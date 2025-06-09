@@ -1,10 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pipenv --version)",
+      "Bash(python manage.py startapp:*)",
+      "Bash(python manage.py:*)",
       "Bash(pipenv install:*)",
-      "Bash(pipenv run:*)",
-      "Bash(git init:*)"
+      "Bash(pytest:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

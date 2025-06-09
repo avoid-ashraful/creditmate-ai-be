@@ -5,7 +5,12 @@ name = "pypi"
 
 [packages]
 django = "*"
+pytest = "*"
+pytest-django = "*"
 djangorestframework = "*"
+pytest-socket = "*"
+django-filter = "*"
+factory-boy = "*"
 
 [dev-packages]
 pytest = "*"
