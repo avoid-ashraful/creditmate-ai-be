@@ -10,6 +10,19 @@ def django_db_setup(django_db_setup, django_db_blocker):
         pass
 
 
+@pytest.fixture(autouse=True)
+def auto_setup_method(request):
+    """
+    Automatically call setup_method on test classes if it exists.
+    This replaces the need to add @pytest.fixture(autouse=True) to every setup_method.
+    """
+    if request.instance and hasattr(request.instance, "setup_method"):
+        # Make sure setup_method is a callable method, not a fixture
+        setup_method = getattr(request.instance, "setup_method")
+        if callable(setup_method) and not hasattr(setup_method, "_pytestfixturefunction"):
+            setup_method()
+
+
 @pytest.fixture()
 def api_client():
     """Django REST Framework API test client."""

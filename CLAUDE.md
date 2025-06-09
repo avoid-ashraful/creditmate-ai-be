@@ -8,11 +8,15 @@ Credit Mate AI is a financial management application built with Django. The plat
 
 ## Development Commands
 
-### Local Python Development
+### Environment Setup
 ```bash
 # Setup environment
 pipenv install --dev
 pipenv shell
+
+# Copy environment configuration
+cp .env.example .env
+# Edit .env file with your configuration values
 
 # Run Django commands
 python manage.py migrate
@@ -21,16 +25,39 @@ python manage.py shell
 python manage.py test
 ```
 
+### Package Management
+```bash
+# Install new packages with specific versions (recommended)
+pipenv install django~=5.2.3
+
+# Install development packages
+pipenv install --dev pytest~=8.4.0
+
+# Update Pipfile.lock after changes
+pipenv lock
+
+# Check for security vulnerabilities
+pipenv check
+```
+
 ### Testing
 ```bash
-# Run all tests
+# Run all tests with Django test runner
 python manage.py test
+
+# Run all tests with pytest (recommended)
+pytest
 
 # Run specific app tests
 python manage.py test app_name
+pytest app_name/
 
 # Run single test case
 python manage.py test app.tests.TestClass.test_method
+pytest app_name/tests/test_file.py::TestClass::test_method
+
+# Run with verbose output
+pytest -v
 ```
 
 ### Code Quality
@@ -105,10 +132,18 @@ Follow this order for model classes:
 - Abstract complex queries into QuerySet methods
 
 ### Testing Standards
-- Use Django's built-in testing framework
+- **Pytest is preferred** over Django's built-in TestCase
+- Use pytest classes with `setup_method()` for test initialization
+- The `setup_method()` is automatically called via global autouse fixture in `conftest.py`
 - Mock external services for unit tests
-- Use `APITestCase` for API testing
+- Use `APITestCase` for API testing when needed
 - Test authentication and permissions thoroughly
+
+### Pytest Configuration
+- **Auto-setup**: `setup_method()` is automatically called for all test classes (no need for `@pytest.fixture(autouse=True)`)
+- **Database access**: Use `@pytest.mark.django_db` decorator for tests that need database
+- **Parametrized tests**: Use `@pytest.mark.parametrize` for testing multiple scenarios
+- **Fixtures**: Global fixtures available in `conftest.py` (api_client, authed_api_client)
 
 ### File Naming Conventions
 - `CharField` fields: default="", blank=True
@@ -169,9 +204,46 @@ app_name/
 - Use `@cache_page` decorator for cacheable endpoints
 - Monitor query performance and optimize as needed
 
+## Environment Configuration
+
+### Setup
+1. Copy `.env.example` to `.env`: `cp .env.example .env`
+2. Update `.env` with your configuration values
+3. Install python-dotenv: `pipenv install python-dotenv` (optional, gracefully handled if missing)
+
+### Available Environment Variables
+- **SECRET_KEY**: Django secret key for cryptographic signing
+- **DEBUG**: Enable/disable debug mode (True/False)
+- **ALLOWED_HOSTS**: Comma-separated list of allowed host/domain names
+- **OPENAI_API_KEY**: OpenAI API key for LLM-powered content parsing
+- **DB_ENGINE**, **DB_NAME**, **DB_USER**, etc.: Database configuration
+- **CELERY_BROKER_URL**: Redis URL for Celery task queue
+- **EMAIL_HOST**, **EMAIL_PORT**, etc.: Email configuration
+
+### Development vs Production
+- Development: Use `.env` file with default SQLite database
+- Production: Set environment variables directly with proper database (PostgreSQL/MySQL)
+
+## Dependency Management Best Practices
+
+### Package Versioning
+- **Use specific versions** instead of `*` in `Pipfile` (e.g., `django = "~=5.2.3"`)
+- **Compatible release operator `~=`**: Allows patch-level updates but prevents breaking changes
+- **Example**: `django = "~=5.2.3"` allows `5.2.4`, `5.2.5` but not `5.3.0`
+
+### Version Pinning Strategy
+- **Production packages**: Use `~=` for stable compatibility with security updates
+- **Development packages**: Use `~=` for consistent development environment
+- **Security critical packages**: Pin exact versions if needed with `==`
+
+### Maintenance
+- **Regular updates**: `pipenv update` to get latest compatible versions
+- **Security scanning**: `pipenv check` to identify vulnerabilities
+- **Lock file**: Always commit `Pipfile.lock` for reproducible builds
+
 ## Security Guidelines
 
-- Never commit secrets or API keys
+- Never commit secrets or API keys (`.env` is gitignored)
 - Use Django's built-in permission system
 - Validate all user inputs
 - Use parameterized queries (Django ORM handles this)
