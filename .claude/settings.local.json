@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pipenv --version)",
+      "Bash(pipenv install:*)",
+      "Bash(pipenv run:*)",
+      "Bash(git init:*)"
+    ],
+    "deny": []
+  }
+}
