@@ -222,13 +222,12 @@ class TestCreditCardAPI:
             "annual_fee_waiver_policy",
             "reward_points_policy",
             "additional_features",
-            "source_url",
             "is_active",
             "has_lounge_access",
             "total_lounge_access",
             "has_annual_fee",
-            "created_at",
-            "updated_at",
+            "created",
+            "modified",
         ]
 
         for field in expected_fields:

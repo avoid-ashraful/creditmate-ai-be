@@ -140,8 +140,8 @@ class TestBankAPI:
             "website",
             "is_active",
             "credit_card_count",
-            "created_at",
-            "updated_at",
+            "created",
+            "modified",
         ]
 
         for field in expected_fields:
@@ -158,8 +158,8 @@ class TestBankAPI:
 
         # These fields should not be in list view
         assert "website" not in response.data["results"][0]
-        assert "created_at" not in response.data["results"][0]
-        assert "updated_at" not in response.data["results"][0]
+        assert "created" not in response.data["results"][0]
+        assert "modified" not in response.data["results"][0]
 
     @pytest.mark.parametrize(
         "endpoint",
