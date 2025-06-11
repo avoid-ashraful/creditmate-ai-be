@@ -37,7 +37,7 @@ jobs:
 
     - name: Run flake8 linting
       run: |
-        flake8 --max-line-length=90 --extend-ignore=E203,W503 .
+        flake8 .
 
     - name: Run mypy type checking
       run: |
