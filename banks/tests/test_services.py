@@ -270,11 +270,11 @@ class TestBankDataCrawlerService:
     def setup_method(self):
         """Set up test data before each test method."""
         # Mock the services to avoid import errors during testing
-        with patch("banks.services.ContentExtractor") as mock_extractor_class, patch(
-            "banks.services.LLMContentParser"
-        ) as mock_parser_class, patch(
-            "banks.services.CreditCardDataService"
-        ) as mock_data_service_class:
+        with (
+            patch("banks.services.ContentExtractor") as mock_extractor_class,
+            patch("banks.services.LLMContentParser") as mock_parser_class,
+            patch("banks.services.CreditCardDataService") as mock_data_service_class,
+        ):
             mock_extractor_class.return_value = Mock()
             mock_parser_class.return_value = Mock()
             mock_data_service_class.return_value = Mock()
@@ -290,13 +290,15 @@ class TestBankDataCrawlerService:
 
     def test_crawl_bank_data_source_success(self):
         """Test successful bank data source crawling."""
-        with patch.object(
-            self.service.content_extractor, "extract_content"
-        ) as mock_extract, patch.object(
-            self.service.llm_parser, "parse_credit_card_data"
-        ) as mock_parse, patch.object(
-            self.service.data_service, "update_credit_card_data"
-        ) as mock_update:
+        with (
+            patch.object(
+                self.service.content_extractor, "extract_content"
+            ) as mock_extract,
+            patch.object(self.service.llm_parser, "parse_credit_card_data") as mock_parse,
+            patch.object(
+                self.service.data_service, "update_credit_card_data"
+            ) as mock_update,
+        ):
             mock_extract.return_value = ("raw content", "extracted content")
             mock_parse.return_value = [{"name": "Test Card", "annual_fee": 95}]
             mock_update.return_value = 1
