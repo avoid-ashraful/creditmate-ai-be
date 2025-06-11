@@ -1,3 +1,5 @@
+import random
+
 import factory
 
 from django.db.models.signals import post_save
@@ -11,7 +13,7 @@ from .models import Bank, BankDataSource, CrawledContent
 class BankFactory(factory.django.DjangoModelFactory):
     """Factory for creating Bank instances."""
 
-    name = factory.Sequence(lambda n: f"Bank {n}")
+    name = factory.LazyAttribute(lambda _: f"Bank {random.randint(1, 99999)}")
     logo = factory.Faker("image_url", width=200, height=100)
     website = factory.Faker("url")
     is_active = True

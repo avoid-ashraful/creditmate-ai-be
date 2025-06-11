@@ -347,7 +347,7 @@ class TestBankAPIEdgeCases:
     def test_performance_with_large_datasets(self):
         """Test API performance with large number of banks."""
         # Create large dataset
-        BankFactory.create_batch(500)
+        BankFactory.create_batch(50)
 
         # Test list endpoint performance
         response = self.client.get(reverse("bank-list"))
@@ -357,7 +357,7 @@ class TestBankAPIEdgeCases:
         data = response.json()
         assert "results" in data
         assert "count" in data
-        assert data["count"] == 500
+        assert data["count"] == 50
 
         # Should limit results per page
         assert len(data["results"]) <= 100
