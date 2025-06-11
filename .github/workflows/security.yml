@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.12
 
@@ -40,7 +40,7 @@ jobs:
         bandit -r . -f txt
 
     - name: Upload Bandit results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: bandit-results
@@ -52,7 +52,7 @@ jobs:
         semgrep --config=auto .
 
     - name: Upload Semgrep results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: semgrep-results
@@ -97,7 +97,7 @@ jobs:
         pip-audit
 
     - name: Upload pip-audit results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: pip-audit-results

@@ -19,7 +19,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.12
 
@@ -282,7 +282,7 @@ jobs:
         cat deployment-checklist.md
 
     - name: Upload deployment checklist
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: deployment-checklist
         path: deployment-checklist.md
