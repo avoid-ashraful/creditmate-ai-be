@@ -47,6 +47,10 @@ ALLOWED_HOSTS = (
     os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
 )
 
+# Add testserver for Django testing
+if "testserver" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("testserver")
+
 
 # Application definition
 
