@@ -9,7 +9,6 @@ import time
 from decimal import Decimal
 
 import pytest
-from rest_framework import status
 
 from django.test import Client
 from django.urls import reverse
@@ -196,18 +195,16 @@ class TestCreditCardAPIEdgeCases:
     def test_featured_cards_algorithm_edge_cases(self):
         """Test featured cards selection with edge case data."""
         # Create cards with edge case values
-        edge_case_cards = [
-            CreditCardFactory(bank=self.bank, annual_fee=Decimal("0.00")),  # Free card
-            CreditCardFactory(
-                bank=self.bank, annual_fee=Decimal("99999.99")
-            ),  # Very expensive
-            CreditCardFactory(
-                bank=self.bank, interest_rate_apr=Decimal("0.00")
-            ),  # 0% interest
-            CreditCardFactory(
-                bank=self.bank, interest_rate_apr=Decimal("99.99")
-            ),  # High interest
-        ]
+        CreditCardFactory(bank=self.bank, annual_fee=Decimal("0.00")),  # Free card
+        CreditCardFactory(
+            bank=self.bank, annual_fee=Decimal("99999.99")
+        ),  # Very expensive
+        CreditCardFactory(
+            bank=self.bank, interest_rate_apr=Decimal("0.00")
+        ),  # 0% interest
+        CreditCardFactory(
+            bank=self.bank, interest_rate_apr=Decimal("99.99")
+        ),  # High interest
 
         response = self.client.get(reverse("creditcard-featured"))
         assert response.status_code == 200
@@ -246,12 +243,9 @@ class TestCreditCardAPIEdgeCases:
         # Test search suggestions for different terms
         search_terms = ["visa", "master", "amex", "chase", "xyz"]
 
-        for term in search_terms:
+        for _ in search_terms:
             response = self.client.get(reverse("creditcard-search-suggestions"))
             assert response.status_code == 200
-
-            data = response.json()
-            # Should return relevant suggestions or empty list
 
     def test_filter_combination_edge_cases(self):
         """Test complex filter combinations that might return empty results."""
@@ -298,9 +292,7 @@ class TestCreditCardAPIEdgeCases:
     def test_ordering_with_ties(self):
         """Test ordering behavior when multiple cards have identical values."""
         # Create cards with identical annual fees
-        cards = CreditCardFactory.create_batch(
-            3, bank=self.bank, annual_fee=Decimal("95.00")
-        )
+        CreditCardFactory.create_batch(3, bank=self.bank, annual_fee=Decimal("95.00"))
 
         # Test ordering by annual fee (should have ties)
         response = self.client.get(reverse("creditcard-list"), {"ordering": "annual_fee"})

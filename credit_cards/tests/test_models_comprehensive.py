@@ -184,9 +184,9 @@ class TestCreditCardModelEdgeCases:
         """Test ordering behavior with identical bank and card names."""
         # Note: This test is adjusted due to unique constraint on (bank, name)
         # Create cards with unique names but similar patterns
-        card1 = CreditCardFactory(bank=self.bank, name="Test Card 1")
-        card2 = CreditCardFactory(bank=self.bank, name="Test Card 2")
-        card3 = CreditCardFactory(bank=self.bank, name="Test Card 3")
+        CreditCardFactory(bank=self.bank, name="Test Card 1")
+        CreditCardFactory(bank=self.bank, name="Test Card 2")
+        CreditCardFactory(bank=self.bank, name="Test Card 3")
 
         # Should maintain consistent ordering
         cards = list(

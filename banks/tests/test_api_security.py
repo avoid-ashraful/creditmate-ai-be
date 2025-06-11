@@ -8,13 +8,11 @@ and edge cases that could expose security issues.
 import time
 
 import pytest
-from rest_framework import status
-from rest_framework.test import APITestCase
 
 from django.test import Client
 from django.urls import reverse
 
-from banks.factories import BankDataSourceFactory, BankFactory
+from banks.factories import BankFactory
 
 
 @pytest.mark.django_db
@@ -255,8 +253,8 @@ class TestBankAPIEdgeCases:
         """Test complex combinations of multiple filters."""
         # Create diverse bank data
         timestamp = int(time.time() * 1000000)  # microseconds for uniqueness
-        active_bank = BankFactory(name=f"Active Bank {timestamp}", is_active=True)
-        inactive_bank = BankFactory(name=f"Inactive Bank {timestamp}_2", is_active=False)
+        BankFactory(name=f"Active Bank {timestamp}", is_active=True)
+        BankFactory(name=f"Inactive Bank {timestamp}_2", is_active=False)
 
         # Test various filter combinations
         filter_combinations = [

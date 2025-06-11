@@ -7,7 +7,7 @@ and cross-component functionality.
 
 import time
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -296,7 +296,7 @@ class TestAPIDataConsistency:
     def test_cross_app_data_consistency(self):
         """Test data consistency across banks and credit cards apps."""
         # Create credit cards for bank
-        cards = CreditCardFactory.create_batch(3, bank=self.bank)
+        CreditCardFactory.create_batch(3, bank=self.bank)
 
         # Get bank with credit cards count
         response = self.client.get(
@@ -314,10 +314,8 @@ class TestAPIDataConsistency:
     def test_filtering_consistency_across_apps(self):
         """Test filtering consistency between apps."""
         # Create mixed active/inactive cards
-        active_cards = CreditCardFactory.create_batch(3, bank=self.bank, is_active=True)
-        inactive_cards = CreditCardFactory.create_batch(
-            2, bank=self.bank, is_active=False
-        )
+        CreditCardFactory.create_batch(3, bank=self.bank, is_active=True)
+        CreditCardFactory.create_batch(2, bank=self.bank, is_active=False)
 
         # Test active filter in credit cards API
         response = self.client.get(reverse("creditcard-list"), {"is_active": "true"})
@@ -556,7 +554,7 @@ class TestSecurityIntegration:
         bank1 = BankFactory(name=f"Bank 1 {int(time.time() * 1000)}")
         bank2 = BankFactory(name=f"Bank 2 {int(time.time() * 1000)}")
 
-        card1 = CreditCardFactory(bank=bank1, name=f"Card 1 {int(time.time() * 1000)}")
+        CreditCardFactory(bank=bank1, name=f"Card 1 {int(time.time() * 1000)}")
         card2 = CreditCardFactory(bank=bank2, name=f"Card 2 {int(time.time() * 1000)}")
 
         # Test that bank-specific endpoints only return relevant data
