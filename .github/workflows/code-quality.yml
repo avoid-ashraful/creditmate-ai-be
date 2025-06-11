@@ -68,8 +68,9 @@ jobs:
 
     - name: Run Django system checks
       env:
-        SECRET_KEY: "test-secret-key-for-github-actions"
+        SECRET_KEY: "test-super-long-secret-key-with-many-unique-characters-for-github-actions-12345"
         DEBUG: "False"
+        ALLOWED_HOSTS: "localhost,127.0.0.1"
       run: |
         python manage.py check --deploy
 
@@ -157,8 +158,9 @@ jobs:
 
     - name: Check for N+1 query patterns
       env:
-        SECRET_KEY: "test-secret-key-for-github-actions"
+        SECRET_KEY: "test-super-long-secret-key-with-many-unique-characters-for-github-actions-12345"
         DEBUG: "False"
+        ALLOWED_HOSTS: "localhost,127.0.0.1"
       run: |
         echo "Checking for potential N+1 query patterns..."
 
