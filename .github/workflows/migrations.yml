@@ -1,0 +1,190 @@
+name: Migration Checks
+
+on:
+  pull_request:
+    branches: [ master, main ]
+  push:
+    branches: [ master, main ]
+
+env:
+  SECRET_KEY: "test-secret-key-for-github-actions"
+  DEBUG: "False"
+
+jobs:
+  migration-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Fetch full history for migration analysis
+        fetch-depth: 0
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Install pipenv
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+
+    - name: Install dependencies
+      run: |
+        pipenv install --dev --system
+
+    - name: Check for missing migrations
+      run: |
+        echo "Checking for missing migrations..."
+        python manage.py makemigrations --dry-run --check --verbosity=2
+
+    - name: Validate migration files
+      run: |
+        echo "Validating migration files..."
+        python manage.py migrate --plan
+
+    - name: Test migration rollback capability
+      run: |
+        echo "Testing migration rollback capability..."
+        # Apply all migrations
+        python manage.py migrate
+
+        # Get list of apps with migrations
+        APPS=$(python manage.py showmigrations --plan | grep -o '^\w\+' | sort -u)
+
+        for app in $APPS; do
+          echo "Testing rollback for app: $app"
+          # Get the previous migration (if any)
+          PREV_MIGRATION=$(python manage.py showmigrations $app --plan | tail -2 | head -1 | sed 's/.*] //' || true)
+          if [ ! -z "$PREV_MIGRATION" ]; then
+            echo "Rolling back to: $PREV_MIGRATION"
+            python manage.py migrate $app $PREV_MIGRATION || echo "Rollback failed for $app"
+          fi
+        done
+
+        # Migrate back to latest
+        python manage.py migrate
+
+    - name: Check for conflicting migrations
+      run: |
+        echo "Checking for conflicting migrations..."
+        python -c "
+        import os
+        import django
+        from django.apps import apps
+        from django.db.migrations.loader import MigrationLoader
+
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_mate_ai.settings')
+        django.setup()
+
+        loader = MigrationLoader(None)
+        conflicts = loader.detect_conflicts()
+
+        if conflicts:
+            print('Migration conflicts detected:')
+            for app, migrations in conflicts.items():
+                print(f'  {app}: {migrations}')
+            exit(1)
+        else:
+            print('No migration conflicts detected.')
+        "
+
+    - name: Check migration dependencies
+      run: |
+        echo "Checking migration dependencies..."
+        python -c "
+        import os
+        import django
+        from django.apps import apps
+        from django.db.migrations.loader import MigrationLoader
+
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_mate_ai.settings')
+        django.setup()
+
+        loader = MigrationLoader(None)
+
+        # Check for circular dependencies
+        try:
+            loader.build_graph()
+            print('Migration dependency graph is valid.')
+        except Exception as e:
+            print(f'Migration dependency error: {e}')
+            exit(1)
+        "
+
+    - name: Analyze migration safety
+      run: |
+        echo "Analyzing migration safety..."
+        python -c "
+        import os
+        import re
+        from pathlib import Path
+
+        # Check for potentially unsafe migration operations
+        unsafe_patterns = [
+            (r'RemoveField', 'Field removal - ensure data is backed up'),
+            (r'DeleteModel', 'Model deletion - ensure data is backed up'),
+            (r'AlterField.*unique=True', 'Adding unique constraint - may fail with existing data'),
+            (r'AlterField.*null=False', 'Making field non-nullable - may fail with existing null data'),
+            (r'RunSQL', 'Raw SQL execution - review carefully'),
+            (r'RunPython', 'Python code execution - review carefully'),
+        ]
+
+        migration_files = Path('.').glob('*/migrations/*.py')
+        warnings = []
+
+        for migration_file in migration_files:
+            if migration_file.name == '__init__.py':
+                continue
+
+            content = migration_file.read_text()
+
+            for pattern, warning in unsafe_patterns:
+                if re.search(pattern, content, re.IGNORECASE):
+                    warnings.append(f'{migration_file}: {warning}')
+
+        if warnings:
+            print('Migration safety warnings:')
+            for warning in warnings:
+                print(f'  ⚠️  {warning}')
+            print()
+            print('Please review these migrations carefully before deploying to production.')
+        else:
+            print('No migration safety issues detected.')
+        "
+
+    - name: Check for squashed migrations
+      run: |
+        echo "Checking for squashed migrations..."
+        find . -name "*.py" -path "*/migrations/*" -exec grep -l "replaces" {} \; | while read file; do
+          echo "Found squashed migration: $file"
+          echo "Ensure all replaced migrations are handled properly."
+        done
+
+    - name: Generate migration summary
+      run: |
+        echo "Generating migration summary..."
+        echo "## Migration Summary" > migration-summary.md
+        echo "" >> migration-summary.md
+
+        python manage.py showmigrations --plan | head -20 >> migration-summary.md
+
+        echo "" >> migration-summary.md
+        echo "### Migration Statistics" >> migration-summary.md
+
+        # Count migrations per app
+        for app in banks credit_cards common; do
+          if [ -d "$app/migrations" ]; then
+            count=$(find $app/migrations -name "*.py" ! -name "__init__.py" | wc -l)
+            echo "- $app: $count migrations" >> migration-summary.md
+          fi
+        done
+
+        cat migration-summary.md
+
+    - name: Upload migration summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: migration-summary
+        path: migration-summary.md

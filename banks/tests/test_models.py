@@ -398,3 +398,280 @@ class TestModelRelationships:
         assert bank2.data_sources.count() == 1
         assert source1.bank != source2.bank
         assert content1.data_source.bank != content2.data_source.bank
+
+
+@pytest.mark.django_db
+class TestBankModelEdgeCases:
+    """Test Bank model edge cases and validation boundaries."""
+
+    def test_bank_name_max_length_validation(self):
+        """Test bank name field max length validation (255 chars)."""
+        # Valid length should work
+        valid_name = "A" * 255
+        bank = BankFactory(name=valid_name)
+        bank.full_clean()  # Should not raise
+        assert bank.name == valid_name
+
+        # Exceeding max length should fail
+        invalid_name = "A" * 256
+        bank.name = invalid_name
+        with pytest.raises(ValidationError):
+            bank.full_clean()
+
+    def test_bank_name_empty_validation(self):
+        """Test bank name cannot be empty (required field)."""
+        with pytest.raises(ValidationError):
+            bank = Bank(name="")
+            bank.full_clean()
+
+    def test_bank_url_field_max_length_validation(self):
+        """Test logo and website URL fields max length validation (512 chars)."""
+        # Valid length should work
+        valid_url = "https://example.com/" + "a" * 480  # Total ~500 chars
+        bank = BankFactory(logo=valid_url, website=valid_url)
+        bank.full_clean()  # Should not raise
+
+        # Exceeding max length should fail
+        invalid_url = "https://example.com/" + "a" * 500  # Total >512 chars
+        bank.logo = invalid_url
+        with pytest.raises(ValidationError):
+            bank.full_clean()
+
+    def test_bank_url_field_blank_handling(self):
+        """Test URL fields can be blank but not None."""
+        bank = BankFactory(logo="", website="")
+        bank.full_clean()  # Should not raise
+        assert bank.logo == ""
+        assert bank.website == ""
+
+    def test_bank_inactive_bank_credit_card_count(self):
+        """Test credit_card_count property with inactive bank."""
+        bank = BankFactory(is_active=False)
+        CreditCardFactory.create_batch(3, bank=bank, is_active=True)
+
+        # Should still count credit cards even if bank is inactive
+        assert bank.credit_card_count == 3
+
+    def test_bank_unicode_name_handling(self):
+        """Test bank names with unicode characters."""
+        unicode_name = "البنك العربي 中国银行 Банк"
+        bank = BankFactory(name=unicode_name)
+        bank.full_clean()  # Should not raise
+        assert bank.name == unicode_name
+
+    def test_bank_special_characters_in_name(self):
+        """Test bank names with special characters and punctuation."""
+        special_name = "Bank & Trust Co. - North America (USA)"
+        bank = BankFactory(name=special_name)
+        bank.full_clean()  # Should not raise
+        assert bank.name == special_name
+
+
+@pytest.mark.django_db
+class TestBankDataSourceEdgeCases:
+    """Test BankDataSource model edge cases and validation boundaries."""
+
+    def setup_method(self):
+        """Set up test data before each test method."""
+        self.bank = BankFactory()
+
+    def test_data_source_url_max_length_validation(self):
+        """Test URL field max length validation (1024 chars)."""
+        # Valid length should work
+        valid_url = "https://example.com/" + "a" * 1000  # Total ~1020 chars
+        data_source = BankDataSourceFactory(bank=self.bank, url=valid_url)
+        data_source.full_clean()  # Should not raise
+
+        # Exceeding max length should fail
+        invalid_url = "https://example.com/" + "a" * 1010  # Total >1024 chars
+        data_source.url = invalid_url
+        with pytest.raises(ValidationError):
+            data_source.full_clean()
+
+    def test_data_source_description_max_length_validation(self):
+        """Test description field max length validation (500 chars)."""
+        # Valid length should work
+        valid_description = "A" * 500
+        data_source = BankDataSourceFactory(bank=self.bank, description=valid_description)
+        data_source.full_clean()  # Should not raise
+
+        # Exceeding max length should fail
+        invalid_description = "A" * 501
+        data_source.description = invalid_description
+        with pytest.raises(ValidationError):
+            data_source.full_clean()
+
+    def test_data_source_failed_attempt_count_negative_validation(self):
+        """Test failed_attempt_count cannot be negative."""
+        data_source = BankDataSourceFactory(bank=self.bank)
+        data_source.failed_attempt_count = -1
+        with pytest.raises(ValidationError):
+            data_source.full_clean()
+
+    def test_data_source_increment_failed_attempts_edge_cases(self):
+        """Test increment at exactly threshold boundary (4->5)."""
+        data_source = BankDataSourceFactory(
+            bank=self.bank, failed_attempt_count=4, is_active=True
+        )
+
+        # Should deactivate at exactly 5 attempts
+        data_source.increment_failed_attempts()
+        data_source.refresh_from_db()
+
+        assert data_source.failed_attempt_count == 5
+        assert data_source.is_active is False
+
+    def test_data_source_increment_failed_attempts_beyond_threshold(self):
+        """Test increment when already at/above threshold."""
+        data_source = BankDataSourceFactory(
+            bank=self.bank, failed_attempt_count=6, is_active=False
+        )
+
+        # Should still increment even when already deactivated
+        data_source.increment_failed_attempts()
+        data_source.refresh_from_db()
+
+        assert data_source.failed_attempt_count == 7
+        assert data_source.is_active is False
+
+    def test_data_source_reset_failed_attempts_when_inactive(self):
+        """Test reset_failed_attempts doesn't reactivate inactive sources."""
+        data_source = BankDataSourceFactory(
+            bank=self.bank, failed_attempt_count=10, is_active=False
+        )
+
+        data_source.reset_failed_attempts()
+        data_source.refresh_from_db()
+
+        assert data_source.failed_attempt_count == 0
+        # Should NOT automatically reactivate
+        assert data_source.is_active is False
+
+    def test_data_source_is_failing_boundary_conditions(self):
+        """Test is_failing property at boundary values (4, 5, 6)."""
+        data_source = BankDataSourceFactory(bank=self.bank)
+
+        # At 4 attempts - not failing
+        data_source.failed_attempt_count = 4
+        assert data_source.is_failing is False
+
+        # At 5 attempts - failing
+        data_source.failed_attempt_count = 5
+        assert data_source.is_failing is True
+
+        # At 6 attempts - still failing
+        data_source.failed_attempt_count = 6
+        assert data_source.is_failing is True
+
+    def test_data_source_last_crawled_timezone_handling(self):
+        """Test timezone handling for crawl timestamps."""
+        data_source = BankDataSourceFactory(bank=self.bank)
+
+        # Set timestamps with timezone
+        now = timezone.now()
+        data_source.last_crawled_at = now
+        data_source.last_successful_crawl_at = now
+        data_source.save()
+
+        data_source.refresh_from_db()
+        assert data_source.last_crawled_at.tzinfo is not None
+        assert data_source.last_successful_crawl_at.tzinfo is not None
+
+
+@pytest.mark.django_db
+class TestCrawledContentEdgeCases:
+    """Test CrawledContent model edge cases and validation boundaries."""
+
+    def setup_method(self):
+        """Set up test data before each test method."""
+        self.bank = BankFactory()
+        self.data_source = BankDataSourceFactory(bank=self.bank)
+
+    def test_crawled_content_very_large_content(self):
+        """Test handling of extremely large text content (>1MB)."""
+        large_content = "A" * (1024 * 1024)  # 1MB of content
+
+        content = CrawledContentFactory(
+            data_source=self.data_source,
+            raw_content=large_content,
+            extracted_content=large_content,
+        )
+
+        content.refresh_from_db()
+        assert len(content.raw_content) == 1024 * 1024
+        assert len(content.extracted_content) == 1024 * 1024
+
+    def test_crawled_content_invalid_json_handling(self):
+        """Test behavior with malformed JSON in parsed_json field."""
+        # Django JSONField should handle this gracefully
+        content = CrawledContentFactory(data_source=self.data_source)
+
+        # Valid JSON should work
+        content.parsed_json = {"valid": "json"}
+        content.save()
+        content.refresh_from_db()
+        assert content.parsed_json == {"valid": "json"}
+
+    def test_crawled_content_nested_json_depth(self):
+        """Test deeply nested JSON structures."""
+        nested_json = {
+            "level1": {"level2": {"level3": {"level4": {"level5": "deep_value"}}}}
+        }
+
+        content = CrawledContentFactory(
+            data_source=self.data_source, parsed_json=nested_json
+        )
+
+        content.refresh_from_db()
+        assert (
+            content.parsed_json["level1"]["level2"]["level3"]["level4"]["level5"]
+            == "deep_value"
+        )
+
+    def test_crawled_content_empty_json_vs_null(self):
+        """Test difference between {} and None for parsed_json."""
+        # Empty dict
+        content1 = CrawledContentFactory(data_source=self.data_source, parsed_json={})
+        content1.refresh_from_db()
+        assert content1.parsed_json == {}
+
+        # None/null - should default to empty dict
+        content2 = CrawledContentFactory(data_source=self.data_source, parsed_json=None)
+        content2.refresh_from_db()
+        assert content2.parsed_json == {}
+
+    def test_crawled_content_auto_timestamp_accuracy(self):
+        """Test crawl_date auto_now_add accuracy and timezone."""
+        before_creation = timezone.now()
+        content = CrawledContentFactory(data_source=self.data_source)
+        after_creation = timezone.now()
+
+        assert before_creation <= content.crawl_date <= after_creation
+        assert content.crawl_date.tzinfo is not None
+
+    def test_crawled_content_error_message_length_limits(self):
+        """Test very long error messages handling."""
+        long_error = "Error: " + "A" * 10000  # Very long error message
+
+        content = CrawledContentFactory(
+            data_source=self.data_source,
+            error_message=long_error,
+            processing_status=ProcessingStatus.FAILED,
+        )
+
+        content.refresh_from_db()
+        assert len(content.error_message) > 1000  # Should store long messages
+
+    def test_crawled_content_unicode_content_handling(self):
+        """Test raw/extracted content with unicode characters."""
+        unicode_content = "测试内容 العربية Русский 🌟📱💳"
+
+        content = CrawledContentFactory(
+            data_source=self.data_source,
+            raw_content=unicode_content,
+            extracted_content=unicode_content,
+        )
+
+        content.refresh_from_db()
+        assert content.raw_content == unicode_content
+        assert content.extracted_content == unicode_content

@@ -1,0 +1,288 @@
+name: Deployment Checks
+
+on:
+  pull_request:
+    branches: [ master, main ]
+  push:
+    branches: [ master, main ]
+
+env:
+  SECRET_KEY: "test-secret-key-for-github-actions"
+  DEBUG: "False"
+  ALLOWED_HOSTS: "localhost,127.0.0.1"
+
+jobs:
+  deployment-readiness:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv install --dev --system
+
+    - name: Check Django deployment settings
+      run: |
+        echo "Checking Django deployment settings..."
+
+        # Run Django deployment checks
+        python manage.py check --deploy --fail-level WARNING
+
+    - name: Validate static files collection
+      run: |
+        echo "Testing static files collection..."
+        python manage.py collectstatic --noinput --verbosity=2
+
+    - name: Check for missing environment variables
+      run: |
+        echo "Checking for required environment variables in production..."
+
+        python -c "
+        import os
+        from pathlib import Path
+
+        # Check settings.py for environment variable usage
+        settings_path = Path('credit_mate_ai/settings.py')
+        if settings_path.exists():
+            content = settings_path.read_text()
+
+            # List of environment variables that should be documented
+            env_vars = []
+
+            # Find os.environ.get() calls
+            import re
+            env_calls = re.findall(r'os\.environ\.get\([\'\"](.*?)[\'\"]', content)
+            env_vars.extend(env_calls)
+
+            # Find os.getenv() calls
+            getenv_calls = re.findall(r'os\.getenv\([\'\"](.*?)[\'\"]', content)
+            env_vars.extend(getenv_calls)
+
+            if env_vars:
+                print('Environment variables used in settings:')
+                for var in sorted(set(env_vars)):
+                    print(f'  - {var}')
+
+                # Check if .env.example exists
+                env_example = Path('.env.example')
+                if env_example.exists():
+                    example_content = env_example.read_text()
+                    missing_vars = []
+                    for var in set(env_vars):
+                        if var not in example_content:
+                            missing_vars.append(var)
+
+                    if missing_vars:
+                        print()
+                        print('⚠️  Missing from .env.example:')
+                        for var in missing_vars:
+                            print(f'  - {var}')
+                else:
+                    print()
+                    print('⚠️  .env.example file not found. Consider creating one for documentation.')
+            else:
+                print('No environment variables found in settings.')
+        "
+
+    - name: Check database configuration
+      run: |
+        echo "Checking database configuration..."
+
+        # Test database connectivity
+        python manage.py migrate --dry-run
+
+        # Check for database optimization settings
+        python -c "
+        import os
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_mate_ai.settings')
+        import django
+        django.setup()
+        from django.conf import settings
+
+        # Check database configuration
+        db_config = settings.DATABASES['default']
+
+        print(f'Database engine: {db_config[\"ENGINE\"]}')
+
+        # Recommendations for production
+        if 'sqlite' in db_config['ENGINE'].lower():
+            print('⚠️  SQLite detected. Consider PostgreSQL or MySQL for production.')
+
+        # Check for connection pooling
+        if 'CONN_MAX_AGE' not in db_config:
+            print('💡 Consider setting CONN_MAX_AGE for database connection persistence.')
+        "
+
+    - name: Check security configuration
+      run: |
+        echo "Checking security configuration..."
+
+        python -c "
+        import os
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_mate_ai.settings')
+        import django
+        django.setup()
+        from django.conf import settings
+
+        security_checks = []
+
+        # Check HTTPS settings
+        if not getattr(settings, 'SECURE_SSL_REDIRECT', False):
+            security_checks.append('Consider enabling SECURE_SSL_REDIRECT for HTTPS enforcement')
+
+        if not getattr(settings, 'SECURE_HSTS_SECONDS', 0):
+            security_checks.append('Consider setting SECURE_HSTS_SECONDS for HTTPS security')
+
+        # Check session security
+        if not getattr(settings, 'SESSION_COOKIE_SECURE', False):
+            security_checks.append('Consider enabling SESSION_COOKIE_SECURE for HTTPS cookies')
+
+        if not getattr(settings, 'CSRF_COOKIE_SECURE', False):
+            security_checks.append('Consider enabling CSRF_COOKIE_SECURE for HTTPS CSRF cookies')
+
+        # Check content security
+        if not getattr(settings, 'SECURE_CONTENT_TYPE_NOSNIFF', False):
+            security_checks.append('Consider enabling SECURE_CONTENT_TYPE_NOSNIFF')
+
+        if security_checks:
+            print('Security recommendations for production:')
+            for check in security_checks:
+                print(f'  🔒 {check}')
+        else:
+            print('✅ Basic security settings look good.')
+        "
+
+    - name: Check logging configuration
+      run: |
+        echo "Checking logging configuration..."
+
+        python -c "
+        import os
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_mate_ai.settings')
+        import django
+        django.setup()
+        from django.conf import settings
+
+        if hasattr(settings, 'LOGGING'):
+            print('✅ Logging configuration found.')
+
+            # Check for important loggers
+            loggers = settings.LOGGING.get('loggers', {})
+            important_loggers = ['django', 'django.request', 'django.security']
+
+            for logger in important_loggers:
+                if logger in loggers:
+                    print(f'  ✅ {logger} logger configured')
+                else:
+                    print(f'  ⚠️  {logger} logger not configured')
+        else:
+            print('⚠️  No logging configuration found. Consider adding structured logging.')
+        "
+
+    - name: Check Celery configuration
+      run: |
+        echo "Checking Celery configuration..."
+
+        if [ -f "credit_mate_ai/celery.py" ]; then
+          echo "✅ Celery configuration found."
+
+          # Check for production Celery settings
+          python -c "
+          import os
+          os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_mate_ai.settings')
+          import django
+          django.setup()
+
+          try:
+              from credit_mate_ai.celery import app
+
+              # Check broker configuration
+              broker = app.conf.broker_url
+              if 'redis' in broker.lower():
+                  print('📊 Redis broker configured for Celery.')
+              elif 'rabbitmq' in broker.lower():
+                  print('📊 RabbitMQ broker configured for Celery.')
+              else:
+                  print('⚠️  Celery broker configuration may need review for production.')
+
+              # Check result backend
+              result_backend = app.conf.result_backend
+              if result_backend:
+                  print('📊 Result backend configured for Celery.')
+              else:
+                  print('💡 Consider configuring Celery result backend for task tracking.')
+
+          except Exception as e:
+              print(f'⚠️  Error checking Celery configuration: {e}')
+          "
+        else
+          echo "ℹ️  No Celery configuration found."
+        fi
+
+    - name: Check for production secrets
+      run: |
+        echo "Checking for production-ready secret management..."
+
+        # Check that SECRET_KEY is not hardcoded
+        if grep -r "SECRET_KEY.*=" credit_mate_ai/settings.py | grep -v "environ"; then
+          echo "⚠️  SECRET_KEY appears to be hardcoded. Use environment variables."
+          exit 1
+        else
+          echo "✅ SECRET_KEY uses environment variables."
+        fi
+
+        # Check for other hardcoded secrets
+        if grep -ri "password.*=" --include="*.py" . | grep -v test | grep -v __pycache__ | grep -v "password_validators"; then
+          echo "⚠️  Potential hardcoded passwords found."
+          exit 1
+        fi
+
+    - name: Generate deployment checklist
+      run: |
+        echo "# Deployment Checklist" > deployment-checklist.md
+        echo "" >> deployment-checklist.md
+        echo "Generated on: $(date)" >> deployment-checklist.md
+        echo "" >> deployment-checklist.md
+
+        echo "## Pre-deployment Checklist" >> deployment-checklist.md
+        echo "" >> deployment-checklist.md
+        echo "- [ ] All tests passing" >> deployment-checklist.md
+        echo "- [ ] Security checks passed" >> deployment-checklist.md
+        echo "- [ ] Migration checks completed" >> deployment-checklist.md
+        echo "- [ ] Static files collection tested" >> deployment-checklist.md
+        echo "- [ ] Environment variables documented" >> deployment-checklist.md
+        echo "- [ ] Database configuration reviewed" >> deployment-checklist.md
+        echo "- [ ] Logging configuration verified" >> deployment-checklist.md
+        echo "- [ ] Security settings configured" >> deployment-checklist.md
+        echo "- [ ] Celery configuration checked (if applicable)" >> deployment-checklist.md
+        echo "- [ ] Backup strategy in place" >> deployment-checklist.md
+        echo "- [ ] Monitoring configured" >> deployment-checklist.md
+        echo "" >> deployment-checklist.md
+
+        echo "## Environment-specific Checks" >> deployment-checklist.md
+        echo "" >> deployment-checklist.md
+        echo "### Production Environment" >> deployment-checklist.md
+        echo "- [ ] DEBUG = False" >> deployment-checklist.md
+        echo "- [ ] ALLOWED_HOSTS configured" >> deployment-checklist.md
+        echo "- [ ] HTTPS enforced" >> deployment-checklist.md
+        echo "- [ ] Database connection pooling" >> deployment-checklist.md
+        echo "- [ ] Redis/Celery configured" >> deployment-checklist.md
+        echo "- [ ] Email backend configured" >> deployment-checklist.md
+        echo "- [ ] Error tracking (Sentry) configured" >> deployment-checklist.md
+        echo "" >> deployment-checklist.md
+
+        cat deployment-checklist.md
+
+    - name: Upload deployment checklist
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-checklist
+        path: deployment-checklist.md

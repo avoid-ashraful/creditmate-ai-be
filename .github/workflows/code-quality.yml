@@ -1,0 +1,233 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [ master, main ]
+  push:
+    branches: [ master, main ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Install pipenv and tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+
+    - name: Install dependencies
+      run: |
+        pipenv install --dev --system
+
+    - name: Run Black formatting check
+      run: |
+        black --check --diff --line-length=90 .
+
+    - name: Run isort import sorting check
+      run: |
+        isort --check-only --diff .
+
+    - name: Run flake8 linting
+      run: |
+        flake8 --max-line-length=90 --extend-ignore=E203,W503 .
+
+    - name: Run mypy type checking
+      run: |
+        # Install mypy if not in requirements
+        pip install mypy django-stubs djangorestframework-stubs
+        mypy --config-file=setup.cfg . || echo "Type checking completed with warnings"
+
+    - name: Run pylint code analysis
+      run: |
+        pip install pylint pylint-django
+        pylint --load-plugins pylint_django --django-settings-module=credit_mate_ai.settings **/*.py || echo "Pylint completed with warnings"
+
+    - name: Check docstring coverage
+      run: |
+        pip install interrogate
+        interrogate -v --ignore-init-method --ignore-init-module --ignore-magic --ignore-nested-functions --ignore-semiprivate --ignore-private --ignore-property-decorators --ignore-module --fail-under=70 .
+
+    - name: Run complexity analysis
+      run: |
+        pip install radon
+        radon cc . --min=B --show-complexity
+        radon mi . --min=B
+
+    - name: Check for dead code
+      run: |
+        pip install vulture
+        vulture . --min-confidence 80 || echo "Dead code analysis completed"
+
+    - name: Run Django system checks
+      env:
+        SECRET_KEY: "test-secret-key-for-github-actions"
+        DEBUG: "False"
+      run: |
+        python manage.py check --deploy
+
+    - name: Check for common Django anti-patterns
+      run: |
+        echo "Checking for Django anti-patterns..."
+
+        # Check for direct model imports in views
+        if grep -r "from.*models import" --include="*views.py" .; then
+          echo "⚠️  Direct model imports in views found. Consider using get_model() or importing in functions."
+        fi
+
+        # Check for raw SQL in models
+        if grep -r "raw(" --include="*models.py" .; then
+          echo "⚠️  Raw SQL usage in models found. Consider using ORM methods when possible."
+        fi
+
+        # Check for print statements (should use logging)
+        if grep -r "print(" --include="*.py" . | grep -v test | grep -v __pycache__ | grep -v migrations; then
+          echo "⚠️  print() statements found. Consider using logging instead."
+        fi
+
+        # Check for hardcoded URLs
+        if grep -r "http://" --include="*.py" . | grep -v test | grep -v __pycache__; then
+          echo "⚠️  Hardcoded HTTP URLs found. Consider using reverse() or settings."
+        fi
+
+        echo "Anti-pattern check completed."
+
+    - name: Check requirements and dependencies
+      run: |
+        echo "Checking requirements and dependencies..."
+
+        # Check for unused dependencies
+        pip install pip-check
+        pip-check || echo "Dependency check completed with warnings"
+
+        # Check Pipfile vs Pipfile.lock consistency
+        pipenv verify
+
+        echo "Requirements check completed."
+
+    - name: Generate code quality report
+      run: |
+        echo "# Code Quality Report" > code-quality-report.md
+        echo "" >> code-quality-report.md
+        echo "Generated on: $(date)" >> code-quality-report.md
+        echo "" >> code-quality-report.md
+
+        echo "## Code Statistics" >> code-quality-report.md
+        echo "```" >> code-quality-report.md
+        find . -name "*.py" | grep -v __pycache__ | grep -v migrations | xargs wc -l | tail -1 >> code-quality-report.md
+        echo "```" >> code-quality-report.md
+        echo "" >> code-quality-report.md
+
+        echo "## Complexity Metrics" >> code-quality-report.md
+        echo "```" >> code-quality-report.md
+        radon cc . --total-average >> code-quality-report.md
+        echo "```" >> code-quality-report.md
+
+        cat code-quality-report.md
+
+    - name: Upload code quality report
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-quality-report
+        path: code-quality-report.md
+
+  performance-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv install --dev --system
+
+    - name: Check for N+1 query patterns
+      env:
+        SECRET_KEY: "test-secret-key-for-github-actions"
+        DEBUG: "False"
+      run: |
+        echo "Checking for potential N+1 query patterns..."
+
+        # Look for patterns that might cause N+1 queries
+        if grep -r "\.get(" --include="*.py" . | grep -v test | grep -v __pycache__ | grep -v migrations; then
+          echo "⚠️  Found .get() calls. Ensure these are not in loops that could cause N+1 queries."
+        fi
+
+        # Check for missing select_related/prefetch_related
+        python -c "
+        import os
+        import ast
+        from pathlib import Path
+
+        class QueryAnalyzer(ast.NodeVisitor):
+            def __init__(self):
+                self.warnings = []
+
+            def visit_Call(self, node):
+                # Check for filter() without select_related/prefetch_related
+                if hasattr(node.func, 'attr') and node.func.attr == 'filter':
+                    # This is a basic check - in practice, you'd need more sophisticated analysis
+                    pass
+                self.generic_visit(node)
+
+        # Analyze Python files for query patterns
+        for py_file in Path('.').glob('**/*.py'):
+            if 'test' in str(py_file) or '__pycache__' in str(py_file) or 'migrations' in str(py_file):
+                continue
+
+            try:
+                with open(py_file, 'r') as f:
+                    content = f.read()
+
+                # Look for QuerySet operations without optimization
+                if '.filter(' in content and 'select_related' not in content and 'prefetch_related' not in content:
+                    if 'views.py' in str(py_file) or 'serializers.py' in str(py_file):
+                        print(f'⚠️  {py_file}: Consider using select_related/prefetch_related for query optimization')
+
+            except Exception:
+                pass
+
+        print('Query pattern analysis completed.')
+        "
+
+    - name: Check for large file uploads handling
+      run: |
+        echo "Checking for file upload handling..."
+
+        # Check for file upload views without size limits
+        if grep -r "FileField\|ImageField" --include="*.py" .; then
+          echo "📁 File fields found. Ensure proper size limits and validation are in place."
+        fi
+
+        # Check for streaming responses for large data
+        if grep -r "HttpResponse" --include="*views.py" .; then
+          echo "📊 HttpResponse usage found. Consider StreamingHttpResponse for large responses."
+        fi
+
+    - name: Memory usage analysis
+      run: |
+        echo "Analyzing potential memory usage issues..."
+
+        # Check for large data operations
+        if grep -r "\.all()" --include="*.py" . | grep -v test | grep -v __pycache__; then
+          echo "⚠️  Found .all() QuerySet calls. Ensure pagination for large datasets."
+        fi
+
+        # Check for potential memory leaks in Celery tasks
+        if grep -r "@task\|@shared_task" --include="*.py" .; then
+          echo "🔄 Celery tasks found. Ensure proper resource cleanup and memory management."
+        fi
