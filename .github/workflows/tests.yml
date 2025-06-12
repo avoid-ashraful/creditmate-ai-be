@@ -9,7 +9,7 @@ on:
 env:
   # Environment variables for testing
   SECRET_KEY: "test-super-long-secret-key-with-many-unique-characters-for-github-actions-12345"
-  DEBUG: "False"
+  DEBUG: "True"
   ALLOWED_HOSTS: "localhost,127.0.0.1"
 
 jobs:
