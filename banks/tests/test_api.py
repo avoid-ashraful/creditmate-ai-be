@@ -43,9 +43,8 @@ class TestBankAPI:
             "bank-credit-cards", kwargs={"pk": self.bank1.id}
         )
 
-    def test_bank_list(self, settings):
+    def test_bank_list(self):
         """Test listing all active banks."""
-        settings.APPEND_SLASH = False
         response = self.client.get(self.bank_list_url)
 
         assert response.status_code == status.HTTP_200_OK
@@ -68,9 +67,8 @@ class TestBankAPI:
         )
         assert active_count == 2
 
-    def test_bank_detail(self, settings):
+    def test_bank_detail(self):
         """Test retrieving a specific bank."""
-        settings.APPEND_SLASH = False
         response = self.client.get(self.bank_detail_url)
 
         assert response.status_code == status.HTTP_200_OK
@@ -78,16 +76,14 @@ class TestBankAPI:
         assert response.data["is_active"] is True
         assert "credit_card_count" in response.data
 
-    def test_bank_not_found(self, settings):
+    def test_bank_not_found(self):
         """Test retrieving a non-existent bank."""
-        settings.APPEND_SLASH = False
         response = self.client.get(self.bank_not_found_url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_bank_search(self, settings):
+    def test_bank_search(self):
         """Test searching banks by name."""
-        settings.APPEND_SLASH = False
         url = reverse_with_qp("bank-list", query_params={"search": self.bank1.name})
         response = self.client.get(url)
 
@@ -98,9 +94,8 @@ class TestBankAPI:
         bank_names = [bank["name"] for bank in response.data["results"]]
         assert self.bank1.name in bank_names
 
-    def test_bank_search_case_insensitive(self, settings):
+    def test_bank_search_case_insensitive(self):
         """Test that search is case insensitive."""
-        settings.APPEND_SLASH = False
         search_term = self.bank1.name.lower()
         url = reverse_with_qp("bank-list", query_params={"search": search_term})
         response = self.client.get(url)

@@ -1,6 +1,8 @@
 import pytest
 from rest_framework.test import APIClient
 
+from django.test import override_settings
+
 
 @pytest.fixture(scope="session", autouse=True)
 def django_db_setup(django_db_setup, django_db_blocker):
@@ -8,6 +10,13 @@ def django_db_setup(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         # Add any initial data loading commands here if needed
         pass
+
+
+@pytest.fixture(autouse=True)
+def disable_append_slash():
+    """Automatically disable APPEND_SLASH for all tests."""
+    with override_settings(APPEND_SLASH=False):
+        yield
 
 
 @pytest.fixture(autouse=True)
