@@ -411,8 +411,8 @@ class BankDataCrawlerService:
                     processing_status="failed",
                     error_message=str(e),
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Error crawling data source {data_source_id}: {str(e)}")
 
             return False
 

@@ -1,4 +1,0 @@
-[bandit]
-exclude_dirs = tests,migrations
-exclude_files = test_*.py
-skips = B101,B601

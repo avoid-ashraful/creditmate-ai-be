@@ -33,24 +33,11 @@ except ImportError:
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes", "on")
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
-if not SECRET_KEY:
-    if DEBUG:
-        # Development fallback - this should not be used in production
-        SECRET_KEY = (
-            "django-insecure-dev-key-only-for-development-do-not-use-in-production"
-        )
-    else:
-        raise ValueError("SECRET_KEY environment variable must be set in production")
-
-ALLOWED_HOSTS = (
-    os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "django-insecure-dev-key-only-for-development-do-not-use-in-production"
 )
 
-# Add testserver for Django testing
-if "testserver" not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append("testserver")
-
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver,localhost,172.0.0.1").split(",")
 
 # Application definition
 
