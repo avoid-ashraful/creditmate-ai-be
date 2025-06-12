@@ -67,6 +67,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "credit_mate_ai.urls"
 
+# Disable automatic slash appending for API consistency
+APPEND_SLASH = False
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
