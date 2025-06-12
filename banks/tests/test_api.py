@@ -1,9 +1,21 @@
+from urllib.parse import urlencode
+
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from django.urls import reverse
+
 from banks.factories import BankFactory
 from credit_cards.factories import CreditCardFactory
+
+
+def reverse_with_qp(url_name, kwargs=None, query_params=None):
+    """Utility function to reverse URL with query parameters."""
+    url = reverse(url_name, kwargs=kwargs)
+    if query_params:
+        url += "?" + urlencode(query_params)
+    return url
 
 
 @pytest.mark.django_db
@@ -23,9 +35,17 @@ class TestBankAPI:
             name=f"Inactive Bank {unique_id}", is_active=False
         )
 
+        # Set up URLs using reverse
+        self.bank_list_url = reverse("bank-list")
+        self.bank_detail_url = reverse("bank-detail", kwargs={"pk": self.bank1.id})
+        self.bank_not_found_url = reverse("bank-detail", kwargs={"pk": 99999})
+        self.bank_credit_cards_url = reverse(
+            "bank-credit-cards", kwargs={"pk": self.bank1.id}
+        )
+
     def test_bank_list(self):
         """Test listing all active banks."""
-        response = self.client.get("/api/v1/banks/")
+        response = self.client.get(self.bank_list_url)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -49,7 +69,7 @@ class TestBankAPI:
 
     def test_bank_detail(self):
         """Test retrieving a specific bank."""
-        response = self.client.get(f"/api/v1/banks/{self.bank1.id}/")
+        response = self.client.get(self.bank_detail_url)
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["name"] == self.bank1.name
@@ -58,13 +78,14 @@ class TestBankAPI:
 
     def test_bank_not_found(self):
         """Test retrieving a non-existent bank."""
-        response = self.client.get("/api/v1/banks/99999/")
+        response = self.client.get(self.bank_not_found_url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_bank_search(self):
         """Test searching banks by name."""
-        response = self.client.get(f"/api/v1/banks/?search={self.bank1.name}")
+        url = reverse_with_qp("bank-list", query_params={"search": self.bank1.name})
+        response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) >= 1
@@ -76,7 +97,8 @@ class TestBankAPI:
     def test_bank_search_case_insensitive(self):
         """Test that search is case insensitive."""
         search_term = self.bank1.name.lower()
-        response = self.client.get(f"/api/v1/banks/?search={search_term}")
+        url = reverse_with_qp("bank-list", query_params={"search": search_term})
+        response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -86,7 +108,8 @@ class TestBankAPI:
 
     def test_bank_filter_by_name(self):
         """Test filtering banks by name."""
-        response = self.client.get(f"/api/v1/banks/?name={self.bank1.name}")
+        url = reverse_with_qp("bank-list", query_params={"name": self.bank1.name})
+        response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -99,7 +122,8 @@ class TestBankAPI:
         # Add credit cards to bank1
         CreditCardFactory.create_batch(2, bank=self.bank1)
 
-        response = self.client.get("/api/v1/banks/?has_credit_cards=true")
+        url = reverse_with_qp("bank-list", query_params={"has_credit_cards": "true"})
+        response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) >= 1
@@ -117,7 +141,8 @@ class TestBankAPI:
         # Add credit cards to bank1 only
         CreditCardFactory.create_batch(2, bank=self.bank1)
 
-        response = self.client.get("/api/v1/banks/?has_credit_cards=false")
+        url = reverse_with_qp("bank-list", query_params={"has_credit_cards": "false"})
+        response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) >= 1
@@ -132,7 +157,8 @@ class TestBankAPI:
 
     def test_bank_ordering_by_name(self):
         """Test ordering banks by name."""
-        response = self.client.get("/api/v1/banks/?ordering=name")
+        url = reverse_with_qp("bank-list", query_params={"ordering": "name"})
+        response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
         results = response.data["results"]
@@ -144,7 +170,8 @@ class TestBankAPI:
 
     def test_bank_ordering_by_name_desc(self):
         """Test ordering banks by name descending."""
-        response = self.client.get("/api/v1/banks/?ordering=-name")
+        url = reverse_with_qp("bank-list", query_params={"ordering": "-name"})
+        response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
         results = response.data["results"]
@@ -163,7 +190,7 @@ class TestBankAPI:
         CreditCardFactory(bank=self.bank1, name="Card 2")
         CreditCardFactory(bank=self.bank1, name="Inactive Card", is_active=False)
 
-        response = self.client.get(f"/api/v1/banks/{self.bank1.id}/credit_cards/")
+        response = self.client.get(self.bank_credit_cards_url)
 
         assert response.status_code == status.HTTP_200_OK
         assert "bank" in response.data
@@ -178,7 +205,7 @@ class TestBankAPI:
 
     def test_bank_serializer_fields(self):
         """Test that all expected fields are present in bank response."""
-        response = self.client.get(f"/api/v1/banks/{self.bank1.id}/")
+        response = self.client.get(self.bank_detail_url)
 
         expected_fields = [
             "id",
@@ -196,7 +223,7 @@ class TestBankAPI:
 
     def test_bank_list_serializer_fields(self):
         """Test that list view returns lighter serializer."""
-        response = self.client.get("/api/v1/banks/")
+        response = self.client.get(self.bank_list_url)
 
         expected_fields = ["id", "name", "logo", "credit_card_count", "is_active"]
 
@@ -209,11 +236,16 @@ class TestBankAPI:
         assert "modified" not in response.data["results"][0]
 
     @pytest.mark.parametrize(
-        "endpoint",
-        ["/api/v1/banks/", "/api/v1/banks/1/", "/api/v1/banks/1/credit_cards/"],
+        "endpoint_name,kwargs",
+        [
+            ("bank-list", None),
+            ("bank-detail", {"pk": 1}),
+            ("bank-credit-cards", {"pk": 1}),
+        ],
     )
-    def test_bank_api_read_only(self, endpoint):
+    def test_bank_api_read_only(self, endpoint_name, kwargs):
         """Test that bank API is read-only."""
+        endpoint = reverse(endpoint_name, kwargs=kwargs)
         for method in ["post", "put", "patch", "delete"]:
             response = getattr(self.client, method)(endpoint, {})
             assert response.status_code in [

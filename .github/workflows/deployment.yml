@@ -97,7 +97,7 @@ jobs:
         echo "Checking database configuration..."
 
         # Test database connectivity
-        python manage.py migrate --dry-run
+        python manage.py makemigrations --dry-run
 
         # Check for database optimization settings
         python -c "
