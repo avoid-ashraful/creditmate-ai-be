@@ -7,8 +7,9 @@ on:
     branches: [ master, main ]
 
 env:
-  SECRET_KEY: "test-secret-key-for-github-actions"
+  SECRET_KEY: "test-super-long-secret-key-with-many-unique-characters-for-github-actions-12345"
   DEBUG: "False"
+  ALLOWED_HOSTS: "localhost,127.0.0.1"
 
 jobs:
   migration-checks:
@@ -21,7 +22,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.12
 
@@ -184,7 +185,7 @@ jobs:
         cat migration-summary.md
 
     - name: Upload migration summary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: migration-summary
         path: migration-summary.md

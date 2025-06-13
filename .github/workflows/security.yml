@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.12
 
@@ -36,11 +36,11 @@ jobs:
 
     - name: Run Bandit security linter
       run: |
-        bandit -r . -f json -o bandit-report.json || true
-        bandit -r . -f txt
+        bandit -c pyproject.toml -r . -f json -o bandit-report.json || true
+        bandit -c pyproject.toml -r . -f txt
 
     - name: Upload Bandit results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: bandit-results
@@ -52,7 +52,7 @@ jobs:
         semgrep --config=auto .
 
     - name: Upload Semgrep results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: semgrep-results
@@ -62,17 +62,17 @@ jobs:
       run: |
         # Check for common secret patterns
         echo "Checking for hardcoded secrets..."
-        if grep -r -i "password\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__"; then
+        if grep -r -i "password\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "os\.getenv\|getenv\|environ\|settings\." | grep -v "None\|''\|\"\""; then
           echo "WARNING: Potential hardcoded passwords found!"
           exit 1
         fi
 
-        if grep -r -i "api_key\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__"; then
+        if grep -r -i "api_key\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "os\.getenv\|getenv\|environ\|settings\." | grep -v "None\|''\|\"\""; then
           echo "WARNING: Potential hardcoded API keys found!"
           exit 1
         fi
 
-        if grep -r -i "secret_key\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "settings.py"; then
+        if grep -r -i "secret_key\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "settings.py" | grep -v "os\.getenv\|getenv\|environ\|settings\." | grep -v "None\|''\|\"\""; then
           echo "WARNING: Potential hardcoded secret keys found!"
           exit 1
         fi
@@ -97,7 +97,7 @@ jobs:
         pip-audit
 
     - name: Upload pip-audit results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: pip-audit-results

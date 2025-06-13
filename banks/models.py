@@ -80,7 +80,7 @@ class CrawledContent(Audit):
     )
     raw_content = models.TextField(blank=True, default="")
     extracted_content = models.TextField(blank=True, default="")
-    parsed_json = models.JSONField(default=dict, blank=True)
+    parsed_json = models.JSONField(default=dict, blank=True, null=True)
     crawl_date = models.DateTimeField(auto_now_add=True)
     processing_status = models.CharField(
         max_length=20,

@@ -149,7 +149,7 @@ class TestCreditCardAPI:
     def test_credit_card_compare_action(self):
         """Test the compare action endpoint."""
         response = self.client.get(
-            f"/api/v1/credit-cards/compare/?ids={self.card1.id}, {self.card2.id}"
+            f"/api/v1/credit-cards/compare/?ids={self.card1.id},{self.card2.id}"
         )
 
         assert response.status_code == status.HTTP_200_OK

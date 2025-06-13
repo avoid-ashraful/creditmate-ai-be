@@ -635,10 +635,10 @@ class TestCrawledContentEdgeCases:
         content1.refresh_from_db()
         assert content1.parsed_json == {}
 
-        # None/null - should default to empty dict
+        # None/null - should remain None
         content2 = CrawledContentFactory(data_source=self.data_source, parsed_json=None)
         content2.refresh_from_db()
-        assert content2.parsed_json == {}
+        assert content2.parsed_json is None
 
     def test_crawled_content_auto_timestamp_accuracy(self):
         """Test crawl_date auto_now_add accuracy and timezone."""

@@ -29,18 +29,15 @@ except ImportError:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.getenv("DEBUG", True)
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv(
-    "SECRET_KEY", "django-insecure-z+tjo7+qi9+9(ho+b*d-#!kikyd_z95iwf8y!*%7!-8oy-*nem"
+    "SECRET_KEY", "django-insecure-dev-key-only-for-development-do-not-use-in-production"
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes", "on")
-
-ALLOWED_HOSTS = (
-    os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
-)
-
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver,localhost,172.0.0.1").split(",")
 
 # Application definition
 
@@ -69,6 +66,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "credit_mate_ai.urls"
+
+# Disable automatic slash appending for API consistency
+APPEND_SLASH = False
 
 TEMPLATES = [
     {
@@ -149,7 +149,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Bank Crawler Configuration
+# OpenAI Configuration for Bank Crawler
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 # Celery Configuration (Redis broker)
@@ -168,7 +168,7 @@ EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "yes", "on")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 # Django REST Framework
 REST_FRAMEWORK = {
@@ -191,13 +191,64 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
-# Celery Configuration
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "UTC"
 
-# OpenAI Configuration
-OPENAI_API_KEY = ""  # Set this in environment variables
+# Security Settings
+# HTTPS/SSL Security
+SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", "False"
+).lower() in ("true", "1", "yes", "on")
+SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+
+# Cookie Security
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+
+# Content Security
+SECURE_CONTENT_TYPE_NOSNIFF = os.getenv(
+    "SECURE_CONTENT_TYPE_NOSNIFF", "True"
+).lower() in ("true", "1", "yes", "on")
+SECURE_BROWSER_XSS_FILTER = os.getenv("SECURE_BROWSER_XSS_FILTER", "True").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
+
+# Production Security Overrides
+if not DEBUG:
+    # Force HTTPS in production
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Secure cookies in production
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Additional security headers
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True

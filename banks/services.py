@@ -34,7 +34,7 @@ except ImportError:
     Image = None
 
 try:
-    from PyPDF2 import PdfReader
+    from pypdf import PdfReader
 except ImportError:
     PdfReader = None
 
@@ -94,7 +94,7 @@ class ContentExtractor:
     def _extract_pdf_content(self, raw_content: bytes) -> str:
         """Extract text content from PDF."""
         if PdfReader is None:
-            logger.warning("PyPDF2 not installed, cannot extract PDF content")
+            logger.warning("pypdf not installed, cannot extract PDF content")
             return ""
 
         try:
@@ -411,8 +411,8 @@ class BankDataCrawlerService:
                     processing_status="failed",
                     error_message=str(e),
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Error crawling data source {data_source_id}: {str(e)}")
 
             return False
 

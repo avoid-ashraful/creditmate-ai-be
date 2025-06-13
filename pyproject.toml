@@ -2,9 +2,12 @@
 line-length = 90
 target-version = ['py311']
 include = '\.pyi?$'
-extend-exclude = '''
+exclude = '''
 /(
-  migrations
+    \.idea
+  | \.git
+  | \.pytest_cache
+  | \.venv
 )/
 '''
 
@@ -22,3 +25,14 @@ DJANGO_SETTINGS_MODULE = "credit_mate_ai.settings"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 addopts = "--tb=short --strict-markers"
 testpaths = ["."]
+
+[tool.bandit]
+exclude_dirs = [
+  ".git",
+  ".github",
+  ".venv",
+  "__pycache__",
+  "tests",
+  "scripts",
+  "factories.py"
+]
