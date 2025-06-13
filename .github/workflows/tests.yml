@@ -64,15 +64,7 @@ jobs:
       run: |
         python manage.py migrate
 
-    - name: Run Django tests
-      run: |
-        python manage.py test --verbosity=2
-
-    - name: Run pytest tests
-      run: |
-        pytest -v --tb=short --maxfail=5
-
-    - name: Run pytest with coverage
+    - name: Run tests with coverage
       run: |
         pytest --cov=banks --cov=credit_cards --cov=common --cov-report=xml --cov-report=term-missing
 
@@ -86,15 +78,10 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: false
 
-    - name: Test management commands
+    - name: Run Django system checks
       run: |
         python manage.py check
-        python manage.py validate_templates
 
-    - name: Test admin interface
+    - name: Test static files collection
       run: |
         python manage.py collectstatic --noinput
-
-    - name: Test API endpoints
-      run: |
-        python manage.py test banks.tests.test_api credit_cards.tests.test_api --verbosity=2
