@@ -407,8 +407,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
   <p>Built with ❤️ by the CreditMate AI Team</p>
   <p>
-    <a href="https://github.com/username/creditmate-ai-be">⭐ Star us on GitHub</a> •
-    <a href="https://twitter.com/creditmate_ai">🐦 Follow on Twitter</a> •
-    <a href="https://creditmate.ai">🌐 Visit our Website</a>
   </p>
 </div>
