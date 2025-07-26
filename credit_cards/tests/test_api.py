@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from banks.factories import BankFactory
-from credit_cards.factories import CreditCardFactory, PremiumCreditCardFactory
+from credit_cards.factories import CreditCardFactory
 
 
 @pytest.mark.django_db
@@ -146,75 +146,50 @@ class TestCreditCardAPI:
         results = response.data["results"]
         assert float(results[0]["annual_fee"]) <= float(results[1]["annual_fee"])
 
-    def test_credit_card_compare_action(self):
-        """Test the compare action endpoint."""
+    def test_credit_card_ids_filter(self):
+        """Test filtering credit cards by multiple IDs."""
         response = self.client.get(
-            f"/api/v1/credit-cards/compare/?ids={self.card1.id},{self.card2.id}"
+            f"/api/v1/credit-cards/?ids={self.card1.id},{self.card2.id}"
         )
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["comparison_count"] == 2
-        assert len(response.data["cards"]) == 2
+        assert len(response.data["results"]) == 2
 
-        card_names = [card["name"] for card in response.data["cards"]]
+        card_names = [card["name"] for card in response.data["results"]]
         assert "Alpha Card" in card_names
         assert "Beta Card" in card_names
 
-    def test_credit_card_compare_action_too_many_cards(self):
-        """Test compare action with too many cards."""
-        cards = CreditCardFactory.create_batch(5)
-        card_ids = ",".join(str(card.id) for card in cards)
-
-        response = self.client.get(f"/api/v1/credit-cards/compare/?ids={card_ids}")
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Maximum 4 credit cards" in response.data["error"]
-
-    def test_credit_card_compare_action_invalid_ids(self):
-        """Test compare action with invalid IDs."""
-        response = self.client.get("/api/v1/credit-cards/compare/?ids=invalid,ids")
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Invalid ID format" in response.data["error"]
-
-    def test_credit_card_compare_action_no_ids(self):
-        """Test compare action without IDs."""
-        response = self.client.get("/api/v1/credit-cards/compare/")
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Please provide credit card IDs" in response.data["error"]
-
-    def test_credit_card_featured_action(self):
-        """Test the featured action endpoint."""
-        # Create some featured cards
-        PremiumCreditCardFactory.create_batch(2, annual_fee=Decimal("1500"))
-
-        response = self.client.get("/api/v1/credit-cards/featured/")
+    def test_credit_card_ids_filter_single_id(self):
+        """Test filtering by single ID."""
+        response = self.client.get(f"/api/v1/credit-cards/?ids={self.card1.id}")
 
         assert response.status_code == status.HTTP_200_OK
-        assert "cards" in response.data
-        assert len(response.data["cards"]) > 0
+        assert len(response.data["results"]) == 1
+        assert response.data["results"][0]["name"] == "Alpha Card"
 
-    def test_credit_card_no_annual_fee_action(self):
-        """Test the no_annual_fee action endpoint."""
-        response = self.client.get("/api/v1/credit-cards/no_annual_fee/")
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["count"] >= 1
-        # Check that all returned cards have no annual fee
-        for card in response.data["cards"]:
-            assert card["annual_fee"] == "0.00"
-
-    def test_credit_card_premium_action(self):
-        """Test the premium action endpoint."""
-        # Create premium cards
-        PremiumCreditCardFactory.create_batch(2)
-
-        response = self.client.get("/api/v1/credit-cards/premium/")
+    def test_credit_card_bank_ids_filter(self):
+        """Test filtering credit cards by multiple bank IDs."""
+        response = self.client.get(
+            f"/api/v1/credit-cards/?bank_ids={self.bank1.id},{self.bank2.id}"
+        )
 
         assert response.status_code == status.HTTP_200_OK
-        assert "cards" in response.data
-        assert response.data["count"] >= 0
+        assert len(response.data["results"]) >= 2
+
+        bank_names = [card["bank_name"] for card in response.data["results"]]
+        assert any("Alpha Bank" in name for name in bank_names)
+        assert any("Beta Bank" in name for name in bank_names)
+
+    def test_credit_card_bank_ids_filter_single_bank(self):
+        """Test filtering by single bank ID."""
+        response = self.client.get(f"/api/v1/credit-cards/?bank_ids={self.bank1.id}")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) >= 1
+
+        # All results should belong to bank1
+        for card in response.data["results"]:
+            assert "Alpha Bank" in card["bank_name"]
 
     def test_credit_card_search_suggestions_action(self):
         """Test the search_suggestions action endpoint."""
@@ -358,10 +333,6 @@ class TestCreditCardAPI:
         [
             "/api/v1/credit-cards/",
             "/api/v1/credit-cards/1/",
-            "/api/v1/credit-cards/compare/",
-            "/api/v1/credit-cards/featured/",
-            "/api/v1/credit-cards/no_annual_fee/",
-            "/api/v1/credit-cards/premium/",
             "/api/v1/credit-cards/search_suggestions/",
         ],
     )

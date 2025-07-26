@@ -288,17 +288,6 @@ class TestBankAPIEdgeCases:
             # Should either ignore invalid field or return error
             assert response.status_code in [200, 400]
 
-    def test_credit_cards_action_with_inactive_bank(self):
-        """Test credit_cards action on inactive banks."""
-        # Create inactive bank with credit cards
-        inactive_bank = BankFactory(is_active=False)
-
-        response = self.client.get(
-            reverse("bank-credit-cards", kwargs={"pk": inactive_bank.pk})
-        )
-        # Should handle gracefully
-        assert response.status_code in [200, 404]
-
     def test_concurrent_api_access_simulation(self):
         """Test API behavior under simulated concurrent requests."""
         bank = BankFactory()
@@ -379,7 +368,6 @@ class TestAPIAuthenticationAndPermissions:
         endpoints = [
             reverse("bank-list"),
             reverse("bank-detail", kwargs={"pk": bank.pk}),
-            reverse("bank-credit-cards", kwargs={"pk": bank.pk}),
         ]
 
         for endpoint in endpoints:

@@ -60,6 +60,12 @@ class CreditCardFilter(django_filters.FilterSet):
     # Waiver policy filters
     has_fee_waiver = django_filters.BooleanFilter(method="filter_has_fee_waiver")
 
+    # IDs filter for filtering multiple credit cards
+    ids = django_filters.BaseInFilter(field_name="id", lookup_expr="in")
+
+    # Bank IDs filter for filtering by multiple banks
+    bank_ids = django_filters.BaseInFilter(field_name="bank", lookup_expr="in")
+
     class Meta:
         model = CreditCard
         fields = {

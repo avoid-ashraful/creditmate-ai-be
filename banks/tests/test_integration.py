@@ -298,17 +298,15 @@ class TestAPIDataConsistency:
         # Create credit cards for bank
         CreditCardFactory.create_batch(3, bank=self.bank)
 
-        # Get bank with credit cards count
-        response = self.client.get(
-            reverse("bank-credit-cards", kwargs={"pk": self.bank.pk})
-        )
+        # Get credit cards for this bank using the credit cards API with bank_ids filter
+        response = self.client.get(f"/api/v1/credit-cards/?bank_ids={self.bank.id}")
         assert response.status_code == 200
 
         data = response.json()
-        assert len(data["credit_cards"]) == 3
+        assert len(data["results"]) == 3
 
         # Verify all cards belong to the bank
-        for card_data in data["credit_cards"]:
+        for card_data in data["results"]:
             assert card_data["bank_name"] == self.bank.name
 
     def test_filtering_consistency_across_apps(self):
@@ -471,16 +469,6 @@ class TestErrorHandlingAndRecovery:
             data = response.json()
             assert "detail" in data or "error" in data
 
-    def test_malformed_data_handling(self):
-        """Test handling of malformed data in various contexts."""
-        # Test API with malformed query parameters
-        response = self.client.get(
-            reverse("creditcard-compare"), {"ids": "not_valid_ids"}
-        )
-
-        # Should handle gracefully
-        assert response.status_code in [400, 422]
-
 
 @pytest.mark.django_db
 class TestSecurityIntegration:
@@ -557,12 +545,12 @@ class TestSecurityIntegration:
         CreditCardFactory(bank=bank1, name=f"Card 1 {int(time.time() * 1000)}")
         card2 = CreditCardFactory(bank=bank2, name=f"Card 2 {int(time.time() * 1000)}")
 
-        # Test that bank-specific endpoints only return relevant data
-        response = self.client.get(reverse("bank-credit-cards", kwargs={"pk": bank1.pk}))
+        # Test that bank-specific filtering only returns relevant data
+        response = self.client.get(f"/api/v1/credit-cards/?bank_ids={bank1.id}")
         assert response.status_code == 200
 
         data = response.json()
         # Should only return cards from bank1
-        for card in data["credit_cards"]:
+        for card in data["results"]:
             assert card["bank_name"] == bank1.name
             assert card["id"] != card2.id
