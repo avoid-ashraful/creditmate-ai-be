@@ -192,4 +192,4 @@ Banks can be managed through the Django admin interface at `/admin/banks/bank/` 
 
 Each bank can have multiple data sources (URLs) for automated credit card data crawling. This is managed through the `BankDataSource` model and is not directly exposed through the public API.
 
-For more comprehensive API usage examples, see [Common API Examples](../common/api_examples.md).
+For more comprehensive API usage examples, see [API Examples](./examples.md).

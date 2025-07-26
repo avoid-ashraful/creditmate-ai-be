@@ -1,8 +1,8 @@
 # 💳 CreditMate AI
 
-[![Tests](https://github.com/username/creditmate-ai-be/workflows/Tests/badge.svg)](https://github.com/username/creditmate-ai-be/actions)
-[![Code Quality](https://github.com/username/creditmate-ai-be/workflows/Code%20Quality/badge.svg)](https://github.com/username/creditmate-ai-be/actions)
-[![codecov](https://codecov.io/gh/username/creditmate-ai-be/branch/master/graph/badge.svg)](https://codecov.io/gh/username/creditmate-ai-be)
+[![Tests](https://github.com/avoid-ashraful/creditmate-ai-be/workflows/Tests/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions)
+[![Code Quality](https://github.com/avoid-ashraful/creditmate-ai-be/workflows/Code%20Quality/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions)
+[![codecov](https://codecov.io/gh/avoid-ashraful/creditmate-ai-be/branch/master/graph/badge.svg)](https://codecov.io/gh/avoid-ashraful/creditmate-ai-be)
 
 > 🚀 **AI-Powered Credit Card Discovery Platform** - Automatically crawl, analyze, and compare credit cards from banks across the web using advanced AI content parsing.
 
@@ -54,6 +54,9 @@ This project is currently in active development phase. Core features are impleme
 - **Git Workflow**: Improved development workflow with better commit practices
 
 ### Performance & Security
+- **Rate Limiting**: API throttling implemented across all endpoints (1000/hour anonymous, 2000/hour authenticated)
+- **CORS Configuration**: Environment-based Cross-Origin Resource Sharing setup
+- **Docker Support**: Complete containerization with development and production configurations
 - **Optimized Queries**: Enhanced database queries for better performance
 - **Security Hardening**: Comprehensive security testing and vulnerability protection
 - **Test Coverage**: Extensive test coverage including edge cases and security scenarios
@@ -70,7 +73,7 @@ This project is currently in active development phase. Core features are impleme
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/username/creditmate-ai-be.git
+   git clone https://github.com/avoid-ashraful/creditmate-ai-be.git
    cd creditmate-ai-be
    ```
 
@@ -139,9 +142,9 @@ This project is currently in active development phase. Core features are impleme
 
 | Resource | Endpoints | Documentation |
 |----------|-----------|---------------|
-| **Banks** | `/api/v1/banks/` | [Banks API Docs](./banks/api_docs.md) |
-| **Credit Cards** | `/api/v1/credit-cards/` | [Credit Cards API Docs](./credit_cards/api_docs.md) |
-| **Usage Examples** | All endpoints | [Common API Examples](./common/api_examples.md) |
+| **Banks** | `/api/v1/banks/` | [Banks API Docs](./docs/api/banks.md) |
+| **Credit Cards** | `/api/v1/credit-cards/` | [Credit Cards API Docs](./docs/api/credit-cards.md) |
+| **Usage Examples** | All endpoints | [API Examples](./docs/api/examples.md) |
 
 ### Key Endpoints
 
@@ -189,9 +192,9 @@ curl "http://localhost:8000/api/v1/credit-cards/?search=travel&bank_ids=1,2,3"
 ```
 
 **📋 For comprehensive examples and detailed documentation, see:**
-- **[Common API Examples](./common/api_examples.md)** - Complete usage guide with integration examples
-- **[Banks API Documentation](./banks/api_docs.md)** - Detailed Banks API reference
-- **[Credit Cards API Documentation](./credit_cards/api_docs.md)** - Complete Credit Cards API guide
+- **[API Examples](./docs/api/examples.md)** - Complete usage guide with integration examples
+- **[Banks API Documentation](./docs/api/banks.md)** - Detailed Banks API reference
+- **[Credit Cards API Documentation](./docs/api/credit-cards.md)** - Complete Credit Cards API guide
 
 ## 🕷️ Web Crawling System
 
@@ -291,8 +294,15 @@ EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your-email@domain.com
 EMAIL_HOST_PASSWORD=your-email-password
 
-# Security
-CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+# CORS Configuration
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://yourdomain.com
+CORS_ALLOW_CREDENTIALS=True
+
+# API Rate Limiting
+THROTTLE_RATE_ANON=1000/hour
+THROTTLE_RATE_USER=2000/hour
+THROTTLE_RATE_BURST=100/min
+
 ```
 
 ### Celery Configuration
@@ -337,15 +347,14 @@ docker-compose exec web python manage.py createsuperuser
 - **Database**: PostgreSQL
 - **Cache/Queue**: Redis
 - **Process Manager**: Supervisor or systemd
-- **Monitoring**: Sentry + Prometheus
-- **Deployment**: Docker + Kubernetes
 
 ## 🛡️ Security Features
 
 - **SQL Injection Protection** - Parameterized queries and ORM usage
 - **XSS Prevention** - Content sanitization and proper escaping
 - **CSRF Protection** - Django's built-in CSRF middleware
-- **Rate Limiting** - API throttling and abuse prevention
+- **CORS Security** - Configurable Cross-Origin Resource Sharing with environment variables
+- **Rate Limiting** - API throttling and abuse prevention (1000/hour anonymous, 2000/hour authenticated)
 - **Input Validation** - Comprehensive data validation
 - **Secure Headers** - Security headers for all responses
 
@@ -379,7 +388,7 @@ python manage.py help
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Implementation Summary](./documents/IMPLEMENTATION_SUMMARY.md) and [Crawler Guide](./documents/CRAWLER_README.md) for technical details.
+We welcome contributions! Please see our [Implementation Summary](./docs/development/implementation-summary.md) and [Crawler Guide](./docs/development/crawler-system.md) for technical details.
 
 ### Development Workflow
 
@@ -399,24 +408,27 @@ We maintain high code quality standards:
 - **Code Formatting**: Black
 - **Linting**: Flake8
 - **Import Sorting**: isort
-- **Type Hints**: MyPy (optional but encouraged)
 - **Test Coverage**: Minimum 90%
 
 ## 📚 Documentation
 
+**📋 [Complete Documentation Index](./docs/README.md)**
+
 ### API Documentation
-- **[Common API Examples](./common/api_examples.md)** - Comprehensive API usage guide with integration examples
-- **[Banks API Reference](./banks/api_docs.md)** - Complete Banks API documentation
-- **[Credit Cards API Reference](./credit_cards/api_docs.md)** - Detailed Credit Cards API guide
+- **[API Examples](./docs/api/examples.md)** - Comprehensive API usage guide with integration examples
+- **[Banks API Reference](./docs/api/banks.md)** - Complete Banks API documentation
+- **[Credit Cards API Reference](./docs/api/credit-cards.md)** - Detailed Credit Cards API guide
 
 ### Configuration & Setup
-- **[Email Configuration Guide](./docs/EMAIL_CONFIGURATION.md)** - Environment-based email setup
-- **[Environment Variables](./.env.example)** - Complete configuration reference
+- **[Environment Variables](./docs/configuration/environment-variables.md)** - Complete configuration reference
+- **[Email Configuration](./docs/configuration/email.md)** - Environment-based email setup
+- **[CORS & Rate Limiting](./docs/configuration/cors-and-rate-limiting.md)** - Security configuration for APIs
 
 ### Development & Architecture
-- **[Crawler System Guide](./documents/CRAWLER_README.md)** - AI-powered web crawling system
-- **[Implementation Details](./documents/IMPLEMENTATION_SUMMARY.md)** - Technical implementation summary
-- **[Project Instructions](./CLAUDE.md)** - Development guidelines and commands
+- **[Setup & Guidelines](./docs/development/setup-and-guidelines.md)** - Development environment and coding standards
+- **[Crawler System](./docs/development/crawler-system.md)** - AI-powered web crawling system
+- **[Implementation Summary](./docs/development/implementation-summary.md)** - Technical implementation details
+- **[Project Guidelines](./CLAUDE.md)** - Claude development instructions
 
 ## 🐛 Troubleshooting
 
@@ -434,16 +446,9 @@ We maintain high code quality standards:
    - Ensure database is running
    - Check connection settings in `.env`
 
-### Getting Help
-
-- 📧 **Email**: support@creditmate.ai
-- 💬 **Issues**: [GitHub Issues](https://github.com/username/creditmate-ai-be/issues)
-- 📖 **Wiki**: [Project Wiki](https://github.com/username/creditmate-ai-be/wiki)
-- 💡 **Discussions**: [GitHub Discussions](https://github.com/username/creditmate-ai-be/discussions)
-
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## 🙏 Acknowledgments
 

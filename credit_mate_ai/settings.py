@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "rest_framework",
     "django_filters",
     "common",
@@ -57,6 +58,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -202,8 +204,57 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": os.getenv("THROTTLE_RATE_ANON", "1000/hour"),
+        "user": os.getenv("THROTTLE_RATE_USER", "2000/hour"),
+        "burst": os.getenv("THROTTLE_RATE_BURST", "100/min"),
+    },
 }
 
+# CORS Configuration
+# Best practice: Use environment variables for CORS settings
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+    ).split(",")
+    if origin.strip()
+]
+
+# Allow credentials for authenticated requests
+CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS", "True").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+
+# CORS headers to allow
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# For development, you can use CORS_ALLOW_ALL_ORIGINS = True
+# But this should NEVER be used in production
+if DEBUG and os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+):
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # Security Settings
 # HTTPS/SSL Security

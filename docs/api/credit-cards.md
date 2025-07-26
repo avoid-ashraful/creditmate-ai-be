@@ -398,4 +398,4 @@ GET /api/v1/credit-cards/?annual_fee=0
 GET /api/v1/credit-cards/?annual_fee__gte=400&has_lounge_access=true
 ```
 
-For comprehensive API usage examples across all endpoints, see [Common API Examples](../common/api_examples.md).
+For comprehensive API usage examples across all endpoints, see [API Examples](./examples.md).

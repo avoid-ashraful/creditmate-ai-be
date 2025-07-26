@@ -21,6 +21,8 @@ python-magic = "~=0.4.27"
 pandas = "~=2.3.0"
 pillow = "*"
 urllib3 = "*"
+django-cors-headers = "~=4.6.0"
+gunicorn = "~=23.0.0"
 
 [dev-packages]
 black = "~=24.10.0"

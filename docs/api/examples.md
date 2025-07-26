@@ -346,6 +346,6 @@ get_cards "search=travel&has_foreign_transaction_fee=false"
 ## Support
 
 For additional API support or questions:
-- Check the individual app documentation: [Banks API](../banks/api_docs.md) | [Credit Cards API](../credit_cards/api_docs.md)
+- Check the individual app documentation: [Banks API](./banks.md) | [Credit Cards API](./credit-cards.md)
 - Review the main project documentation
 - Open an issue on GitHub
