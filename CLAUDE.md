@@ -137,3 +137,7 @@ Required configuration in `.env`:
 - **Integration** - End-to-end workflow testing
 
 Test configuration uses pytest with Django integration, socket blocking for external calls, and comprehensive coverage reporting.
+
+## Git Workflow Instructions
+
+**IMPORTANT**: Do not automatically create git commits unless explicitly requested by the user. Only commit when the user specifically asks for commits to be made.
