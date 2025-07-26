@@ -6,6 +6,14 @@
 
 > 🚀 **AI-Powered Credit Card Discovery Platform** - Automatically crawl, analyze, and compare credit cards from banks across the web using advanced AI content parsing.
 
+## 🚧 Development Status
+
+**Current Phase**: Active Development
+**Version**: 0.1.0-beta
+**Status**: Not yet production-ready
+
+This project is currently in active development phase. Core features are implemented and tested, but the system has not gone live yet. We welcome contributions and feedback from developers interested in financial technology and AI applications.
+
 ## ✨ Features
 
 - 🤖 **AI-Powered Content Extraction** - Uses OpenAI GPT to parse credit card data from PDFs, webpages, images, and CSV files
@@ -15,6 +23,8 @@
 - 🛡️ **Security First** - Built-in protection against SQL injection, XSS, and other vulnerabilities
 - 📱 **API-First Design** - Comprehensive REST API with Django REST Framework
 - ⚡ **High Performance** - Optimized queries, caching, and scalable architecture
+- 🎯 **Advanced Filtering** - Filter by multiple IDs, bank IDs, and comprehensive search parameters
+- ✉️ **Environment-Based Email** - Smart email configuration that disables email in development
 
 ## 🏗️ Architecture
 
@@ -30,6 +40,23 @@
 │   Celery Tasks  │    │   PostgreSQL    │    │   Django Admin  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
+
+## 🆕 Recent Improvements
+
+### API Enhancements
+- **Enhanced Filtering**: Added `ids` and `bank_ids` filters for flexible credit card selection
+- **Streamlined Endpoints**: Removed redundant endpoints in favor of comprehensive filtering
+- **Comprehensive Documentation**: Added detailed API documentation for both Banks and Credit Cards APIs
+
+### Developer Experience
+- **Environment-Based Configuration**: Email service automatically disabled in development/staging
+- **Security Updates**: Updated dependencies to address security vulnerabilities (Pillow 11.3.0, urllib3 2.5.0)
+- **Git Workflow**: Improved development workflow with better commit practices
+
+### Performance & Security
+- **Optimized Queries**: Enhanced database queries for better performance
+- **Security Hardening**: Comprehensive security testing and vulnerability protection
+- **Test Coverage**: Extensive test coverage including edge cases and security scenarios
 
 ## 🚀 Quick Start
 
@@ -68,6 +95,7 @@
    export SECRET_KEY="your-super-secret-key"
    export OPENAI_API_KEY="your-openai-api-key"
    export DEBUG=True
+   export ENVIRONMENT=local  # Email service disabled for development
    ```
 
 4. **Database setup**
@@ -77,9 +105,6 @@
 
    # Create superuser
    python manage.py createsuperuser
-
-   # Load sample data (optional)
-   python manage.py loaddata fixtures/sample_data.json
    ```
 
 5. **Start Redis (required for Celery)**
@@ -106,60 +131,67 @@
 7. **Access the application**
    - API: http://localhost:8000/api/v1/
    - Admin: http://localhost:8000/admin/
-   - API Documentation: http://localhost:8000/api/v1/docs/
+   - API Documentation: See detailed documentation links below
 
 ## 📖 API Documentation
 
-### Banks Endpoints
+### Quick Reference
+
+| Resource | Endpoints | Documentation |
+|----------|-----------|---------------|
+| **Banks** | `/api/v1/banks/` | [Banks API Docs](./banks/api_docs.md) |
+| **Credit Cards** | `/api/v1/credit-cards/` | [Credit Cards API Docs](./credit_cards/api_docs.md) |
+| **Usage Examples** | All endpoints | [Common API Examples](./common/api_examples.md) |
+
+### Key Endpoints
 
 ```http
+# Banks
 GET    /api/v1/banks/                    # List all banks
 GET    /api/v1/banks/{id}/               # Get bank details
-GET    /api/v1/banks/{id}/credit-cards/  # Get bank's credit cards
-```
 
-### Credit Cards Endpoints
-
-```http
+# Credit Cards
 GET    /api/v1/credit-cards/              # List all credit cards
 GET    /api/v1/credit-cards/{id}/         # Get credit card details
-POST   /api/v1/credit-cards/compare/      # Compare multiple cards
-GET    /api/v1/credit-cards/featured/     # Get featured cards
-GET    /api/v1/credit-cards/no-annual-fee/ # Get cards with no annual fee
-GET    /api/v1/credit-cards/premium/      # Get premium cards
 GET    /api/v1/credit-cards/search-suggestions/ # Get search suggestions
 ```
 
-### Query Parameters
+### Essential Query Parameters
 
 ```http
-# Filtering
-?bank=chase&has_lounge_access=true&annual_fee_max=200
+# Filter by specific credit cards (for comparison)
+?ids=1,2,3,4
 
-# Searching
+# Filter by specific banks
+?bank_ids=1,3,5
+
+# Advanced filtering
+?annual_fee=0&has_lounge_access=true&credit_score_required=Good
+
+# Search functionality
 ?search=travel rewards cashback
 
-# Ordering
-?ordering=annual_fee,-interest_rate
-
-# Pagination
-?page=2&page_size=20
+# Sorting and pagination
+?ordering=annual_fee,-interest_rate&page=2&page_size=20
 ```
 
-### Example API Usage
+### Quick Examples
 
 ```bash
-# Get all Chase credit cards with no annual fee
-curl "http://localhost:8000/api/v1/credit-cards/?bank__name=Chase&annual_fee=0"
+# No annual fee cards
+curl "http://localhost:8000/api/v1/credit-cards/?annual_fee=0"
 
-# Compare two credit cards
-curl -X POST "http://localhost:8000/api/v1/credit-cards/compare/" \
-  -H "Content-Type: application/json" \
-  -d '{"card_ids": [1, 2]}'
+# Compare specific cards
+curl "http://localhost:8000/api/v1/credit-cards/?ids=1,2,3,4"
 
-# Search for travel rewards cards
-curl "http://localhost:8000/api/v1/credit-cards/?search=travel+rewards"
+# Travel cards from major banks
+curl "http://localhost:8000/api/v1/credit-cards/?search=travel&bank_ids=1,2,3"
 ```
+
+**📋 For comprehensive examples and detailed documentation, see:**
+- **[Common API Examples](./common/api_examples.md)** - Complete usage guide with integration examples
+- **[Banks API Documentation](./banks/api_docs.md)** - Detailed Banks API reference
+- **[Credit Cards API Documentation](./credit_cards/api_docs.md)** - Complete Credit Cards API guide
 
 ## 🕷️ Web Crawling System
 
@@ -233,6 +265,9 @@ python manage.py test
 ### Environment Variables
 
 ```bash
+# Environment Configuration (local/staging/production)
+ENVIRONMENT=local                      # Email service disabled for non-production
+
 # Core Django Settings
 SECRET_KEY=your-secret-key
 DEBUG=True
@@ -247,6 +282,14 @@ OPENAI_API_KEY=your-openai-api-key
 # Celery & Redis
 CELERY_BROKER_URL=redis://localhost:6379/0
 CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# Email Configuration (Production only)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.your-provider.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@domain.com
+EMAIL_HOST_PASSWORD=your-email-password
 
 # Security
 CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
@@ -324,19 +367,19 @@ celery -A credit_mate_ai inspect active
 ### Maintenance Tasks
 
 ```bash
-# Clean up old crawled content
-python manage.py cleanup_old_content --days 30
+# Crawl bank data manually
+python manage.py crawl_bank_data
 
-# Reset failed data sources
-python manage.py reset_failed_sources
+# Crawl specific bank
+python manage.py crawl_bank_data --bank-id 1
 
-# Generate performance reports
-python manage.py performance_report
+# View available management commands
+python manage.py help
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./documents/CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Implementation Summary](./documents/IMPLEMENTATION_SUMMARY.md) and [Crawler Guide](./documents/CRAWLER_README.md) for technical details.
 
 ### Development Workflow
 
@@ -361,11 +404,19 @@ We maintain high code quality standards:
 
 ## 📚 Documentation
 
-- [API Documentation](./documents/API.md)
-- [Crawler System Guide](./documents/CRAWLER_README.md)
-- [Implementation Details](./documents/IMPLEMENTATION_SUMMARY.md)
-- [Deployment Guide](./documents/DEPLOYMENT.md)
-- [Contributing Guide](./documents/CONTRIBUTING.md)
+### API Documentation
+- **[Common API Examples](./common/api_examples.md)** - Comprehensive API usage guide with integration examples
+- **[Banks API Reference](./banks/api_docs.md)** - Complete Banks API documentation
+- **[Credit Cards API Reference](./credit_cards/api_docs.md)** - Detailed Credit Cards API guide
+
+### Configuration & Setup
+- **[Email Configuration Guide](./docs/EMAIL_CONFIGURATION.md)** - Environment-based email setup
+- **[Environment Variables](./.env.example)** - Complete configuration reference
+
+### Development & Architecture
+- **[Crawler System Guide](./documents/CRAWLER_README.md)** - AI-powered web crawling system
+- **[Implementation Details](./documents/IMPLEMENTATION_SUMMARY.md)** - Technical implementation summary
+- **[Project Instructions](./CLAUDE.md)** - Development guidelines and commands
 
 ## 🐛 Troubleshooting
 
