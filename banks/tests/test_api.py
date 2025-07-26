@@ -39,9 +39,6 @@ class TestBankAPI:
         self.bank_list_url = reverse("bank-list")
         self.bank_detail_url = reverse("bank-detail", kwargs={"pk": self.bank1.id})
         self.bank_not_found_url = reverse("bank-detail", kwargs={"pk": 99999})
-        self.bank_credit_cards_url = reverse(
-            "bank-credit-cards", kwargs={"pk": self.bank1.id}
-        )
 
     def test_bank_list(self):
         """Test listing all active banks."""
@@ -183,26 +180,6 @@ class TestBankAPI:
                 names, reverse=True
             ), "Banks should be ordered by name descending"
 
-    def test_bank_credit_cards_action(self):
-        """Test the credit_cards action endpoint."""
-        # Add credit cards to bank1
-        CreditCardFactory(bank=self.bank1, name="Card 1")
-        CreditCardFactory(bank=self.bank1, name="Card 2")
-        CreditCardFactory(bank=self.bank1, name="Inactive Card", is_active=False)
-
-        response = self.client.get(self.bank_credit_cards_url)
-
-        assert response.status_code == status.HTTP_200_OK
-        assert "bank" in response.data
-        assert "credit_cards" in response.data
-        assert "Alpha Bank" in response.data["bank"]["name"]
-        assert len(response.data["credit_cards"]) == 2  # Only active cards
-
-        card_names = [card["name"] for card in response.data["credit_cards"]]
-        assert "Card 1" in card_names
-        assert "Card 2" in card_names
-        assert "Inactive Card" not in card_names
-
     def test_bank_serializer_fields(self):
         """Test that all expected fields are present in bank response."""
         response = self.client.get(self.bank_detail_url)
@@ -240,7 +217,6 @@ class TestBankAPI:
         [
             ("bank-list", None),
             ("bank-detail", {"pk": 1}),
-            ("bank-credit-cards", {"pk": 1}),
         ],
     )
     def test_bank_api_read_only(self, endpoint_name, kwargs):

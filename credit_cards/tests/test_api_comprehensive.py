@@ -143,87 +143,58 @@ class TestCreditCardAPIEdgeCases:
         self.client = Client()
         self.bank = BankFactory()
 
-    def test_compare_with_duplicate_ids(self):
-        """Test compare action with duplicate card IDs in request."""
+    def test_ids_filter_with_duplicate_ids(self):
+        """Test ids filter with duplicate card IDs in request."""
         card1 = CreditCardFactory(bank=self.bank)
         card2 = CreditCardFactory(bank=self.bank)
 
         # Test with duplicate IDs
         response = self.client.get(
-            reverse("creditcard-compare") + f"?ids={card1.id},{card1.id},{card2.id}"
+            reverse("creditcard-list") + f"?ids={card1.id},{card1.id},{card2.id}"
         )
 
         # Should handle duplicates gracefully
-        assert response.status_code in [200, 400, 404]
+        assert response.status_code == 200
+        data = response.json()
+        # Should deduplicate or handle appropriately
+        assert len(data["results"]) <= 2
 
-        if response.status_code == 200:
-            data = response.json()
-            # Should deduplicate or handle appropriately
-            assert len(data) <= 2
-
-    def test_compare_with_inactive_cards(self):
-        """Test compare action including inactive cards."""
+    def test_ids_filter_with_inactive_cards(self):
+        """Test ids filter including inactive cards."""
         active_card = CreditCardFactory(bank=self.bank, is_active=True)
         inactive_card = CreditCardFactory(bank=self.bank, is_active=False)
 
         response = self.client.get(
-            reverse("creditcard-compare") + f"?ids={active_card.id},{inactive_card.id}"
+            reverse("creditcard-list") + f"?ids={active_card.id},{inactive_card.id}"
         )
 
         # Should handle gracefully (may include or exclude inactive cards)
-        assert response.status_code in [200, 400, 404]
+        assert response.status_code == 200
+        data = response.json()
+        # Since default queryset filters for is_active=True, inactive card should not be included
+        assert len(data["results"]) == 1
+        assert data["results"][0]["id"] == active_card.id
 
-    def test_compare_boundary_conditions(self):
-        """Test compare with exactly 1, 4, and 5 cards."""
+    def test_ids_filter_boundary_conditions(self):
+        """Test ids filter with various numbers of cards."""
         cards = CreditCardFactory.create_batch(5, bank=self.bank)
 
         # Test edge cases
         test_cases = [
             ([cards[0].id], "single card"),
-            ([c.id for c in cards[:4]], "maximum allowed (4 cards)"),
-            ([c.id for c in cards], "exceeding maximum (5 cards)"),
+            ([c.id for c in cards[:4]], "4 cards"),
+            ([c.id for c in cards], "5 cards"),
         ]
 
         for card_ids, description in test_cases:
             response = self.client.get(
-                reverse("creditcard-compare") + f"?ids={','.join(map(str, card_ids))}"
+                reverse("creditcard-list") + f"?ids={','.join(map(str, card_ids))}"
             )
 
             # Should handle all cases appropriately
-            assert response.status_code in [200, 400, 404], f"Failed for {description}"
-
-    def test_featured_cards_algorithm_edge_cases(self):
-        """Test featured cards selection with edge case data."""
-        # Create cards with edge case values
-        CreditCardFactory(bank=self.bank, annual_fee=Decimal("0.00")),  # Free card
-        CreditCardFactory(
-            bank=self.bank, annual_fee=Decimal("99999.99")
-        ),  # Very expensive
-        CreditCardFactory(
-            bank=self.bank, interest_rate_apr=Decimal("0.00")
-        ),  # 0% interest
-        CreditCardFactory(
-            bank=self.bank, interest_rate_apr=Decimal("99.99")
-        ),  # High interest
-
-        response = self.client.get(reverse("creditcard-featured"))
-        assert response.status_code == 200
-
-        data = response.json()
-        assert "cards" in data
-        # Should handle edge cases without errors
-
-    def test_premium_cards_empty_results(self):
-        """Test premium cards action when no cards meet criteria."""
-        # Create only low-fee cards
-        CreditCardFactory.create_batch(3, bank=self.bank, annual_fee=Decimal("0.00"))
-
-        response = self.client.get(reverse("creditcard-premium"))
-        assert response.status_code == 200
-
-        data = response.json()
-        assert "cards" in data
-        # Should handle empty results gracefully
+            assert response.status_code == 200, f"Failed for {description}"
+            data = response.json()
+            assert len(data["results"]) == len(card_ids)
 
     def test_search_suggestions_dynamic_data(self):
         """Test search suggestions with varying data sets."""
