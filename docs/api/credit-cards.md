@@ -24,22 +24,30 @@ The Credit Cards API is the core component of the Credit Mate AI platform, provi
 - `ids` (string): Comma-separated list of credit card IDs (e.g., `1,2,3,4`)
 - `bank_ids` (string): Comma-separated list of bank IDs (e.g., `1,3,5`)
 - `bank` (integer): Filter by specific bank ID
-- `bank__name` (string): Filter by bank name (case-insensitive)
-- `annual_fee` (decimal): Exact annual fee match
-- `annual_fee__lte` (decimal): Annual fee less than or equal to
-- `annual_fee__gte` (decimal): Annual fee greater than or equal to
-- `annual_fee__range` (string): Annual fee range (e.g., `0,200`)
-- `interest_rate__lte` (decimal): Interest rate less than or equal to
-- `interest_rate__gte` (decimal): Interest rate greater than or equal to
-- `credit_score_required` (string): Exact credit score requirement match
-- `credit_score_required__in` (string): Multiple credit score requirements (e.g., `Good,Excellent`)
-- `has_foreign_transaction_fee` (boolean): Filter by foreign transaction fee presence
-- `has_balance_transfer` (boolean): Filter by balance transfer availability
-- `has_lounge_access` (boolean): Filter by airport lounge access
+- `name` (string): Filter by card name (case-insensitive)
+- `bank_name` (string): Filter by bank name (case-insensitive)
+- `annual_fee_min` (decimal): Annual fee greater than or equal to
+- `annual_fee_max` (decimal): Annual fee less than or equal to
+- `annual_fee_range` (string): Annual fee range (e.g., `0,200`)
+- `interest_rate_min` (decimal): Interest rate greater than or equal to
+- `interest_rate_max` (decimal): Interest rate less than or equal to
+- `interest_rate_range` (string): Interest rate range
+- `has_lounge_access` (boolean): Filter by any lounge access
+- `has_international_lounge` (boolean): Filter by international lounge access
+- `has_domestic_lounge` (boolean): Filter by domestic lounge access
+- `min_international_lounge` (integer): Minimum international lounge access count
+- `min_domestic_lounge` (integer): Minimum domestic lounge access count
+- `has_annual_fee` (boolean): Filter by annual fee presence
+- `no_annual_fee` (boolean): Filter by no annual fee
+- `has_additional_features` (boolean): Filter by additional features presence
+- `feature_search` (string): Search in additional features
+- `has_fee_waiver` (boolean): Filter by fee waiver policy presence
+- `is_active` (boolean): Filter by active status
 
 #### Search and Ordering
 - `search` (string): Full-text search across card names, descriptions, and features
 - `ordering` (string): Sort results by field name (prefix with `-` for descending)
+  - Available fields: `name`, `annual_fee`, `interest_rate_apr`, `lounge_access_international`, `lounge_access_domestic`, `created_at`, `updated_at`
 - `page` (integer): Page number for pagination
 - `page_size` (integer): Number of results per page (default: 20, max: 100)
 
@@ -57,21 +65,15 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/"
   "results": [
     {
       "id": 1,
-      "name": "Chase Sapphire Preferred",
-      "bank": {
-        "id": 1,
-        "name": "Chase"
-      },
+      "bank_name": "Chase",
+      "name": "Sapphire Preferred",
       "annual_fee": 95.00,
-      "interest_rate": 21.49,
-      "credit_score_required": "Good",
-      "rewards_program": "Ultimate Rewards",
-      "welcome_bonus": "60,000 points after spending $4,000",
-      "has_foreign_transaction_fee": false,
-      "has_balance_transfer": true,
+      "interest_rate_apr": 21.49,
+      "lounge_access_international": 0,
+      "lounge_access_domestic": 0,
       "has_lounge_access": false,
-      "created": "2024-01-15T10:30:00Z",
-      "updated": "2024-01-20T14:45:00Z"
+      "has_annual_fee": true,
+      "is_active": true
     }
   ]
 }
@@ -95,28 +97,30 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/1/"
 ```json
 {
   "id": 1,
-  "name": "Chase Sapphire Preferred",
   "bank": {
     "id": 1,
-    "name": "Chase"
+    "name": "Chase",
+    "logo": "https://example.com/chase-logo.png",
+    "credit_card_count": 15,
+    "is_active": true
   },
+  "bank_id": 1,
+  "name": "Sapphire Preferred",
   "annual_fee": 95.00,
-  "interest_rate": 21.49,
-  "credit_score_required": "Good",
-  "rewards_program": "Ultimate Rewards",
-  "welcome_bonus": "60,000 points after spending $4,000",
-  "cash_back_rate": 1.25,
-  "travel_insurance": true,
-  "extended_warranty": true,
-  "purchase_protection": true,
-  "has_foreign_transaction_fee": false,
-  "has_balance_transfer": true,
+  "interest_rate_apr": 21.49,
+  "lounge_access_international": 0,
+  "lounge_access_domestic": 0,
+  "cash_advance_fee": "5% of advance amount",
+  "late_payment_fee": "Up to $40",
+  "annual_fee_waiver_policy": null,
+  "reward_points_policy": "2x points on travel and dining, 1x on all other purchases",
+  "additional_features": ["Travel insurance", "Purchase protection"],
+  "is_active": true,
   "has_lounge_access": false,
-  "balance_transfer_fee": 3.0,
-  "cash_advance_fee": 5.0,
-  "late_payment_fee": 40.00,
+  "total_lounge_access": 0,
+  "has_annual_fee": true,
   "created": "2024-01-15T10:30:00Z",
-  "updated": "2024-01-20T14:45:00Z"
+  "modified": "2024-01-20T14:45:00Z"
 }
 ```
 
@@ -124,25 +128,29 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/1/"
 
 **Endpoint:** `GET /api/v1/credit-cards/search-suggestions/`
 
-**Description:** Get search suggestions based on a query prefix for autocomplete functionality.
-
-**Query Parameters:**
-- `q` (string): Query prefix for suggestions
+**Description:** Get search suggestions and filter options for building user interfaces.
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:8000/api/v1/credit-cards/search-suggestions/?q=cash"
+curl -X GET "http://localhost:8000/api/v1/credit-cards/search-suggestions/"
 ```
 
 **Example Response:**
 ```json
 {
-  "suggestions": [
-    "cashback",
-    "cash rewards",
-    "cash back bonus",
-    "cash advance"
-  ]
+  "annual_fee_ranges": [
+    {"label": "Free", "filter": "annual_fee=0"},
+    {"label": "Low (1-1000)", "filter": "annual_fee_min=1&annual_fee_max=1000"},
+    {"label": "Medium (1001-3000)", "filter": "annual_fee_min=1001&annual_fee_max=3000"},
+    {"label": "Premium (3000+)", "filter": "annual_fee_min=3000"}
+  ],
+  "benefits": [
+    {"label": "International Lounge Access", "filter": "has_international_lounge=true"},
+    {"label": "Domestic Lounge Access", "filter": "has_domestic_lounge=true"},
+    {"label": "No Annual Fee", "filter": "no_annual_fee=true"},
+    {"label": "Fee Waiver Available", "filter": "has_fee_waiver=true"}
+  ],
+  "popular_banks": ["Chase", "Bank of America", "Citi", "American Express"]
 }
 ```
 
@@ -165,28 +173,28 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?bank_ids=1,2,3"
 ### No Annual Fee Cards
 
 ```bash
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee=0"
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?no_annual_fee=true"
 ```
 
 ### Travel Cards with Benefits
 
 ```bash
-# Travel cards with no foreign transaction fees and lounge access
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?search=travel&has_foreign_transaction_fee=false&has_lounge_access=true"
+# Travel cards with lounge access
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?search=travel&has_lounge_access=true"
 ```
 
 ### Annual Fee Range
 
 ```bash
 # Cards with annual fee between $0 and $200
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee__gte=0&annual_fee__lte=200"
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee_min=0&annual_fee_max=200"
 ```
 
-### Credit Score Requirements
+### Feature Search
 
 ```bash
-# Cards for good or excellent credit
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?credit_score_required__in=Good,Excellent"
+# Cards with specific features
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?feature_search=travel+insurance"
 ```
 
 ## Search Examples
@@ -260,33 +268,52 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?page=2&page_size=20"
 |-------|------|-------------|
 | `id` | integer | Unique identifier |
 | `name` | string | Credit card name |
-| `bank` | object | Bank information (id, name) |
+| `bank` | object | Bank information (id, name, logo, credit_card_count, is_active) |
+| `bank_id` | integer | Bank ID (write-only) |
 | `annual_fee` | decimal | Annual fee amount |
-| `interest_rate` | decimal | Annual percentage rate (APR) |
-| `credit_score_required` | string | Required credit score level |
-| `rewards_program` | string | Name of rewards program |
-| `welcome_bonus` | string | Welcome bonus description |
-| `cash_back_rate` | decimal | Cash back percentage |
-| `travel_insurance` | boolean | Travel insurance coverage |
-| `extended_warranty` | boolean | Extended warranty protection |
-| `purchase_protection` | boolean | Purchase protection coverage |
-| `has_foreign_transaction_fee` | boolean | Foreign transaction fee presence |
-| `has_balance_transfer` | boolean | Balance transfer availability |
-| `has_lounge_access` | boolean | Airport lounge access |
-| `balance_transfer_fee` | decimal | Balance transfer fee percentage |
-| `cash_advance_fee` | decimal | Cash advance fee percentage |
-| `late_payment_fee` | decimal | Late payment fee amount |
+| `interest_rate_apr` | decimal | Annual percentage rate (APR) |
+| `lounge_access_international` | integer | Number of international lounge access |
+| `lounge_access_domestic` | integer | Number of domestic lounge access |
+| `cash_advance_fee` | string | Cash advance fee description |
+| `late_payment_fee` | string | Late payment fee description |
+| `annual_fee_waiver_policy` | object | Annual fee waiver policy details |
+| `reward_points_policy` | string | Reward points policy description |
+| `additional_features` | array | List of additional features |
+| `is_active` | boolean | Whether the card is active |
+| `has_lounge_access` | boolean | Whether card has any lounge access (computed) |
+| `total_lounge_access` | integer | Total lounge access count (computed) |
+| `has_annual_fee` | boolean | Whether card has annual fee (computed) |
 | `created` | datetime | Record creation timestamp |
-| `updated` | datetime | Last update timestamp |
+| `modified` | datetime | Last update timestamp |
 
-## Credit Score Requirements
+## Filter Examples by Feature
 
-Available values for `credit_score_required`:
-- `Poor` (300-579)
-- `Fair` (580-669)
-- `Good` (670-739)
-- `Very Good` (740-799)
-- `Excellent` (800+)
+### Annual Fee Filters
+```bash
+# No annual fee cards
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?no_annual_fee=true"
+
+# Cards with annual fee
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?has_annual_fee=true"
+
+# Annual fee range
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee_min=100&annual_fee_max=500"
+```
+
+### Lounge Access Filters
+```bash
+# Cards with any lounge access
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?has_lounge_access=true"
+
+# Cards with international lounge access
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?has_international_lounge=true"
+
+# Cards with domestic lounge access
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?has_domestic_lounge=true"
+
+# Minimum lounge access counts
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?min_international_lounge=5"
+```
 
 ## Error Responses
 

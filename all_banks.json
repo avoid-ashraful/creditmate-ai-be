@@ -1,0 +1,834 @@
+[
+  {
+    "model": "banks.bank",
+    "pk": 1,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Sonali Bank Limited",
+      "logo": "https://www.sonalibank.com.bd/images/logo.png",
+      "website": "https://www.sonalibank.com.bd/",
+      "schedule_charge_url": "https://www.sonalibank.com.bd/PDF_file/schedule_of_charges/schedule_of_charges.pdf",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 2,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Janata Bank Limited",
+      "logo": "https://janatabank-bd.com/assets/images/logo.png",
+      "website": "https://janatabank-bd.com/",
+      "schedule_charge_url": "https://janatabank-bd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 3,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Agrani Bank Limited",
+      "logo": "https://www.agranibank.org/images/logo.png",
+      "website": "https://www.agranibank.org/",
+      "schedule_charge_url": "https://www.agranibank.org/index.php/home/schedule",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 4,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Rupali Bank Limited",
+      "logo": "http://www.rupalibank.org/images/logo.png",
+      "website": "http://www.rupalibank.org/",
+      "schedule_charge_url": "http://www.rupalibank.org/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 5,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "BASIC Bank Limited",
+      "logo": "https://www.basicbanklimited.com/images/logo.png",
+      "website": "https://www.basicbanklimited.com/",
+      "schedule_charge_url": "https://www.basicbanklimited.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 6,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Bangladesh Development Bank Limited",
+      "logo": "https://www.bdbl.com.bd/images/logo.png",
+      "website": "https://www.bdbl.com.bd/",
+      "schedule_charge_url": "https://www.bdbl.com.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 7,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Bangladesh Krishi Bank",
+      "logo": "https://www.krishibank.org.bd/images/logo.png",
+      "website": "https://www.krishibank.org.bd/",
+      "schedule_charge_url": "https://www.krishibank.org.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 8,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Rajshahi Krishi Unnayan Bank",
+      "logo": "https://www.rakub.org.bd/images/logo.png",
+      "website": "https://www.rakub.org.bd/",
+      "schedule_charge_url": "https://www.rakub.org.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 9,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "AB Bank PLC",
+      "logo": "https://abbl.com/wp-content/themes/abbank/images/logo.png",
+      "website": "https://abbl.com/",
+      "schedule_charge_url": "https://abbl.com/schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 10,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Bangladesh Commerce Bank Limited",
+      "logo": "https://bcblbd.com/assets/images/logo.png",
+      "website": "https://bcblbd.com/",
+      "schedule_charge_url": "https://bcblbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 11,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Bank Asia PLC",
+      "logo": "http://www.bankasia-bd.com/assets/images/logo.png",
+      "website": "http://www.bankasia-bd.com/",
+      "schedule_charge_url": "https://www.bankasia-bd.com/assets/downloads/fees-charges.pdf",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 12,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Bengal Commercial Bank Limited",
+      "logo": "https://www.bgcb.com.bd/assets/images/logo.png",
+      "website": "https://www.bgcb.com.bd/",
+      "schedule_charge_url": "https://www.bgcb.com.bd/public/assets/BGCB_SOC_Card.pdf",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 13,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "BRAC Bank PLC",
+      "logo": "https://www.bracbank.com/assets/images/logo.png",
+      "website": "https://www.bracbank.com/",
+      "schedule_charge_url": "https://www.bracbank.com/schedule_of_charges/SCHEDULE-OF-CHARGES.PDF",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 14,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "City Bank PLC",
+      "logo": "https://www.citybankplc.com/assets/images/logo.png",
+      "website": "https://www.citybankplc.com/home",
+      "schedule_charge_url": "https://www.citybankplc.com/SoC",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 15,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Community Bank Bangladesh PLC",
+      "logo": "https://www.communitybankbd.com/wp-content/uploads/logo.png",
+      "website": "https://www.communitybankbd.com/",
+      "schedule_charge_url": "https://www.communitybankbd.com/credit-card-shecdule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 16,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Citizens Bank PLC",
+      "logo": "https://www.citizensbankbd.com/assets/images/logo.png",
+      "website": "https://www.citizensbankbd.com/",
+      "schedule_charge_url": "https://www.citizensbankbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 17,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Dhaka Bank PLC",
+      "logo": "https://dhakabankltd.com/wp-content/uploads/logo.png",
+      "website": "https://dhakabankltd.com/",
+      "schedule_charge_url": "https://dhakabankltd.com/wp-content/uploads/2025/01/SCHEDULE-OF-CHARGES-Jan-2025.pdf",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 18,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Dhaka Mercantile Co-Operative Bank Limited",
+      "logo": "https://dmcbl.com/assets/images/logo.png",
+      "website": "https://dmcbl.com/",
+      "schedule_charge_url": "https://dmcbl.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 19,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Dutch-Bangla Bank PLC",
+      "logo": "https://www.dutchbanglabank.com/img/logos/logo-1.png",
+      "website": "https://www.dutchbanglabank.com/",
+      "schedule_charge_url": "https://www.dutchbanglabank.com/schedule_charge/schedule-of-charges.pdf",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 20,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Eastern Bank PLC",
+      "logo": "https://www.ebl.com.bd/assets/images/logo.png",
+      "website": "https://www.ebl.com.bd/",
+      "schedule_charge_url": "https://www.ebl.com.bd/charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 21,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "IFIC Bank PLC",
+      "logo": "https://www.ificbank.com.bd/public/chatbot/ific-logo.png",
+      "website": "https://www.ificbank.com.bd/",
+      "schedule_charge_url": "https://www.ificbank.com.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 22,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Jamuna Bank Limited",
+      "logo": "https://jamunabankbd.com/assets/images/logo.png",
+      "website": "https://jamunabankbd.com/",
+      "schedule_charge_url": "https://jamunabankbd.com/schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 23,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Meghna Bank PLC",
+      "logo": "https://www.meghnabank.com.bd/assets/images/logo.png",
+      "website": "https://www.meghnabank.com.bd/",
+      "schedule_charge_url": "https://www.meghnabank.com.bd/page/schedule-of-charges/retail",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 24,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Mercantile Bank PLC",
+      "logo": "https://mblbd.com/assets/images/logo.png",
+      "website": "https://mblbd.com/",
+      "schedule_charge_url": "https://mblbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 25,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Midland Bank Limited",
+      "logo": "https://www.midlandbankbd.net/assets/images/logo.png",
+      "website": "https://www.midlandbankbd.net/",
+      "schedule_charge_url": "https://www.midlandbankbd.net/schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 26,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Modhumoti Bank Limited",
+      "logo": "https://www.modhumotibankplc.com/assets/images/logo.png",
+      "website": "https://www.modhumotibankplc.com/",
+      "schedule_charge_url": "https://www.modhumotibankplc.com/schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 27,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Mutual Trust Bank PLC",
+      "logo": "https://www.mutualtrustbank.com/assets/images/logo.png",
+      "website": "https://www.mutualtrustbank.com/",
+      "schedule_charge_url": "https://www.mutualtrustbank.com/schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 28,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "National Credit & Commerce Bank PLC",
+      "logo": "https://www.nccbank.com.bd/assets/images/logo.png",
+      "website": "https://www.nccbank.com.bd/",
+      "schedule_charge_url": "https://www.nccbank.com.bd/NccbServices/soc",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 29,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "NRB Bank Limited",
+      "logo": "https://www.nrbbankbd.com/assets/images/logo.png",
+      "website": "https://www.nrbbankbd.com/",
+      "schedule_charge_url": "https://www.nrbbankbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 30,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "NRBC Bank PLC",
+      "logo": "https://www.nrbcommercialbank.com/assets/images/logo.png",
+      "website": "https://www.nrbcommercialbank.com/",
+      "schedule_charge_url": "https://www.nrbcommercialbank.com/assets/form/SOC_28_07_2021.pdf",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 31,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "ONE Bank PLC",
+      "logo": "https://www.onebank.com.bd/assets/images/logo.png",
+      "website": "https://www.onebank.com.bd/",
+      "schedule_charge_url": "https://www.onebank.com.bd/Schedule-of-Charges/Schedule-of-Charges-June2020.pdf",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 32,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Premier Bank PLC",
+      "logo": "https://premierbankltd.com/pbl/assets/images/logo.png",
+      "website": "https://premierbankltd.com/pbl/",
+      "schedule_charge_url": "https://premierbankltd.com/pbl/schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 33,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Prime Bank PLC",
+      "logo": "https://www.primebank.com.bd/assets/images/logo.png",
+      "website": "https://www.primebank.com.bd",
+      "schedule_charge_url": "https://www.primebank.com.bd/sub-schedule-of-charges/Credit-Card-Services",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 34,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Pubali Bank PLC",
+      "logo": "https://www.pubalibangla.com/assets/images/logo.png",
+      "website": "https://www.pubalibangla.com/",
+      "schedule_charge_url": "https://www.pubalibangla.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 35,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Shimanto Bank Limited",
+      "logo": "https://www.shimantobank.com/assets/images/logo.png",
+      "website": "https://www.shimantobank.com/",
+      "schedule_charge_url": "https://www.shimantobank.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 36,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Southeast Bank Limited",
+      "logo": "https://www.southeastbank.com.bd/assets/images/logo.png",
+      "website": "https://www.southeastbank.com.bd/",
+      "schedule_charge_url": "https://www.southeastbank.com.bd/?page=schedule_of_charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 37,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "South Bangla Agriculture and Commerce Bank Limited",
+      "logo": "https://www.sbacbank.com/assets/images/logo.png",
+      "website": "https://www.sbacbank.com/",
+      "schedule_charge_url": "https://www.sbacbank.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 38,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Trust Bank PLC",
+      "logo": "https://www.tblbd.com/assets/images/logo.png",
+      "website": "https://www.tblbd.com/",
+      "schedule_charge_url": "https://www.tblbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 39,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "United Commercial Bank PLC",
+      "logo": "https://www.ucb.com.bd/assets/images/logo.png",
+      "website": "https://www.ucb.com.bd/",
+      "schedule_charge_url": "https://www.ucb.com.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 40,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Uttara Bank PLC",
+      "logo": "https://www.uttarabank-bd.com/assets/images/logo.png",
+      "website": "https://www.uttarabank-bd.com/",
+      "schedule_charge_url": "https://www.uttarabank-bd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 41,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Islami Bank Bangladesh Limited",
+      "logo": "https://www.islamibankbd.com/assets/images/logo.png",
+      "website": "https://www.islamibankbd.com/",
+      "schedule_charge_url": "https://www.islamibankbd.com/utilities/charges.php",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 42,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Al-Arafah Islami Bank PLC",
+      "logo": "https://www.aibl.com.bd/assets/images/logo.png",
+      "website": "https://www.aibl.com.bd/",
+      "schedule_charge_url": "https://www.aibl.com.bd/rates-schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 43,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Social Islami Bank PLC",
+      "logo": "https://www.siblbd.com/assets/images/logo.png",
+      "website": "https://www.siblbd.com/",
+      "schedule_charge_url": "https://www.siblbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 44,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Standard Bank PLC",
+      "logo": "https://www.standardbankbd.com/assets/images/logo.png",
+      "website": "https://www.standardbankbd.com/",
+      "schedule_charge_url": "https://www.standardbankbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 45,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Export Import Bank of Bangladesh Limited",
+      "logo": "https://www.eximbankbd.com/assets/images/logo.png",
+      "website": "https://www.eximbankbd.com/",
+      "schedule_charge_url": "https://www.eximbankbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 46,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "First Security Islami Bank PLC",
+      "logo": "https://fsibplc.com/assets/images/logo.png",
+      "website": "https://fsibplc.com/",
+      "schedule_charge_url": "https://fsibplc.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 47,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Shahjalal Islami Bank PLC",
+      "logo": "https://sjiblbd.com/assets/images/logo.png",
+      "website": "https://sjiblbd.com/",
+      "schedule_charge_url": "https://sjiblbd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 48,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Union Bank PLC",
+      "logo": "https://www.unionbank.com.bd/assets/images/logo.png",
+      "website": "https://www.unionbank.com.bd/",
+      "schedule_charge_url": "https://www.unionbank.com.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 49,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Global Islami Bank PLC",
+      "logo": "https://www.globalislamibankbd.com/assets/images/logo.png",
+      "website": "https://www.globalislamibankbd.com/",
+      "schedule_charge_url": "https://www.globalislamibankbd.com/schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 50,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "ICB Islamic Bank Limited",
+      "logo": "https://www.icbislamic-bd.com/assets/images/logo.png",
+      "website": "https://www.icbislamic-bd.com/",
+      "schedule_charge_url": "https://www.icbislamic-bd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 51,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Bank Al-Falah Limited",
+      "logo": "https://www.bankalfalah.com/bd/assets/images/logo.png",
+      "website": "https://www.bankalfalah.com/bd/",
+      "schedule_charge_url": "https://www.bankalfalah.com/bd/schedule-of-charge/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 52,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Citibank, N.A",
+      "logo": "https://www.citigroup.com/assets/images/logo.png",
+      "website": "https://www.citigroup.com/citi/about/countries-and-jurisdictions/bangladesh.html",
+      "schedule_charge_url": "https://www.citibank.com.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 53,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Commercial Bank of Ceylon PLC",
+      "logo": "https://www.combank.net.bd/assets/images/logo.png",
+      "website": "https://www.combank.net.bd/",
+      "schedule_charge_url": "https://www.combank.net.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 54,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Habib Bank Limited",
+      "logo": "https://www.hbl.com/assets/images/logo.png",
+      "website": "https://www.hbl.com/",
+      "schedule_charge_url": "https://www.hbl.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 55,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "HSBC",
+      "logo": "https://www.hsbc.com.bd/assets/images/logo.png",
+      "website": "https://www.hsbc.com.bd/",
+      "schedule_charge_url": "https://www.hsbc.com.bd/1/2/retail-banking/fees-and-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 56,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "National Bank of Pakistan",
+      "logo": "http://www.nbp-bd.com/assets/images/logo.png",
+      "website": "http://www.nbp-bd.com/",
+      "schedule_charge_url": "http://www.nbp-bd.com/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 57,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Standard Chartered Bank",
+      "logo": "https://www.sc.com/bd/assets/images/logo.png",
+      "website": "https://www.sc.com/bd/",
+      "schedule_charge_url": "https://www.sc.com/bd/forms-centre/schedule-of-charges/",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 58,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "State Bank of India",
+      "logo": "https://bd.statebank/assets/images/logo.png",
+      "website": "https://bd.statebank/",
+      "schedule_charge_url": "https://bd.statebank/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 59,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Woori Bank",
+      "logo": "https://go.wooribank.com/bd/assets/images/logo.png",
+      "website": "https://go.wooribank.com/bd/ib/main/IbMain.do",
+      "schedule_charge_url": "https://go.wooribank.com/bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 60,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Ansar VDP Unnayan Bank",
+      "logo": "https://ansarvdpbank.portal.gov.bd/assets/images/logo.png",
+      "website": "https://ansarvdpbank.portal.gov.bd/",
+      "schedule_charge_url": "https://ansarvdpbank.portal.gov.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 61,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Karmashangosthan Bank",
+      "logo": "https://kb.gov.bd/assets/images/logo.png",
+      "website": "https://kb.gov.bd/",
+      "schedule_charge_url": "https://kb.gov.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 62,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Grameen Bank",
+      "logo": "https://grameenbank.org.bd/assets/images/logo.png",
+      "website": "https://grameenbank.org.bd/",
+      "schedule_charge_url": "https://grameenbank.org.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 63,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Jubilee Bank",
+      "logo": "https://www.jubileebank.com/assets/images/logo.png",
+      "website": "https://www.jubileebank.com/",
+      "schedule_charge_url": "https://www.jubileebank.com/schedule-of-charges",
+      "is_active": false
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 64,
+    "fields": {
+      "created": "2025-07-29T16:57:43.210Z",
+      "modified": "2025-07-29T16:57:43.210Z",
+      "name": "Palli Sanchay Bank",
+      "logo": "https://pallisanchaybank.gov.bd/assets/images/logo.png",
+      "website": "https://pallisanchaybank.gov.bd/",
+      "schedule_charge_url": "https://pallisanchaybank.gov.bd/schedule-of-charges",
+      "is_active": true
+    }
+  }
+]

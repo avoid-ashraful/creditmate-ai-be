@@ -23,6 +23,7 @@ The Banks API provides access to bank information and serves as the foundation f
 - `page` (integer): Page number for pagination
 - `page_size` (integer): Number of results per page (default: 20)
 - `ordering` (string): Sort results by field name (prefix with `-` for descending)
+  - Available fields: `name`, `created_at`, `updated_at`
 
 **Example Request:**
 ```bash
@@ -39,20 +40,16 @@ curl -X GET "http://localhost:8000/api/v1/banks/"
     {
       "id": 1,
       "name": "Chase",
-      "website": "https://chase.com",
-      "established": 1799,
-      "credit_cards_count": 15,
-      "created": "2024-01-15T10:30:00Z",
-      "updated": "2024-01-20T14:45:00Z"
+      "logo": "https://example.com/chase-logo.png",
+      "credit_card_count": 15,
+      "is_active": true
     },
     {
       "id": 2,
       "name": "Bank of America",
-      "website": "https://bankofamerica.com",
-      "established": 1904,
-      "credit_cards_count": 12,
-      "created": "2024-01-15T10:35:00Z",
-      "updated": "2024-01-19T16:20:00Z"
+      "logo": "https://example.com/boa-logo.png",
+      "credit_card_count": 12,
+      "is_active": true
     }
   ]
 }
@@ -77,11 +74,12 @@ curl -X GET "http://localhost:8000/api/v1/banks/1/"
 {
   "id": 1,
   "name": "Chase",
+  "logo": "https://example.com/chase-logo.png",
   "website": "https://chase.com",
-  "established": 1799,
-  "credit_cards_count": 15,
+  "is_active": true,
+  "credit_card_count": 15,
   "created": "2024-01-15T10:30:00Z",
-  "updated": "2024-01-20T14:45:00Z"
+  "modified": "2024-01-20T14:45:00Z"
 }
 ```
 
@@ -102,8 +100,8 @@ curl -X GET "http://localhost:8000/api/v1/banks/?ordering=name"
 # Sort by establishment date (newest first)
 curl -X GET "http://localhost:8000/api/v1/banks/?ordering=-established"
 
-# Sort by credit card count (highest first)
-curl -X GET "http://localhost:8000/api/v1/banks/?ordering=-credit_cards_count"
+# Sort by creation date (newest first)
+curl -X GET "http://localhost:8000/api/v1/banks/?ordering=-created_at"
 ```
 
 ## Response Fields
@@ -112,11 +110,12 @@ curl -X GET "http://localhost:8000/api/v1/banks/?ordering=-credit_cards_count"
 |-------|------|-------------|
 | `id` | integer | Unique identifier for the bank |
 | `name` | string | Official name of the bank |
+| `logo` | string (URL) | Bank's logo URL |
 | `website` | string (URL) | Bank's official website |
-| `established` | integer | Year the bank was established |
-| `credit_cards_count` | integer | Number of credit cards offered by this bank |
+| `is_active` | boolean | Whether the bank is currently active |
+| `credit_card_count` | integer | Number of active credit cards offered by this bank |
 | `created` | datetime | When this bank record was created in our system |
-| `updated` | datetime | When this bank record was last updated |
+| `modified` | datetime | When this bank record was last updated |
 
 ## Error Responses
 
@@ -150,11 +149,11 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?bank__name=Chase"
 
 ## Usage Examples
 
-### Get Major Banks
+### Get Active Banks Only
 
 ```bash
-# Get banks established before 1900 (historical banks)
-curl -X GET "http://localhost:8000/api/v1/banks/?established__lt=1900&ordering=established"
+# Get only active banks
+curl -X GET "http://localhost:8000/api/v1/banks/?is_active=true"
 ```
 
 ### Search for Specific Bank
@@ -164,11 +163,11 @@ curl -X GET "http://localhost:8000/api/v1/banks/?established__lt=1900&ordering=e
 curl -X GET "http://localhost:8000/api/v1/banks/?search=american+express"
 ```
 
-### Banks with Most Credit Cards
+### Recently Added Banks
 
 ```bash
-# Get banks with the most credit card offerings
-curl -X GET "http://localhost:8000/api/v1/banks/?ordering=-credit_cards_count"
+# Get recently added banks (newest first)
+curl -X GET "http://localhost:8000/api/v1/banks/?ordering=-created_at"
 ```
 
 ## Integration Notes

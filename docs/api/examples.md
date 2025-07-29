@@ -218,8 +218,8 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/search-suggestions/?q=cas
 ### Find the Best Travel Cards
 
 ```bash
-# Travel cards with no foreign transaction fees, sorted by annual fee
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?search=travel&has_foreign_transaction_fee=false&ordering=annual_fee"
+# Travel cards with lounge access, sorted by annual fee
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?search=travel&has_lounge_access=true&ordering=annual_fee"
 ```
 
 ### Compare Specific Cards
@@ -232,15 +232,15 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?ids=1,5,10,15"
 ### Cards for Beginners
 
 ```bash
-# No annual fee cards with good credit score requirement
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee=0&credit_score_required__in=Fair,Good"
+# No annual fee cards with additional features
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?no_annual_fee=true&has_additional_features=true"
 ```
 
 ### Premium Rewards Cards
 
 ```bash
-# High-end cards with significant welcome bonuses
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee__gte=200&search=welcome+bonus&ordering=-annual_fee"
+# High-end cards with fee waiver policies
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee_min=200&has_fee_waiver=true&ordering=-annual_fee"
 ```
 
 ## Error Handling
