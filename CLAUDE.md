@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Environment
 
-This is a Django-based AI-powered credit card discovery platform using Python 3.12, pipenv for dependency management, and Celery for background tasks.
+This is a Django-based AI-powered credit card discovery platform using Python 3.12, pipenv for dependency management, PostgreSQL 17 as the database, and Celery for background tasks.
 
 **Required services:**
+- PostgreSQL 17 (primary database)
 - Redis (for Celery task queue)
 - OpenAI API key for AI content parsing
 
@@ -124,6 +125,7 @@ REST endpoints follow `/api/v1/` pattern:
 
 Required configuration in `.env`:
 - `SECRET_KEY` - Django secret key
+- `DATABASE_URL` - PostgreSQL 17 connection string
 - `OPENAI_API_KEY` - For AI content parsing
 - `CELERY_BROKER_URL` - Redis URL for task queue
 - `DEBUG` - Development mode flag

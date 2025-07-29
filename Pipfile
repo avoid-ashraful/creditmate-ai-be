@@ -23,6 +23,9 @@ pillow = "*"
 urllib3 = "*"
 django-cors-headers = "~=4.6.0"
 gunicorn = "~=23.0.0"
+psycopg2-binary = "~=2.9.9"
+dj-database-url = "*"
+python-dotenv = "*"
 
 [dev-packages]
 black = "~=24.10.0"
