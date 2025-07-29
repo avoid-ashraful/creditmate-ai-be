@@ -12,6 +12,12 @@ class Bank(Audit):
     name = models.CharField(max_length=255, unique=True)
     logo = models.URLField(max_length=512, blank=True, validators=[URLValidator()])
     website = models.URLField(max_length=512, blank=True, validators=[URLValidator()])
+    schedule_charge_url = models.URLField(
+        max_length=1024,
+        blank=True,
+        validators=[URLValidator()],
+        help_text="Base URL where schedule of charges/fee documents can be found",
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -36,6 +42,7 @@ class BankDataSource(Audit):
     description = models.CharField(max_length=500, blank=True, default="")
     failed_attempt_count = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    last_verified_at = models.DateTimeField(null=True, blank=True)
     last_crawled_at = models.DateTimeField(null=True, blank=True)
     last_successful_crawl_at = models.DateTimeField(null=True, blank=True)
 
@@ -80,6 +87,11 @@ class CrawledContent(Audit):
     )
     raw_content = models.TextField(blank=True, default="")
     extracted_content = models.TextField(blank=True, default="")
+    content_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text="SHA256 hash of extracted content for change detection",
+    )
     parsed_json = models.JSONField(default=dict, blank=True, null=True)
     crawl_date = models.DateTimeField(auto_now_add=True)
     processing_status = models.CharField(

@@ -26,6 +26,7 @@ psycopg2-binary = "~=2.9.9"
 dj-database-url = "*"
 python-dotenv = "*"
 google-generativeai = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 black = "~=24.10.0"

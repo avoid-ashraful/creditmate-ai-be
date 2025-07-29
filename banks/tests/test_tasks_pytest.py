@@ -115,9 +115,14 @@ class TestCrawlBankDataSourcesByBankTask:
     def setup_method(self):
         """Set up test data before each test method."""
         self.bank = BankFactory()
-        self.data_sources = BankDataSourceFactory.create_batch(3, bank=self.bank)
+        self.data_sources = [
+            BankDataSourceFactory(bank=self.bank, url=f"https://example.com/data{i}")
+            for i in range(3)
+        ]
         # Create one inactive data source
-        BankDataSourceFactory(bank=self.bank, is_active=False)
+        BankDataSourceFactory(
+            bank=self.bank, url="https://example.com/inactive", is_active=False
+        )
 
     def test_crawl_bank_data_sources_by_bank_success(self):
         """Test successful crawling of data sources by bank."""

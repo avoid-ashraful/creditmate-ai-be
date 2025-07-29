@@ -23,7 +23,7 @@ class TestContentExtractor:
         """Set up test data before each test method."""
         self.extractor = ContentExtractor()
 
-    @patch("banks.services.requests.Session.get")
+    @patch("banks.services.content_extractor.requests.Session.get")
     def test_extract_pdf_content(self, mock_get):
         """Test PDF content extraction."""
         # Mock PDF response
@@ -32,7 +32,7 @@ class TestContentExtractor:
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        with patch("banks.services.PdfReader") as mock_pdf_reader:
+        with patch("banks.services.content_extractor.PdfReader") as mock_pdf_reader:
             mock_page = Mock()
             mock_page.extract_text.return_value = "Extracted PDF text"
             mock_pdf_reader.return_value.pages = [mock_page]
@@ -44,7 +44,7 @@ class TestContentExtractor:
             assert extracted_content == "Extracted PDF text"
             mock_pdf_reader.assert_called_once()
 
-    @patch("banks.services.requests.Session.get")
+    @patch("banks.services.content_extractor.requests.Session.get")
     def test_extract_webpage_content(self, mock_get):
         """Test webpage content extraction."""
         html_content = """
@@ -63,7 +63,7 @@ class TestContentExtractor:
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        with patch("banks.services.BeautifulSoup") as mock_bs:
+        with patch("banks.services.content_extractor.BeautifulSoup") as mock_bs:
             mock_soup = Mock()
             mock_soup.get_text.return_value = "Credit Card Information\nAnnual Fee: $95"
             mock_bs.return_value = mock_soup
@@ -74,7 +74,7 @@ class TestContentExtractor:
 
             assert "Credit Card Information" in extracted_content
 
-    @patch("banks.services.requests.Session.get")
+    @patch("banks.services.content_extractor.requests.Session.get")
     def test_extract_csv_content(self, mock_get):
         """Test CSV content extraction."""
         csv_content = (
@@ -93,7 +93,7 @@ class TestContentExtractor:
         assert "Platinum Card" in extracted_content
         assert "95" in extracted_content
 
-    @patch("banks.services.requests.Session.get")
+    @patch("banks.services.content_extractor.requests.Session.get")
     def test_extract_content_failure(self, mock_get):
         """Test content extraction failure handling."""
         mock_get.side_effect = Exception("Network error")
@@ -112,7 +112,7 @@ class TestContentExtractor:
     )
     def test_detect_content_type(self, mime_type, expected_type):
         """Test content type detection."""
-        with patch("banks.services.magic.from_buffer") as mock_magic:
+        with patch("banks.services.content_extractor.magic.from_buffer") as mock_magic:
             mock_magic.return_value = mime_type
             content_type = self.extractor._detect_content_type(b"test content")
             assert content_type == expected_type
@@ -126,72 +126,77 @@ class TestLLMContentParser:
         """Set up test data before each test method."""
         self.parser = LLMContentParser()
 
-    @patch("banks.services.openai.ChatCompletion.create")
-    @patch("banks.services.settings.OPENAI_API_KEY", "test-key")
-    def test_parse_credit_card_data_success(self, mock_openai):
+    @patch("banks.services.llm_parser.genai.GenerativeModel")
+    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
+    def test_parse_credit_card_data_success(self, mock_model_class):
         """Test successful credit card data parsing."""
+        mock_model = Mock()
         mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = json.dumps(
-            [
-                {
-                    "name": "Platinum Card",
-                    "annual_fee": 95,
-                    "interest_rate_apr": 18.99,
-                    "lounge_access_international": 2,
-                    "lounge_access_domestic": 4,
-                    "cash_advance_fee": "3% of amount",
-                    "late_payment_fee": "$35",
-                    "annual_fee_waiver_policy": {"minimum_spend": 12000},
-                    "reward_points_policy": "1 point per $1 spent",
-                    "additional_features": ["Travel Insurance"],
-                }
-            ]
+        mock_response.text = json.dumps(
+            {
+                "credit_cards": [
+                    {
+                        "name": "Platinum Card",
+                        "annual_fee": 95,
+                        "interest_rate_apr": 18.99,
+                        "lounge_access_international": 2,
+                        "lounge_access_domestic": 4,
+                        "cash_advance_fee": "3% of amount",
+                        "late_payment_fee": "$35",
+                        "annual_fee_waiver_policy": {"minimum_spend": 12000},
+                        "reward_points_policy": "1 point per $1 spent",
+                        "additional_features": ["Travel Insurance"],
+                    }
+                ]
+            }
         )
-        mock_openai.return_value = mock_response
+        mock_model.generate_content.return_value = mock_response
+        mock_model_class.return_value = mock_model
 
         content = "Test credit card content"
         result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert result[0]["name"] == "Platinum Card"
-        assert result[0]["annual_fee"] == 95
+        assert isinstance(result, dict)
+        assert "credit_cards" in result
+        assert len(result["credit_cards"]) == 1
+        assert result["credit_cards"][0]["name"] == "Platinum Card"
+        assert result["credit_cards"][0]["annual_fee"] == 95
 
-    @patch("banks.services.openai.ChatCompletion.create")
-    @patch("banks.services.settings.OPENAI_API_KEY", "test-key")
-    def test_parse_credit_card_data_invalid_json(self, mock_openai):
+    @patch("banks.services.llm_parser.genai.GenerativeModel")
+    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
+    def test_parse_credit_card_data_invalid_json(self, mock_model_class):
         """Test handling of invalid JSON response."""
+        mock_model = Mock()
         mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Invalid JSON response"
-        mock_openai.return_value = mock_response
+        mock_response.text = "Invalid JSON response"
+        mock_model.generate_content.return_value = mock_response
+        mock_model_class.return_value = mock_model
 
         content = "Test credit card content"
-        result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert "raw_parsed_content" in result
-        assert result["raw_parsed_content"] == "Invalid JSON response"
+        with pytest.raises(Exception):  # Should raise AIParsingError
+            self.parser.parse_credit_card_data(content, "Test Bank")
 
-    @patch("banks.services.settings.OPENAI_API_KEY", "")
+    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "")
     def test_parse_credit_card_data_no_api_key(self):
-        """Test handling when OpenAI API key is not configured."""
+        """Test handling when Gemini API key is not configured."""
         content = "Test credit card content"
-        result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert result == {}
+        with pytest.raises(Exception):  # Should raise ConfigurationError
+            self.parser.parse_credit_card_data(content, "Test Bank")
 
-    @patch("banks.services.openai.ChatCompletion.create")
-    @patch("banks.services.settings.OPENAI_API_KEY", "test-key")
-    def test_parse_credit_card_data_api_error(self, mock_openai):
-        """Test handling of OpenAI API errors."""
-        mock_openai.side_effect = Exception("API Error")
+    @patch("banks.services.llm_parser.genai.GenerativeModel")
+    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
+    def test_parse_credit_card_data_api_error(self, mock_model_class):
+        """Test handling of Gemini API errors."""
+        mock_model = Mock()
+        mock_model.generate_content.side_effect = Exception("API Error")
+        mock_model_class.return_value = mock_model
 
         content = "Test credit card content"
-        result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert "error" in result
-        assert result["error"] == "API Error"
+        with pytest.raises(Exception):  # Should raise AIParsingError
+            self.parser.parse_credit_card_data(content, "Test Bank")
 
 
 @pytest.mark.django_db
@@ -401,7 +406,7 @@ class TestBankDataCrawlerService:
             self.data_source.refresh_from_db()
             assert self.data_source.failed_attempt_count == 0
 
-    @patch("banks.services.BankDataSource.objects.filter")
+    @patch("banks.models.BankDataSource.objects.filter")
     def test_crawl_all_active_sources(self, mock_filter):
         """Test crawling all active sources."""
         mock_sources = [Mock(id=1), Mock(id=2)]

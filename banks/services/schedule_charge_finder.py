@@ -1,0 +1,310 @@
+"""
+Service for finding schedule of charges/fee document URLs from bank websites.
+"""
+
+import logging
+from typing import Any, Dict, List
+from urllib.parse import urljoin
+
+from django.conf import settings
+
+from ..exceptions import NetworkError
+
+# Optional imports
+try:
+    import requests
+except ImportError:
+    requests = None
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
+
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
+
+logger = logging.getLogger(__name__)
+
+
+class ScheduleChargeURLFinder:
+    """Service for finding schedule of charges/fee document URLs using AI."""
+
+    def __init__(self):
+        """Initialize the URL finder."""
+        if requests is None:
+            raise ImportError("requests library is required but not installed")
+        self.session = requests.Session()
+        self.session.headers.update(
+            {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        )
+
+    def find_schedule_charge_url(self, base_url: str) -> Dict[str, Any]:
+        """
+        Find schedule of charges URL using AI to analyze webpage content.
+
+        Args:
+            base_url (str): Base URL to analyze
+
+        Returns:
+            Dict[str, Any]: Result containing found URL and metadata
+        """
+        try:
+            logger.info(f"Finding schedule charge URL for: {base_url}")
+
+            webpage_content = self._fetch_webpage_content(base_url)
+            analysis_data = self._analyze_webpage_content(webpage_content, base_url)
+            result = self._process_ai_analysis(analysis_data, base_url)
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error finding schedule charge URL: {str(e)}")
+            return {"found": False, "method": "error", "error": str(e)}
+
+    def _fetch_webpage_content(self, url: str) -> Dict[str, Any]:
+        """
+        Fetch and parse webpage content.
+
+        Args:
+            url (str): URL to fetch
+
+        Returns:
+            Dict[str, Any]: Webpage content and metadata
+
+        Raises:
+            NetworkError: If fetching fails
+        """
+        try:
+            response = self.session.get(url, timeout=30)
+            response.raise_for_status()
+
+            if BeautifulSoup is None:
+                logger.warning("BeautifulSoup not installed, cannot analyze webpage")
+                raise NetworkError("BeautifulSoup not available")
+
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            return {
+                "html_text": response.text,
+                "soup": soup,
+                "links": self._extract_links(soup, url),
+                "page_content": soup.get_text(),
+                "contains_charges": self._check_charges_on_page(soup),
+            }
+
+        except requests.exceptions.RequestException as e:
+            raise NetworkError(f"Failed to fetch webpage: {str(e)}") from e
+
+    def _extract_links(self, soup: BeautifulSoup, base_url: str) -> List[Dict[str, str]]:
+        """
+        Extract all relevant links from the webpage.
+
+        Args:
+            soup (BeautifulSoup): Parsed HTML
+            base_url (str): Base URL for resolving relative links
+
+        Returns:
+            List[Dict[str, str]]: List of link information
+        """
+        links = []
+        for link in soup.find_all(["a", "link"], href=True):
+            href = link.get("href")
+            if href:
+                full_url = urljoin(base_url, href)
+                link_text = link.get_text(strip=True) if hasattr(link, "get_text") else ""
+                links.append(
+                    {
+                        "url": full_url,
+                        "text": link_text,
+                        "title": link.get("title", ""),
+                    }
+                )
+        return links
+
+    def _check_charges_on_page(self, soup: BeautifulSoup) -> bool:
+        """
+        Check if charges are displayed directly on the page.
+
+        Args:
+            soup (BeautifulSoup): Parsed HTML
+
+        Returns:
+            bool: True if charges found on page
+        """
+        page_content = soup.get_text().lower()
+        charge_terms = [
+            "schedule of charges",
+            "fee schedule",
+            "credit card fees",
+            "annual fee",
+            "interest rate",
+            "processing fee",
+        ]
+        return any(term in page_content for term in charge_terms)
+
+    def _analyze_webpage_content(
+        self, content_data: Dict[str, Any], base_url: str
+    ) -> Dict[str, Any]:
+        """
+        Analyze webpage content using AI.
+
+        Args:
+            content_data (Dict[str, Any]): Webpage content data
+            base_url (str): Base URL
+
+        Returns:
+            Dict[str, Any]: Analysis results
+        """
+        if not self._is_ai_available():
+            return {
+                "found": False,
+                "method": "ai_analysis",
+                "error": "AI analysis not available",
+            }
+
+        try:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel("gemini-1.5-flash")
+
+            prompt = self._build_url_finding_prompt(
+                base_url, content_data["links"][:50], content_data["contains_charges"]
+            )
+
+            ai_response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.1,
+                    max_output_tokens=1000,
+                ),
+            )
+
+            return {
+                "ai_response": ai_response.text.strip(),
+                "links_analyzed": len(content_data["links"]),
+                "contains_charges": content_data["contains_charges"],
+            }
+
+        except Exception as e:
+            logger.error(f"AI analysis failed: {str(e)}")
+            return {
+                "found": False,
+                "method": "ai_analysis",
+                "error": f"AI analysis failed: {str(e)}",
+            }
+
+    def _process_ai_analysis(
+        self, analysis_data: Dict[str, Any], base_url: str
+    ) -> Dict[str, Any]:
+        """
+        Process AI analysis results.
+
+        Args:
+            analysis_data (Dict[str, Any]): AI analysis results
+            base_url (str): Base URL
+
+        Returns:
+            Dict[str, Any]: Final result
+        """
+        if "ai_response" not in analysis_data:
+            return analysis_data
+
+        response_text = analysis_data["ai_response"]
+
+        # Parse AI response
+        if response_text and response_text.lower() != "none":
+            # Clean up markdown if present
+            if response_text.startswith("```"):
+                response_text = response_text.replace("```", "").strip()
+
+            # Check if AI suggests the current page has the charges
+            if response_text.lower() == "current_page" or response_text == base_url:
+                return {
+                    "found": True,
+                    "url": base_url,
+                    "method": "ai_analysis",
+                    "content_type": "WEBPAGE",
+                    "links_analyzed": analysis_data.get("links_analyzed", 0),
+                    "note": "Charges displayed directly on the webpage",
+                }
+            # Check if AI found a specific URL
+            elif response_text.startswith("http"):
+                # Determine content type based on URL
+                content_type = (
+                    "PDF" if response_text.lower().endswith(".pdf") else "WEBPAGE"
+                )
+                return {
+                    "found": True,
+                    "url": response_text,
+                    "method": "ai_analysis",
+                    "content_type": content_type,
+                    "links_analyzed": analysis_data.get("links_analyzed", 0),
+                }
+
+        return {
+            "found": False,
+            "method": "ai_analysis",
+            "error": "No schedule charge URL found",
+        }
+
+    def _is_ai_available(self) -> bool:
+        """
+        Check if AI analysis is available.
+
+        Returns:
+            bool: True if AI is available
+        """
+        return (
+            genai is not None
+            and hasattr(settings, "GEMINI_API_KEY")
+            and settings.GEMINI_API_KEY
+        )
+
+    def _build_url_finding_prompt(
+        self, base_url: str, links: List[Dict], contains_charges: bool
+    ) -> str:
+        """
+        Build prompt for AI to find schedule charge URL.
+
+        Args:
+            base_url (str): Base URL
+            links (List[Dict]): Available links
+            contains_charges (bool): Whether page contains charge info
+
+        Returns:
+            str: Formatted prompt
+        """
+        links_text = "\n".join(
+            [
+                f"URL: {link['url']}\nText: {link['text']}\nTitle: {link['title']}"
+                for link in links
+                if link["url"] and (link["text"] or link["title"])
+            ]
+        )
+
+        charges_note = ""
+        if contains_charges:
+            charges_note = "\nNOTE: The current page appears to contain fee/charge information directly."
+
+        return f"""
+Analyze the following links from a bank website ({base_url}) and identify where credit card schedule of charges/fee information can be found.
+
+Look for:
+1. Links to PDF documents with terms like: "schedule of charges", "fee schedule", "credit card fees", "tariff guide", "pricing guide"
+2. Links to webpages that might contain fee information
+3. If the current page already displays the charges/fees directly
+
+{charges_note}
+
+Available links:
+{links_text}
+
+Return ONE of the following:
+- If charges are displayed on the current page, return: "current_page"
+- If you find a specific document/page URL, return the complete URL
+- If no suitable link is found, return: "none"
+
+Do not include any explanation, just return the URL, "current_page", or "none".
+"""

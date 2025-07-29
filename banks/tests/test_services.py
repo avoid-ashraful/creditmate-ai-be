@@ -22,7 +22,7 @@ class TestContentExtractor:
     def setup_method(self):
         """Set up test data before each test method."""
         # Mock requests to avoid import errors during testing
-        with patch("banks.services.requests") as mock_requests:
+        with patch("banks.services.content_extractor.requests") as mock_requests:
             mock_session = Mock()
             mock_requests.Session.return_value = mock_session
             self.extractor = ContentExtractor()
@@ -36,7 +36,7 @@ class TestContentExtractor:
         mock_response.raise_for_status.return_value = None
         self.extractor.session.get.return_value = mock_response
 
-        with patch("banks.services.PdfReader") as mock_pdf_reader:
+        with patch("banks.services.content_extractor.PdfReader") as mock_pdf_reader:
             mock_page = Mock()
             mock_page.extract_text.return_value = "Extracted PDF text"
             mock_pdf_reader.return_value.pages = [mock_page]
@@ -66,7 +66,7 @@ class TestContentExtractor:
         mock_response.raise_for_status.return_value = None
         self.extractor.session.get.return_value = mock_response
 
-        with patch("banks.services.BeautifulSoup") as mock_bs:
+        with patch("banks.services.content_extractor.BeautifulSoup") as mock_bs:
             mock_soup = Mock()
             mock_soup.get_text.return_value = "Credit Card Information\nAnnual Fee: $95"
             mock_bs.return_value = mock_soup
@@ -113,7 +113,7 @@ class TestContentExtractor:
     )
     def test_detect_content_type(self, mime_type, expected_type):
         """Test content type detection."""
-        with patch("banks.services.magic") as mock_magic:
+        with patch("banks.services.content_extractor.magic") as mock_magic:
             mock_magic.from_buffer.return_value = mime_type
             content_type = self.extractor._detect_content_type(b"test content")
             assert content_type == expected_type
@@ -127,13 +127,13 @@ class TestLLMContentParser:
         """Set up test data before each test method."""
         self.parser = LLMContentParser()
 
-    @patch("banks.services.openai")
-    @patch("banks.services.settings.OPENAI_API_KEY", "test-key")
-    def test_parse_credit_card_data_success(self, mock_openai):
+    @patch("banks.services.llm_parser.genai")
+    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
+    def test_parse_credit_card_data_success(self, mock_genai):
         """Test successful credit card data parsing."""
+        mock_model = Mock()
         mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = json.dumps(
+        mock_response.text = json.dumps(
             [
                 {
                     "name": "Platinum Card",
@@ -149,7 +149,8 @@ class TestLLMContentParser:
                 }
             ]
         )
-        mock_openai.ChatCompletion.create.return_value = mock_response
+        mock_model.generate_content.return_value = mock_response
+        mock_genai.GenerativeModel.return_value = mock_model
 
         content = "Test credit card content"
         result = self.parser.parse_credit_card_data(content, "Test Bank")
@@ -159,35 +160,34 @@ class TestLLMContentParser:
         assert result[0]["name"] == "Platinum Card"
         assert result[0]["annual_fee"] == 95
 
-    @patch("banks.services.openai")
-    @patch("banks.services.settings.OPENAI_API_KEY", "test-key")
-    def test_parse_credit_card_data_invalid_json(self, mock_openai):
+    @patch("banks.services.llm_parser.genai")
+    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
+    def test_parse_credit_card_data_invalid_json(self, mock_genai):
         """Test handling of invalid JSON response."""
+        mock_model = Mock()
         mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Invalid JSON response"
-        mock_openai.ChatCompletion.create.return_value = mock_response
+        mock_response.text = "Invalid JSON response"
+        mock_model.generate_content.return_value = mock_response
+        mock_genai.GenerativeModel.return_value = mock_model
 
         content = "Test credit card content"
-        result = self.parser.parse_credit_card_data(content, "Test Bank")
+        with pytest.raises(Exception):  # Should raise AIParsingError
+            self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert "raw_parsed_content" in result
-        assert result["raw_parsed_content"] == "Invalid JSON response"
-
-    def test_parse_credit_card_data_no_openai(self):
-        """Test handling when OpenAI is not available."""
-        with patch("banks.services.openai", None):
+    def test_parse_credit_card_data_no_genai(self):
+        """Test handling when Gemini AI is not available."""
+        with patch("banks.services.llm_parser.genai", None):
             parser = LLMContentParser()
             content = "Test credit card content"
-            result = parser.parse_credit_card_data(content, "Test Bank")
-            assert result == {}
+            with pytest.raises(Exception):  # Should raise ConfigurationError
+                parser.parse_credit_card_data(content, "Test Bank")
 
-    @patch("banks.services.settings.OPENAI_API_KEY", "")
+    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "")
     def test_parse_credit_card_data_no_api_key(self):
-        """Test handling when OpenAI API key is not configured."""
+        """Test handling when Gemini API key is not configured."""
         content = "Test credit card content"
-        result = self.parser.parse_credit_card_data(content, "Test Bank")
-        assert result == {}
+        with pytest.raises(Exception):  # Should raise ConfigurationError
+            self.parser.parse_credit_card_data(content, "Test Bank")
 
 
 @pytest.mark.django_db
@@ -271,9 +271,13 @@ class TestBankDataCrawlerService:
         """Set up test data before each test method."""
         # Mock the services to avoid import errors during testing
         with (
-            patch("banks.services.ContentExtractor") as mock_extractor_class,
-            patch("banks.services.LLMContentParser") as mock_parser_class,
-            patch("banks.services.CreditCardDataService") as mock_data_service_class,
+            patch(
+                "banks.services.content_extractor.ContentExtractor"
+            ) as mock_extractor_class,
+            patch("banks.services.llm_parser.LLMContentParser") as mock_parser_class,
+            patch(
+                "banks.services.credit_card_data_service.CreditCardDataService"
+            ) as mock_data_service_class,
         ):
             mock_extractor_class.return_value = Mock()
             mock_parser_class.return_value = Mock()

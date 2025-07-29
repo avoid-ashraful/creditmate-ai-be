@@ -1,4 +1,4 @@
-import random
+import uuid
 
 import factory
 
@@ -13,7 +13,7 @@ from .models import Bank, BankDataSource, CrawledContent
 class BankFactory(factory.django.DjangoModelFactory):
     """Factory for creating Bank instances."""
 
-    name = factory.LazyAttribute(lambda _: f"Bank {random.randint(1, 99999)}")
+    name = factory.LazyAttribute(lambda _: f"Bank {uuid.uuid4().hex[:8]}")
     logo = factory.Faker("image_url", width=200, height=100)
     website = factory.Faker("url")
     is_active = True

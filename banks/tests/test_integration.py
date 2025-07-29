@@ -35,8 +35,8 @@ class TestEndToEndCrawlingWorkflow:
             content_type=ContentType.PDF,
         )
 
-    @patch("banks.services.ContentExtractor.extract_content")
-    @patch("banks.services.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.content_extractor.ContentExtractor.extract_content")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
     def test_full_crawl_cycle_success(self, mock_parse, mock_extract):
         """Test complete successful crawl from trigger to data update."""
         # Mock successful content extraction
@@ -90,8 +90,8 @@ class TestEndToEndCrawlingWorkflow:
         assert credit_card.cash_advance_fee == "Annual fee waived first year"
         assert credit_card.reward_points_policy == "1 point per dollar spent"
 
-    @patch("banks.services.ContentExtractor.extract_content")
-    @patch("banks.services.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.content_extractor.ContentExtractor.extract_content")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
     def test_full_crawl_cycle_with_failures(self, mock_parse, mock_extract):
         """Test crawl workflow with various failure points."""
         # Mock extraction failure
@@ -115,8 +115,8 @@ class TestEndToEndCrawlingWorkflow:
         assert crawled_content.processing_status == ProcessingStatus.FAILED
         assert "Network error" in crawled_content.error_message
 
-    @patch("banks.services.ContentExtractor.extract_content")
-    @patch("banks.services.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.content_extractor.ContentExtractor.extract_content")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
     def test_crawl_with_partial_success(self, mock_parse, mock_extract):
         """Test crawl where extraction succeeds but parsing fails."""
         # Mock successful extraction
@@ -138,7 +138,9 @@ class TestEndToEndCrawlingWorkflow:
         assert crawled_content.processing_status == ProcessingStatus.FAILED
         assert "LLM API error" in crawled_content.error_message
 
-    @patch("banks.services.BankDataCrawlerService.crawl_bank_data_source")
+    @patch(
+        "banks.services.bank_data_crawler.BankDataCrawlerService.crawl_bank_data_source"
+    )
     def test_concurrent_crawl_requests(self, mock_crawl):
         """Test system behavior with concurrent crawl requests."""
         # Mock crawl method to simulate processing time
@@ -158,8 +160,8 @@ class TestEndToEndCrawlingWorkflow:
         assert all(results)
         assert mock_crawl.call_count == 5
 
-    @patch("banks.services.ContentExtractor.extract_content")
-    @patch("banks.services.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.content_extractor.ContentExtractor.extract_content")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
     def test_crawl_with_database_rollback(self, mock_parse, mock_extract):
         """Test proper rollback when crawl partially fails."""
         # Mock successful extraction
@@ -205,7 +207,9 @@ class TestCeleryTaskIntegration:
         self.bank = BankFactory()
         self.data_source = BankDataSourceFactory(bank=self.bank)
 
-    @patch("banks.services.BankDataCrawlerService.crawl_bank_data_source")
+    @patch(
+        "banks.services.bank_data_crawler.BankDataCrawlerService.crawl_bank_data_source"
+    )
     def test_crawl_task_execution(self, mock_crawl):
         """Test Celery task execution."""
         mock_crawl.return_value = True
@@ -218,7 +222,9 @@ class TestCeleryTaskIntegration:
         assert result["data_source_id"] == self.data_source.id
         mock_crawl.assert_called_once_with(self.data_source.id)
 
-    @patch("banks.services.BankDataCrawlerService.crawl_all_active_sources")
+    @patch(
+        "banks.services.bank_data_crawler.BankDataCrawlerService.crawl_all_active_sources"
+    )
     def test_crawl_all_task_execution(self, mock_crawl_all):
         """Test crawl all task execution."""
         mock_crawl_all.return_value = {"total": 5, "successful": 4, "failed": 1}
@@ -233,7 +239,9 @@ class TestCeleryTaskIntegration:
         mock_crawl_all.assert_called_once()
 
     @patch("banks.tasks.crawl_bank_data_source.retry")
-    @patch("banks.services.BankDataCrawlerService.crawl_bank_data_source")
+    @patch(
+        "banks.services.bank_data_crawler.BankDataCrawlerService.crawl_bank_data_source"
+    )
     def test_task_retry_mechanism(self, mock_crawl, mock_retry):
         """Test Celery task retry mechanism."""
         # Mock failure that should trigger retry
@@ -359,8 +367,8 @@ class TestSystemScalabilityAndPerformance:
         cards_data = response.json()
         assert cards_data["count"] == 200
 
-    @patch("banks.services.ContentExtractor.extract_content")
-    @patch("banks.services.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.content_extractor.ContentExtractor.extract_content")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
     def test_crawling_performance_with_many_sources(self, mock_parse, mock_extract):
         """Test crawling performance with many data sources."""
         # Mock successful responses
@@ -435,7 +443,7 @@ class TestErrorHandlingAndRecovery:
         # Should handle gracefully (currently allowed)
         assert card2.id is not None
 
-    @patch("banks.services.ContentExtractor.extract_content")
+    @patch("banks.services.content_extractor.ContentExtractor.extract_content")
     def test_network_error_recovery(self, mock_extract):
         """Test recovery from network errors during crawling."""
         # Mock network error
