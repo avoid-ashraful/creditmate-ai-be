@@ -158,8 +158,8 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# OpenAI Configuration for Bank Crawler
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+# Gemini AI Configuration for Bank Crawler
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Celery Configuration (Redis broker)
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
