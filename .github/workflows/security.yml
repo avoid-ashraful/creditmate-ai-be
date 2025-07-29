@@ -79,7 +79,18 @@ jobs:
 
         echo "No hardcoded secrets detected."
 
+    - name: Set up PostgreSQL for security checks
+      run: |
+        sudo systemctl start postgresql.service
+        sudo -u postgres createuser --createdb --superuser runner
+        createdb security_test
+
     - name: Check Django security settings
+      env:
+        SECRET_KEY: "test-super-long-secret-key-with-many-unique-characters-for-github-actions-12345"
+        DEBUG: "False"
+        ALLOWED_HOSTS: "localhost,127.0.0.1"
+        DATABASE_URL: "postgresql://runner@localhost:5432/security_test"
       run: |
         python -c "
         import os

@@ -11,6 +11,7 @@ env:
   SECRET_KEY: "test-super-long-secret-key-with-many-unique-characters-for-github-actions-12345"
   DEBUG: "True"
   ALLOWED_HOSTS: "localhost,127.0.0.1"
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/creditmate_test"
 
 jobs:
   test:
@@ -21,6 +22,20 @@ jobs:
         python-version: [3.12]
 
     services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: creditmate_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
       redis:
         image: redis:7-alpine
         options: >-
