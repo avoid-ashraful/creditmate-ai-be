@@ -19,9 +19,9 @@ except ImportError:
     magic = None
 
 try:
-    import openai
+    import google.generativeai as genai
 except ImportError:
-    openai = None
+    genai = None
 
 try:
     import pandas as pd
@@ -196,36 +196,43 @@ class LLMContentParser:
     """Service for parsing extracted content using LLM."""
 
     def __init__(self):
-        if openai is not None:
-            openai.api_key = settings.OPENAI_API_KEY
+        if genai is not None and hasattr(settings, "GEMINI_API_KEY"):
+            genai.configure(api_key=settings.GEMINI_API_KEY)
 
     def parse_credit_card_data(self, content: str, bank_name: str) -> Dict[str, Any]:
         """Parse credit card information from extracted content using LLM."""
-        if openai is None:
-            logger.warning("OpenAI library not installed")
+        if genai is None:
+            logger.warning("Google Generative AI library not installed")
             return {}
 
-        if not settings.OPENAI_API_KEY:
-            logger.warning("OpenAI API key not configured")
+        if not hasattr(settings, "GEMINI_API_KEY") or not settings.GEMINI_API_KEY:
+            logger.warning("Gemini API key not configured")
             return {}
 
         try:
+            # Initialize the Gemini model
+            model = genai.GenerativeModel("gemini-1.5-flash")
+
             prompt = self._build_parsing_prompt(content, bank_name)
 
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a financial data extraction expert.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.1,
-                max_tokens=2000,
+            # Generate content using Gemini
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.1,
+                    max_output_tokens=2000,
+                ),
             )
 
-            parsed_content = response.choices[0].message.content
+            parsed_content = response.text
+
+            # Clean up markdown code blocks if present
+            if parsed_content.startswith("```json"):
+                parsed_content = (
+                    parsed_content.replace("```json", "").replace("```", "").strip()
+                )
+            elif parsed_content.startswith("```"):
+                parsed_content = parsed_content.replace("```", "").strip()
 
             # Try to parse as JSON
             try:
