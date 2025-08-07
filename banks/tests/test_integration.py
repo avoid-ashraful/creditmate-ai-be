@@ -72,7 +72,7 @@ class TestEndToEndCrawlingWorkflow:
         assert self.data_source.failed_attempt_count == 0
 
         # Verify crawled content was created
-        crawled_content = self.data_source.crawled_contents.latest("crawl_date")
+        crawled_content = self.data_source.crawled_contents.latest("crawled_at")
         assert crawled_content.processing_status == ProcessingStatus.COMPLETED
         assert (
             crawled_content.extracted_content
@@ -111,7 +111,7 @@ class TestEndToEndCrawlingWorkflow:
         assert self.data_source.last_successful_crawl_at is None
 
         # Verify error was recorded
-        crawled_content = self.data_source.crawled_contents.latest("crawl_date")
+        crawled_content = self.data_source.crawled_contents.latest("crawled_at")
         assert crawled_content.processing_status == ProcessingStatus.FAILED
         assert "Network error" in crawled_content.error_message
 
@@ -133,7 +133,7 @@ class TestEndToEndCrawlingWorkflow:
         assert success is False
 
         # Verify parsing failed (extracted content is not preserved when parsing fails)
-        crawled_content = self.data_source.crawled_contents.latest("crawl_date")
+        crawled_content = self.data_source.crawled_contents.latest("crawled_at")
         # Note: Current implementation doesn't preserve extracted content when parsing fails
         assert crawled_content.processing_status == ProcessingStatus.FAILED
         assert "LLM API error" in crawled_content.error_message
@@ -457,7 +457,7 @@ class TestErrorHandlingAndRecovery:
         assert success is False
 
         # Error should be recorded
-        crawled_content = self.data_source.crawled_contents.latest("crawl_date")
+        crawled_content = self.data_source.crawled_contents.latest("crawled_at")
         assert crawled_content.processing_status == ProcessingStatus.FAILED
         assert "Connection timeout" in crawled_content.error_message
 

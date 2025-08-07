@@ -74,7 +74,15 @@ class ContentExtractor:
         raw_content = self._fetch_content(url)
         extracted_content = self._process_content(raw_content, content_type, url)
 
-        return raw_content.decode("utf-8", errors="ignore"), extracted_content
+        # For binary content types, store a placeholder for raw content to avoid NUL character issues
+        if content_type == ContentType.PDF or content_type == ContentType.IMAGE:
+            raw_content_str = (
+                f"<BINARY_CONTENT_{content_type.upper()}_SIZE_{len(raw_content)}>"
+            )
+        else:
+            raw_content_str = raw_content.decode("utf-8", errors="ignore")
+
+        return raw_content_str, extracted_content
 
     def _fetch_content(self, url: str) -> bytes:
         """
@@ -169,7 +177,7 @@ class ContentExtractor:
 
     def _extract_pdf_content(self, raw_content: bytes) -> str:
         """
-        Extract text content from PDF.
+        Extract text content from PDF, with OCR fallback for image-based PDFs.
 
         Args:
             raw_content (bytes): Raw PDF content
@@ -189,9 +197,69 @@ class ContentExtractor:
             for page in reader.pages:
                 text_content += page.extract_text() + "\n"
 
-            return text_content.strip()
+            text_content = text_content.strip()
+
+            # If extracted text is minimal (likely image-based PDF), try OCR
+            if len(text_content) < 50:  # Threshold for minimal text
+                logger.info("Minimal text extracted from PDF, attempting OCR...")
+                ocr_text = self._extract_pdf_with_ocr(raw_content)
+                if ocr_text and len(ocr_text) > len(text_content):
+                    return ocr_text
+
+            return text_content
         except Exception as e:
             logger.error(f"Error extracting PDF content: {str(e)}")
+            # Try OCR as fallback for corrupted or complex PDFs
+            logger.info("Attempting OCR fallback for PDF...")
+            return self._extract_pdf_with_ocr(raw_content)
+
+    def _extract_pdf_with_ocr(self, raw_content: bytes) -> str:
+        """
+        Extract text from image-based PDF using OCR.
+
+        Args:
+            raw_content (bytes): Raw PDF content
+
+        Returns:
+            str: Text extracted via OCR
+        """
+        try:
+            # Check if required libraries are available
+            try:
+                import fitz  # PyMuPDF
+            except ImportError:
+                logger.warning("PyMuPDF not available, cannot perform PDF OCR")
+                return ""
+
+            try:
+                import pytesseract
+                from PIL import Image
+            except ImportError:
+                logger.warning("pytesseract/PIL not available, cannot perform PDF OCR")
+                return ""
+
+            # Convert PDF pages to images and extract text with OCR
+            doc = fitz.open(stream=raw_content, filetype="pdf")
+            all_text = ""
+
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                # Convert page to image (higher DPI for better OCR)
+                pix = page.get_pixmap(
+                    matrix=fitz.Matrix(2, 2)
+                )  # 2x scaling for better quality
+                img_data = pix.tobytes("png")
+
+                # Perform OCR on the image
+                image = Image.open(BytesIO(img_data))
+                text = pytesseract.image_to_string(image, config="--psm 6")
+                all_text += text + "\n"
+
+            doc.close()
+            return all_text.strip()
+
+        except Exception as e:
+            logger.error(f"Error performing PDF OCR: {str(e)}")
             return ""
 
     def _extract_webpage_content(self, html_content: str) -> str:

@@ -366,7 +366,7 @@ class TestBankDataCrawlerServiceUpdated:
             # Should create a new record indicating no changes
             latest_crawl = (
                 CrawledContent.objects.filter(data_source=self.data_source)
-                .order_by("-crawl_date")
+                .order_by("-crawled_at")
                 .first()
             )
 

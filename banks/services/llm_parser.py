@@ -59,6 +59,43 @@ class LLMContentParser:
                 {"bank_name": bank_name, "error_type": type(e).__name__},
             ) from e
 
+    def parse_comprehensive_data(
+        self, content: str, bank_name: str
+    ) -> tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Parse both structured credit card data and comprehensive raw data.
+
+        Args:
+            content (str): Extracted content to parse
+            bank_name (str): Name of the bank for context
+
+        Returns:
+            tuple: (structured_data, raw_comprehensive_data)
+
+        Raises:
+            ConfigurationError: If Gemini AI is not properly configured
+            AIParsingError: If parsing fails
+        """
+        self._validate_configuration()
+
+        try:
+            # Get structured credit card data
+            structured_data = self.parse_credit_card_data(content, bank_name)
+
+            # Get comprehensive raw data
+            raw_response = self._generate_comprehensive_ai_response(content, bank_name)
+            raw_data = self._parse_json_response(raw_response, bank_name)
+
+            return structured_data, raw_data
+
+        except (ConfigurationError, AIParsingError):
+            raise
+        except Exception as e:
+            raise AIParsingError(
+                "Unexpected error during comprehensive AI parsing",
+                {"bank_name": bank_name, "error_type": type(e).__name__},
+            ) from e
+
     def _configure_genai(self) -> None:
         """Configure Gemini AI if available."""
         if genai is not None and hasattr(settings, "GEMINI_API_KEY"):
@@ -115,6 +152,48 @@ class LLMContentParser:
                 raise
             raise AIParsingError(
                 f"Error generating AI response: {str(e)}", {"bank_name": bank_name}
+            ) from e
+
+    def _generate_comprehensive_ai_response(self, content: str, bank_name: str) -> str:
+        """
+        Generate AI response for comprehensive data extraction.
+
+        Args:
+            content (str): Content to analyze
+            bank_name (str): Bank name for context
+
+        Returns:
+            str: Raw AI response with comprehensive data
+
+        Raises:
+            AIParsingError: If AI generation fails
+        """
+        try:
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            prompt = self._build_comprehensive_parsing_prompt(content, bank_name)
+
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.1,
+                    max_output_tokens=3000,
+                ),
+            )
+
+            if not response or not response.text:
+                raise AIParsingError(
+                    "Empty response from Gemini API for comprehensive parsing",
+                    {"bank_name": bank_name},
+                )
+
+            return response.text.strip()
+
+        except Exception as e:
+            if isinstance(e, AIParsingError):
+                raise
+            raise AIParsingError(
+                f"Error generating comprehensive AI response: {str(e)}",
+                {"bank_name": bank_name},
             ) from e
 
     def _parse_json_response(self, raw_response: str, bank_name: str) -> Any:
@@ -219,4 +298,46 @@ Return the data as a JSON array of credit card objects. If no credit card data i
 
 Content to analyze:
 {content[:4000]}  # Limit content length for API
+"""
+
+    def _build_comprehensive_parsing_prompt(self, content: str, bank_name: str) -> str:
+        """
+        Build the prompt for comprehensive LLM parsing to extract all available data.
+
+        Args:
+            content (str): Content to analyze
+            bank_name (str): Bank name for context
+
+        Returns:
+            str: Formatted comprehensive prompt
+        """
+        return f"""
+Extract ALL available information from the following {bank_name} credit card document.
+Create a comprehensive JSON object with ALL data points found in the document.
+
+INSTRUCTIONS:
+1. For credit card model fields, use these exact field names as keys:
+   - name, annual_fee, interest_rate_apr, lounge_access_international, lounge_access_domestic
+   - cash_advance_fee, late_payment_fee, annual_fee_waiver_policy, reward_points_policy, additional_features
+
+2. For any other data found in the document, use the column header or title as the key
+   - Examples: "CIB" -> "CIB": "BDT 100", "Processing Fee" -> "Processing Fee": "2%"
+   - "Insurance Premium" -> "Insurance Premium": "85%"
+   - "Supplementary Card Fee" -> "Supplementary Card Fee": "BDT 500"
+
+3. Extract data for each credit card type found (World, Platinum, Gold, Classic, etc.)
+
+4. Include ALL charges, fees, benefits, and policies mentioned
+   - Transaction fees, foreign exchange fees, over limit charges
+   - Reward ratios, cashback percentages
+   - Eligibility criteria, income requirements
+   - Interest rates, penalty rates
+   - Any limits, caps, or conditions
+
+5. Return as JSON array where each object represents a credit card with ALL extracted fields
+
+IMPORTANT: Do not skip any data - include everything you can find, even if it seems minor.
+
+Content to analyze:
+{content[:6000]}  # Increased limit for comprehensive extraction
 """

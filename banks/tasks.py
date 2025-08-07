@@ -182,7 +182,7 @@ def cleanup_old_crawled_content(days_to_keep: int = 30) -> Dict[str, Any]:
 
         cutoff_date = timezone.now() - timedelta(days=days_to_keep)
 
-        old_records = CrawledContent.objects.filter(crawl_date__lt=cutoff_date)
+        old_records = CrawledContent.objects.filter(crawled_at__lt=cutoff_date)
 
         deleted_count = old_records.count()
         old_records.delete()
@@ -646,7 +646,7 @@ def _check_system_health(results):
     total_sources = BankDataSource.objects.filter(is_active=True).count()
     total_cards = CreditCard.objects.filter(is_active=True).count()
     recent_crawls = CrawledContent.objects.filter(
-        crawl_date__gte=timezone.now() - timedelta(days=7)
+        crawled_at__gte=timezone.now() - timedelta(days=7)
     ).count()
 
     results["checks"]["system_health"] = {

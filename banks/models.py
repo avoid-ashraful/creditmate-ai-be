@@ -93,7 +93,13 @@ class CrawledContent(Audit):
         help_text="SHA256 hash of extracted content for change detection",
     )
     parsed_json = models.JSONField(default=dict, blank=True, null=True)
-    crawl_date = models.DateTimeField(auto_now_add=True)
+    parsed_json_raw = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        help_text="Raw extracted data with all fields including non-standard ones",
+    )
+    crawled_at = models.DateTimeField(auto_now_add=True)
     processing_status = models.CharField(
         max_length=20,
         choices=ProcessingStatus.choices,
@@ -102,8 +108,8 @@ class CrawledContent(Audit):
     error_message = models.TextField(blank=True, default="")
 
     class Meta:
-        ordering = ["-crawl_date"]
+        ordering = ["-crawled_at"]
         db_table = "banks_crawledcontent"
 
     def __str__(self):
-        return f"{self.data_source.bank.name} - {self.crawl_date}"
+        return f"{self.data_source.bank.name} - {self.crawled_at}"

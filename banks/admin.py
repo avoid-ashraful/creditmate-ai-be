@@ -136,12 +136,12 @@ class CrawledContentAdmin(admin.ModelAdmin):
         "data_source",
         "credit_card",
         "processing_status",
-        "crawl_date",
+        "crawled_at",
         "content_preview",
     ]
     list_filter = [
         "processing_status",
-        "crawl_date",
+        "crawled_at",
         "data_source__bank",
         "data_source__content_type",
     ]
@@ -151,8 +151,8 @@ class CrawledContentAdmin(admin.ModelAdmin):
         "extracted_content",
         "error_message",
     ]
-    readonly_fields = ["created", "modified", "crawl_date", "content_preview"]
-    ordering = ["-crawl_date"]
+    readonly_fields = ["created", "modified", "crawled_at", "content_preview"]
+    ordering = ["-crawled_at"]
 
     fieldsets = (
         (None, {"fields": ("data_source", "credit_card", "processing_status")}),
@@ -164,6 +164,7 @@ class CrawledContentAdmin(admin.ModelAdmin):
                     "raw_content",
                     "extracted_content",
                     "parsed_json",
+                    "parsed_json_raw",
                 )
             },
         ),
@@ -177,7 +178,7 @@ class CrawledContentAdmin(admin.ModelAdmin):
         (
             "Metadata",
             {
-                "fields": ("crawl_date", "created", "modified"),
+                "fields": ("crawled_at", "created", "modified"),
                 "classes": ("collapse",),
             },
         ),

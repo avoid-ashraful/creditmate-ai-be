@@ -168,7 +168,7 @@ class BankDataCrawlerService:
             CrawledContent.objects.filter(
                 data_source=data_source, processing_status="completed"
             )
-            .order_by("-crawl_date")
+            .order_by("-crawled_at")
             .first()
         )
 
@@ -227,21 +227,29 @@ class BankDataCrawlerService:
         )
 
         # Parse content with AI
-        parsed_data = self._parse_content_safely(data_source, extracted_content)
-        if not parsed_data:
+        parsing_result = self._parse_content_safely(data_source, extracted_content)
+        if not parsing_result:
             return False
 
-        # Store crawled content
+        # Unpack the tuple (structured_data, raw_comprehensive_data)
+        structured_data, raw_comprehensive_data = parsing_result
+
+        # Store crawled content with both parsed data types
         crawled_content = self._create_crawl_record(
-            data_source, raw_content, extracted_content, content_hash, parsed_data
+            data_source,
+            raw_content,
+            extracted_content,
+            content_hash,
+            structured_data,
+            raw_comprehensive_data,
         )
 
         # Update database
-        return self._update_database_safely(data_source, parsed_data, crawled_content)
+        return self._update_database_safely(data_source, structured_data, crawled_content)
 
     def _parse_content_safely(
         self, data_source: BankDataSource, content: str
-    ) -> Dict[str, Any]:
+    ) -> tuple[Dict[str, Any], Dict[str, Any]] | None:
         """
         Safely parse content with AI, handling errors.
 
@@ -250,10 +258,12 @@ class BankDataCrawlerService:
             content (str): Content to parse
 
         Returns:
-            Dict[str, Any]: Parsed data or None on failure
+            tuple[Dict[str, Any], Dict[str, Any]] | None: Tuple of (structured_data, raw_data) or None on failure
         """
         try:
-            return self.llm_parser.parse_credit_card_data(content, data_source.bank.name)
+            return self.llm_parser.parse_comprehensive_data(
+                content, data_source.bank.name
+            )
         except (ConfigurationError, AIParsingError) as e:
             logger.error(f"AI parsing failed for {data_source.bank.name}: {e.message}")
 
@@ -270,16 +280,18 @@ class BankDataCrawlerService:
         extracted_content: str,
         content_hash: str,
         parsed_data: Dict[str, Any],
+        raw_comprehensive_data: Dict[str, Any],
     ) -> CrawledContent:
         """
-        Create a crawled content record.
+        Create a crawled content record with both structured and raw comprehensive data.
 
         Args:
             data_source (BankDataSource): Data source
             raw_content (str): Raw content
             extracted_content (str): Extracted content
             content_hash (str): Content hash
-            parsed_data (Dict[str, Any]): Parsed data
+            parsed_data (Dict[str, Any]): Structured parsed data
+            raw_comprehensive_data (Dict[str, Any]): Raw comprehensive parsed data
 
         Returns:
             CrawledContent: Created record
@@ -290,6 +302,7 @@ class BankDataCrawlerService:
             extracted_content=extracted_content,
             content_hash=content_hash,
             parsed_json=parsed_data,
+            parsed_json_raw=raw_comprehensive_data,
             processing_status="processing",
         )
 
