@@ -402,7 +402,9 @@ class TestBankDataCrawlerServiceUpdated:
             patch.object(
                 self.service.content_extractor, "extract_content"
             ) as mock_extract,
-            patch.object(self.service.llm_parser, "parse_credit_card_data") as mock_parse,
+            patch.object(
+                self.service.llm_parser, "parse_comprehensive_data"
+            ) as mock_parse,
         ):
             mock_extract.return_value = ("raw content", "extracted content")
             mock_parse.side_effect = AIParsingError(
@@ -423,7 +425,9 @@ class TestBankDataCrawlerServiceUpdated:
             patch.object(
                 self.service.content_extractor, "extract_content"
             ) as mock_extract,
-            patch.object(self.service.llm_parser, "parse_credit_card_data") as mock_parse,
+            patch.object(
+                self.service.llm_parser, "parse_comprehensive_data"
+            ) as mock_parse,
         ):
             mock_extract.return_value = ("raw content", "extracted content")
             mock_parse.side_effect = ConfigurationError("Missing API key")
@@ -447,13 +451,20 @@ class TestBankDataCrawlerServiceUpdated:
             patch.object(
                 self.service.content_extractor, "extract_content"
             ) as mock_extract,
-            patch.object(self.service.llm_parser, "parse_credit_card_data") as mock_parse,
+            patch.object(
+                self.service.llm_parser, "parse_comprehensive_data"
+            ) as mock_parse,
             patch.object(
                 self.service.data_service, "update_credit_card_data"
             ) as mock_update,
         ):
             mock_extract.return_value = ("raw content", "extracted content")
-            mock_parse.return_value = parsed_data_with_errors
+            mock_parse.return_value = (
+                parsed_data_with_errors,  # structured data with validation errors
+                [
+                    {"name": "Test Card", "annual_fee": 95, "Processing Fee": "2%"}
+                ],  # raw comprehensive data
+            )
             mock_update.return_value = 1
 
             result = self.service.crawl_bank_data_source(self.data_source.id)
@@ -470,13 +481,20 @@ class TestBankDataCrawlerServiceUpdated:
             patch.object(
                 self.service.content_extractor, "extract_content"
             ) as mock_extract,
-            patch.object(self.service.llm_parser, "parse_credit_card_data") as mock_parse,
+            patch.object(
+                self.service.llm_parser, "parse_comprehensive_data"
+            ) as mock_parse,
             patch.object(
                 self.service.data_service, "update_credit_card_data"
             ) as mock_update,
         ):
             mock_extract.return_value = ("raw content", "extracted content")
-            mock_parse.return_value = [{"name": "Test Card", "annual_fee": 95}]
+            mock_parse.return_value = (
+                [{"name": "Test Card", "annual_fee": 95}],  # structured data
+                [
+                    {"name": "Test Card", "annual_fee": 95, "Processing Fee": "2%"}
+                ],  # raw comprehensive data
+            )
             mock_update.side_effect = Exception("Database error")
 
             result = self.service.crawl_bank_data_source(self.data_source.id)
@@ -499,13 +517,20 @@ class TestBankDataCrawlerServiceUpdated:
             patch.object(
                 self.service.content_extractor, "extract_content"
             ) as mock_extract,
-            patch.object(self.service.llm_parser, "parse_credit_card_data") as mock_parse,
+            patch.object(
+                self.service.llm_parser, "parse_comprehensive_data"
+            ) as mock_parse,
             patch.object(
                 self.service.data_service, "update_credit_card_data"
             ) as mock_update,
         ):
             mock_extract.return_value = ("raw content", "new extracted content")
-            mock_parse.return_value = [{"name": "Test Card", "annual_fee": 95}]
+            mock_parse.return_value = (
+                [{"name": "Test Card", "annual_fee": 95}],  # structured data
+                [
+                    {"name": "Test Card", "annual_fee": 95, "Processing Fee": "2%"}
+                ],  # raw comprehensive data
+            )
             mock_update.return_value = 1
 
             result = self.service.crawl_bank_data_source(self.data_source.id)

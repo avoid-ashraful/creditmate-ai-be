@@ -36,7 +36,7 @@ class TestEndToEndCrawlingWorkflow:
         )
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_full_crawl_cycle_success(self, mock_parse, mock_extract):
         """Test complete successful crawl from trigger to data update."""
         # Mock successful content extraction
@@ -46,8 +46,8 @@ class TestEndToEndCrawlingWorkflow:
         )
 
         # Mock successful LLM parsing
-        mock_parse.return_value = {
-            "credit_cards": [
+        mock_parse.return_value = (
+            [  # structured data
                 {
                     "name": "Premium Card",
                     "annual_fee": "95.00",
@@ -55,8 +55,19 @@ class TestEndToEndCrawlingWorkflow:
                     "cash_advance_fee": "Annual fee waived first year",
                     "reward_points_policy": "1 point per dollar spent",
                 }
-            ]
-        }
+            ],
+            [  # raw comprehensive data
+                {
+                    "name": "Premium Card",
+                    "annual_fee": "95.00",
+                    "interest_rate_apr": "15.99",
+                    "cash_advance_fee": "Annual fee waived first year",
+                    "reward_points_policy": "1 point per dollar spent",
+                    "Processing Fee": "2%",
+                    "Foreign Exchange Fee": "3%",
+                }
+            ],
+        )
 
         # Execute the crawl
         crawler = BankDataCrawlerService()
@@ -91,7 +102,7 @@ class TestEndToEndCrawlingWorkflow:
         assert credit_card.reward_points_policy == "1 point per dollar spent"
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_full_crawl_cycle_with_failures(self, mock_parse, mock_extract):
         """Test crawl workflow with various failure points."""
         # Mock extraction failure
@@ -116,7 +127,7 @@ class TestEndToEndCrawlingWorkflow:
         assert "Network error" in crawled_content.error_message
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_crawl_with_partial_success(self, mock_parse, mock_extract):
         """Test crawl where extraction succeeds but parsing fails."""
         # Mock successful extraction
@@ -161,22 +172,29 @@ class TestEndToEndCrawlingWorkflow:
         assert mock_crawl.call_count == 5
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_crawl_with_database_rollback(self, mock_parse, mock_extract):
         """Test proper rollback when crawl partially fails."""
         # Mock successful extraction
         mock_extract.return_value = ("Raw content", "Content")
 
         # Mock parsing that returns invalid data
-        mock_parse.return_value = {
-            "credit_cards": [
+        mock_parse.return_value = (
+            [  # structured data
                 {
                     "name": "",  # Invalid empty name
                     "annual_fee": "invalid_decimal",
                     "interest_rate_apr": "not_a_number",
                 }
-            ]
-        }
+            ],
+            [  # raw comprehensive data
+                {
+                    "name": "",
+                    "annual_fee": "invalid_decimal",
+                    "interest_rate_apr": "not_a_number",
+                }
+            ],
+        )
 
         # Execute the crawl
         crawler = BankDataCrawlerService()
@@ -368,14 +386,17 @@ class TestSystemScalabilityAndPerformance:
         assert cards_data["count"] == 200
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_crawling_performance_with_many_sources(self, mock_parse, mock_extract):
         """Test crawling performance with many data sources."""
         # Mock successful responses
         mock_extract.return_value = ("Raw content", "Sample content")
-        mock_parse.return_value = {
-            "credit_cards": [{"name": "Test Card", "annual_fee": "95.00"}]
-        }
+        mock_parse.return_value = (
+            [{"name": "Test Card", "annual_fee": "95.00"}],  # structured data
+            [
+                {"name": "Test Card", "annual_fee": "95.00", "Processing Fee": "2%"}
+            ],  # raw data
+        )
 
         # Create many data sources
         banks = BankFactory.create_batch(10)
