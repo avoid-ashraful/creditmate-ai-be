@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 90
-extend-ignore = E203,E501,W503,E231,E221
+extend-ignore = E203,E501,W503,E231,E221,E201,E202
 exclude =
     migrations,
     __pycache__,

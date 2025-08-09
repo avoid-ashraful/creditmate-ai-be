@@ -100,6 +100,11 @@ class CrawledContent(Audit):
         help_text="Raw extracted data with all fields including non-standard ones",
     )
     crawled_at = models.DateTimeField(auto_now_add=True)
+    sync_timestamps = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of timestamps when this content was re-crawled and found unchanged",
+    )
     processing_status = models.CharField(
         max_length=20,
         choices=ProcessingStatus.choices,

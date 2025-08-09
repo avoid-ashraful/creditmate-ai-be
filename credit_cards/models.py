@@ -18,8 +18,8 @@ class CreditCard(Audit):
         decimal_places=2,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
-    lounge_access_international = models.PositiveIntegerField(default=0)
-    lounge_access_domestic = models.PositiveIntegerField(default=0)
+    lounge_access_international = models.CharField(max_length=255, blank=True, default="")
+    lounge_access_domestic = models.CharField(max_length=255, blank=True, default="")
     cash_advance_fee = models.CharField(max_length=255, blank=True, default="")
     late_payment_fee = models.CharField(max_length=255, blank=True, default="")
     annual_fee_waiver_policy = models.JSONField(blank=True, null=True)
@@ -38,12 +38,19 @@ class CreditCard(Audit):
     @property
     def has_lounge_access(self):
         """Check if card has any lounge access."""
-        return self.lounge_access_international > 0 or self.lounge_access_domestic > 0
+        return bool(self.lounge_access_international.strip()) or bool(
+            self.lounge_access_domestic.strip()
+        )
 
     @property
-    def total_lounge_access(self):
-        """Return total lounge access count."""
-        return self.lounge_access_international + self.lounge_access_domestic
+    def lounge_access_summary(self):
+        """Return summary of lounge access benefits."""
+        access_list = []
+        if self.lounge_access_international.strip():
+            access_list.append(f"International: {self.lounge_access_international}")
+        if self.lounge_access_domestic.strip():
+            access_list.append(f"Domestic: {self.lounge_access_domestic}")
+        return "; ".join(access_list) if access_list else "No lounge access"
 
     @property
     def has_annual_fee(self):

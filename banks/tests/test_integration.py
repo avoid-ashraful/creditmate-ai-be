@@ -208,7 +208,7 @@ class TestEndToEndCrawlingWorkflow:
         assert cards.count() == 1
 
         card = cards.first()
-        assert card.name == ""  # Empty name was preserved
+        assert "Credit Card (Annual Fee:" in card.name  # Fallback name was created
         assert card.annual_fee == 0.0  # Invalid decimal was converted to 0
         assert card.interest_rate_apr == 0.0  # Invalid decimal was converted to 0
 

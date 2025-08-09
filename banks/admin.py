@@ -21,22 +21,6 @@ class BankAdmin(admin.ModelAdmin):
     readonly_fields = ["created", "modified", "credit_card_count", "data_source_count"]
     ordering = ["name"]
 
-    fieldsets = (
-        (None, {"fields": ("name", "logo", "website", "is_active")}),
-        (
-            "Metadata",
-            {
-                "fields": (
-                    "credit_card_count",
-                    "data_source_count",
-                    "created",
-                    "modified",
-                ),
-                "classes": ("collapse",),
-            },
-        ),
-    )
-
     def data_source_count(self, obj):
         """Return the number of data sources for this bank."""
         return obj.data_sources.count()
@@ -67,28 +51,6 @@ class BankDataSourceAdmin(admin.ModelAdmin):
     search_fields = ["bank__name", "url", "description"]
     readonly_fields = ["created", "modified", "is_failing"]
     ordering = ["bank__name", "url"]
-
-    fieldsets = (
-        (None, {"fields": ("bank", "url", "content_type", "description", "is_active")}),
-        (
-            "Crawling Status",
-            {
-                "fields": (
-                    "failed_attempt_count",
-                    "is_failing",
-                    "last_crawled_at",
-                    "last_successful_crawl_at",
-                )
-            },
-        ),
-        (
-            "Metadata",
-            {
-                "fields": ("created", "modified"),
-                "classes": ("collapse",),
-            },
-        ),
-    )
 
     def url_display(self, obj):
         """Display truncated URL with link."""
@@ -154,36 +116,6 @@ class CrawledContentAdmin(admin.ModelAdmin):
     readonly_fields = ["created", "modified", "crawled_at", "content_preview"]
     ordering = ["-crawled_at"]
 
-    fieldsets = (
-        (None, {"fields": ("data_source", "credit_card", "processing_status")}),
-        (
-            "Content",
-            {
-                "fields": (
-                    "content_preview",
-                    "raw_content",
-                    "extracted_content",
-                    "parsed_json",
-                    "parsed_json_raw",
-                )
-            },
-        ),
-        (
-            "Error Information",
-            {
-                "fields": ("error_message",),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Metadata",
-            {
-                "fields": ("crawled_at", "created", "modified"),
-                "classes": ("collapse",),
-            },
-        ),
-    )
-
     def content_preview(self, obj):
         """Display preview of extracted content."""
         content = obj.extracted_content
@@ -192,7 +124,3 @@ class CrawledContentAdmin(admin.ModelAdmin):
         return content
 
     content_preview.short_description = "Content Preview"
-
-    def has_add_permission(self, request):
-        """Prevent manual addition of crawled content."""
-        return False

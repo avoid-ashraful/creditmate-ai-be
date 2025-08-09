@@ -183,25 +183,45 @@ class BankDataCrawlerService:
 
     def _record_no_changes(self, data_source: BankDataSource, content_hash: str) -> None:
         """
-        Record a successful crawl with no content changes.
+        Record a successful crawl with no content changes by updating sync timestamps.
 
         Args:
             data_source (BankDataSource): Data source
             content_hash (str): Content hash
         """
         # Update successful crawl timestamp
-        data_source.last_successful_crawl_at = timezone.now()
+        current_time = timezone.now()
+        data_source.last_successful_crawl_at = current_time
         data_source.save(update_fields=["last_successful_crawl_at"])
 
-        # Create record to track this check
-        CrawledContent.objects.create(
-            data_source=data_source,
-            raw_content="",  # Don't store duplicate content
-            extracted_content="",
-            content_hash=content_hash,
-            parsed_json={"skipped": "no_changes_detected"},
-            processing_status="completed",
+        # Find the latest completed crawl record with matching hash
+        latest_crawl = (
+            CrawledContent.objects.filter(
+                data_source=data_source,
+                content_hash=content_hash,
+                processing_status="completed",
+            )
+            .order_by("-crawled_at")
+            .first()
         )
+
+        if latest_crawl:
+            # Append current timestamp to sync_timestamps list
+            sync_timestamps = latest_crawl.sync_timestamps or []
+            sync_timestamps.append(current_time.isoformat())
+            latest_crawl.sync_timestamps = sync_timestamps
+            latest_crawl.save(update_fields=["sync_timestamps"])
+        else:
+            # Fallback: create new record if no existing one found (shouldn't happen)
+            CrawledContent.objects.create(
+                data_source=data_source,
+                raw_content="",
+                extracted_content="",
+                content_hash=content_hash,
+                parsed_json={"info": "no_existing_record_found"},
+                processing_status="completed",
+                sync_timestamps=[current_time.isoformat()],
+            )
 
     def _process_changed_content(
         self,

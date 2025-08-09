@@ -51,11 +51,13 @@ class TestCreditCardModelEdgeCases:
         """Test maximum integer values for lounge access fields."""
         # Test reasonable high values
         card = CreditCardFactory(
-            bank=self.bank, lounge_access_domestic=999, lounge_access_international=999
+            bank=self.bank,
+            lounge_access_domestic="999 visits",
+            lounge_access_international="999 visits",
         )
         card.full_clean()  # Should not raise
-        assert card.lounge_access_domestic == 999
-        assert card.lounge_access_international == 999
+        assert card.lounge_access_domestic == "999 visits"
+        assert card.lounge_access_international == "999 visits"
 
     def test_credit_card_interest_rate_boundary_values(self):
         """Test interest_rate_apr at 0%, 100%, and near boundaries."""

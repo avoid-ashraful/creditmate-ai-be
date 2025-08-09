@@ -160,15 +160,14 @@ class CreditCardDataValidator:
             )
             errors.extend(rate_errors)
 
-        # Lounge access validation
+        # Lounge access string validation
         lounge_fields = ["lounge_access_international", "lounge_access_domestic"]
         for field in lounge_fields:
             value = card_data.get(field)
-            if value is not None:
-                lounge_errors = CreditCardDataValidator._validate_lounge_access(
-                    value, field, prefix
-                )
-                errors.extend(lounge_errors)
+            if value is not None and not isinstance(value, str) and value != "":
+                errors.append(f"{prefix}Invalid {field} format: {value}")
+            elif isinstance(value, str) and len(value) > 255:
+                errors.append(f"{prefix}{field} is too long (max 255 characters)")
 
         return errors
 
@@ -189,7 +188,7 @@ class CreditCardDataValidator:
             fee_value = float(annual_fee)
             if fee_value < 0:
                 errors.append(f"{prefix}Annual fee cannot be negative")
-            elif fee_value > 10000:  # Reasonable upper limit
+            elif fee_value > 100000:  # Reasonable upper limit
                 errors.append(f"{prefix}Annual fee seems unusually high: ${fee_value}")
         except (ValueError, TypeError):
             errors.append(f"{prefix}Invalid annual fee format: {annual_fee}")
@@ -221,30 +220,6 @@ class CreditCardDataValidator:
         return errors
 
     @staticmethod
-    def _validate_lounge_access(value: Any, field: str, prefix: str) -> List[str]:
-        """
-        Validate lounge access value.
-
-        Args:
-            value (Any): Access value to validate
-            field (str): Field name
-            prefix (str): Error message prefix
-
-        Returns:
-            List[str]: Validation errors
-        """
-        errors = []
-        try:
-            access_value = int(value)
-            if access_value < 0:
-                errors.append(f"{prefix}{field} cannot be negative")
-            elif access_value > 50:  # Reasonable upper limit
-                errors.append(f"{prefix}{field} seems unusually high: {access_value}")
-        except (ValueError, TypeError):
-            errors.append(f"{prefix}Invalid {field} format: {value}")
-        return errors
-
-    @staticmethod
     def _validate_json_fields(card_data: Dict[str, Any], prefix: str) -> List[str]:
         """
         Validate JSON fields.
@@ -258,15 +233,20 @@ class CreditCardDataValidator:
         """
         errors = []
 
-        # Additional features should be a list
+        # Additional features should be a list (but accept null)
         additional_features = card_data.get("additional_features")
         if additional_features is not None and not isinstance(additional_features, list):
-            errors.append(f"{prefix}additional_features should be a list")
+            # Allow conversion of non-list to list
+            logger.warning(
+                f"{prefix}additional_features is not a list, will be converted during sanitization"
+            )
 
-        # Annual fee waiver policy should be a dict
+        # Annual fee waiver policy should be a dict or string or null
         waiver_policy = card_data.get("annual_fee_waiver_policy")
-        if waiver_policy is not None and not isinstance(waiver_policy, dict):
-            errors.append(f"{prefix}annual_fee_waiver_policy should be a dictionary")
+        if waiver_policy is not None and not isinstance(waiver_policy, (dict, str)):
+            errors.append(
+                f"{prefix}annual_fee_waiver_policy should be a dictionary, string, or null"
+            )
 
         return errors
 
@@ -340,6 +320,8 @@ class CreditCardDataValidator:
             "cash_advance_fee",
             "late_payment_fee",
             "reward_points_policy",
+            "lounge_access_international",
+            "lounge_access_domestic",
         ]
 
         for field in string_fields:
@@ -366,18 +348,13 @@ class CreditCardDataValidator:
         numeric_fields = [
             "annual_fee",
             "interest_rate_apr",
-            "lounge_access_international",
-            "lounge_access_domestic",
         ]
 
         for field in numeric_fields:
             value = card_data.get(field)
             if value is not None:
                 try:
-                    if field.startswith("lounge_access"):
-                        sanitized[field] = max(0, int(float(value)))
-                    else:
-                        sanitized[field] = max(0, float(value))
+                    sanitized[field] = max(0, float(value))
                 except (ValueError, TypeError):
                     sanitized[field] = 0
             else:
@@ -402,8 +379,12 @@ class CreditCardDataValidator:
         annual_fee_waiver = card_data.get("annual_fee_waiver_policy")
         if isinstance(annual_fee_waiver, dict):
             sanitized["annual_fee_waiver_policy"] = annual_fee_waiver
+        elif isinstance(annual_fee_waiver, str) and annual_fee_waiver.strip():
+            sanitized["annual_fee_waiver_policy"] = {
+                "description": annual_fee_waiver.strip()
+            }
         else:
-            sanitized["annual_fee_waiver_policy"] = {}
+            sanitized["annual_fee_waiver_policy"] = None
 
         # Additional features
         additional_features = card_data.get("additional_features")

@@ -155,10 +155,15 @@ class TestLLMContentParser:
         content = "Test credit card content"
         result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert result[0]["name"] == "Platinum Card"
-        assert result[0]["annual_fee"] == 95
+        # Result now includes validation structure
+        assert isinstance(result, dict)
+        assert "data" in result
+        data = result["data"] if isinstance(result.get("data"), list) else result
+        if isinstance(data, dict):
+            data = [data]
+        assert len(data) == 1
+        assert data[0]["name"] == "Platinum Card"
+        assert data[0]["annual_fee"] == 95
 
     @patch("banks.services.llm_parser.genai")
     @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
