@@ -1,5 +1,3 @@
-"""Main service orchestrating the bank data crawling process."""
-
 import hashlib
 import logging
 

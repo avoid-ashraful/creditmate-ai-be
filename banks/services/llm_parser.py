@@ -1,29 +1,14 @@
-"""
-LLM content parsing service for extracting structured data.
-"""
-
 import json
 import logging
 import os
+
+import google.generativeai as genai
+from openai import OpenAI
 
 from django.conf import settings
 
 from ..exceptions import AIParsingError, ConfigurationError
 from ..validators import CreditCardDataValidator
-
-# Optional import for OpenAI (OpenRouter)
-try:
-    from openai import OpenAI
-
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-
-# Optional import for Gemini AI
-try:
-    import google.generativeai as genai
-except ImportError:
-    genai = None
 
 logger = logging.getLogger(__name__)
 
@@ -157,12 +142,8 @@ class LLMContentParser:
         Raises
         ------
         ConfigurationError
-            If Google Generative AI library is not installed or
-            Gemini API key is not configured in settings
+            If Gemini API key is not configured in settings
         """
-        if genai is None:
-            raise ConfigurationError("Google Generative AI library not installed")
-
         if not hasattr(settings, "GEMINI_API_KEY") or not settings.GEMINI_API_KEY:
             raise ConfigurationError("Gemini API key not configured")
 
@@ -188,7 +169,7 @@ class LLMContentParser:
         """
         # Check if OpenRouter API key is available
         openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not openrouter_api_key or not OPENAI_AVAILABLE:
+        if not openrouter_api_key:
             # Fallback to Gemini
             return self._generate_gemini_response(content, bank_name)
 
@@ -295,7 +276,7 @@ class LLMContentParser:
         """
         # Check if OpenRouter API key is available
         openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not openrouter_api_key or not OPENAI_AVAILABLE:
+        if not openrouter_api_key:
             # Fallback to Gemini
             return self._generate_comprehensive_gemini_response(content, bank_name)
 

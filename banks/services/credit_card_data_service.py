@@ -1,7 +1,3 @@
-"""
-Service for managing credit card data in the database.
-"""
-
 import logging
 
 from credit_cards.models import CreditCard

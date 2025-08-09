@@ -4,6 +4,7 @@ Comprehensive tests for banks services with all new features.
 
 import hashlib
 import json
+import os
 from unittest.mock import Mock, patch
 
 import pytest
@@ -138,14 +139,17 @@ class TestLLMContentParserUpdated:
         self.parser = LLMContentParser()
 
     def test_parse_credit_card_data_missing_genai(self):
-        """Test handling when genai is not available."""
-        with patch("banks.services.llm_parser.genai", None):
-            parser = LLMContentParser()
+        """Test handling when OpenRouter API key is not available and Gemini fails."""
+        with patch.dict(
+            os.environ, {}, clear=True
+        ):  # Clear all env vars including OPENROUTER_API_KEY
+            with patch("banks.services.llm_parser.settings.GEMINI_API_KEY", ""):
+                parser = LLMContentParser()
 
-            with pytest.raises(ConfigurationError) as exc_info:
-                parser.parse_credit_card_data("test content", "Test Bank")
+                with pytest.raises(ConfigurationError) as exc_info:
+                    parser.parse_credit_card_data("test content", "Test Bank")
 
-            assert "Google Generative AI library not installed" in str(exc_info.value)
+                assert "Gemini API key not configured" in str(exc_info.value)
 
     @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "")
     def test_parse_credit_card_data_missing_api_key(self):

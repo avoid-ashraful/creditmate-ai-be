@@ -1,39 +1,15 @@
 import logging
 from io import BytesIO
 
+import magic
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from PIL import Image
+from pypdf import PdfReader
+
 from ..enums import ContentType
 from ..exceptions import ContentExtractionError, FileFormatError, NetworkError
-
-# Optional imports for content extraction
-try:
-    import requests
-except ImportError:
-    requests = None
-
-try:
-    import magic
-except ImportError:
-    magic = None
-
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
-
-try:
-    from PIL import Image
-except ImportError:
-    Image = None
-
-try:
-    from pypdf import PdfReader
-except ImportError:
-    PdfReader = None
-
-try:
-    from bs4 import BeautifulSoup
-except ImportError:
-    BeautifulSoup = None
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +35,8 @@ class ContentExtractor:
 
         Raises
         ------
-        ImportError
-            If requests library is not installed
+        None
         """
-        if requests is None:
-            raise ImportError("requests library is required but not installed")
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -318,10 +291,6 @@ class ContentExtractor:
         str
             Cleaned text content with scripts/styles removed
         """
-        if BeautifulSoup is None:
-            logger.warning("BeautifulSoup not installed, returning raw HTML")
-            return html_content
-
         try:
             soup = BeautifulSoup(html_content, "html.parser")
 
@@ -410,10 +379,6 @@ class ContentExtractor:
         str or None
             Detected content type (PDF, WEBPAGE, IMAGE, CSV) or None if undetectable
         """
-        if magic is None:
-            logger.warning("python-magic not installed, cannot detect content type")
-            return None
-
         try:
             mime_type = magic.from_buffer(raw_content, mime=True)
 

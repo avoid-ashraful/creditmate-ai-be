@@ -1,29 +1,13 @@
-"""
-Service for finding schedule of charges/fee document URLs from bank websites.
-"""
-
 import logging
 from urllib.parse import urljoin
+
+import google.generativeai as genai
+import requests
+from bs4 import BeautifulSoup
 
 from django.conf import settings
 
 from ..exceptions import NetworkError
-
-# Optional imports
-try:
-    import requests
-except ImportError:
-    requests = None
-
-try:
-    from bs4 import BeautifulSoup
-except ImportError:
-    BeautifulSoup = None
-
-try:
-    import google.generativeai as genai
-except ImportError:
-    genai = None
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +30,8 @@ class ScheduleChargeURLFinder:
 
         Raises
         ------
-        ImportError
-            If requests library is not installed
+        None
         """
-        if requests is None:
-            raise ImportError("requests library is required but not installed")
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -113,10 +94,6 @@ class ScheduleChargeURLFinder:
         try:
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
-
-            if BeautifulSoup is None:
-                logger.warning("BeautifulSoup not installed, cannot analyze webpage")
-                raise NetworkError("BeautifulSoup not available")
 
             soup = BeautifulSoup(response.text, "html.parser")
 
