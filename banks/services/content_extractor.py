@@ -1,94 +1,104 @@
-"""
-Content extraction service for various file types.
-"""
-
 import logging
 from io import BytesIO
-from typing import Optional, Tuple
 
-from ..enums import ContentType
-from ..exceptions import ContentExtractionError, FileFormatError, NetworkError
+import magic
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from PIL import Image
+from pypdf import PdfReader
 
-# Optional imports for content extraction
-try:
-    import requests
-except ImportError:
-    requests = None
-
-try:
-    import magic
-except ImportError:
-    magic = None
-
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
-
-try:
-    from PIL import Image
-except ImportError:
-    Image = None
-
-try:
-    from pypdf import PdfReader
-except ImportError:
-    PdfReader = None
-
-try:
-    from bs4 import BeautifulSoup
-except ImportError:
-    BeautifulSoup = None
+from banks.enums import ContentType
+from banks.exceptions import ContentExtractionError, FileFormatError, NetworkError
 
 logger = logging.getLogger(__name__)
 
 
 class ContentExtractor:
-    """Service for extracting content from various file types."""
+    """Service for extracting content from various file types.
+
+    This service handles content extraction from multiple sources including:
+    - PDF documents (text extraction with OCR fallback)
+    - Web pages (HTML parsing and text extraction)
+    - Images (OCR text extraction)
+    - CSV files (structured data parsing)
+    """
 
     def __init__(self):
-        """Initialize the content extractor."""
-        if requests is None:
-            raise ImportError("requests library is required but not installed")
+        """Initialize the content extractor.
+
+        Sets up HTTP session with appropriate headers for web content extraction.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+        """
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         )
 
-    def extract_content(self, url: str, content_type: str) -> Tuple[str, str]:
-        """
-        Extract content from URL based on content type.
+    def extract_content(self, url, content_type):
+        """Extract content from URL based on content type.
 
-        Args:
-            url (str): The URL to extract content from
-            content_type (str): The type of content to extract
+        Parameters
+        ----------
+        url : str
+            The URL to extract content from
+        content_type : str
+            The type of content to extract (PDF, WEBPAGE, IMAGE, CSV)
 
-        Returns:
-            Tuple[str, str]: Raw content and extracted text content
+        Returns
+        -------
+        tuple of (str, str)
+            First element is raw content (or placeholder for binary),
+            second element is extracted text content
 
-        Raises:
-            NetworkError: For network-related errors
-            ContentExtractionError: For content extraction errors
-            FileFormatError: For unsupported file formats
+        Raises
+        ------
+        NetworkError
+            For network-related connection or timeout errors
+        ContentExtractionError
+            For HTTP errors or general extraction failures
+        FileFormatError
+            For unsupported or undetectable file formats
         """
         raw_content = self._fetch_content(url)
         extracted_content = self._process_content(raw_content, content_type, url)
 
-        return raw_content.decode("utf-8", errors="ignore"), extracted_content
+        # For binary content types, store a placeholder for raw content to avoid NUL character issues
+        if content_type == ContentType.PDF or content_type == ContentType.IMAGE:
+            raw_content_str = (
+                f"<BINARY_CONTENT_{content_type.upper()}_SIZE_{len(raw_content)}>"
+            )
+        else:
+            raw_content_str = raw_content.decode("utf-8", errors="ignore")
 
-    def _fetch_content(self, url: str) -> bytes:
-        """
-        Fetch raw content from URL.
+        return raw_content_str, extracted_content
 
-        Args:
-            url (str): The URL to fetch content from
+    def _fetch_content(self, url):
+        """Fetch raw content from URL.
 
-        Returns:
-            bytes: Raw content from the URL
+        Parameters
+        ----------
+        url : str
+            The URL to fetch content from
 
-        Raises:
-            NetworkError: For network-related errors
-            ContentExtractionError: For HTTP errors
+        Returns
+        -------
+        bytes
+            Raw binary content retrieved from the URL
+
+        Raises
+        ------
+        NetworkError
+            For network timeouts or connection errors
+        ContentExtractionError
+            For HTTP errors (404, 500, etc.) or unexpected failures
         """
         try:
             response = self.session.get(url, timeout=30)
@@ -122,21 +132,29 @@ class ContentExtractor:
                 f"Unexpected error extracting content from {url}", {"url": url}
             ) from e
 
-    def _process_content(self, raw_content: bytes, content_type: str, url: str) -> str:
-        """
-        Process raw content based on content type.
+    def _process_content(self, raw_content, content_type, url):
+        """Process raw content based on content type.
 
-        Args:
-            raw_content (bytes): Raw content to process
-            content_type (str): Type of content
-            url (str): Original URL for error reporting
+        Parameters
+        ----------
+        raw_content : bytes
+            Raw binary content to process
+        content_type : str
+            Type of content (PDF, WEBPAGE, IMAGE, CSV)
+        url : str
+            Original URL for error reporting and logging
 
-        Returns:
-            str: Extracted text content
+        Returns
+        -------
+        str
+            Extracted text content from the processed source
 
-        Raises:
-            FileFormatError: For unsupported content types
-            ContentExtractionError: For processing errors
+        Raises
+        ------
+        FileFormatError
+            For unsupported or undetectable content types
+        ContentExtractionError
+            For processing errors during content extraction
         """
         try:
             if content_type == ContentType.PDF:
@@ -167,15 +185,18 @@ class ContentExtractor:
                 {"url": url, "content_type": content_type},
             ) from e
 
-    def _extract_pdf_content(self, raw_content: bytes) -> str:
-        """
-        Extract text content from PDF.
+    def _extract_pdf_content(self, raw_content):
+        """Extract text content from PDF, with OCR fallback for image-based PDFs.
 
-        Args:
-            raw_content (bytes): Raw PDF content
+        Parameters
+        ----------
+        raw_content : bytes
+            Raw PDF binary content
 
-        Returns:
-            str: Extracted text from PDF
+        Returns
+        -------
+        str
+            Extracted text from PDF, using OCR fallback for image-based PDFs
         """
         if PdfReader is None:
             logger.warning("pypdf not installed, cannot extract PDF content")
@@ -189,25 +210,87 @@ class ContentExtractor:
             for page in reader.pages:
                 text_content += page.extract_text() + "\n"
 
-            return text_content.strip()
+            text_content = text_content.strip()
+
+            # If extracted text is minimal (likely image-based PDF), try OCR
+            if len(text_content) < 50:  # Threshold for minimal text
+                logger.info("Minimal text extracted from PDF, attempting OCR...")
+                ocr_text = self._extract_pdf_with_ocr(raw_content)
+                if ocr_text and len(ocr_text) > len(text_content):
+                    return ocr_text
+
+            return text_content
         except Exception as e:
             logger.error(f"Error extracting PDF content: {str(e)}")
+            # Try OCR as fallback for corrupted or complex PDFs
+            logger.info("Attempting OCR fallback for PDF...")
+            return self._extract_pdf_with_ocr(raw_content)
+
+    def _extract_pdf_with_ocr(self, raw_content):
+        """Extract text from image-based PDF using OCR.
+
+        Parameters
+        ----------
+        raw_content : bytes
+            Raw PDF binary content requiring OCR processing
+
+        Returns
+        -------
+        str
+            Text extracted via OCR from PDF pages converted to images
+        """
+        try:
+            # Check if required libraries are available
+            try:
+                import fitz  # PyMuPDF
+            except ImportError:
+                logger.warning("PyMuPDF not available, cannot perform PDF OCR")
+                return ""
+
+            try:
+                import pytesseract
+                from PIL import Image
+            except ImportError:
+                logger.warning("pytesseract/PIL not available, cannot perform PDF OCR")
+                return ""
+
+            # Convert PDF pages to images and extract text with OCR
+            doc = fitz.open(stream=raw_content, filetype="pdf")
+            all_text = ""
+
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                # Convert page to image (higher DPI for better OCR)
+                pix = page.get_pixmap(
+                    matrix=fitz.Matrix(2, 2)
+                )  # 2x scaling for better quality
+                img_data = pix.tobytes("png")
+
+                # Perform OCR on the image
+                image = Image.open(BytesIO(img_data))
+                text = pytesseract.image_to_string(image, config="--psm 6")
+                all_text += text + "\n"
+
+            doc.close()
+            return all_text.strip()
+
+        except Exception as e:
+            logger.error(f"Error performing PDF OCR: {str(e)}")
             return ""
 
-    def _extract_webpage_content(self, html_content: str) -> str:
+    def _extract_webpage_content(self, html_content):
+        """Extract text content from HTML webpage.
+
+        Parameters
+        ----------
+        html_content : str
+            Raw HTML content to process and clean
+
+        Returns
+        -------
+        str
+            Cleaned text content with scripts/styles removed
         """
-        Extract text content from HTML webpage.
-
-        Args:
-            html_content (str): HTML content to process
-
-        Returns:
-            str: Cleaned text content
-        """
-        if BeautifulSoup is None:
-            logger.warning("BeautifulSoup not installed, returning raw HTML")
-            return html_content
-
         try:
             soup = BeautifulSoup(html_content, "html.parser")
 
@@ -228,15 +311,18 @@ class ContentExtractor:
             logger.error(f"Error extracting webpage content: {str(e)}")
             return html_content
 
-    def _extract_image_content(self, raw_content: bytes) -> str:
-        """
-        Extract text content from image using OCR.
+    def _extract_image_content(self, raw_content):
+        """Extract text content from image using OCR.
 
-        Args:
-            raw_content (bytes): Raw image content
+        Parameters
+        ----------
+        raw_content : bytes
+            Raw image binary content (JPEG, PNG, etc.)
 
-        Returns:
-            str: Text extracted from image
+        Returns
+        -------
+        str
+            Text extracted from image using pytesseract OCR
         """
         if Image is None:
             logger.warning("PIL not installed, cannot extract text from images")
@@ -255,15 +341,18 @@ class ContentExtractor:
             logger.error(f"Error extracting image content: {str(e)}")
             return ""
 
-    def _extract_csv_content(self, raw_content: bytes) -> str:
-        """
-        Extract content from CSV file.
+    def _extract_csv_content(self, raw_content):
+        """Extract content from CSV file.
 
-        Args:
-            raw_content (bytes): Raw CSV content
+        Parameters
+        ----------
+        raw_content : bytes
+            Raw CSV binary content
 
-        Returns:
-            str: Processed CSV content
+        Returns
+        -------
+        str
+            Processed CSV content as formatted string using pandas
         """
         if pd is None:
             logger.warning("pandas not installed, returning raw CSV content")
@@ -277,20 +366,19 @@ class ContentExtractor:
             logger.error(f"Error extracting CSV content: {str(e)}")
             return raw_content.decode("utf-8", errors="ignore")
 
-    def _detect_content_type(self, raw_content: bytes) -> Optional[str]:
+    def _detect_content_type(self, raw_content):
+        """Detect content type from raw content.
+
+        Parameters
+        ----------
+        raw_content : bytes
+            Raw binary content to analyze for type detection
+
+        Returns
+        -------
+        str or None
+            Detected content type (PDF, WEBPAGE, IMAGE, CSV) or None if undetectable
         """
-        Detect content type from raw content.
-
-        Args:
-            raw_content (bytes): Raw content to analyze
-
-        Returns:
-            Optional[str]: Detected content type or None
-        """
-        if magic is None:
-            logger.warning("python-magic not installed, cannot detect content type")
-            return None
-
         try:
             mime_type = magic.from_buffer(raw_content, mime=True)
 

@@ -1,55 +1,59 @@
-"""
-Service for finding schedule of charges/fee document URLs from bank websites.
-"""
-
 import logging
-from typing import Any, Dict, List
 from urllib.parse import urljoin
+
+import google.generativeai as genai
+import requests
+from bs4 import BeautifulSoup
 
 from django.conf import settings
 
-from ..exceptions import NetworkError
-
-# Optional imports
-try:
-    import requests
-except ImportError:
-    requests = None
-
-try:
-    from bs4 import BeautifulSoup
-except ImportError:
-    BeautifulSoup = None
-
-try:
-    import google.generativeai as genai
-except ImportError:
-    genai = None
+from banks.exceptions import NetworkError
 
 logger = logging.getLogger(__name__)
 
 
 class ScheduleChargeURLFinder:
-    """Service for finding schedule of charges/fee document URLs using AI."""
+    """Service for finding schedule of charges/fee document URLs using AI.
+
+    This service analyzes bank websites to locate schedule of charges or
+    fee documents using AI-powered content analysis and link extraction.
+    """
 
     def __init__(self):
-        """Initialize the URL finder."""
-        if requests is None:
-            raise ImportError("requests library is required but not installed")
+        """Initialize the URL finder.
+
+        Sets up HTTP session with appropriate headers for web scraping.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+        """
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         )
 
-    def find_schedule_charge_url(self, base_url: str) -> Dict[str, Any]:
-        """
-        Find schedule of charges URL using AI to analyze webpage content.
+    def find_schedule_charge_url(self, base_url):
+        """Find schedule of charges URL using AI to analyze webpage content.
 
-        Args:
-            base_url (str): Base URL to analyze
+        Parameters
+        ----------
+        base_url : str
+            Base URL of the bank website to analyze
 
-        Returns:
-            Dict[str, Any]: Result containing found URL and metadata
+        Returns
+        -------
+        dict
+            Result dictionary containing:
+            - found: bool indicating if URL was found
+            - url: str with the found URL if successful
+            - method: str describing the method used
+            - content_type: str indicating PDF or WEBPAGE
+            - error: str with error message if failed
         """
         try:
             logger.info(f"Finding schedule charge URL for: {base_url}")
@@ -64,26 +68,32 @@ class ScheduleChargeURLFinder:
             logger.error(f"Error finding schedule charge URL: {str(e)}")
             return {"found": False, "method": "error", "error": str(e)}
 
-    def _fetch_webpage_content(self, url: str) -> Dict[str, Any]:
-        """
-        Fetch and parse webpage content.
+    def _fetch_webpage_content(self, url):
+        """Fetch and parse webpage content.
 
-        Args:
-            url (str): URL to fetch
+        Parameters
+        ----------
+        url : str
+            URL to fetch and parse
 
-        Returns:
-            Dict[str, Any]: Webpage content and metadata
+        Returns
+        -------
+        dict
+            Dictionary containing webpage content and metadata:
+            - html_text: raw HTML content
+            - soup: BeautifulSoup parsed object
+            - links: list of extracted links
+            - page_content: cleaned text content
+            - contains_charges: bool if charge keywords found
 
-        Raises:
-            NetworkError: If fetching fails
+        Raises
+        ------
+        NetworkError
+            If webpage fetching fails
         """
         try:
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
-
-            if BeautifulSoup is None:
-                logger.warning("BeautifulSoup not installed, cannot analyze webpage")
-                raise NetworkError("BeautifulSoup not available")
 
             soup = BeautifulSoup(response.text, "html.parser")
 
@@ -98,16 +108,23 @@ class ScheduleChargeURLFinder:
         except requests.exceptions.RequestException as e:
             raise NetworkError(f"Failed to fetch webpage: {str(e)}") from e
 
-    def _extract_links(self, soup: BeautifulSoup, base_url: str) -> List[Dict[str, str]]:
-        """
-        Extract all relevant links from the webpage.
+    def _extract_links(self, soup, base_url):
+        """Extract all relevant links from the webpage.
 
-        Args:
-            soup (BeautifulSoup): Parsed HTML
-            base_url (str): Base URL for resolving relative links
+        Parameters
+        ----------
+        soup : BeautifulSoup
+            Parsed HTML document
+        base_url : str
+            Base URL for resolving relative links
 
-        Returns:
-            List[Dict[str, str]]: List of link information
+        Returns
+        -------
+        list of dict
+            List of dictionaries containing link information with keys:
+            - url: full URL of the link
+            - text: link text content
+            - title: link title attribute
         """
         links = []
         for link in soup.find_all(["a", "link"], href=True):
@@ -124,15 +141,18 @@ class ScheduleChargeURLFinder:
                 )
         return links
 
-    def _check_charges_on_page(self, soup: BeautifulSoup) -> bool:
-        """
-        Check if charges are displayed directly on the page.
+    def _check_charges_on_page(self, soup):
+        """Check if charges are displayed directly on the page.
 
-        Args:
-            soup (BeautifulSoup): Parsed HTML
+        Parameters
+        ----------
+        soup : BeautifulSoup
+            Parsed HTML document to search
 
-        Returns:
-            bool: True if charges found on page
+        Returns
+        -------
+        bool
+            True if charge-related keywords found on page, False otherwise
         """
         page_content = soup.get_text().lower()
         charge_terms = [
@@ -145,18 +165,20 @@ class ScheduleChargeURLFinder:
         ]
         return any(term in page_content for term in charge_terms)
 
-    def _analyze_webpage_content(
-        self, content_data: Dict[str, Any], base_url: str
-    ) -> Dict[str, Any]:
-        """
-        Analyze webpage content using AI.
+    def _analyze_webpage_content(self, content_data, base_url):
+        """Analyze webpage content using AI.
 
-        Args:
-            content_data (Dict[str, Any]): Webpage content data
-            base_url (str): Base URL
+        Parameters
+        ----------
+        content_data : dict
+            Dictionary containing webpage content and metadata
+        base_url : str
+            Base URL being analyzed
 
-        Returns:
-            Dict[str, Any]: Analysis results
+        Returns
+        -------
+        dict
+            Analysis results containing AI response and metadata
         """
         if not self._is_ai_available():
             return {
@@ -195,18 +217,20 @@ class ScheduleChargeURLFinder:
                 "error": f"AI analysis failed: {str(e)}",
             }
 
-    def _process_ai_analysis(
-        self, analysis_data: Dict[str, Any], base_url: str
-    ) -> Dict[str, Any]:
-        """
-        Process AI analysis results.
+    def _process_ai_analysis(self, analysis_data, base_url):
+        """Process AI analysis results.
 
-        Args:
-            analysis_data (Dict[str, Any]): AI analysis results
-            base_url (str): Base URL
+        Parameters
+        ----------
+        analysis_data : dict
+            AI analysis results to process
+        base_url : str
+            Base URL for result context
 
-        Returns:
-            Dict[str, Any]: Final result
+        Returns
+        -------
+        dict
+            Final processed result with found URLs and metadata
         """
         if "ai_response" not in analysis_data:
             return analysis_data
@@ -249,32 +273,36 @@ class ScheduleChargeURLFinder:
             "error": "No schedule charge URL found",
         }
 
-    def _is_ai_available(self) -> bool:
+    def _is_ai_available(self):
+        """Check if AI analysis is available.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        bool
+            True if Gemini AI is properly configured and available
         """
-        Check if AI analysis is available.
+        return genai is not None and settings.GEMINI_API_KEY
 
-        Returns:
-            bool: True if AI is available
-        """
-        return (
-            genai is not None
-            and hasattr(settings, "GEMINI_API_KEY")
-            and settings.GEMINI_API_KEY
-        )
+    def _build_url_finding_prompt(self, base_url, links, contains_charges):
+        """Build prompt for AI to find schedule charge URL.
 
-    def _build_url_finding_prompt(
-        self, base_url: str, links: List[Dict], contains_charges: bool
-    ) -> str:
-        """
-        Build prompt for AI to find schedule charge URL.
+        Parameters
+        ----------
+        base_url : str
+            Base URL being analyzed
+        links : list of dict
+            Available links extracted from the webpage
+        contains_charges : bool
+            Whether the current page contains charge information
 
-        Args:
-            base_url (str): Base URL
-            links (List[Dict]): Available links
-            contains_charges (bool): Whether page contains charge info
-
-        Returns:
-            str: Formatted prompt
+        Returns
+        -------
+        str
+            Formatted prompt for AI analysis
         """
         links_text = "\n".join(
             [

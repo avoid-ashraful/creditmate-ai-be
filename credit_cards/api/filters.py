@@ -2,7 +2,7 @@ import django_filters
 
 from django.db import models
 
-from ..models import CreditCard
+from credit_cards.models import CreditCard
 
 
 class CreditCardFilter(django_filters.FilterSet):
@@ -78,23 +78,23 @@ class CreditCardFilter(django_filters.FilterSet):
     def filter_has_lounge_access(self, queryset, name, value):
         """Filter cards that have any lounge access."""
         if value:
-            return queryset.filter(
-                models.Q(lounge_access_international__gt=0)
-                | models.Q(lounge_access_domestic__gt=0)
+            return queryset.exclude(
+                models.Q(lounge_access_international="")
+                & models.Q(lounge_access_domestic="")
             )
-        return queryset.filter(lounge_access_international=0, lounge_access_domestic=0)
+        return queryset.filter(lounge_access_international="", lounge_access_domestic="")
 
     def filter_has_international_lounge(self, queryset, name, value):
         """Filter cards that have international lounge access."""
         if value:
-            return queryset.filter(lounge_access_international__gt=0)
-        return queryset.filter(lounge_access_international=0)
+            return queryset.exclude(lounge_access_international="")
+        return queryset.filter(lounge_access_international="")
 
     def filter_has_domestic_lounge(self, queryset, name, value):
         """Filter cards that have domestic lounge access."""
         if value:
-            return queryset.filter(lounge_access_domestic__gt=0)
-        return queryset.filter(lounge_access_domestic=0)
+            return queryset.exclude(lounge_access_domestic="")
+        return queryset.filter(lounge_access_domestic="")
 
     def filter_has_annual_fee(self, queryset, name, value):
         """Filter cards that have annual fee."""

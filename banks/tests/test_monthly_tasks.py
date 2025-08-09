@@ -122,7 +122,7 @@ class TestMonthlyDataQualityCheck:
         """Test system health score calculation."""
         # Create recent crawled content
         CrawledContentFactory(
-            data_source=self.data_source1, crawl_date=timezone.now() - timedelta(days=2)
+            data_source=self.data_source1, crawled_at=timezone.now() - timedelta(days=2)
         )
 
         result = monthly_data_quality_check()
@@ -270,7 +270,7 @@ class TestMonthlyTasksIntegration:
         CrawledContentFactory(
             data_source=self.healthy_source,
             processing_status="completed",
-            crawl_date=timezone.now() - timedelta(hours=6),
+            crawled_at=timezone.now() - timedelta(hours=6),
         )
 
         self.problematic_bank = BankFactory()

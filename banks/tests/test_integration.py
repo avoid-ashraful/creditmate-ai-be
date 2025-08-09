@@ -36,7 +36,7 @@ class TestEndToEndCrawlingWorkflow:
         )
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_full_crawl_cycle_success(self, mock_parse, mock_extract):
         """Test complete successful crawl from trigger to data update."""
         # Mock successful content extraction
@@ -46,8 +46,8 @@ class TestEndToEndCrawlingWorkflow:
         )
 
         # Mock successful LLM parsing
-        mock_parse.return_value = {
-            "credit_cards": [
+        mock_parse.return_value = (
+            [  # structured data
                 {
                     "name": "Premium Card",
                     "annual_fee": "95.00",
@@ -55,8 +55,19 @@ class TestEndToEndCrawlingWorkflow:
                     "cash_advance_fee": "Annual fee waived first year",
                     "reward_points_policy": "1 point per dollar spent",
                 }
-            ]
-        }
+            ],
+            [  # raw comprehensive data
+                {
+                    "name": "Premium Card",
+                    "annual_fee": "95.00",
+                    "interest_rate_apr": "15.99",
+                    "cash_advance_fee": "Annual fee waived first year",
+                    "reward_points_policy": "1 point per dollar spent",
+                    "Processing Fee": "2%",
+                    "Foreign Exchange Fee": "3%",
+                }
+            ],
+        )
 
         # Execute the crawl
         crawler = BankDataCrawlerService()
@@ -72,7 +83,7 @@ class TestEndToEndCrawlingWorkflow:
         assert self.data_source.failed_attempt_count == 0
 
         # Verify crawled content was created
-        crawled_content = self.data_source.crawled_contents.latest("crawl_date")
+        crawled_content = self.data_source.crawled_contents.latest("crawled_at")
         assert crawled_content.processing_status == ProcessingStatus.COMPLETED
         assert (
             crawled_content.extracted_content
@@ -91,7 +102,7 @@ class TestEndToEndCrawlingWorkflow:
         assert credit_card.reward_points_policy == "1 point per dollar spent"
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_full_crawl_cycle_with_failures(self, mock_parse, mock_extract):
         """Test crawl workflow with various failure points."""
         # Mock extraction failure
@@ -111,12 +122,12 @@ class TestEndToEndCrawlingWorkflow:
         assert self.data_source.last_successful_crawl_at is None
 
         # Verify error was recorded
-        crawled_content = self.data_source.crawled_contents.latest("crawl_date")
+        crawled_content = self.data_source.crawled_contents.latest("crawled_at")
         assert crawled_content.processing_status == ProcessingStatus.FAILED
         assert "Network error" in crawled_content.error_message
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_crawl_with_partial_success(self, mock_parse, mock_extract):
         """Test crawl where extraction succeeds but parsing fails."""
         # Mock successful extraction
@@ -133,7 +144,7 @@ class TestEndToEndCrawlingWorkflow:
         assert success is False
 
         # Verify parsing failed (extracted content is not preserved when parsing fails)
-        crawled_content = self.data_source.crawled_contents.latest("crawl_date")
+        crawled_content = self.data_source.crawled_contents.latest("crawled_at")
         # Note: Current implementation doesn't preserve extracted content when parsing fails
         assert crawled_content.processing_status == ProcessingStatus.FAILED
         assert "LLM API error" in crawled_content.error_message
@@ -161,22 +172,29 @@ class TestEndToEndCrawlingWorkflow:
         assert mock_crawl.call_count == 5
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_crawl_with_database_rollback(self, mock_parse, mock_extract):
         """Test proper rollback when crawl partially fails."""
         # Mock successful extraction
         mock_extract.return_value = ("Raw content", "Content")
 
         # Mock parsing that returns invalid data
-        mock_parse.return_value = {
-            "credit_cards": [
+        mock_parse.return_value = (
+            [  # structured data
                 {
                     "name": "",  # Invalid empty name
                     "annual_fee": "invalid_decimal",
                     "interest_rate_apr": "not_a_number",
                 }
-            ]
-        }
+            ],
+            [  # raw comprehensive data
+                {
+                    "name": "",
+                    "annual_fee": "invalid_decimal",
+                    "interest_rate_apr": "not_a_number",
+                }
+            ],
+        )
 
         # Execute the crawl
         crawler = BankDataCrawlerService()
@@ -190,7 +208,7 @@ class TestEndToEndCrawlingWorkflow:
         assert cards.count() == 1
 
         card = cards.first()
-        assert card.name == ""  # Empty name was preserved
+        assert "Credit Card (Annual Fee:" in card.name  # Fallback name was created
         assert card.annual_fee == 0.0  # Invalid decimal was converted to 0
         assert card.interest_rate_apr == 0.0  # Invalid decimal was converted to 0
 
@@ -368,14 +386,17 @@ class TestSystemScalabilityAndPerformance:
         assert cards_data["count"] == 200
 
     @patch("banks.services.content_extractor.ContentExtractor.extract_content")
-    @patch("banks.services.llm_parser.LLMContentParser.parse_credit_card_data")
+    @patch("banks.services.llm_parser.LLMContentParser.parse_comprehensive_data")
     def test_crawling_performance_with_many_sources(self, mock_parse, mock_extract):
         """Test crawling performance with many data sources."""
         # Mock successful responses
         mock_extract.return_value = ("Raw content", "Sample content")
-        mock_parse.return_value = {
-            "credit_cards": [{"name": "Test Card", "annual_fee": "95.00"}]
-        }
+        mock_parse.return_value = (
+            [{"name": "Test Card", "annual_fee": "95.00"}],  # structured data
+            [
+                {"name": "Test Card", "annual_fee": "95.00", "Processing Fee": "2%"}
+            ],  # raw data
+        )
 
         # Create many data sources
         banks = BankFactory.create_batch(10)
@@ -457,7 +478,7 @@ class TestErrorHandlingAndRecovery:
         assert success is False
 
         # Error should be recorded
-        crawled_content = self.data_source.crawled_contents.latest("crawl_date")
+        crawled_content = self.data_source.crawled_contents.latest("crawled_at")
         assert crawled_content.processing_status == ProcessingStatus.FAILED
         assert "Connection timeout" in crawled_content.error_message
 

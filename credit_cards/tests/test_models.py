@@ -93,25 +93,28 @@ class TestCreditCardModel:
     def test_has_lounge_access_property(self):
         """Test has_lounge_access property."""
         # Card with no lounge access
-        card1 = CreditCardFactory(lounge_access_international=0, lounge_access_domestic=0)
+        card1 = CreditCardFactory(
+            lounge_access_international="", lounge_access_domestic=""
+        )
         assert card1.has_lounge_access is False
 
         # Card with international lounge access
-        card2 = CreditCardFactory(lounge_access_international=5, lounge_access_domestic=0)
+        card2 = CreditCardFactory(
+            lounge_access_international="5 visits", lounge_access_domestic=""
+        )
         assert card2.has_lounge_access is True
 
         # Card with domestic lounge access
-        card3 = CreditCardFactory(lounge_access_international=0, lounge_access_domestic=3)
+        card3 = CreditCardFactory(
+            lounge_access_international="", lounge_access_domestic="3 visits"
+        )
         assert card3.has_lounge_access is True
 
         # Card with both
-        card4 = CreditCardFactory(lounge_access_international=2, lounge_access_domestic=4)
+        card4 = CreditCardFactory(
+            lounge_access_international="2 visits", lounge_access_domestic="4 visits"
+        )
         assert card4.has_lounge_access is True
-
-    def test_total_lounge_access_property(self):
-        """Test total_lounge_access property."""
-        card = CreditCardFactory(lounge_access_international=5, lounge_access_domestic=8)
-        assert card.total_lounge_access == 13
 
     def test_has_annual_fee_property(self):
         """Test has_annual_fee property."""
@@ -147,8 +150,8 @@ class TestCreditCardModel:
             interest_rate_apr=Decimal("25.0"),
         )
 
-        assert card.lounge_access_international == 0
-        assert card.lounge_access_domestic == 0
+        assert card.lounge_access_international == ""
+        assert card.lounge_access_domestic == ""
         assert card.cash_advance_fee == ""
         assert card.late_payment_fee == ""
         assert card.annual_fee_waiver_policy is None
@@ -175,16 +178,16 @@ class TestCreditCardModel:
         card = PremiumCreditCardFactory()
 
         assert card.annual_fee >= Decimal("2000")
-        assert card.lounge_access_international >= 5
-        assert card.lounge_access_domestic >= 10
+        assert card.lounge_access_international != ""
+        assert card.lounge_access_domestic != ""
 
     def test_normal_credit_card_factory(self):
         """Test NormalCreditCardFactory generates normal cards."""
         card = NormalCreditCardFactory()
 
         assert card.annual_fee <= Decimal("1000")
-        assert card.lounge_access_international <= 3
-        assert card.lounge_access_domestic <= 5
+        assert card.lounge_access_international != ""
+        assert card.lounge_access_domestic != ""
 
     def test_credit_card_factory_unique_names(self):
         """Test that CreditCardFactory generates unique names."""

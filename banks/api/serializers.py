@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from ..models import Bank
+from banks.models import Bank
 
 
 class BankSerializer(serializers.ModelSerializer):

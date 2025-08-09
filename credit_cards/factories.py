@@ -5,8 +5,7 @@ import factory
 from django.db.models.signals import post_save
 
 from banks.factories import BankFactory
-
-from .models import CreditCard
+from credit_cards.models import CreditCard
 
 
 @factory.django.mute_signals(post_save)
@@ -31,8 +30,8 @@ class CreditCardFactory(factory.django.DjangoModelFactory):
         min_value=Decimal("15"),
         max_value=Decimal("45"),
     )
-    lounge_access_international = factory.Faker("random_int", min=0, max=10)
-    lounge_access_domestic = factory.Faker("random_int", min=0, max=15)
+    lounge_access_international = factory.Faker("sentence", nb_words=3)
+    lounge_access_domestic = factory.Faker("sentence", nb_words=3)
     cash_advance_fee = factory.Faker("sentence", nb_words=6)
     late_payment_fee = factory.Faker("sentence", nb_words=6)
     annual_fee_waiver_policy = factory.Dict(
@@ -70,8 +69,8 @@ class PremiumCreditCardFactory(CreditCardFactory):
         min_value=Decimal("2000"),
         max_value=Decimal("10000"),
     )
-    lounge_access_international = factory.Faker("random_int", min=5, max=20)
-    lounge_access_domestic = factory.Faker("random_int", min=10, max=30)
+    lounge_access_international = factory.Faker("sentence", nb_words=4)
+    lounge_access_domestic = factory.Faker("sentence", nb_words=4)
 
 
 class NormalCreditCardFactory(CreditCardFactory):
@@ -84,5 +83,5 @@ class NormalCreditCardFactory(CreditCardFactory):
         min_value=Decimal("0"),
         max_value=Decimal("1000"),
     )
-    lounge_access_international = factory.Faker("random_int", min=0, max=3)
-    lounge_access_domestic = factory.Faker("random_int", min=0, max=5)
+    lounge_access_international = factory.Faker("sentence", nb_words=2)
+    lounge_access_domestic = factory.Faker("sentence", nb_words=2)

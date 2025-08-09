@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CreditCard
+from credit_cards.models import CreditCard
 
 
 @admin.register(CreditCard)

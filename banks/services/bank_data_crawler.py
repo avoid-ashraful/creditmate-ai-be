@@ -1,44 +1,57 @@
-"""Main service orchestrating the bank data crawling process."""
-
 import hashlib
 import logging
-from typing import Any, Dict
 
 from django.utils import timezone
 
-from ..exceptions import (
+from banks.exceptions import (
     AIParsingError,
     ConfigurationError,
     ContentExtractionError,
     FileFormatError,
     NetworkError,
 )
-from ..models import BankDataSource, CrawledContent
-from .content_extractor import ContentExtractor
-from .credit_card_data_service import CreditCardDataService
-from .llm_parser import LLMContentParser
+from banks.models import BankDataSource, CrawledContent
+from banks.services.content_extractor import ContentExtractor
+from banks.services.credit_card_data_service import CreditCardDataService
+from banks.services.llm_parser import LLMContentParser
 
 logger = logging.getLogger(__name__)
 
 
 class BankDataCrawlerService:
-    """Main service orchestrating the bank data crawling process."""
+    """Main service orchestrating the bank data crawling process.
+
+    This service coordinates the entire crawling pipeline including content
+    extraction, LLM parsing, change detection, and database updates for
+    bank credit card data sources.
+    """
 
     def __init__(self):
-        """Initialize the crawler service with its components."""
+        """Initialize the crawler service with its components.
+
+        Sets up the content extraction, LLM parsing, and data service
+        components required for the crawling pipeline.
+
+        Returns
+        -------
+        None
+        """
         self.content_extractor = ContentExtractor()
         self.llm_parser = LLMContentParser()
         self.data_service = CreditCardDataService()
 
-    def crawl_bank_data_source(self, data_source_id: int) -> bool:
-        """
-        Crawl a single bank data source with change detection.
+    def crawl_bank_data_source(self, data_source_id):
+        """Crawl a single bank data source with change detection.
 
-        Args:
-            data_source_id (int): ID of the data source to crawl
+        Parameters
+        ----------
+        data_source_id : int
+            ID of the BankDataSource to crawl
 
-        Returns:
-            bool: True if crawling was successful, False otherwise
+        Returns
+        -------
+        bool
+            True if crawling was successful, False if any step failed
         """
         try:
             data_source = self._get_data_source(data_source_id)
@@ -72,12 +85,18 @@ class BankDataCrawlerService:
             self._record_unexpected_error(data_source_id, str(e))
             return False
 
-    def crawl_all_active_sources(self) -> Dict[str, int]:
-        """
-        Crawl all active bank data sources.
+    def crawl_all_active_sources(self):
+        """Crawl all active bank data sources.
 
-        Returns:
-            Dict[str, int]: Summary of crawling results
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dict
+            Summary dictionary with keys 'total', 'successful', 'failed'
+            containing counts of crawling results
         """
         active_sources = BankDataSource.objects.filter(is_active=True)
         results = {"total": active_sources.count(), "successful": 0, "failed": 0}
@@ -91,40 +110,54 @@ class BankDataCrawlerService:
         logger.info(f"Crawling completed: {results}")
         return results
 
-    def _get_data_source(self, data_source_id: int) -> BankDataSource:
-        """
-        Get active data source by ID.
+    def _get_data_source(self, data_source_id):
+        """Get active data source by ID.
 
-        Args:
-            data_source_id (int): Data source ID
+        Parameters
+        ----------
+        data_source_id : int
+            Database ID of the BankDataSource to retrieve
 
-        Returns:
-            BankDataSource: The data source object
+        Returns
+        -------
+        BankDataSource
+            The requested data source instance
 
-        Raises:
-            BankDataSource.DoesNotExist: If data source not found or inactive
+        Raises
+        ------
+        BankDataSource.DoesNotExist
+            If the data source ID does not exist or is inactive
         """
         return BankDataSource.objects.get(id=data_source_id, is_active=True)
 
-    def _update_crawl_timestamp(self, data_source: BankDataSource) -> None:
-        """
-        Update the last crawled timestamp for a data source.
+    def _update_crawl_timestamp(self, data_source):
+        """Update the last crawled timestamp for a data source.
 
-        Args:
-            data_source (BankDataSource): Data source to update
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source instance to update with current timestamp
+
+        Returns
+        -------
+        None
         """
         data_source.last_crawled_at = timezone.now()
         data_source.save(update_fields=["last_crawled_at"])
 
-    def _extract_content_safely(self, data_source: BankDataSource) -> tuple:
-        """
-        Safely extract content with error handling.
+    def _extract_content_safely(self, data_source):
+        """Safely extract content with error handling.
 
-        Args:
-            data_source (BankDataSource): Data source to extract from
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source to extract content from
 
-        Returns:
-            tuple: (raw_content, extracted_content) or (None, None) on failure
+        Returns
+        -------
+        tuple of (str, str) or (None, None)
+            First element is raw content, second is extracted content.
+            Returns (None, None) on extraction failure.
         """
         try:
             raw_content, extracted_content = self.content_extractor.extract_content(
@@ -139,36 +172,42 @@ class BankDataCrawlerService:
             self._create_failed_crawl_record(data_source, e.message)
             return None, None
 
-    def _generate_content_hash(self, content: str) -> str:
-        """
-        Generate SHA256 hash for content change detection.
+    def _generate_content_hash(self, content):
+        """Generate SHA256 hash for content change detection.
 
-        Args:
-            content (str): Content to hash
+        Parameters
+        ----------
+        content : str
+            Text content to generate hash for change detection
 
-        Returns:
-            str: SHA256 hash
+        Returns
+        -------
+        str
+            SHA256 hash of the content as hexadecimal string
         """
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
-    def _should_skip_processing(
-        self, data_source: BankDataSource, content_hash: str
-    ) -> bool:
-        """
-        Check if content processing should be skipped due to no changes.
+    def _should_skip_processing(self, data_source, content_hash):
+        """Check if content processing should be skipped due to no changes.
 
-        Args:
-            data_source (BankDataSource): Data source to check
-            content_hash (str): Hash of current content
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source to check for existing content
+        content_hash : str
+            Hash of current content to compare against previous crawls
 
-        Returns:
-            bool: True if processing should be skipped
+        Returns
+        -------
+        bool
+            True if processing should be skipped (no changes detected),
+            False if content has changed and should be processed
         """
         last_successful_crawl = (
             CrawledContent.objects.filter(
                 data_source=data_source, processing_status="completed"
             )
-            .order_by("-crawl_date")
+            .order_by("-crawled_at")
             .first()
         )
 
@@ -181,79 +220,120 @@ class BankDataCrawlerService:
 
         return False
 
-    def _record_no_changes(self, data_source: BankDataSource, content_hash: str) -> None:
-        """
-        Record a successful crawl with no content changes.
+    def _record_no_changes(self, data_source, content_hash):
+        """Record a successful crawl with no content changes by updating sync timestamps.
 
-        Args:
-            data_source (BankDataSource): Data source
-            content_hash (str): Content hash
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source instance to update
+        content_hash : str
+            SHA256 hash of the unchanged content
+
+        Returns
+        -------
+        None
         """
         # Update successful crawl timestamp
-        data_source.last_successful_crawl_at = timezone.now()
+        current_time = timezone.now()
+        data_source.last_successful_crawl_at = current_time
         data_source.save(update_fields=["last_successful_crawl_at"])
 
-        # Create record to track this check
-        CrawledContent.objects.create(
-            data_source=data_source,
-            raw_content="",  # Don't store duplicate content
-            extracted_content="",
-            content_hash=content_hash,
-            parsed_json={"skipped": "no_changes_detected"},
-            processing_status="completed",
+        # Find the latest completed crawl record with matching hash
+        latest_crawl = (
+            CrawledContent.objects.filter(
+                data_source=data_source,
+                content_hash=content_hash,
+                processing_status="completed",
+            )
+            .order_by("-crawled_at")
+            .first()
         )
 
+        if latest_crawl:
+            # Append current timestamp to sync_timestamps list
+            sync_timestamps = latest_crawl.sync_timestamps or []
+            sync_timestamps.append(current_time.isoformat())
+            latest_crawl.sync_timestamps = sync_timestamps
+            latest_crawl.save(update_fields=["sync_timestamps"])
+        else:
+            # Fallback: create new record if no existing one found (shouldn't happen)
+            CrawledContent.objects.create(
+                data_source=data_source,
+                raw_content="",
+                extracted_content="",
+                content_hash=content_hash,
+                parsed_json={"info": "no_existing_record_found"},
+                processing_status="completed",
+                sync_timestamps=[current_time.isoformat()],
+            )
+
     def _process_changed_content(
-        self,
-        data_source: BankDataSource,
-        raw_content: str,
-        extracted_content: str,
-        content_hash: str,
-    ) -> bool:
-        """
-        Process content that has changed since last crawl.
+        self, data_source, raw_content, extracted_content, content_hash
+    ):
+        """Process content that has changed since last crawl.
 
-        Args:
-            data_source (BankDataSource): Data source
-            raw_content (str): Raw content
-            extracted_content (str): Extracted text content
-            content_hash (str): Content hash
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source being processed
+        raw_content : str
+            Raw content from the source
+        extracted_content : str
+            Extracted and cleaned text content
+        content_hash : str
+            SHA256 hash of the content for change tracking
 
-        Returns:
-            bool: True if processing was successful
+        Returns
+        -------
+        bool
+            True if processing completed successfully, False if any step failed
         """
         logger.info(
             f"Content changes detected for {data_source.bank.name}, processing..."
         )
 
         # Parse content with AI
-        parsed_data = self._parse_content_safely(data_source, extracted_content)
-        if not parsed_data:
+        parsing_result = self._parse_content_safely(data_source, extracted_content)
+        if not parsing_result:
             return False
 
-        # Store crawled content
+        # Unpack the tuple (structured_data, raw_comprehensive_data)
+        structured_data, raw_comprehensive_data = parsing_result
+
+        # Store crawled content with both parsed data types
         crawled_content = self._create_crawl_record(
-            data_source, raw_content, extracted_content, content_hash, parsed_data
+            data_source,
+            raw_content,
+            extracted_content,
+            content_hash,
+            structured_data,
+            raw_comprehensive_data,
         )
 
         # Update database
-        return self._update_database_safely(data_source, parsed_data, crawled_content)
+        return self._update_database_safely(data_source, structured_data, crawled_content)
 
-    def _parse_content_safely(
-        self, data_source: BankDataSource, content: str
-    ) -> Dict[str, Any]:
-        """
-        Safely parse content with AI, handling errors.
+    def _parse_content_safely(self, data_source, content):
+        """Safely parse content with AI, handling errors.
 
-        Args:
-            data_source (BankDataSource): Data source
-            content (str): Content to parse
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source being processed for context
+        content : str
+            Extracted text content to parse with LLM
 
-        Returns:
-            Dict[str, Any]: Parsed data or None on failure
+        Returns
+        -------
+        tuple of (dict, dict) or None
+            Tuple of (structured_data, raw_comprehensive_data) on success,
+            None on parsing failure
         """
         try:
-            return self.llm_parser.parse_credit_card_data(content, data_source.bank.name)
+            return self.llm_parser.parse_comprehensive_data(
+                content, data_source.bank.name
+            )
         except (ConfigurationError, AIParsingError) as e:
             logger.error(f"AI parsing failed for {data_source.bank.name}: {e.message}")
 
@@ -265,24 +345,34 @@ class BankDataCrawlerService:
 
     def _create_crawl_record(
         self,
-        data_source: BankDataSource,
-        raw_content: str,
-        extracted_content: str,
-        content_hash: str,
-        parsed_data: Dict[str, Any],
-    ) -> CrawledContent:
-        """
-        Create a crawled content record.
+        data_source,
+        raw_content,
+        extracted_content,
+        content_hash,
+        parsed_data,
+        raw_comprehensive_data,
+    ):
+        """Create a crawled content record with both structured and raw comprehensive data.
 
-        Args:
-            data_source (BankDataSource): Data source
-            raw_content (str): Raw content
-            extracted_content (str): Extracted content
-            content_hash (str): Content hash
-            parsed_data (Dict[str, Any]): Parsed data
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source instance
+        raw_content : str
+            Raw content from the source
+        extracted_content : str
+            Extracted text content
+        content_hash : str
+            SHA256 hash for change detection
+        parsed_data : dict
+            Structured parsed data from LLM
+        raw_comprehensive_data : dict
+            Raw comprehensive data with all extracted fields
 
-        Returns:
-            CrawledContent: Created record
+        Returns
+        -------
+        CrawledContent
+            Created database record for the crawled content
         """
         return CrawledContent.objects.create(
             data_source=data_source,
@@ -290,25 +380,26 @@ class BankDataCrawlerService:
             extracted_content=extracted_content,
             content_hash=content_hash,
             parsed_json=parsed_data,
+            parsed_json_raw=raw_comprehensive_data,
             processing_status="processing",
         )
 
-    def _update_database_safely(
-        self,
-        data_source: BankDataSource,
-        parsed_data: Dict[str, Any],
-        crawled_content: CrawledContent,
-    ) -> bool:
-        """
-        Safely update database with parsed data.
+    def _update_database_safely(self, data_source, parsed_data, crawled_content):
+        """Safely update database with parsed data.
 
-        Args:
-            data_source (BankDataSource): Data source
-            parsed_data (Dict[str, Any]): Parsed data
-            crawled_content (CrawledContent): Crawled content record
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source instance
+        parsed_data : dict
+            Parsed credit card data from LLM processing
+        crawled_content : CrawledContent
+            Crawled content record to update with results
 
-        Returns:
-            bool: True if update was successful
+        Returns
+        -------
+        bool
+            True if database update was successful, False otherwise
         """
         # Handle validation errors in parsed data
         actual_data = self._extract_actual_data(parsed_data, data_source.bank.name)
@@ -329,18 +420,20 @@ class BankDataCrawlerService:
             self._record_database_failure(crawled_content, data_source, str(e))
             return False
 
-    def _extract_actual_data(
-        self, parsed_data: Dict[str, Any], bank_name: str
-    ) -> Dict[str, Any]:
-        """
-        Extract actual data from parsed response, handling validation errors.
+    def _extract_actual_data(self, parsed_data, bank_name):
+        """Extract actual data from parsed response, handling validation errors.
 
-        Args:
-            parsed_data (Dict[str, Any]): Raw parsed data
-            bank_name (str): Bank name for logging
+        Parameters
+        ----------
+        parsed_data : dict
+            Raw parsed data that may contain validation errors
+        bank_name : str
+            Bank name for logging context
 
-        Returns:
-            Dict[str, Any]: Actual data to process
+        Returns
+        -------
+        dict
+            Cleaned data ready for database processing
         """
         if "validation_errors" in parsed_data:
             logger.warning(
@@ -349,19 +442,21 @@ class BankDataCrawlerService:
             return parsed_data.get("data", parsed_data)
         return parsed_data
 
-    def _record_successful_update(
-        self,
-        crawled_content: CrawledContent,
-        data_source: BankDataSource,
-        updated_count: int,
-    ) -> None:
-        """
-        Record successful database update.
+    def _record_successful_update(self, crawled_content, data_source, updated_count):
+        """Record successful database update.
 
-        Args:
-            crawled_content (CrawledContent): Content record to update
-            data_source (BankDataSource): Data source
-            updated_count (int): Number of cards updated
+        Parameters
+        ----------
+        crawled_content : CrawledContent
+            Content record to mark as completed
+        data_source : BankDataSource
+            Data source to reset failure counters
+        updated_count : int
+            Number of credit cards updated in the database
+
+        Returns
+        -------
+        None
         """
         crawled_content.processing_status = "completed"
         crawled_content.save(update_fields=["processing_status"])
@@ -375,19 +470,21 @@ class BankDataCrawlerService:
             f"Successfully updated {updated_count} credit cards for {data_source.bank.name}"
         )
 
-    def _record_parsing_failure(
-        self,
-        crawled_content: CrawledContent,
-        actual_data: Dict[str, Any],
-        data_source: BankDataSource,
-    ) -> None:
-        """
-        Record parsing failure.
+    def _record_parsing_failure(self, crawled_content, actual_data, data_source):
+        """Record parsing failure.
 
-        Args:
-            crawled_content (CrawledContent): Content record to update
-            actual_data (Dict[str, Any]): Failed data
-            data_source (BankDataSource): Data source
+        Parameters
+        ----------
+        crawled_content : CrawledContent
+            Content record to mark as failed
+        actual_data : dict or None
+            Failed or empty parsing data
+        data_source : BankDataSource
+            Data source to increment failure counter
+
+        Returns
+        -------
+        None
         """
         error_msg = (
             actual_data.get("error", "Failed to parse data")
@@ -402,16 +499,21 @@ class BankDataCrawlerService:
         data_source.increment_failed_attempts()
         logger.error(f"Failed to parse data for {data_source.bank.name}: {error_msg}")
 
-    def _record_database_failure(
-        self, crawled_content: CrawledContent, data_source: BankDataSource, error: str
-    ) -> None:
-        """
-        Record database update failure.
+    def _record_database_failure(self, crawled_content, data_source, error):
+        """Record database update failure.
 
-        Args:
-            crawled_content (CrawledContent): Content record to update
-            data_source (BankDataSource): Data source
-            error (str): Error message
+        Parameters
+        ----------
+        crawled_content : CrawledContent
+            Content record to mark as failed
+        data_source : BankDataSource
+            Data source to increment failure counter
+        error : str
+            Error message describing the database failure
+
+        Returns
+        -------
+        None
         """
         crawled_content.processing_status = "failed"
         crawled_content.error_message = f"Database update failed: {error}"
@@ -420,15 +522,19 @@ class BankDataCrawlerService:
         data_source.increment_failed_attempts()
         logger.error(f"Database update failed for {data_source.bank.name}: {error}")
 
-    def _create_failed_crawl_record(
-        self, data_source: BankDataSource, error_message: str
-    ) -> None:
-        """
-        Create a failed crawl record.
+    def _create_failed_crawl_record(self, data_source, error_message):
+        """Create a failed crawl record.
 
-        Args:
-            data_source (BankDataSource): Data source
-            error_message (str): Error message
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Data source that failed to be crawled
+        error_message : str
+            Error message describing the failure
+
+        Returns
+        -------
+        None
         """
         CrawledContent.objects.create(
             data_source=data_source,
@@ -436,13 +542,19 @@ class BankDataCrawlerService:
             error_message=error_message,
         )
 
-    def _record_unexpected_error(self, data_source_id: int, error: str) -> None:
-        """
-        Record unexpected error during crawling.
+    def _record_unexpected_error(self, data_source_id, error):
+        """Record unexpected error during crawling.
 
-        Args:
-            data_source_id (int): Data source ID
-            error (str): Error message
+        Parameters
+        ----------
+        data_source_id : int
+            ID of the data source that encountered an error
+        error : str
+            Error message describing the unexpected failure
+
+        Returns
+        -------
+        None
         """
         try:
             data_source = BankDataSource.objects.get(id=data_source_id)

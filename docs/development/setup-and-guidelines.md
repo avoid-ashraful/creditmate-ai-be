@@ -2,13 +2,52 @@
 
 This document provides comprehensive setup instructions and development guidelines for Credit Mate AI.
 
+## Code Standards and Documentation
+
+### Docstring Format
+All functions and methods **MUST** use numpy-style docstrings without type hints in function signatures:
+
+```python
+def process_bank_data(self, bank_id, data_source_urls):
+    """Process bank data from multiple sources.
+
+    Parameters
+    ----------
+    bank_id : int
+        Database ID of the bank to process
+    data_source_urls : list of str
+        List of URLs containing bank data
+
+    Returns
+    -------
+    dict
+        Processing results with success/failure counts
+
+    Raises
+    ------
+    ValidationError
+        If bank_id is invalid or data sources are malformed
+    NetworkError
+        If unable to fetch data from provided URLs
+    """
+```
+
+### Function Signature Standards
+- **NO type hints** in function signatures
+- Use descriptive parameter names
+- All type information goes in docstrings
+- Private methods (starting with `_`) should also include docstrings
+
 ## Quick Start Development Setup
 
 ### Prerequisites
 - Python 3.12+
+- PostgreSQL 17 (primary database)
 - Redis (for Celery task queue)
-- OpenAI API Key
+- OpenAI API Key (for LLM content parsing)
+- Gemini API Key (optional, for LLM fallback)
 - Git
+- pytesseract and tesseract-ocr (for OCR functionality)
 
 ### 1. Clone and Setup
 ```bash

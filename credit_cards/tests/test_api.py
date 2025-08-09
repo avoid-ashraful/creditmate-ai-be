@@ -27,16 +27,16 @@ class TestCreditCardAPI:
             name="Alpha Card",
             annual_fee=Decimal("1000"),
             interest_rate_apr=Decimal("25.5"),
-            lounge_access_international=5,
-            lounge_access_domestic=10,
+            lounge_access_international="5 visits",
+            lounge_access_domestic="10 visits",
         )
         self.card2 = CreditCardFactory(
             bank=self.bank2,
             name="Beta Card",
             annual_fee=Decimal("0"),
             interest_rate_apr=Decimal("30.0"),
-            lounge_access_international=0,
-            lounge_access_domestic=0,
+            lounge_access_international="",
+            lounge_access_domestic="",
         )
         self.inactive_card = CreditCardFactory(
             bank=self.bank1, name="Inactive Card", is_active=False
@@ -136,7 +136,7 @@ class TestCreditCardAPI:
         assert len(response.data["results"]) >= 1
         # Check that all results have international lounge access
         for card in response.data["results"]:
-            assert card["lounge_access_international"] > 0
+            assert card["lounge_access_international"].strip() != ""
 
     def test_credit_card_ordering(self):
         """Test ordering credit cards by annual fee."""
@@ -219,7 +219,6 @@ class TestCreditCardAPI:
             "additional_features",
             "is_active",
             "has_lounge_access",
-            "total_lounge_access",
             "has_annual_fee",
             "created",
             "modified",

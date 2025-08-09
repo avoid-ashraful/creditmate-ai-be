@@ -224,7 +224,7 @@ class CleanupOldCrawledContentTaskTestCase(TestCase):
 
         # Manually set the created date for old content to simulate age
         CrawledContent.objects.filter(id__in=[old_content1.id, old_content2.id]).update(
-            crawl_date=old_date
+            crawled_at=old_date
         )
 
         result = cleanup_old_crawled_content(days_to_keep=30)
@@ -260,7 +260,7 @@ class CleanupOldCrawledContentTaskTestCase(TestCase):
         with patch("django.utils.timezone.now", return_value=old_date):
             old_content = CrawledContentFactory(data_source=self.data_source)
 
-        CrawledContent.objects.filter(id=old_content.id).update(crawl_date=old_date)
+        CrawledContent.objects.filter(id=old_content.id).update(crawled_at=old_date)
 
         # Use 7-day retention period
         result = cleanup_old_crawled_content(days_to_keep=7)

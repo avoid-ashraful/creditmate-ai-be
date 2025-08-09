@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
 from banks.api.serializers import BankListSerializer
-
-from ..models import CreditCard
+from credit_cards.models import CreditCard
 
 
 class CreditCardSerializer(serializers.ModelSerializer):

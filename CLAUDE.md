@@ -126,7 +126,8 @@ REST endpoints follow `/api/v1/` pattern:
 Required configuration in `.env`:
 - `SECRET_KEY` - Django secret key
 - `DATABASE_URL` - PostgreSQL 17 connection string
-- `OPENAI_API_KEY` - For AI content parsing
+- `OPENROUTER_API_KEY` - For AI content parsing (OpenRouter proxy)
+- `GEMINI_API_KEY` - For AI content parsing (Google Gemini fallback)
 - `CELERY_BROKER_URL` - Redis URL for task queue
 - `DEBUG` - Development mode flag
 
@@ -140,6 +141,70 @@ Required configuration in `.env`:
 
 Test configuration uses pytest with Django integration, socket blocking for external calls, and comprehensive coverage reporting.
 
+## Code Documentation Standards
+
+All functions and methods follow **numpy-style docstring format** for consistency and automatic documentation generation:
+
+```python
+def extract_content(self, url, content_type):
+    """Extract content from URL based on content type.
+
+    Parameters
+    ----------
+    url : str
+        The URL to extract content from
+    content_type : str
+        The type of content to extract (PDF, WEBPAGE, IMAGE, CSV)
+
+    Returns
+    -------
+    tuple of (str, str)
+        First element is raw content, second is extracted text content
+
+    Raises
+    ------
+    NetworkError
+        For network-related connection or timeout errors
+    ContentExtractionError
+        For HTTP errors or general extraction failures
+    """
+```
+
+## Function and Method Naming Standards
+
+All functions and methods follow these conventions:
+- Use descriptive names that clearly indicate the function's purpose
+- Avoid type hints in function signatures (use docstrings for type information)
+- Use numpy-style docstrings for all public methods and functions
+- Private methods (prefixed with `_`) should also include docstrings for complex logic
+
+### Example Refactored Method:
+```python
+# Before refactoring
+def _record_no_changes(self, data_source: BankDataSource, content_hash: str) -> None:
+    """Record that content hasn't changed."""
+    pass
+
+# After refactoring
+def _record_no_changes(self, data_source, content_hash):
+    """Record that content hasn't changed.
+
+    Parameters
+    ----------
+    data_source : BankDataSource
+        The data source being processed
+    content_hash : str
+        SHA256 hash of the content for change detection
+
+    Returns
+    -------
+    None
+    """
+    pass
+```
+
 ## Git Workflow Instructions
 
 **IMPORTANT**: Do not automatically create git commits unless explicitly requested by the user. Only commit when the user specifically asks for commits to be made.
+
+**Code Standards**: All functions and methods must use numpy-style docstrings without type hints in signatures.

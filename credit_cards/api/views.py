@@ -3,17 +3,17 @@ from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import CreditCard
-from .filters import CreditCardFilter
-from .serializers import CreditCardListSerializer, CreditCardSerializer
+from credit_cards.api.filters import CreditCardFilter
+from credit_cards.api.serializers import CreditCardListSerializer, CreditCardSerializer
+from credit_cards.models import CreditCard
 
 
 class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet for Credit Cards.
+    """ViewSet for Credit Cards.
 
-    Provides read-only operations for credit cards with comprehensive filtering,
-    search capabilities, and comparison functionality.
+    Provides read-only REST API operations for credit cards with comprehensive
+    filtering, search capabilities, comparison functionality, and search suggestions.
+    Optimized with select_related for efficient database queries.
     """
 
     queryset = CreditCard.objects.select_related("bank").filter(is_active=True)
@@ -39,14 +39,39 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["bank__name", "name"]
 
     def get_serializer_class(self):
-        """Return appropriate serializer based on action."""
+        """Return appropriate serializer based on action.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        class
+            CreditCardListSerializer for list actions,
+            CreditCardSerializer for detail actions
+        """
         if self.action == "list":
             return CreditCardListSerializer
         return CreditCardSerializer
 
     @action(detail=False, methods=["get"])
     def search_suggestions(self, request):
-        """Get search suggestions based on popular filters."""
+        """Get search suggestions based on popular filters.
+
+        Parameters
+        ----------
+        request : HttpRequest
+            Django HTTP request object
+
+        Returns
+        -------
+        Response
+            DRF Response containing structured suggestions for:
+            - Annual fee ranges with filter parameters
+            - Common benefits with filter parameters
+            - Popular bank names for filtering
+        """
         return Response(
             {
                 "annual_fee_ranges": [

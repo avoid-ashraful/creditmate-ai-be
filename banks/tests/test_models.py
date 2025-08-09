@@ -226,12 +226,12 @@ class TestCrawledContentModel:
         assert content.raw_content == "Raw content here"
         assert content.extracted_content == "Extracted content here"
         assert content.processing_status == ProcessingStatus.COMPLETED
-        assert content.crawl_date is not None
+        assert content.crawled_at is not None
 
     def test_crawled_content_str_representation(self):
         """Test crawled content string representation."""
         content = CrawledContentFactory(data_source=self.data_source)
-        expected = f"{self.bank.name} - {content.crawl_date}"
+        expected = f"{self.bank.name} - {content.crawled_at}"
         assert str(content) == expected
 
     def test_crawled_content_without_credit_card(self):
@@ -272,10 +272,10 @@ class TestCrawledContentModel:
         # Create content with different timestamps
         older_content = CrawledContentFactory(data_source=self.data_source)
 
-        # Manually update the crawl_date to make it older
+        # Manually update the crawled_at to make it older
         older_timestamp = timezone.now() - timedelta(hours=1)
         CrawledContent.objects.filter(id=older_content.id).update(
-            crawl_date=older_timestamp
+            crawled_at=older_timestamp
         )
 
         newer_content = CrawledContentFactory(data_source=self.data_source)
@@ -641,13 +641,13 @@ class TestCrawledContentEdgeCases:
         assert content2.parsed_json is None
 
     def test_crawled_content_auto_timestamp_accuracy(self):
-        """Test crawl_date auto_now_add accuracy and timezone."""
+        """Test crawled_at auto_now_add accuracy and timezone."""
         before_creation = timezone.now()
         content = CrawledContentFactory(data_source=self.data_source)
         after_creation = timezone.now()
 
-        assert before_creation <= content.crawl_date <= after_creation
-        assert content.crawl_date.tzinfo is not None
+        assert before_creation <= content.crawled_at <= after_creation
+        assert content.crawled_at.tzinfo is not None
 
     def test_crawled_content_error_message_length_limits(self):
         """Test very long error messages handling."""

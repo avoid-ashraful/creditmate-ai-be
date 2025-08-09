@@ -155,10 +155,15 @@ class TestLLMContentParser:
         content = "Test credit card content"
         result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert result[0]["name"] == "Platinum Card"
-        assert result[0]["annual_fee"] == 95
+        # Result now includes validation structure
+        assert isinstance(result, dict)
+        assert "data" in result
+        data = result["data"] if isinstance(result.get("data"), list) else result
+        if isinstance(data, dict):
+            data = [data]
+        assert len(data) == 1
+        assert data[0]["name"] == "Platinum Card"
+        assert data[0]["annual_fee"] == 95
 
     @patch("banks.services.llm_parser.genai")
     @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
@@ -298,13 +303,20 @@ class TestBankDataCrawlerService:
             patch.object(
                 self.service.content_extractor, "extract_content"
             ) as mock_extract,
-            patch.object(self.service.llm_parser, "parse_credit_card_data") as mock_parse,
+            patch.object(
+                self.service.llm_parser, "parse_comprehensive_data"
+            ) as mock_parse,
             patch.object(
                 self.service.data_service, "update_credit_card_data"
             ) as mock_update,
         ):
             mock_extract.return_value = ("raw content", "extracted content")
-            mock_parse.return_value = [{"name": "Test Card", "annual_fee": 95}]
+            mock_parse.return_value = (
+                [{"name": "Test Card", "annual_fee": 95}],  # structured data
+                [
+                    {"name": "Test Card", "annual_fee": 95, "Processing Fee": "2%"}
+                ],  # raw comprehensive data
+            )
             mock_update.return_value = 1
 
             result = self.service.crawl_bank_data_source(self.data_source.id)

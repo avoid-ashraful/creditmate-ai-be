@@ -5,8 +5,8 @@ import factory
 from django.db.models.signals import post_save
 from django.utils import timezone
 
-from .enums import ContentType, ProcessingStatus
-from .models import Bank, BankDataSource, CrawledContent
+from banks.enums import ContentType, ProcessingStatus
+from banks.models import Bank, BankDataSource, CrawledContent
 
 
 @factory.django.mute_signals(post_save)
