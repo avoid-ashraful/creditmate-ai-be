@@ -126,7 +126,8 @@ REST endpoints follow `/api/v1/` pattern:
 Required configuration in `.env`:
 - `SECRET_KEY` - Django secret key
 - `DATABASE_URL` - PostgreSQL 17 connection string
-- `OPENAI_API_KEY` - For AI content parsing
+- `OPENROUTER_API_KEY` - For AI content parsing (OpenRouter proxy)
+- `GEMINI_API_KEY` - For AI content parsing (Google Gemini fallback)
 - `CELERY_BROKER_URL` - Redis URL for task queue
 - `DEBUG` - Development mode flag
 

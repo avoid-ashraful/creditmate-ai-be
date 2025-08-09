@@ -285,11 +285,7 @@ class ScheduleChargeURLFinder:
         bool
             True if Gemini AI is properly configured and available
         """
-        return (
-            genai is not None
-            and hasattr(settings, "GEMINI_API_KEY")
-            and settings.GEMINI_API_KEY
-        )
+        return genai is not None and settings.GEMINI_API_KEY
 
     def _build_url_finding_prompt(self, base_url, links, contains_charges):
         """Build prompt for AI to find schedule charge URL.

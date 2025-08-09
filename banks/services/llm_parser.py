@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 
 import google.generativeai as genai
 from openai import OpenAI
@@ -125,7 +124,7 @@ class LLMContentParser:
         -------
         None
         """
-        if genai is not None and hasattr(settings, "GEMINI_API_KEY"):
+        if genai is not None and settings.GEMINI_API_KEY:
             genai.configure(api_key=settings.GEMINI_API_KEY)
 
     def _validate_configuration(self):
@@ -144,7 +143,7 @@ class LLMContentParser:
         ConfigurationError
             If Gemini API key is not configured in settings
         """
-        if not hasattr(settings, "GEMINI_API_KEY") or not settings.GEMINI_API_KEY:
+        if not settings.GEMINI_API_KEY:
             raise ConfigurationError("Gemini API key not configured")
 
     def _generate_ai_response(self, content, bank_name):
@@ -168,15 +167,14 @@ class LLMContentParser:
             If AI generation fails or returns empty response
         """
         # Check if OpenRouter API key is available
-        openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not openrouter_api_key:
+        if not settings.OPENROUTER_API_KEY:
             # Fallback to Gemini
             return self._generate_gemini_response(content, bank_name)
 
         try:
             client = OpenAI(
                 base_url="https://openrouter.ai/api/v1",
-                api_key=openrouter_api_key,
+                api_key=settings.OPENROUTER_API_KEY,
             )
 
             prompt = self._build_parsing_prompt(content, bank_name)
@@ -275,15 +273,14 @@ class LLMContentParser:
             If AI generation fails or returns insufficient data
         """
         # Check if OpenRouter API key is available
-        openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not openrouter_api_key:
+        if not settings.OPENROUTER_API_KEY:
             # Fallback to Gemini
             return self._generate_comprehensive_gemini_response(content, bank_name)
 
         try:
             client = OpenAI(
                 base_url="https://openrouter.ai/api/v1",
-                api_key=openrouter_api_key,
+                api_key=settings.OPENROUTER_API_KEY,
             )
 
             prompt = self._build_comprehensive_parsing_prompt(content, bank_name)
