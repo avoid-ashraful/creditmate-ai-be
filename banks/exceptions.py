@@ -6,7 +6,7 @@ Custom exceptions for banks app to provide better error categorization.
 class CrawlingError(Exception):
     """Base class for all crawling-related errors."""
 
-    def __init__(self, message: str, details: dict = None):
+    def __init__(self, message, details=None):
         super().__init__(message)
         self.message = message
         self.details = details or {}

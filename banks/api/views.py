@@ -7,10 +7,11 @@ from .serializers import BankListSerializer, BankSerializer
 
 
 class BankViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet for Banks.
+    """ViewSet for Banks.
 
-    Provides read-only operations for banks with filtering and search capabilities.
+    Provides read-only REST API operations for banks with comprehensive
+    filtering, search, and ordering capabilities. Supports list and detail
+    views with different serialization formats.
     """
 
     queryset = Bank.objects.filter(is_active=True)
@@ -22,7 +23,17 @@ class BankViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["name"]
 
     def get_serializer_class(self):
-        """Return appropriate serializer based on action."""
+        """Return appropriate serializer based on action.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        class
+            BankListSerializer for list actions, BankSerializer for detail actions
+        """
         if self.action == "list":
             return BankListSerializer
         return BankSerializer

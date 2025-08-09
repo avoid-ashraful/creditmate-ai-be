@@ -3,7 +3,6 @@ Service for managing credit card data in the database.
 """
 
 import logging
-from typing import Any, Dict, Union
 
 from credit_cards.models import CreditCard
 
@@ -11,20 +10,28 @@ logger = logging.getLogger(__name__)
 
 
 class CreditCardDataService:
-    """Service for updating credit card data in the database."""
+    """Service for updating credit card data in the database.
 
-    def update_credit_card_data(
-        self, bank_id: int, parsed_data: Union[Dict[str, Any], list]
-    ) -> int:
-        """
-        Update credit card data in the database.
+    This service handles the conversion of parsed credit card data from
+    various sources into database records, including data normalization,
+    validation, and creation/update operations.
+    """
 
-        Args:
-            bank_id (int): ID of the bank
-            parsed_data (Union[Dict[str, Any], list]): Parsed credit card data
+    def update_credit_card_data(self, bank_id, parsed_data):
+        """Update credit card data in the database.
 
-        Returns:
-            int: Number of cards updated/created
+        Parameters
+        ----------
+        bank_id : int
+            ID of the bank to associate credit cards with
+        parsed_data : dict or list
+            Parsed credit card data from LLM processing, can be single
+            card dict or list of card dicts
+
+        Returns
+        -------
+        int
+            Number of credit cards successfully updated or created
         """
         logger.info(f"Raw parsed data received for bank {bank_id}: {parsed_data}")
         normalized_data = self._normalize_parsed_data(parsed_data)
@@ -43,15 +50,18 @@ class CreditCardDataService:
         logger.info(f"Total cards processed: {updated_count}")
         return updated_count
 
-    def _normalize_parsed_data(self, parsed_data: Union[Dict[str, Any], list]) -> list:
-        """
-        Normalize parsed data to a list format.
+    def _normalize_parsed_data(self, parsed_data):
+        """Normalize parsed data to a list format.
 
-        Args:
-            parsed_data (Union[Dict[str, Any], list]): Data to normalize
+        Parameters
+        ----------
+        parsed_data : dict or list
+            Raw parsed data that may be in various formats
 
-        Returns:
-            list: Normalized data as list
+        Returns
+        -------
+        list
+            Normalized list of credit card data dictionaries
         """
         if isinstance(parsed_data, list):
             return parsed_data
@@ -74,16 +84,20 @@ class CreditCardDataService:
             logger.warning("Parsed data is not in expected format")
             return []
 
-    def _update_single_card(self, bank_id: int, card_data: Dict[str, Any]) -> int:
-        """
-        Update or create a single credit card record.
+    def _update_single_card(self, bank_id, card_data):
+        """Update or create a single credit card record.
 
-        Args:
-            bank_id (int): ID of the bank
-            card_data (Dict[str, Any]): Credit card data
+        Parameters
+        ----------
+        bank_id : int
+            ID of the bank to associate the card with
+        card_data : dict
+            Dictionary containing credit card information and attributes
 
-        Returns:
-            int: 1 if card was updated/created, 0 otherwise
+        Returns
+        -------
+        int
+            1 if card was successfully updated or created, 0 otherwise
         """
         card_name = card_data.get("name", "").strip()
         if not card_name:
@@ -121,15 +135,18 @@ class CreditCardDataService:
             logger.error(f"Failed to create/update credit card '{card_name}': {str(e)}")
             raise
 
-    def _prepare_card_defaults(self, card_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Prepare default values for credit card creation/update.
+    def _prepare_card_defaults(self, card_data):
+        """Prepare default values for credit card creation/update.
 
-        Args:
-            card_data (Dict[str, Any]): Raw card data
+        Parameters
+        ----------
+        card_data : dict
+            Raw credit card data from parsing
 
-        Returns:
-            Dict[str, Any]: Prepared defaults for database
+        Returns
+        -------
+        dict
+            Prepared defaults dictionary for database operations
         """
         return {
             "annual_fee": self._parse_decimal(card_data.get("annual_fee", 0)),
@@ -148,15 +165,18 @@ class CreditCardDataService:
             "is_active": True,
         }
 
-    def _parse_decimal(self, value: Union[str, int, float]) -> float:
-        """
-        Parse decimal value from various formats.
+    def _parse_decimal(self, value):
+        """Parse decimal value from various formats.
 
-        Args:
-            value (Union[str, int, float]): Value to parse
+        Parameters
+        ----------
+        value : str, int, or float
+            Value to parse, may contain currency symbols or percentages
 
-        Returns:
-            float: Parsed decimal value
+        Returns
+        -------
+        float
+            Parsed decimal value, defaults to 0.0 for invalid inputs
         """
         if isinstance(value, (int, float)):
             return float(value)

@@ -1,26 +1,33 @@
 """Data validation layer for credit card data."""
 
 import logging
-from typing import Any, Dict, List, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
 
 class CreditCardDataValidator:
-    """Validate parsed credit card data before saving to database."""
+    """Validate parsed credit card data before saving to database.
+
+    This validator ensures data integrity and consistency for credit card
+    information parsed from various sources before database insertion.
+    Provides validation and sanitization methods for all credit card fields.
+    """
 
     @staticmethod
-    def validate_credit_card_data(
-        data: Union[Dict[str, Any], List[Dict[str, Any]]]
-    ) -> Tuple[bool, List[str]]:
-        """
-        Validate credit card data structure and values.
+    def validate_credit_card_data(data):
+        """Validate credit card data structure and values.
 
-        Args:
-            data (Union[Dict[str, Any], List[Dict[str, Any]]]): Single card dict or list of card dicts
+        Parameters
+        ----------
+        data : dict or list of dict
+            Single credit card dictionary or list of credit card dictionaries
+            containing parsed data to validate
 
-        Returns:
-            Tuple[bool, List[str]]: Tuple of (is_valid, list_of_errors)
+        Returns
+        -------
+        tuple of (bool, list)
+            First element is True if valid, False otherwise.
+            Second element is list of validation error messages.
         """
         errors = []
         cards_data = CreditCardDataValidator._normalize_data_for_validation(data, errors)
@@ -36,18 +43,20 @@ class CreditCardDataValidator:
         return len(errors) == 0, errors
 
     @staticmethod
-    def _normalize_data_for_validation(
-        data: Union[Dict[str, Any], List[Dict[str, Any]]], errors: List[str]
-    ) -> List[Dict[str, Any]]:
-        """
-        Normalize data format for validation.
+    def _normalize_data_for_validation(data, errors):
+        """Normalize data format for validation.
 
-        Args:
-            data (Union[Dict[str, Any], List[Dict[str, Any]]]): Data to normalize
-            errors (List[str]): Error list to append to
+        Parameters
+        ----------
+        data : dict or list of dict
+            Raw data that may be in various formats
+        errors : list
+            List to append error messages to during normalization
 
-        Returns:
-            List[Dict[str, Any]]: Normalized card data list
+        Returns
+        -------
+        list of dict
+            Normalized list of credit card data dictionaries
         """
         # Handle both single dict and list formats
         if isinstance(data, dict):
@@ -73,16 +82,20 @@ class CreditCardDataValidator:
         return cards_data
 
     @staticmethod
-    def _validate_single_card(card_data: Dict[str, Any], index: int) -> List[str]:
-        """
-        Validate a single credit card data dict.
+    def _validate_single_card(card_data, index):
+        """Validate a single credit card data dict.
 
-        Args:
-            card_data (Dict[str, Any]): Single card data to validate
-            index (int): Index of card for error reporting
+        Parameters
+        ----------
+        card_data : dict
+            Single credit card data dictionary to validate
+        index : int
+            Zero-based index of card for error message context
 
-        Returns:
-            List[str]: List of validation errors
+        Returns
+        -------
+        list
+            List of validation error messages for this card
         """
         errors = []
         prefix = f"Card {index + 1}: "
@@ -103,16 +116,20 @@ class CreditCardDataValidator:
         return errors
 
     @staticmethod
-    def _validate_string_fields(card_data: Dict[str, Any], prefix: str) -> List[str]:
-        """
-        Validate string fields.
+    def _validate_string_fields(card_data, prefix):
+        """Validate string fields.
 
-        Args:
-            card_data (Dict[str, Any]): Card data
-            prefix (str): Error message prefix
+        Parameters
+        ----------
+        card_data : dict
+            Credit card data dictionary
+        prefix : str
+            Error message prefix for consistent formatting
 
-        Returns:
-            List[str]: Validation errors
+        Returns
+        -------
+        list
+            List of validation errors for string fields
         """
         errors = []
 
@@ -133,16 +150,20 @@ class CreditCardDataValidator:
         return errors
 
     @staticmethod
-    def _validate_numeric_fields(card_data: Dict[str, Any], prefix: str) -> List[str]:
-        """
-        Validate numeric fields.
+    def _validate_numeric_fields(card_data, prefix):
+        """Validate numeric fields.
 
-        Args:
-            card_data (Dict[str, Any]): Card data
-            prefix (str): Error message prefix
+        Parameters
+        ----------
+        card_data : dict
+            Credit card data dictionary
+        prefix : str
+            Error message prefix for consistent formatting
 
-        Returns:
-            List[str]: Validation errors
+        Returns
+        -------
+        list
+            List of validation errors for numeric fields
         """
         errors = []
 
@@ -172,16 +193,20 @@ class CreditCardDataValidator:
         return errors
 
     @staticmethod
-    def _validate_annual_fee(annual_fee: Any, prefix: str) -> List[str]:
-        """
-        Validate annual fee value.
+    def _validate_annual_fee(annual_fee, prefix):
+        """Validate annual fee value.
 
-        Args:
-            annual_fee (Any): Fee value to validate
-            prefix (str): Error message prefix
+        Parameters
+        ----------
+        annual_fee : any
+            Annual fee value to validate (number, string, etc.)
+        prefix : str
+            Error message prefix for consistent formatting
 
-        Returns:
-            List[str]: Validation errors
+        Returns
+        -------
+        list
+            List of validation errors for annual fee field
         """
         errors = []
         try:
@@ -195,16 +220,20 @@ class CreditCardDataValidator:
         return errors
 
     @staticmethod
-    def _validate_interest_rate(interest_rate: Any, prefix: str) -> List[str]:
-        """
-        Validate interest rate value.
+    def _validate_interest_rate(interest_rate, prefix):
+        """Validate interest rate value.
 
-        Args:
-            interest_rate (Any): Rate value to validate
-            prefix (str): Error message prefix
+        Parameters
+        ----------
+        interest_rate : any
+            Interest rate value to validate (number, string, etc.)
+        prefix : str
+            Error message prefix for consistent formatting
 
-        Returns:
-            List[str]: validation errors
+        Returns
+        -------
+        list
+            List of validation errors for interest rate field
         """
         errors = []
         try:
@@ -220,16 +249,20 @@ class CreditCardDataValidator:
         return errors
 
     @staticmethod
-    def _validate_json_fields(card_data: Dict[str, Any], prefix: str) -> List[str]:
-        """
-        Validate JSON fields.
+    def _validate_json_fields(card_data, prefix):
+        """Validate JSON fields.
 
-        Args:
-            card_data (Dict[str, Any]): Card data
-            prefix (str): Error message prefix
+        Parameters
+        ----------
+        card_data : dict
+            Credit card data dictionary
+        prefix : str
+            Error message prefix for consistent formatting
 
-        Returns:
-            List[str]: Validation errors
+        Returns
+        -------
+        list
+            List of validation errors for JSON/complex fields
         """
         errors = []
 
@@ -251,17 +284,18 @@ class CreditCardDataValidator:
         return errors
 
     @staticmethod
-    def sanitize_credit_card_data(
-        data: Union[Dict[str, Any], List[Dict[str, Any]]]
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
-        """
-        Sanitize and normalize credit card data.
+    def sanitize_credit_card_data(data):
+        """Sanitize and normalize credit card data.
 
-        Args:
-            data (Union[Dict[str, Any], List[Dict[str, Any]]]): Credit card data to sanitize
+        Parameters
+        ----------
+        data : dict or list of dict
+            Credit card data to sanitize and normalize
 
-        Returns:
-            Union[Dict[str, Any], List[Dict[str, Any]]]: Sanitized data
+        Returns
+        -------
+        dict or list of dict
+            Sanitized data with consistent formats and clean values
         """
         # Handle both single dict and list formats
         if isinstance(data, dict):
@@ -280,15 +314,18 @@ class CreditCardDataValidator:
         return data
 
     @staticmethod
-    def _sanitize_single_card(card_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Sanitize a single credit card data dict.
+    def _sanitize_single_card(card_data):
+        """Sanitize a single credit card data dict.
 
-        Args:
-            card_data (Dict[str, Any]): Card data to sanitize
+        Parameters
+        ----------
+        card_data : dict
+            Single credit card data dictionary to sanitize
 
-        Returns:
-            Dict[str, Any]: Sanitized card data
+        Returns
+        -------
+        dict
+            Sanitized credit card data with normalized field values
         """
         sanitized = {}
 
@@ -304,15 +341,18 @@ class CreditCardDataValidator:
         return sanitized
 
     @staticmethod
-    def _sanitize_string_fields(card_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Sanitize string fields.
+    def _sanitize_string_fields(card_data):
+        """Sanitize string fields.
 
-        Args:
-            card_data (Dict[str, Any]): Card data
+        Parameters
+        ----------
+        card_data : dict
+            Credit card data dictionary
 
-        Returns:
-            Dict[str, Any]: Sanitized string fields
+        Returns
+        -------
+        dict
+            Dictionary with sanitized string field values
         """
         sanitized = {}
         string_fields = [
@@ -334,15 +374,18 @@ class CreditCardDataValidator:
         return sanitized
 
     @staticmethod
-    def _sanitize_numeric_fields(card_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Sanitize numeric fields.
+    def _sanitize_numeric_fields(card_data):
+        """Sanitize numeric fields.
 
-        Args:
-            card_data (Dict[str, Any]): Card data
+        Parameters
+        ----------
+        card_data : dict
+            Credit card data dictionary
 
-        Returns:
-            Dict[str, Any]: Sanitized numeric fields
+        Returns
+        -------
+        dict
+            Dictionary with sanitized numeric field values
         """
         sanitized = {}
         numeric_fields = [
@@ -363,15 +406,18 @@ class CreditCardDataValidator:
         return sanitized
 
     @staticmethod
-    def _sanitize_json_fields(card_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Sanitize JSON fields.
+    def _sanitize_json_fields(card_data):
+        """Sanitize JSON fields.
 
-        Args:
-            card_data (Dict[str, Any]): Card data
+        Parameters
+        ----------
+        card_data : dict
+            Credit card data dictionary
 
-        Returns:
-            Dict[str, Any]: Sanitized JSON fields
+        Returns
+        -------
+        dict
+            Dictionary with sanitized JSON/complex field values
         """
         sanitized = {}
 

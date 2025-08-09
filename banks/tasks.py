@@ -1,5 +1,4 @@
 import logging
-from typing import Any, Dict
 
 from django.db import models
 from django.utils import timezone
@@ -25,15 +24,24 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=300)
-def crawl_bank_data_source(self, data_source_id: int) -> Dict[str, Any]:
-    """
-    Celery task to crawl a single bank data source.
+def crawl_bank_data_source(self, data_source_id):
+    """Celery task to crawl a single bank data source.
 
-    Args:
-        data_source_id: ID of the BankDataSource to crawl
+    Parameters
+    ----------
+    self : celery.Task
+        Celery task instance for retry functionality
+    data_source_id : int
+        ID of the BankDataSource to crawl
 
-    Returns:
-        Dict containing task result information
+    Returns
+    -------
+    dict
+        Dictionary containing task result information with keys:
+        - status: 'success', 'failed', or 'error'
+        - data_source_id: ID of the processed data source
+        - timestamp: ISO formatted timestamp
+        - error: Error message if applicable
     """
     try:
         crawler = BankDataCrawlerService()
@@ -74,13 +82,24 @@ def crawl_bank_data_source(self, data_source_id: int) -> Dict[str, Any]:
 
 
 @shared_task
-def crawl_all_bank_data() -> Dict[str, Any]:
-    """
-    Celery task to crawl all active bank data sources.
-    This task is scheduled to run weekly.
+def crawl_all_bank_data():
+    """Celery task to crawl all active bank data sources.
 
-    Returns:
-        Dict containing overall crawling results
+    This task is scheduled to run weekly and processes all active
+    bank data sources in the system.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    dict
+        Dictionary containing overall crawling results with keys:
+        - status: 'completed' or 'error'
+        - timestamp: ISO formatted timestamp
+        - results: Summary of crawling results
+        - error: Error message if applicable
     """
     try:
         logger.info("Starting weekly crawl of all bank data sources")
@@ -106,15 +125,23 @@ def crawl_all_bank_data() -> Dict[str, Any]:
 
 
 @shared_task
-def crawl_bank_data_sources_by_bank(bank_id: int) -> Dict[str, Any]:
-    """
-    Celery task to crawl all data sources for a specific bank.
+def crawl_bank_data_sources_by_bank(bank_id):
+    """Celery task to crawl all data sources for a specific bank.
 
-    Args:
-        bank_id: ID of the Bank whose data sources should be crawled
+    Parameters
+    ----------
+    bank_id : int
+        ID of the Bank whose data sources should be crawled
 
-    Returns:
-        Dict containing crawling results for the bank
+    Returns
+    -------
+    dict
+        Dictionary containing crawling results for the bank with keys:
+        - status: 'completed', 'skipped', or 'error'
+        - bank_id: ID of the processed bank
+        - timestamp: ISO formatted timestamp
+        - results: Summary of crawling results
+        - error: Error message if applicable
     """
     try:
         data_sources = BankDataSource.objects.filter(bank_id=bank_id, is_active=True)
@@ -162,16 +189,26 @@ def crawl_bank_data_sources_by_bank(bank_id: int) -> Dict[str, Any]:
 
 
 @shared_task
-def cleanup_old_crawled_content(days_to_keep: int = 30) -> Dict[str, Any]:
-    """
-    Celery task to clean up old crawled content records.
-    Keeps only the most recent records for each data source.
+def cleanup_old_crawled_content(days_to_keep=30):
+    """Celery task to clean up old crawled content records.
 
-    Args:
-        days_to_keep: Number of days worth of records to keep
+    Keeps only the most recent records for each data source by removing
+    records older than the specified number of days.
 
-    Returns:
-        Dict containing cleanup results
+    Parameters
+    ----------
+    days_to_keep : int, optional
+        Number of days worth of records to keep, by default 30
+
+    Returns
+    -------
+    dict
+        Dictionary containing cleanup results with keys:
+        - status: 'completed' or 'error'
+        - timestamp: ISO formatted timestamp
+        - deleted_count: Number of records deleted
+        - cutoff_date: Date threshold for deletion
+        - error: Error message if applicable
     """
     try:
         from datetime import timedelta
@@ -206,18 +243,28 @@ def cleanup_old_crawled_content(days_to_keep: int = 30) -> Dict[str, Any]:
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=300)
-def find_and_update_schedule_charge_urls(self) -> Dict[str, Any]:
-    """
-    Celery task to find schedule charge URLs for all banks and update BankDataSource.
+def find_and_update_schedule_charge_urls(self):
+    """Celery task to find schedule charge URLs for all banks and update BankDataSource.
 
-    This task:
-    1. Goes through all banks with schedule_charge_url
+    This task performs the following operations:
+    1. Goes through all banks with schedule_charge_url configured
     2. Uses AI to find the exact URL for charges document/page
     3. Checks if URL exists in BankDataSource, updates last_verified_at if exists
     4. Creates new BankDataSource entry if URL doesn't exist
 
-    Returns:
-        Dict containing task results
+    Parameters
+    ----------
+    self : celery.Task
+        Celery task instance for retry functionality
+
+    Returns
+    -------
+    dict
+        Dictionary containing task results with keys:
+        - status: 'completed' or 'error'
+        - timestamp: ISO formatted timestamp
+        - results: Summary of processing results
+        - error: Error message if applicable
     """
     try:
         logger.info("Starting schedule charge URL discovery for all banks")
@@ -240,14 +287,35 @@ def find_and_update_schedule_charge_urls(self) -> Dict[str, Any]:
 
 
 def _get_banks_with_schedule_urls():
-    """Get all active banks with schedule_charge_url configured."""
+    """Get all active banks with schedule_charge_url configured.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    QuerySet
+        Django QuerySet of Bank instances that are active and have
+        schedule_charge_url configured
+    """
     return Bank.objects.filter(is_active=True, schedule_charge_url__isnull=False).exclude(
         schedule_charge_url=""
     )
 
 
 def _create_empty_result():
-    """Create result for when no banks are found."""
+    """Create result for when no banks are found.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    dict
+        Empty result dictionary with zero counts for all metrics
+    """
     logger.warning("No banks found with schedule_charge_url configured")
     return {
         "status": "completed",
@@ -264,7 +332,18 @@ def _create_empty_result():
 
 
 def _initialize_task_results(total_count):
-    """Initialize the task results tracking dictionary."""
+    """Initialize the task results tracking dictionary.
+
+    Parameters
+    ----------
+    total_count : int
+        Total number of banks to process
+
+    Returns
+    -------
+    dict
+        Initialized results dictionary with tracking counters
+    """
     return {
         "total": total_count,
         "processed": 0,
@@ -276,7 +355,21 @@ def _initialize_task_results(total_count):
 
 
 def _process_bank_schedule_url(bank, finder, results):
-    """Process a single bank's schedule URL discovery."""
+    """Process a single bank's schedule URL discovery.
+
+    Parameters
+    ----------
+    bank : Bank
+        Bank instance to process
+    finder : ScheduleChargeURLFinder
+        URL finder service instance
+    results : dict
+        Results dictionary to update with processing outcomes
+
+    Returns
+    -------
+    None
+    """
     try:
         logger.info(f"Processing bank: {bank.name} - {bank.schedule_charge_url}")
         results["processed"] += 1
@@ -370,15 +463,24 @@ def _handle_task_exception(task_self, exc):
 
 
 @shared_task
-def find_schedule_charge_url_for_bank(bank_id: int) -> Dict[str, Any]:
-    """
-    Celery task to find schedule charge URL for a specific bank.
+def find_schedule_charge_url_for_bank(bank_id):
+    """Celery task to find schedule charge URL for a specific bank.
 
-    Args:
-        bank_id: ID of the bank to process
+    Parameters
+    ----------
+    bank_id : int
+        ID of the bank to process for URL discovery
 
-    Returns:
-        Dict containing task results for the specific bank
+    Returns
+    -------
+    dict
+        Dictionary containing task results for the specific bank with keys:
+        - status: 'success', 'not_found', 'skipped', or 'error'
+        - bank_id: ID of the processed bank
+        - bank_name: Name of the bank
+        - timestamp: ISO formatted timestamp
+        - found_url: URL if found
+        - error: Error message if applicable
     """
     try:
         bank = Bank.objects.get(id=bank_id, is_active=True)
@@ -472,7 +574,7 @@ def find_schedule_charge_url_for_bank(bank_id: int) -> Dict[str, Any]:
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=300)
-def monthly_data_quality_check(self) -> Dict[str, Any]:
+def monthly_data_quality_check(self):
     """
     Monthly task to perform comprehensive data quality checks.
     Runs on the 1st day of each month.
@@ -693,7 +795,7 @@ def _handle_quality_check_exception(task_self, exc):
 
 
 @shared_task(bind=True, max_retries=2, default_retry_delay=600)
-def monthly_schedule_charge_url_discovery(self) -> Dict[str, Any]:
+def monthly_schedule_charge_url_discovery(self):
     """
     Monthly task to discover and update schedule charge URLs for all banks.
     Runs on the 1st day of each month.
@@ -741,7 +843,7 @@ def monthly_schedule_charge_url_discovery(self) -> Dict[str, Any]:
 
 
 @shared_task(bind=True, max_retries=2, default_retry_delay=600)
-def monthly_comprehensive_crawl(self) -> Dict[str, Any]:
+def monthly_comprehensive_crawl(self):
     """
     Monthly comprehensive crawl of all bank data sources.
     Runs on the 1st day of each month.

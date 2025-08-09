@@ -5,7 +5,6 @@ LLM content parsing service for extracting structured data.
 import json
 import logging
 import os
-from typing import Any, Dict
 
 from django.conf import settings
 
@@ -30,26 +29,46 @@ logger = logging.getLogger(__name__)
 
 
 class LLMContentParser:
-    """Service for parsing extracted content using LLM."""
+    """Service for parsing extracted content using Large Language Models.
+
+    This service handles the conversion of unstructured text content from
+    various sources (PDFs, webpages, images, CSV) into structured credit card
+    data using OpenAI GPT models with Gemini as fallback.
+    """
 
     def __init__(self):
-        """Initialize the LLM parser."""
+        """Initialize the LLM parser.
+
+        Sets up the Gemini AI configuration for fallback scenarios.
+
+        Returns
+        -------
+        None
+        """
         self._configure_genai()
 
-    def parse_credit_card_data(self, content: str, bank_name: str) -> Dict[str, Any]:
-        """
-        Parse credit card information from extracted content using LLM.
+    def parse_credit_card_data(self, content, bank_name):
+        """Parse credit card information from extracted content using LLM.
 
-        Args:
-            content (str): Extracted content to parse
-            bank_name (str): Name of the bank for context
+        Parameters
+        ----------
+        content : str
+            Extracted text content to parse from various sources
+        bank_name : str
+            Name of the bank for context and specialized parsing
 
-        Returns:
-            Dict[str, Any]: Parsed and validated credit card data
+        Returns
+        -------
+        dict
+            Parsed and validated credit card data containing structured
+            information about credit cards found in the content
 
-        Raises:
-            ConfigurationError: If Gemini AI is not properly configured
-            AIParsingError: If parsing fails
+        Raises
+        ------
+        ConfigurationError
+            If Gemini AI is not properly configured
+        AIParsingError
+            If parsing fails due to LLM errors or invalid content
         """
         self._validate_configuration()
 
@@ -68,22 +87,28 @@ class LLMContentParser:
                 {"bank_name": bank_name, "error_type": type(e).__name__},
             ) from e
 
-    def parse_comprehensive_data(
-        self, content: str, bank_name: str
-    ) -> tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Parse both structured credit card data and comprehensive raw data.
+    def parse_comprehensive_data(self, content, bank_name):
+        """Parse both structured credit card data and comprehensive raw data.
 
-        Args:
-            content (str): Extracted content to parse
-            bank_name (str): Name of the bank for context
+        Parameters
+        ----------
+        content : str
+            Extracted text content to parse
+        bank_name : str
+            Name of the bank for specialized parsing context
 
-        Returns:
-            tuple: (structured_data, raw_comprehensive_data)
+        Returns
+        -------
+        tuple of (dict, dict)
+            First element contains structured credit card data,
+            second element contains comprehensive raw data with all fields
 
-        Raises:
-            ConfigurationError: If Gemini AI is not properly configured
-            AIParsingError: If parsing fails
+        Raises
+        ------
+        ConfigurationError
+            If Gemini AI is not properly configured
+        AIParsingError
+            If parsing fails due to LLM processing errors
         """
         self._validate_configuration()
 
@@ -105,17 +130,35 @@ class LLMContentParser:
                 {"bank_name": bank_name, "error_type": type(e).__name__},
             ) from e
 
-    def _configure_genai(self) -> None:
-        """Configure Gemini AI if available."""
+    def _configure_genai(self):
+        """Configure Gemini AI if available.
+
+        Sets up Gemini AI client configuration using the API key from
+        Django settings if available.
+
+        Returns
+        -------
+        None
+        """
         if genai is not None and hasattr(settings, "GEMINI_API_KEY"):
             genai.configure(api_key=settings.GEMINI_API_KEY)
 
-    def _validate_configuration(self) -> None:
-        """
-        Validate that required dependencies and configuration are available.
+    def _validate_configuration(self):
+        """Validate that required dependencies and configuration are available.
 
-        Raises:
-            ConfigurationError: If configuration is invalid
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ConfigurationError
+            If Google Generative AI library is not installed or
+            Gemini API key is not configured in settings
         """
         if genai is None:
             raise ConfigurationError("Google Generative AI library not installed")
@@ -123,19 +166,25 @@ class LLMContentParser:
         if not hasattr(settings, "GEMINI_API_KEY") or not settings.GEMINI_API_KEY:
             raise ConfigurationError("Gemini API key not configured")
 
-    def _generate_ai_response(self, content: str, bank_name: str) -> str:
-        """
-        Generate AI response for the given content using OpenRouter.
+    def _generate_ai_response(self, content, bank_name):
+        """Generate AI response for the given content using OpenRouter.
 
-        Args:
-            content (str): Content to analyze
-            bank_name (str): Bank name for context
+        Parameters
+        ----------
+        content : str
+            Text content to analyze and parse
+        bank_name : str
+            Bank name for contextual parsing optimization
 
-        Returns:
-            str: Raw AI response
+        Returns
+        -------
+        str
+            Raw AI response containing parsed credit card information
 
-        Raises:
-            AIParsingError: If AI generation fails
+        Raises
+        ------
+        AIParsingError
+            If AI generation fails or returns empty response
         """
         # Check if OpenRouter API key is available
         openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
@@ -178,19 +227,25 @@ class LLMContentParser:
             )
             return self._generate_gemini_response(content, bank_name)
 
-    def _generate_gemini_response(self, content: str, bank_name: str) -> str:
-        """
-        Fallback method to generate response using direct Gemini API.
+    def _generate_gemini_response(self, content, bank_name):
+        """Fallback method to generate response using direct Gemini API.
 
-        Args:
-            content (str): Content to analyze
-            bank_name (str): Bank name for context
+        Parameters
+        ----------
+        content : str
+            Text content to analyze when OpenRouter fails
+        bank_name : str
+            Bank name for parsing context
 
-        Returns:
-            str: Raw AI response
+        Returns
+        -------
+        str
+            Raw AI response from Gemini API
 
-        Raises:
-            AIParsingError: If generation fails
+        Raises
+        ------
+        AIParsingError
+            If Gemini generation fails or returns empty response
         """
         try:
             model = genai.GenerativeModel("gemini-1.5-flash")
@@ -218,19 +273,25 @@ class LLMContentParser:
                 f"Error generating AI response: {str(e)}", {"bank_name": bank_name}
             ) from e
 
-    def _generate_comprehensive_ai_response(self, content: str, bank_name: str) -> str:
-        """
-        Generate AI response for comprehensive data extraction using OpenRouter.
+    def _generate_comprehensive_ai_response(self, content, bank_name):
+        """Generate AI response for comprehensive data extraction using OpenRouter.
 
-        Args:
-            content (str): Content to analyze
-            bank_name (str): Bank name for context
+        Parameters
+        ----------
+        content : str
+            Text content to analyze for comprehensive extraction
+        bank_name : str
+            Bank name for contextual processing
 
-        Returns:
-            str: Raw AI response with comprehensive data
+        Returns
+        -------
+        str
+            Raw AI response with comprehensive credit card data
 
-        Raises:
-            AIParsingError: If AI generation fails
+        Raises
+        ------
+        AIParsingError
+            If AI generation fails or returns insufficient data
         """
         # Check if OpenRouter API key is available
         openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
@@ -274,21 +335,25 @@ class LLMContentParser:
             )
             return self._generate_comprehensive_gemini_response(content, bank_name)
 
-    def _generate_comprehensive_gemini_response(
-        self, content: str, bank_name: str
-    ) -> str:
-        """
-        Fallback method for comprehensive data extraction using direct Gemini API.
+    def _generate_comprehensive_gemini_response(self, content, bank_name):
+        """Fallback method for comprehensive data extraction using direct Gemini API.
 
-        Args:
-            content (str): Content to analyze
-            bank_name (str): Bank name for context
+        Parameters
+        ----------
+        content : str
+            Text content to analyze using Gemini fallback
+        bank_name : str
+            Bank name for specialized parsing context
 
-        Returns:
-            str: Raw AI response with comprehensive data
+        Returns
+        -------
+        str
+            Raw AI response with comprehensive data from Gemini
 
-        Raises:
-            AIParsingError: If generation fails
+        Raises
+        ------
+        AIParsingError
+            If Gemini generation fails or produces invalid output
         """
         try:
             model = genai.GenerativeModel("gemini-1.5-flash")
@@ -318,19 +383,25 @@ class LLMContentParser:
                 {"bank_name": bank_name},
             ) from e
 
-    def _parse_json_response(self, raw_response: str, bank_name: str) -> Any:
-        """
-        Parse JSON response from AI.
+    def _parse_json_response(self, raw_response, bank_name):
+        """Parse JSON response from AI.
 
-        Args:
-            raw_response (str): Raw response from AI
-            bank_name (str): Bank name for error context
+        Parameters
+        ----------
+        raw_response : str
+            Raw text response from AI model containing JSON
+        bank_name : str
+            Bank name for error context and logging
 
-        Returns:
-            Any: Parsed JSON data
+        Returns
+        -------
+        dict or list
+            Parsed JSON data structure from AI response
 
-        Raises:
-            AIParsingError: If JSON parsing fails
+        Raises
+        ------
+        AIParsingError
+            If JSON parsing fails due to malformed response
         """
         # Clean the response - remove markdown code blocks
         cleaned_response = raw_response.strip()
@@ -360,18 +431,21 @@ class LLMContentParser:
                 },
             ) from e
 
-    def _validate_and_sanitize_data(
-        self, parsed_data: Any, bank_name: str
-    ) -> Dict[str, Any]:
-        """
-        Validate and sanitize parsed data.
+    def _validate_and_sanitize_data(self, parsed_data, bank_name):
+        """Validate and sanitize parsed data.
 
-        Args:
-            parsed_data (Any): Data to validate
-            bank_name (str): Bank name for context
+        Parameters
+        ----------
+        parsed_data : dict or list
+            Raw parsed data from AI response to validate
+        bank_name : str
+            Bank name for validation context and error reporting
 
-        Returns:
-            Dict[str, Any]: Validated and sanitized data
+        Returns
+        -------
+        dict
+            Validated and sanitized credit card data with error information
+            if validation fails
         """
         # Validate the parsed data
         is_valid, validation_errors = CreditCardDataValidator.validate_credit_card_data(
@@ -387,16 +461,20 @@ class LLMContentParser:
         sanitized_data = CreditCardDataValidator.sanitize_credit_card_data(parsed_data)
         return sanitized_data
 
-    def _build_parsing_prompt(self, content: str, bank_name: str) -> str:
-        """
-        Build the prompt for LLM parsing.
+    def _build_parsing_prompt(self, content, bank_name):
+        """Build the prompt for LLM parsing.
 
-        Args:
-            content (str): Content to analyze
-            bank_name (str): Bank name for context
+        Parameters
+        ----------
+        content : str
+            Text content to include in parsing prompt
+        bank_name : str
+            Bank name for contextual prompt customization
 
-        Returns:
-            str: Formatted prompt
+        Returns
+        -------
+        str
+            Formatted prompt with instructions and content for LLM
         """
         return f"""
 You are a data extraction AI. Extract credit card information from the following content for {bank_name}.
@@ -430,16 +508,20 @@ Return format: JSON array of objects. If no credit cards found, return []
 Content to analyze:
 {content}"""
 
-    def _build_comprehensive_parsing_prompt(self, content: str, bank_name: str) -> str:
-        """
-        Build the prompt for comprehensive LLM parsing to extract all available data.
+    def _build_comprehensive_parsing_prompt(self, content, bank_name):
+        """Build the prompt for comprehensive LLM parsing to extract all available data.
 
-        Args:
-            content (str): Content to analyze
-            bank_name (str): Bank name for context
+        Parameters
+        ----------
+        content : str
+            Text content to analyze comprehensively
+        bank_name : str
+            Bank name for prompt contextualization
 
-        Returns:
-            str: Formatted comprehensive prompt
+        Returns
+        -------
+        str
+            Formatted comprehensive parsing prompt for maximum data extraction
         """
         return f"""
 You are a comprehensive data extraction AI. Extract ALL available information from this {bank_name} credit card document.

@@ -6,7 +6,12 @@ from common.models import Audit
 
 
 class CreditCard(Audit):
-    """Model representing a credit card product."""
+    """Model representing a credit card product.
+
+    This model stores comprehensive information about credit card products
+    offered by banks in Bangladesh, including fees, interest rates,
+    benefits, and features extracted from various data sources.
+    """
 
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE, related_name="credit_cards")
     name = models.CharField(max_length=255)
@@ -37,14 +42,36 @@ class CreditCard(Audit):
 
     @property
     def has_lounge_access(self):
-        """Check if card has any lounge access."""
+        """Check if card has any lounge access.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        bool
+            True if card has either international or domestic lounge access,
+            False otherwise
+        """
         return bool(self.lounge_access_international.strip()) or bool(
             self.lounge_access_domestic.strip()
         )
 
     @property
     def lounge_access_summary(self):
-        """Return summary of lounge access benefits."""
+        """Return summary of lounge access benefits.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        str
+            Formatted string summarizing all lounge access benefits,
+            or 'No lounge access' if none available
+        """
         access_list = []
         if self.lounge_access_international.strip():
             access_list.append(f"International: {self.lounge_access_international}")
@@ -54,5 +81,15 @@ class CreditCard(Audit):
 
     @property
     def has_annual_fee(self):
-        """Check if card has annual fee."""
+        """Check if card has annual fee.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        bool
+            True if card has an annual fee greater than 0, False otherwise
+        """
         return self.annual_fee > 0
