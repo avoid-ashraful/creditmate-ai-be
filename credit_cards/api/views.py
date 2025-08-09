@@ -3,9 +3,9 @@ from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import CreditCard
-from .filters import CreditCardFilter
-from .serializers import CreditCardListSerializer, CreditCardSerializer
+from credit_cards.api.filters import CreditCardFilter
+from credit_cards.api.serializers import CreditCardListSerializer, CreditCardSerializer
+from credit_cards.models import CreditCard
 
 
 class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):

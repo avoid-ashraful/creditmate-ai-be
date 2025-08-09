@@ -1,9 +1,8 @@
 from django.core.validators import URLValidator
 from django.db import models
 
+from banks.enums import ContentType, ProcessingStatus
 from common.models import Audit
-
-from .enums import ContentType, ProcessingStatus
 
 
 class Bank(Audit):

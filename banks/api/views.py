@@ -1,9 +1,9 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 
-from ..models import Bank
-from .filters import BankFilter
-from .serializers import BankListSerializer, BankSerializer
+from banks.api.filters import BankFilter
+from banks.api.serializers import BankListSerializer, BankSerializer
+from banks.models import Bank
 
 
 class BankViewSet(viewsets.ReadOnlyModelViewSet):

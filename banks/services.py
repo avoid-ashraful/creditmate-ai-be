@@ -3,7 +3,7 @@ This module maintains backward compatibility by importing from the new service s
 """
 
 # Re-import all services from the new structure for backward compatibility
-from .services import (
+from banks.services import (
     BankDataCrawlerService,
     ContentExtractor,
     CreditCardDataService,

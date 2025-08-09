@@ -5,8 +5,7 @@ import factory
 from django.db.models.signals import post_save
 
 from banks.factories import BankFactory
-
-from .models import CreditCard
+from credit_cards.models import CreditCard
 
 
 @factory.django.mute_signals(post_save)

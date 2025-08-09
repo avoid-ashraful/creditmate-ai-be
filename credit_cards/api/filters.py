@@ -2,7 +2,7 @@ import django_filters
 
 from django.db import models
 
-from ..models import CreditCard
+from credit_cards.models import CreditCard
 
 
 class CreditCardFilter(django_filters.FilterSet):

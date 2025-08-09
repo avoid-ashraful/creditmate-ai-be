@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from django.conf import settings
 
-from ..exceptions import NetworkError
+from banks.exceptions import NetworkError
 
 logger = logging.getLogger(__name__)
 

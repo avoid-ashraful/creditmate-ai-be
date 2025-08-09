@@ -16,9 +16,9 @@ except ImportError:
         return decorator
 
 
-from .enums import ContentType
-from .models import Bank, BankDataSource
-from .services import BankDataCrawlerService, ScheduleChargeURLFinder
+from banks.enums import ContentType
+from banks.models import Bank, BankDataSource
+from banks.services import BankDataCrawlerService, ScheduleChargeURLFinder
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +215,7 @@ def cleanup_old_crawled_content(days_to_keep=30):
 
         from django.utils import timezone
 
-        from .models import CrawledContent
+        from banks.models import CrawledContent
 
         cutoff_date = timezone.now() - timedelta(days=days_to_keep)
 

@@ -3,17 +3,17 @@ import logging
 
 from django.utils import timezone
 
-from ..exceptions import (
+from banks.exceptions import (
     AIParsingError,
     ConfigurationError,
     ContentExtractionError,
     FileFormatError,
     NetworkError,
 )
-from ..models import BankDataSource, CrawledContent
-from .content_extractor import ContentExtractor
-from .credit_card_data_service import CreditCardDataService
-from .llm_parser import LLMContentParser
+from banks.models import BankDataSource, CrawledContent
+from banks.services.content_extractor import ContentExtractor
+from banks.services.credit_card_data_service import CreditCardDataService
+from banks.services.llm_parser import LLMContentParser
 
 logger = logging.getLogger(__name__)
 

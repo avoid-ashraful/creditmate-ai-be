@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 from PIL import Image
 from pypdf import PdfReader
 
-from ..enums import ContentType
-from ..exceptions import ContentExtractionError, FileFormatError, NetworkError
+from banks.enums import ContentType
+from banks.exceptions import ContentExtractionError, FileFormatError, NetworkError
 
 logger = logging.getLogger(__name__)
 

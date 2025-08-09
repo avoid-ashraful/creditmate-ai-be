@@ -1,6 +1,6 @@
 import django_filters
 
-from ..models import Bank
+from banks.models import Bank
 
 
 class BankFilter(django_filters.FilterSet):

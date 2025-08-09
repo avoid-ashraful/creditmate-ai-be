@@ -7,8 +7,8 @@ from openai import OpenAI
 
 from django.conf import settings
 
-from ..exceptions import AIParsingError, ConfigurationError
-from ..validators import CreditCardDataValidator
+from banks.exceptions import AIParsingError, ConfigurationError
+from banks.validators import CreditCardDataValidator
 
 logger = logging.getLogger(__name__)
 
