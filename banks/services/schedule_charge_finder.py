@@ -1,44 +1,41 @@
+"""
+Enhanced schedule charge URL finder using the new LLM orchestrator.
+
+This module provides improved URL discovery capabilities using the
+LLM orchestrator with automatic fallback and better error handling.
+"""
+
+import json
 import logging
 from urllib.parse import urljoin
 
-import google.generativeai as genai
 import requests
 from bs4 import BeautifulSoup
 
-from django.conf import settings
-
 from banks.exceptions import NetworkError
+from common.llm import LLMOrchestrator
+from common.llm.exceptions import AllLLMProvidersFailedError
 
 logger = logging.getLogger(__name__)
 
 
 class ScheduleChargeURLFinder:
-    """Service for finding schedule of charges/fee document URLs using AI.
+    """Enhanced schedule charge URL finder with orchestrator-based LLM analysis.
 
-    This service analyzes bank websites to locate schedule of charges or
-    fee documents using AI-powered content analysis and link extraction.
+    This service provides improved URL discovery with automatic LLM provider
+    fallback, better error handling, and comprehensive content analysis.
     """
 
     def __init__(self):
-        """Initialize the URL finder.
-
-        Sets up HTTP session with appropriate headers for web scraping.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-        """
+        """Initialize the schedule charge finder."""
+        self.orchestrator = LLMOrchestrator()
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         )
 
     def find_schedule_charge_url(self, base_url):
-        """Find schedule of charges URL using AI to analyze webpage content.
+        """Find schedule of charges URL using LLM analysis with orchestrator fallback.
 
         Parameters
         ----------
@@ -53,23 +50,29 @@ class ScheduleChargeURLFinder:
             - url: str with the found URL if successful
             - method: str describing the method used
             - content_type: str indicating PDF or WEBPAGE
+            - provider_used: str name of LLM provider used
             - error: str with error message if failed
         """
         try:
-            logger.info(f"Finding schedule charge URL for: {base_url}")
+            logger.info(f"Schedule charge URL discovery for: {base_url}")
 
-            webpage_content = self._fetch_webpage_content(base_url)
-            analysis_data = self._analyze_webpage_content(webpage_content, base_url)
-            result = self._process_ai_analysis(analysis_data, base_url)
+            # Check if LLM orchestrator is available
+            if not self.orchestrator.is_any_provider_available():
+                logger.warning("No LLM providers available, using fallback method")
+                return self._fallback_pattern_search(base_url)
+
+            # Fetch and analyze webpage content
+            content_data = self._fetch_webpage_content(base_url)
+            result = self._analyze_with_llm(content_data, base_url)
 
             return result
 
         except Exception as e:
-            logger.error(f"Error finding schedule charge URL: {str(e)}")
+            logger.error(f"Error in schedule charge URL discovery: {e}")
             return {"found": False, "method": "error", "error": str(e)}
 
     def _fetch_webpage_content(self, url):
-        """Fetch and parse webpage content.
+        """Fetch and parse webpage content with enhanced error handling.
 
         Parameters
         ----------
@@ -79,12 +82,7 @@ class ScheduleChargeURLFinder:
         Returns
         -------
         dict
-            Dictionary containing webpage content and metadata:
-            - html_text: raw HTML content
-            - soup: BeautifulSoup parsed object
-            - links: list of extracted links
-            - page_content: cleaned text content
-            - contains_charges: bool if charge keywords found
+            Dictionary containing webpage content and metadata
 
         Raises
         ------
@@ -97,242 +95,290 @@ class ScheduleChargeURLFinder:
 
             soup = BeautifulSoup(response.text, "html.parser")
 
+            # Extract links with better filtering
+            links = []
+            for link in soup.find_all("a", href=True):
+                href = link.get("href", "").strip()
+                text = link.get_text(strip=True)
+
+                if href and text:
+                    # Convert relative URLs to absolute
+                    full_url = (
+                        urljoin(url, href)
+                        if not href.startswith(("http://", "https://"))
+                        else href
+                    )
+
+                    links.append({"url": full_url, "text": text, "href": href})
+
+            # Extract page text content
+            # Remove script and style elements
+            for script in soup(["script", "style", "nav", "header", "footer"]):
+                script.decompose()
+
+            page_text = soup.get_text(separator=" ", strip=True)
+
+            # Check for charge-related keywords in content
+            charge_keywords = [
+                "schedule of charges",
+                "fee schedule",
+                "pricing",
+                "rates and fees",
+                "charges",
+                "fees",
+                "tariff",
+                "service charges",
+                "cost",
+            ]
+
+            contains_charges = any(
+                keyword in page_text.lower() for keyword in charge_keywords
+            )
+
             return {
-                "html_text": response.text,
+                "html_text": response.text[:10000],  # Limit HTML size
                 "soup": soup,
-                "links": self._extract_links(soup, url),
-                "page_content": soup.get_text(),
-                "contains_charges": self._check_charges_on_page(soup),
+                "links": links[:50],  # Limit number of links
+                "page_content": page_text[:5000],  # Limit text content
+                "contains_charges": contains_charges,
+                "base_url": url,
             }
 
         except requests.exceptions.RequestException as e:
-            raise NetworkError(f"Failed to fetch webpage: {str(e)}") from e
+            raise NetworkError(f"Failed to fetch webpage: {e}") from e
 
-    def _extract_links(self, soup, base_url):
-        """Extract all relevant links from the webpage.
-
-        Parameters
-        ----------
-        soup : BeautifulSoup
-            Parsed HTML document
-        base_url : str
-            Base URL for resolving relative links
-
-        Returns
-        -------
-        list of dict
-            List of dictionaries containing link information with keys:
-            - url: full URL of the link
-            - text: link text content
-            - title: link title attribute
-        """
-        links = []
-        for link in soup.find_all(["a", "link"], href=True):
-            href = link.get("href")
-            if href:
-                full_url = urljoin(base_url, href)
-                link_text = link.get_text(strip=True) if hasattr(link, "get_text") else ""
-                links.append(
-                    {
-                        "url": full_url,
-                        "text": link_text,
-                        "title": link.get("title", ""),
-                    }
-                )
-        return links
-
-    def _check_charges_on_page(self, soup):
-        """Check if charges are displayed directly on the page.
-
-        Parameters
-        ----------
-        soup : BeautifulSoup
-            Parsed HTML document to search
-
-        Returns
-        -------
-        bool
-            True if charge-related keywords found on page, False otherwise
-        """
-        page_content = soup.get_text().lower()
-        charge_terms = [
-            "schedule of charges",
-            "fee schedule",
-            "credit card fees",
-            "annual fee",
-            "interest rate",
-            "processing fee",
-        ]
-        return any(term in page_content for term in charge_terms)
-
-    def _analyze_webpage_content(self, content_data, base_url):
-        """Analyze webpage content using AI.
+    def _analyze_with_llm(self, content_data, base_url):
+        """Analyze webpage content using LLM orchestrator.
 
         Parameters
         ----------
         content_data : dict
-            Dictionary containing webpage content and metadata
+            Webpage content data
         base_url : str
             Base URL being analyzed
 
         Returns
         -------
         dict
-            Analysis results containing AI response and metadata
+            Analysis result with URL discovery information
         """
-        if not self._is_ai_available():
+        try:
+            # Build analysis prompt
+            prompt = self._build_url_finding_prompt(
+                base_url, content_data["links"], content_data["contains_charges"]
+            )
+
+            # Use orchestrator to analyze content
+            result = self.orchestrator.generate_response(
+                prompt=prompt, max_retries=1, temperature=0.1, max_tokens=1000
+            )
+
+            raw_response = result["response"]
+            provider_used = result["provider"]
+
+            # Parse LLM response
+            analysis_result = self._parse_llm_response(raw_response)
+            analysis_result["provider_used"] = provider_used
+
+            if analysis_result.get("found") and analysis_result.get("url"):
+                logger.info(f"URL found using {provider_used}: {analysis_result['url']}")
+                return analysis_result
+            else:
+                logger.warning(f"No URL found by {provider_used}, trying fallback")
+                return self._fallback_pattern_search(base_url)
+
+        except AllLLMProvidersFailedError as e:
+            logger.error(f"All LLM providers failed for URL analysis: {e}")
+            return self._fallback_pattern_search(base_url)
+
+        except Exception as e:
+            logger.error(f"Unexpected error in LLM analysis: {e}")
+            return self._fallback_pattern_search(base_url)
+
+    def _parse_llm_response(self, raw_response):
+        """Parse LLM response for URL discovery.
+
+        Parameters
+        ----------
+        raw_response : str
+            Raw response from LLM
+
+        Returns
+        -------
+        dict
+            Parsed response with URL information
+        """
+        try:
+            # Try to parse as JSON first
+            if raw_response.strip().startswith("{"):
+                return json.loads(raw_response.strip())
+
+            # Fallback: extract URL from text response
+            import re
+
+            url_pattern = r"https?://[^\\s]+"
+            urls = re.findall(url_pattern, raw_response)
+
+            if urls:
+                return {
+                    "found": True,
+                    "url": urls[0],
+                    "method": "llm_text_extraction",
+                    "content_type": "PDF" if urls[0].endswith(".pdf") else "WEBPAGE",
+                }
+
             return {
                 "found": False,
-                "method": "ai_analysis",
-                "error": "AI analysis not available",
+                "method": "llm_analysis",
+                "error": "No URL found in LLM response",
             }
 
+        except json.JSONDecodeError:
+            return {
+                "found": False,
+                "method": "llm_analysis",
+                "error": "Failed to parse LLM response",
+            }
+
+    def _fallback_pattern_search(self, base_url):
+        """Fallback method using pattern matching when LLM is not available.
+
+        Parameters
+        ----------
+        base_url : str
+            Base URL to search
+
+        Returns
+        -------
+        dict
+            Pattern search result
+        """
         try:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            content_data = self._fetch_webpage_content(base_url)
 
-            prompt = self._build_url_finding_prompt(
-                base_url, content_data["links"][:50], content_data["contains_charges"]
-            )
+            # Search for common patterns in links
+            charge_patterns = [
+                r"schedule.*charge",
+                r"fee.*schedule",
+                r"charges.*fee",
+                r"pricing",
+                r"tariff",
+                r"service.*charge",
+            ]
 
-            ai_response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.1,
-                    max_output_tokens=1000,
-                ),
-            )
+            for link in content_data["links"]:
+                link_text = link["text"].lower()
+                link_url = link["url"].lower()
+
+                for pattern in charge_patterns:
+                    import re
+
+                    if re.search(pattern, link_text) or re.search(pattern, link_url):
+                        return {
+                            "found": True,
+                            "url": link["url"],
+                            "method": "pattern_matching",
+                            "content_type": "PDF"
+                            if link["url"].endswith(".pdf")
+                            else "WEBPAGE",
+                            "pattern": pattern,
+                        }
 
             return {
-                "ai_response": ai_response.text.strip(),
-                "links_analyzed": len(content_data["links"]),
-                "contains_charges": content_data["contains_charges"],
+                "found": False,
+                "method": "pattern_matching",
+                "error": "No matching patterns found",
             }
 
         except Exception as e:
-            logger.error(f"AI analysis failed: {str(e)}")
-            return {
-                "found": False,
-                "method": "ai_analysis",
-                "error": f"AI analysis failed: {str(e)}",
-            }
-
-    def _process_ai_analysis(self, analysis_data, base_url):
-        """Process AI analysis results.
-
-        Parameters
-        ----------
-        analysis_data : dict
-            AI analysis results to process
-        base_url : str
-            Base URL for result context
-
-        Returns
-        -------
-        dict
-            Final processed result with found URLs and metadata
-        """
-        if "ai_response" not in analysis_data:
-            return analysis_data
-
-        response_text = analysis_data["ai_response"]
-
-        # Parse AI response
-        if response_text and response_text.lower() != "none":
-            # Clean up markdown if present
-            if response_text.startswith("```"):
-                response_text = response_text.replace("```", "").strip()
-
-            # Check if AI suggests the current page has the charges
-            if response_text.lower() == "current_page" or response_text == base_url:
-                return {
-                    "found": True,
-                    "url": base_url,
-                    "method": "ai_analysis",
-                    "content_type": "WEBPAGE",
-                    "links_analyzed": analysis_data.get("links_analyzed", 0),
-                    "note": "Charges displayed directly on the webpage",
-                }
-            # Check if AI found a specific URL
-            elif response_text.startswith("http"):
-                # Determine content type based on URL
-                content_type = (
-                    "PDF" if response_text.lower().endswith(".pdf") else "WEBPAGE"
-                )
-                return {
-                    "found": True,
-                    "url": response_text,
-                    "method": "ai_analysis",
-                    "content_type": content_type,
-                    "links_analyzed": analysis_data.get("links_analyzed", 0),
-                }
-
-        return {
-            "found": False,
-            "method": "ai_analysis",
-            "error": "No schedule charge URL found",
-        }
-
-    def _is_ai_available(self):
-        """Check if AI analysis is available.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        bool
-            True if Gemini AI is properly configured and available
-        """
-        return genai is not None and settings.GEMINI_API_KEY
+            return {"found": False, "method": "pattern_matching", "error": str(e)}
 
     def _build_url_finding_prompt(self, base_url, links, contains_charges):
-        """Build prompt for AI to find schedule charge URL.
+        """Build prompt for LLM to find schedule charge URLs.
 
         Parameters
         ----------
         base_url : str
             Base URL being analyzed
-        links : list of dict
-            Available links extracted from the webpage
+        links : list
+            List of links found on the page
         contains_charges : bool
-            Whether the current page contains charge information
+            Whether page content mentions charges/fees
 
         Returns
         -------
         str
-            Formatted prompt for AI analysis
+            Formatted prompt for LLM analysis
         """
-        links_text = "\n".join(
+        links_text = "\\n".join(
             [
-                f"URL: {link['url']}\nText: {link['text']}\nTitle: {link['title']}"
-                for link in links
-                if link["url"] and (link["text"] or link["title"])
+                f"- {link['text']}: {link['url']}"
+                for link in links[:20]  # Limit to first 20 links
             ]
         )
 
-        charges_note = ""
-        if contains_charges:
-            charges_note = "\nNOTE: The current page appears to contain fee/charge information directly."
-
         return f"""
-Analyze the following links from a bank website ({base_url}) and identify where credit card schedule of charges/fee information can be found.
+You are a web analysis AI. Find the schedule of charges or fee document URL from this bank website.
 
-Look for:
-1. Links to PDF documents with terms like: "schedule of charges", "fee schedule", "credit card fees", "tariff guide", "pricing guide"
-2. Links to webpages that might contain fee information
-3. If the current page already displays the charges/fees directly
+TASK: Analyze the links below and identify the most likely URL for schedule of charges, fee schedule, or pricing document.
 
-{charges_note}
+WEBSITE: {base_url}
+PAGE CONTAINS CHARGE INFO: {contains_charges}
 
-Available links:
+LINKS FOUND:
 {links_text}
 
-Return ONE of the following:
-- If charges are displayed on the current page, return: "current_page"
-- If you find a specific document/page URL, return the complete URL
-- If no suitable link is found, return: "none"
+INSTRUCTIONS:
+1. Look for links containing terms like: "schedule of charges", "fee schedule", "pricing", "rates and fees", "tariff", "charges", "fees"
+2. Prefer PDF documents over web pages when available
+3. Prefer official/formal fee documents over general information pages
 
-Do not include any explanation, just return the URL, "current_page", or "none".
+RESPONSE FORMAT (JSON only):
+{{
+    "found": true/false,
+    "url": "full_url_if_found",
+    "method": "llm_analysis",
+    "content_type": "PDF" or "WEBPAGE",
+    "confidence": "high/medium/low",
+    "reasoning": "brief explanation"
+}}
+
+If no suitable URL found, return: {{"found": false, "method": "llm_analysis", "error": "No schedule of charges URL found"}}
 """
+
+    def get_orchestrator_status(self):
+        """Get the current status of the LLM orchestrator.
+
+        Returns
+        -------
+        dict
+            Status information about available providers
+        """
+        return self.orchestrator.validate_configuration()
+
+    def test_llm_connectivity(self):
+        """Test connectivity to LLM providers for URL finding.
+
+        Returns
+        -------
+        dict
+            Test results for each provider
+        """
+        test_prompt = (
+            "Find a URL from this list: https://example.com/fees.pdf - Example Bank Fees"
+        )
+        results = {}
+
+        for provider_name in self.orchestrator.providers:
+            try:
+                result = self.orchestrator.generate_response(
+                    prompt=test_prompt, preferred_provider=provider_name, max_retries=0
+                )
+                results[provider_name] = {
+                    "status": "success",
+                    "response": result["response"][:100],
+                }
+            except Exception as e:
+                results[provider_name] = {"status": "failed", "error": str(e)}
+
+        return results

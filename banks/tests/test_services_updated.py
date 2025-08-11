@@ -4,7 +4,6 @@ Comprehensive tests for banks services with all new features.
 
 import hashlib
 import json
-import os
 from unittest.mock import Mock, patch
 
 import pytest
@@ -138,41 +137,42 @@ class TestLLMContentParserUpdated:
     def setup_method(self):
         self.parser = LLMContentParser()
 
-    def test_parse_credit_card_data_missing_genai(self):
-        """Test handling when OpenRouter API key is not available and Gemini fails."""
-        with patch.dict(
-            os.environ, {}, clear=True
-        ):  # Clear all env vars including OPENROUTER_API_KEY
-            with patch("banks.services.llm_parser.settings.GEMINI_API_KEY", ""):
-                parser = LLMContentParser()
+    def test_parse_credit_card_data_no_providers_available(self):
+        """Test handling when no LLM providers are available."""
+        with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=False
+        ):
+            with pytest.raises(ConfigurationError) as exc_info:
+                self.parser.parse_credit_card_data("test content", "Test Bank")
 
-                with pytest.raises(ConfigurationError) as exc_info:
-                    parser.parse_credit_card_data("test content", "Test Bank")
+            assert "No LLM providers are available" in str(exc_info.value)
 
-                assert "Gemini API key not configured" in str(exc_info.value)
+    def test_parse_credit_card_data_all_providers_failed(self):
+        """Test handling when all LLM providers fail."""
+        from common.llm.exceptions import AllLLMProvidersFailedError
 
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "")
-    def test_parse_credit_card_data_missing_api_key(self):
-        """Test handling when API key is not configured."""
-        with pytest.raises(ConfigurationError) as exc_info:
-            self.parser.parse_credit_card_data("test content", "Test Bank")
+        with patch.object(
+            self.parser.orchestrator,
+            "generate_response",
+            side_effect=AllLLMProvidersFailedError(
+                {"openrouter": "API key invalid", "gemini": "Service unavailable"}
+            ),
+        ):
+            with pytest.raises(AIParsingError) as exc_info:
+                self.parser.parse_credit_card_data("test content", "Test Bank")
 
-        assert "Gemini API key not configured" in str(exc_info.value)
+            assert "all providers failed" in str(exc_info.value)
 
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_parse_credit_card_data_success_with_validation(self, mock_model_class):
+    def test_parse_credit_card_data_success_with_validation(self):
         """Test successful parsing with data validation."""
-        mock_model = Mock()
-        mock_response = Mock()
-        mock_response.text = json.dumps(
+        mock_response_data = json.dumps(
             [
                 {
                     "name": "Test Card",
                     "annual_fee": 95,
                     "interest_rate_apr": 18.99,
-                    "lounge_access_international": 2,
-                    "lounge_access_domestic": 4,
+                    "lounge_access_international": "2 visits",
+                    "lounge_access_domestic": "4 visits",
                     "cash_advance_fee": "3% of amount",
                     "late_payment_fee": "$25",
                     "annual_fee_waiver_policy": {"minimum_spend": 5000},
@@ -181,27 +181,27 @@ class TestLLMContentParserUpdated:
                 }
             ]
         )
-        mock_model.generate_content.return_value = mock_response
-        mock_model_class.return_value = mock_model
 
-        content = "Test credit card content"
-        result = self.parser.parse_credit_card_data(content, "Test Bank")
+        with patch.object(
+            self.parser.orchestrator,
+            "generate_response",
+            return_value={"response": mock_response_data, "provider": "openrouter"},
+        ):
+            content = "Test credit card content"
+            result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        # Result now includes validation structure
-        assert isinstance(result, dict)
-        assert "data" in result
-        data = result["data"]
-        assert len(data) == 1
-        assert data[0]["name"] == "Test Card"
-        assert data[0]["annual_fee"] == 95.0  # Should be sanitized to float
+            # Result now includes validation structure
+            assert isinstance(result, dict)
+            assert "credit_cards" in result
+            assert "provider_used" in result
+            data = result["credit_cards"]
+            assert len(data) == 1
+            assert data[0]["name"] == "Test Card"
+            assert data[0]["annual_fee"] == 95.0  # Should be sanitized to float
 
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_parse_credit_card_data_validation_errors(self, mock_model_class):
+    def test_parse_credit_card_data_validation_errors(self):
         """Test handling of validation errors."""
-        mock_model = Mock()
-        mock_response = Mock()
-        mock_response.text = json.dumps(
+        mock_response_data = json.dumps(
             [
                 {
                     "name": "",  # Invalid: empty name
@@ -210,61 +210,58 @@ class TestLLMContentParserUpdated:
                 }
             ]
         )
-        mock_model.generate_content.return_value = mock_response
-        mock_model_class.return_value = mock_model
 
-        content = "Test content with invalid data"
-        result = self.parser.parse_credit_card_data(content, "Test Bank")
+        with patch.object(
+            self.parser.orchestrator,
+            "generate_response",
+            return_value={"response": mock_response_data, "provider": "openrouter"},
+        ):
+            content = "Test content with invalid data"
+            result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert "validation_errors" in result
-        assert "data" in result
-        assert len(result["validation_errors"]) > 0
+            assert "validation_errors" in result
+            assert "credit_cards" in result
+            assert len(result["validation_errors"]) > 0
 
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_parse_credit_card_data_empty_response(self, mock_model_class):
+    def test_parse_credit_card_data_empty_response(self):
         """Test handling of empty AI response."""
-        mock_model = Mock()
-        mock_response = Mock()
-        mock_response.text = ""
-        mock_model.generate_content.return_value = mock_response
-        mock_model_class.return_value = mock_model
+        with patch.object(
+            self.parser.orchestrator,
+            "generate_response",
+            return_value={"response": "", "provider": "openrouter"},
+        ):
+            with pytest.raises(AIParsingError) as exc_info:
+                self.parser.parse_credit_card_data("test content", "Test Bank")
 
-        with pytest.raises(AIParsingError) as exc_info:
-            self.parser.parse_credit_card_data("test content", "Test Bank")
+            assert "No valid JSON found in LLM response" in str(exc_info.value)
 
-        assert "Empty response from Gemini API" in str(exc_info.value)
-
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_parse_credit_card_data_invalid_json(self, mock_model_class):
+    def test_parse_credit_card_data_invalid_json(self):
         """Test handling of invalid JSON response."""
-        mock_model = Mock()
-        mock_response = Mock()
-        mock_response.text = "Invalid JSON response"
-        mock_model.generate_content.return_value = mock_response
-        mock_model_class.return_value = mock_model
+        with patch.object(
+            self.parser.orchestrator,
+            "generate_response",
+            return_value={"response": "Invalid JSON response", "provider": "openrouter"},
+        ):
+            with pytest.raises(AIParsingError) as exc_info:
+                self.parser.parse_credit_card_data("test content", "Test Bank")
 
-        with pytest.raises(AIParsingError) as exc_info:
-            self.parser.parse_credit_card_data("test content", "Test Bank")
+            assert "No valid JSON found in LLM response" in str(exc_info.value)
 
-        assert "Invalid JSON response from AI" in str(exc_info.value)
-        assert "raw_response" in exc_info.value.details
-
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_parse_credit_card_data_markdown_cleanup(self, mock_model_class):
+    def test_parse_credit_card_data_markdown_cleanup(self):
         """Test cleanup of markdown code blocks."""
-        mock_model = Mock()
-        mock_response = Mock()
-        mock_response.text = '```json\n[{"name": "Test Card", "annual_fee": 0}]\n```'
-        mock_model.generate_content.return_value = mock_response
-        mock_model_class.return_value = mock_model
+        with patch.object(
+            self.parser.orchestrator,
+            "generate_response",
+            return_value={
+                "response": '```json\n[{"name": "Test Card", "annual_fee": 0}]\n```',
+                "provider": "openrouter",
+            },
+        ):
+            result = self.parser.parse_credit_card_data("test content", "Test Bank")
 
-        result = self.parser.parse_credit_card_data("test content", "Test Bank")
-
-        assert isinstance(result, list)
-        assert result[0]["name"] == "Test Card"
+            assert isinstance(result, dict)
+            assert "credit_cards" in result
+            assert result["credit_cards"][0]["name"] == "Test Card"
 
 
 @pytest.mark.django_db
@@ -578,12 +575,8 @@ class TestScheduleChargeURLFinderUpdated:
         assert result["method"] == "error"
         assert "Connection failed" in result["error"]
 
-    @patch("banks.services.content_extractor.requests.Session.get")
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_find_schedule_charge_url_success_current_page(
-        self, mock_model_class, mock_get
-    ):
+    @patch("banks.services.schedule_charge_finder.requests.Session.get")
+    def test_find_schedule_charge_url_success_current_page(self, mock_get):
         """Test successful detection of charges on current page."""
         html_content = """
         <html>
@@ -600,16 +593,28 @@ class TestScheduleChargeURLFinderUpdated:
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        mock_model = Mock()
-        mock_ai_response = Mock()
-        mock_ai_response.text = "current_page"
-        mock_model.generate_content.return_value = mock_ai_response
-        mock_model_class.return_value = mock_model
+        # Mock LLM orchestrator response
+        llm_response = {
+            "found": True,
+            "url": "http://example.com",
+            "method": "llm_analysis",
+            "content_type": "WEBPAGE",
+            "confidence": "high",
+            "reasoning": "Page contains fee information directly",
+        }
 
-        with patch("banks.services.schedule_charge_finder.BeautifulSoup") as mock_bs:
+        with patch(
+            "banks.services.schedule_charge_finder.BeautifulSoup"
+        ) as mock_bs, patch.object(
+            self.finder.orchestrator,
+            "generate_response",
+            return_value={"response": json.dumps(llm_response), "provider": "openrouter"},
+        ):
             mock_soup = Mock()
             mock_soup.find_all.return_value = []
             mock_soup.get_text.return_value = html_content
+            # Mock the soup() call for decomposing script/style elements
+            mock_soup.return_value = []  # When soup is called with tags list
             mock_bs.return_value = mock_soup
 
             result = self.finder.find_schedule_charge_url("http://example.com")
@@ -617,12 +622,9 @@ class TestScheduleChargeURLFinderUpdated:
             assert result["found"] is True
             assert result["url"] == "http://example.com"
             assert result["content_type"] == "WEBPAGE"
-            assert result["note"] == "Charges displayed directly on the webpage"
 
     @patch("banks.services.schedule_charge_finder.requests.Session.get")
-    @patch("banks.services.schedule_charge_finder.genai.GenerativeModel")
-    @patch("banks.services.schedule_charge_finder.settings.GEMINI_API_KEY", "test-key")
-    def test_find_schedule_charge_url_success_pdf_link(self, mock_model_class, mock_get):
+    def test_find_schedule_charge_url_success_pdf_link(self, mock_get):
         """Test successful detection of PDF link."""
         html_content = "<html><body><a href='/charges.pdf'>Fee Schedule</a></body></html>"
 
@@ -631,13 +633,23 @@ class TestScheduleChargeURLFinderUpdated:
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        mock_model = Mock()
-        mock_ai_response = Mock()
-        mock_ai_response.text = "http://example.com/charges.pdf"
-        mock_model.generate_content.return_value = mock_ai_response
-        mock_model_class.return_value = mock_model
+        # Mock LLM orchestrator response
+        llm_response = {
+            "found": True,
+            "url": "http://example.com/charges.pdf",
+            "method": "llm_analysis",
+            "content_type": "PDF",
+            "confidence": "high",
+            "reasoning": "Found PDF link with fee schedule text",
+        }
 
-        with patch("banks.services.schedule_charge_finder.BeautifulSoup") as mock_bs:
+        with patch(
+            "banks.services.schedule_charge_finder.BeautifulSoup"
+        ) as mock_bs, patch.object(
+            self.finder.orchestrator,
+            "generate_response",
+            return_value={"response": json.dumps(llm_response), "provider": "openrouter"},
+        ):
             mock_soup = Mock()
             mock_link = Mock()
             mock_link.get.side_effect = lambda attr, default=None: (
@@ -646,6 +658,8 @@ class TestScheduleChargeURLFinderUpdated:
             mock_link.get_text.return_value = "Fee Schedule"
             mock_soup.find_all.return_value = [mock_link]
             mock_soup.get_text.return_value = html_content
+            # Mock the soup() call for decomposing script/style elements
+            mock_soup.return_value = []  # When soup is called with tags list
             mock_bs.return_value = mock_soup
 
             result = self.finder.find_schedule_charge_url("http://example.com")
