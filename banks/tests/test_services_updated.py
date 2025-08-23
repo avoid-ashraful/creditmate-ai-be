@@ -151,13 +151,16 @@ class TestLLMContentParserUpdated:
         """Test handling when all LLM providers fail."""
         from common.llm.exceptions import AllLLMProvidersFailedError
 
-        with patch.object(
-            self.parser.orchestrator, "is_any_provider_available", return_value=True
-        ), patch.object(
-            self.parser.orchestrator,
-            "generate_response",
-            side_effect=AllLLMProvidersFailedError(
-                {"openrouter": "API key invalid", "gemini": "Service unavailable"}
+        with (
+            patch.object(
+                self.parser.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
+                self.parser.orchestrator,
+                "generate_response",
+                side_effect=AllLLMProvidersFailedError(
+                    {"openrouter": "API key invalid", "gemini": "Service unavailable"}
+                ),
             ),
         ):
             with pytest.raises(AIParsingError) as exc_info:
@@ -184,12 +187,15 @@ class TestLLMContentParserUpdated:
             ]
         )
 
-        with patch.object(
-            self.parser.orchestrator, "is_any_provider_available", return_value=True
-        ), patch.object(
-            self.parser.orchestrator,
-            "generate_response",
-            return_value={"response": mock_response_data, "provider": "openrouter"},
+        with (
+            patch.object(
+                self.parser.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
+                self.parser.orchestrator,
+                "generate_response",
+                return_value={"response": mock_response_data, "provider": "openrouter"},
+            ),
         ):
             content = "Test credit card content"
             result = self.parser.parse_credit_card_data(content, "Test Bank")
@@ -215,12 +221,15 @@ class TestLLMContentParserUpdated:
             ]
         )
 
-        with patch.object(
-            self.parser.orchestrator, "is_any_provider_available", return_value=True
-        ), patch.object(
-            self.parser.orchestrator,
-            "generate_response",
-            return_value={"response": mock_response_data, "provider": "openrouter"},
+        with (
+            patch.object(
+                self.parser.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
+                self.parser.orchestrator,
+                "generate_response",
+                return_value={"response": mock_response_data, "provider": "openrouter"},
+            ),
         ):
             content = "Test content with invalid data"
             result = self.parser.parse_credit_card_data(content, "Test Bank")
@@ -231,12 +240,15 @@ class TestLLMContentParserUpdated:
 
     def test_parse_credit_card_data_empty_response(self):
         """Test handling of empty AI response."""
-        with patch.object(
-            self.parser.orchestrator, "is_any_provider_available", return_value=True
-        ), patch.object(
-            self.parser.orchestrator,
-            "generate_response",
-            return_value={"response": "", "provider": "openrouter"},
+        with (
+            patch.object(
+                self.parser.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
+                self.parser.orchestrator,
+                "generate_response",
+                return_value={"response": "", "provider": "openrouter"},
+            ),
         ):
             with pytest.raises(AIParsingError) as exc_info:
                 self.parser.parse_credit_card_data("test content", "Test Bank")
@@ -245,12 +257,18 @@ class TestLLMContentParserUpdated:
 
     def test_parse_credit_card_data_invalid_json(self):
         """Test handling of invalid JSON response."""
-        with patch.object(
-            self.parser.orchestrator, "is_any_provider_available", return_value=True
-        ), patch.object(
-            self.parser.orchestrator,
-            "generate_response",
-            return_value={"response": "Invalid JSON response", "provider": "openrouter"},
+        with (
+            patch.object(
+                self.parser.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
+                self.parser.orchestrator,
+                "generate_response",
+                return_value={
+                    "response": "Invalid JSON response",
+                    "provider": "openrouter",
+                },
+            ),
         ):
             with pytest.raises(AIParsingError) as exc_info:
                 self.parser.parse_credit_card_data("test content", "Test Bank")
@@ -259,15 +277,18 @@ class TestLLMContentParserUpdated:
 
     def test_parse_credit_card_data_markdown_cleanup(self):
         """Test cleanup of markdown code blocks."""
-        with patch.object(
-            self.parser.orchestrator, "is_any_provider_available", return_value=True
-        ), patch.object(
-            self.parser.orchestrator,
-            "generate_response",
-            return_value={
-                "response": '```json\n[{"name": "Test Card", "annual_fee": 0}]\n```',
-                "provider": "openrouter",
-            },
+        with (
+            patch.object(
+                self.parser.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
+                self.parser.orchestrator,
+                "generate_response",
+                return_value={
+                    "response": '```json\n[{"name": "Test Card", "annual_fee": 0}]\n```',
+                    "provider": "openrouter",
+                },
+            ),
         ):
             result = self.parser.parse_credit_card_data("test content", "Test Bank")
 

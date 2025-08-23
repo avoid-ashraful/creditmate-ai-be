@@ -145,12 +145,15 @@ class TestLLMContentParser:
             ]
         )
 
-        with patch.object(
-            self.parser.orchestrator, "is_any_provider_available", return_value=True
-        ), patch.object(
-            self.parser.orchestrator,
-            "generate_response",
-            return_value={"response": mock_response_data, "provider": "openrouter"},
+        with (
+            patch.object(
+                self.parser.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
+                self.parser.orchestrator,
+                "generate_response",
+                return_value={"response": mock_response_data, "provider": "openrouter"},
+            ),
         ):
             content = "Test credit card content"
             result = self.parser.parse_credit_card_data(content, "Test Bank")

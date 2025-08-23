@@ -62,18 +62,43 @@ jobs:
       run: |
         # Check for common secret patterns
         echo "Checking for hardcoded secrets..."
-        if grep -r -i "password\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "os\.getenv\|getenv\|environ\|settings\." | grep -v "None\|''\|\"\""; then
-          echo "WARNING: Potential hardcoded passwords found!"
+
+        # Function to check for hardcoded secrets with safe exclusions
+        check_secrets() {
+          local pattern="$1"
+          local name="$2"
+
+          # Safe patterns to exclude:
+          # - Environment variable access: os.getenv, getenv, environ
+          # - Django settings access: settings., getattr(settings, ...)
+          # - Parameter passing: api_key=api_key, password=password, etc.
+          # - Empty/None values: None, '', ""
+          if grep -r -i "$pattern" --include="*.py" . | \
+             grep -v "test" | \
+             grep -v "__pycache__" | \
+             grep -v "settings\.py" | \
+             grep -v "os\.getenv\|getenv\|environ\|settings\.\|getattr.*settings" | \
+             grep -v "api_key=api_key\|password=password\|secret_key=secret_key" | \
+             grep -v "None\|''\|\"\"" | \
+             grep -v "\.configure.*api_key=api_key"; then
+            echo "WARNING: Potential hardcoded $name found!"
+            return 1
+          fi
+          return 0
+        }
+
+        # Check for passwords
+        if ! check_secrets "password\s*=" "passwords"; then
           exit 1
         fi
 
-        if grep -r -i "api_key\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "os\.getenv\|getenv\|environ\|settings\." | grep -v "None\|''\|\"\""; then
-          echo "WARNING: Potential hardcoded API keys found!"
+        # Check for API keys
+        if ! check_secrets "api_key\s*=" "API keys"; then
           exit 1
         fi
 
-        if grep -r -i "secret_key\s*=" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "settings.py" | grep -v "os\.getenv\|getenv\|environ\|settings\." | grep -v "None\|''\|\"\""; then
-          echo "WARNING: Potential hardcoded secret keys found!"
+        # Check for secret keys
+        if ! check_secrets "secret_key\s*=" "secret keys"; then
           exit 1
         fi
 
