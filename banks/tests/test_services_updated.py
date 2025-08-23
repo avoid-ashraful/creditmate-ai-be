@@ -152,6 +152,8 @@ class TestLLMContentParserUpdated:
         from common.llm.exceptions import AllLLMProvidersFailedError
 
         with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=True
+        ), patch.object(
             self.parser.orchestrator,
             "generate_response",
             side_effect=AllLLMProvidersFailedError(
@@ -183,6 +185,8 @@ class TestLLMContentParserUpdated:
         )
 
         with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=True
+        ), patch.object(
             self.parser.orchestrator,
             "generate_response",
             return_value={"response": mock_response_data, "provider": "openrouter"},
@@ -212,6 +216,8 @@ class TestLLMContentParserUpdated:
         )
 
         with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=True
+        ), patch.object(
             self.parser.orchestrator,
             "generate_response",
             return_value={"response": mock_response_data, "provider": "openrouter"},
@@ -226,6 +232,8 @@ class TestLLMContentParserUpdated:
     def test_parse_credit_card_data_empty_response(self):
         """Test handling of empty AI response."""
         with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=True
+        ), patch.object(
             self.parser.orchestrator,
             "generate_response",
             return_value={"response": "", "provider": "openrouter"},
@@ -238,6 +246,8 @@ class TestLLMContentParserUpdated:
     def test_parse_credit_card_data_invalid_json(self):
         """Test handling of invalid JSON response."""
         with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=True
+        ), patch.object(
             self.parser.orchestrator,
             "generate_response",
             return_value={"response": "Invalid JSON response", "provider": "openrouter"},
@@ -250,6 +260,8 @@ class TestLLMContentParserUpdated:
     def test_parse_credit_card_data_markdown_cleanup(self):
         """Test cleanup of markdown code blocks."""
         with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=True
+        ), patch.object(
             self.parser.orchestrator,
             "generate_response",
             return_value={
@@ -606,6 +618,9 @@ class TestScheduleChargeURLFinderUpdated:
         with (
             patch("banks.services.schedule_charge_finder.BeautifulSoup") as mock_bs,
             patch.object(
+                self.finder.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
                 self.finder.orchestrator,
                 "generate_response",
                 return_value={
@@ -649,6 +664,9 @@ class TestScheduleChargeURLFinderUpdated:
 
         with (
             patch("banks.services.schedule_charge_finder.BeautifulSoup") as mock_bs,
+            patch.object(
+                self.finder.orchestrator, "is_any_provider_available", return_value=True
+            ),
             patch.object(
                 self.finder.orchestrator,
                 "generate_response",

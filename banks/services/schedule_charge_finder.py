@@ -67,6 +67,9 @@ class ScheduleChargeURLFinder:
 
             return result
 
+        except NetworkError as e:
+            logger.error(f"Network error in schedule charge URL discovery: {e}")
+            return {"found": False, "method": "error", "error": str(e)}
         except Exception as e:
             logger.error(f"Error in schedule charge URL discovery: {e}")
             return {"found": False, "method": "error", "error": str(e)}

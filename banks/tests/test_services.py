@@ -147,6 +147,8 @@ class TestLLMContentParser:
         )
 
         with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=True
+        ), patch.object(
             self.parser.orchestrator,
             "generate_response",
             return_value={"response": mock_response_data, "provider": "openrouter"},
