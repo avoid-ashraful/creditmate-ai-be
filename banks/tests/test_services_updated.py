@@ -595,7 +595,7 @@ class TestScheduleChargeURLFinderUpdated:
     def setup_method(self):
         self.finder = ScheduleChargeURLFinder()
 
-    @patch("banks.services.content_extractor.requests.Session.get")
+    @patch("banks.services.schedule_charge_finder.requests.Session.get")
     def test_find_schedule_charge_url_network_error(self, mock_get):
         """Test handling of network errors."""
         import requests
