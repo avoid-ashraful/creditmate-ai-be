@@ -126,87 +126,75 @@ class TestLLMContentParser:
         """Set up test data before each test method."""
         self.parser = LLMContentParser()
 
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_parse_credit_card_data_success(self, mock_model_class):
+    def test_parse_credit_card_data_success(self):
         """Test successful credit card data parsing."""
-        mock_model = Mock()
-        mock_response = Mock()
-        mock_response.text = json.dumps(
-            {
-                "credit_cards": [
-                    {
-                        "name": "Platinum Card",
-                        "annual_fee": 95,
-                        "interest_rate_apr": 18.99,
-                        "lounge_access_international": "2 visits",
-                        "lounge_access_domestic": "4 visits",
-                        "cash_advance_fee": "3% of amount",
-                        "late_payment_fee": "$35",
-                        "annual_fee_waiver_policy": {"minimum_spend": 12000},
-                        "reward_points_policy": "1 point per $1 spent",
-                        "additional_features": ["Travel Insurance"],
-                    }
-                ]
-            }
+        mock_response_data = json.dumps(
+            [
+                {
+                    "name": "Platinum Card",
+                    "annual_fee": 95,
+                    "interest_rate_apr": 18.99,
+                    "lounge_access_international": "2 visits",
+                    "lounge_access_domestic": "4 visits",
+                    "cash_advance_fee": "3% of amount",
+                    "late_payment_fee": "$35",
+                    "annual_fee_waiver_policy": {"minimum_spend": 12000},
+                    "reward_points_policy": "1 point per $1 spent",
+                    "additional_features": ["Travel Insurance"],
+                }
+            ]
         )
-        mock_model.generate_content.return_value = mock_response
-        mock_model_class.return_value = mock_model
 
-        content = "Test credit card content"
-        result = self.parser.parse_credit_card_data(content, "Test Bank")
+        with (
+            patch.object(
+                self.parser.orchestrator, "is_any_provider_available", return_value=True
+            ),
+            patch.object(
+                self.parser.orchestrator,
+                "generate_response",
+                return_value={"response": mock_response_data, "provider": "openrouter"},
+            ),
+        ):
+            content = "Test credit card content"
+            result = self.parser.parse_credit_card_data(content, "Test Bank")
 
-        assert isinstance(result, dict)
-        # Result might have "data" or "credit_cards" key depending on validation
-        if "data" in result:
-            data = result["data"]
-        elif "credit_cards" in result:
+            assert isinstance(result, dict)
+            assert "credit_cards" in result
             data = result["credit_cards"]
-        else:
-            data = result
+            assert len(data) == 1
+            assert data[0]["name"] == "Platinum Card"
+            assert data[0]["annual_fee"] == 95.0
 
-        # Data might be a list or a single item depending on processing
-        if not isinstance(data, list):
-            data = [data]
-        assert len(data) == 1
-        assert data[0]["name"] == "Platinum Card"
-        assert data[0]["annual_fee"] == 95
-
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_parse_credit_card_data_invalid_json(self, mock_model_class):
+    def test_parse_credit_card_data_invalid_json(self):
         """Test handling of invalid JSON response."""
-        mock_model = Mock()
-        mock_response = Mock()
-        mock_response.text = "Invalid JSON response"
-        mock_model.generate_content.return_value = mock_response
-        mock_model_class.return_value = mock_model
+        with patch.object(
+            self.parser.orchestrator,
+            "generate_response",
+            return_value={"response": "Invalid JSON response", "provider": "openrouter"},
+        ):
+            content = "Test credit card content"
+            with pytest.raises(Exception):  # Should raise AIParsingError
+                self.parser.parse_credit_card_data(content, "Test Bank")
 
-        content = "Test credit card content"
+    def test_parse_credit_card_data_no_providers_available(self):
+        """Test handling when no LLM providers are available."""
+        with patch.object(
+            self.parser.orchestrator, "is_any_provider_available", return_value=False
+        ):
+            content = "Test credit card content"
+            with pytest.raises(Exception):  # Should raise ConfigurationError
+                self.parser.parse_credit_card_data(content, "Test Bank")
 
-        with pytest.raises(Exception):  # Should raise AIParsingError
-            self.parser.parse_credit_card_data(content, "Test Bank")
-
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "")
-    def test_parse_credit_card_data_no_api_key(self):
-        """Test handling when Gemini API key is not configured."""
-        content = "Test credit card content"
-
-        with pytest.raises(Exception):  # Should raise ConfigurationError
-            self.parser.parse_credit_card_data(content, "Test Bank")
-
-    @patch("banks.services.llm_parser.genai.GenerativeModel")
-    @patch("banks.services.llm_parser.settings.GEMINI_API_KEY", "test-key")
-    def test_parse_credit_card_data_api_error(self, mock_model_class):
-        """Test handling of Gemini API errors."""
-        mock_model = Mock()
-        mock_model.generate_content.side_effect = Exception("API Error")
-        mock_model_class.return_value = mock_model
-
-        content = "Test credit card content"
-
-        with pytest.raises(Exception):  # Should raise AIParsingError
-            self.parser.parse_credit_card_data(content, "Test Bank")
+    def test_parse_credit_card_data_api_error(self):
+        """Test handling of LLM API errors."""
+        with patch.object(
+            self.parser.orchestrator,
+            "generate_response",
+            side_effect=Exception("API Error"),
+        ):
+            content = "Test credit card content"
+            with pytest.raises(Exception):  # Should raise AIParsingError
+                self.parser.parse_credit_card_data(content, "Test Bank")
 
 
 @pytest.mark.django_db

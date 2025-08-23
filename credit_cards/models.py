@@ -18,6 +18,7 @@ class CreditCard(Audit):
     annual_fee = models.DecimalField(
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
+    annual_fee_waiver_policy = models.JSONField(blank=True, null=True)
     interest_rate_apr = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -25,9 +26,9 @@ class CreditCard(Audit):
     )
     lounge_access_international = models.CharField(max_length=255, blank=True, default="")
     lounge_access_domestic = models.CharField(max_length=255, blank=True, default="")
+    lounge_access_condition = models.CharField(max_length=500, blank=True, default="")
     cash_advance_fee = models.CharField(max_length=255, blank=True, default="")
     late_payment_fee = models.CharField(max_length=255, blank=True, default="")
-    annual_fee_waiver_policy = models.JSONField(blank=True, null=True)
     reward_points_policy = models.TextField(blank=True, default="")
     additional_features = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)
