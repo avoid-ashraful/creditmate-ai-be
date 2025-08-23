@@ -278,9 +278,9 @@ class ScheduleChargeURLFinder:
                             "found": True,
                             "url": link["url"],
                             "method": "pattern_matching",
-                            "content_type": "PDF"
-                            if link["url"].endswith(".pdf")
-                            else "WEBPAGE",
+                            "content_type": (
+                                "PDF" if link["url"].endswith(".pdf") else "WEBPAGE"
+                            ),
                             "pattern": pattern,
                         }
 

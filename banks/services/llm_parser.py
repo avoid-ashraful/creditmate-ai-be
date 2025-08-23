@@ -189,6 +189,7 @@ Extract these fields for each credit card with EXACT formats:
 - interest_rate_apr: Interest rate as decimal number (e.g., "20%" becomes 20.0, "17%" becomes 17.0)
 - lounge_access_international: Lounge access description as string (e.g., "10 complimentary visits", "Unlimited", or "" if none)
 - lounge_access_domestic: Lounge access description as string (e.g., "Unlimited visits for cardholder only", or "" if none)
+- lounge_access_condition: Conditions or requirements for lounge access as string (e.g., "Available for primary cardholders only", "Valid for first 3 years", or "" if none)
 - cash_advance_fee: Fee description as string
 - late_payment_fee: Fee description as string
 - annual_fee_waiver_policy: Waiver conditions as simple string (or null if not available)
@@ -233,7 +234,7 @@ CRITICAL FORMATTING RULES:
 
 EXTRACTION INSTRUCTIONS:
 1. For credit card model fields, use these exact field names:
-   - name, annual_fee, interest_rate_apr, lounge_access_international, lounge_access_domestic
+   - name, annual_fee, interest_rate_apr, lounge_access_international, lounge_access_domestic, lounge_access_condition
    - cash_advance_fee, late_payment_fee, annual_fee_waiver_policy, reward_points_policy, additional_features
 
 2. For any other data found, use the column header/title as key:

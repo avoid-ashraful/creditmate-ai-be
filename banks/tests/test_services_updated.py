@@ -603,12 +603,16 @@ class TestScheduleChargeURLFinderUpdated:
             "reasoning": "Page contains fee information directly",
         }
 
-        with patch(
-            "banks.services.schedule_charge_finder.BeautifulSoup"
-        ) as mock_bs, patch.object(
-            self.finder.orchestrator,
-            "generate_response",
-            return_value={"response": json.dumps(llm_response), "provider": "openrouter"},
+        with (
+            patch("banks.services.schedule_charge_finder.BeautifulSoup") as mock_bs,
+            patch.object(
+                self.finder.orchestrator,
+                "generate_response",
+                return_value={
+                    "response": json.dumps(llm_response),
+                    "provider": "openrouter",
+                },
+            ),
         ):
             mock_soup = Mock()
             mock_soup.find_all.return_value = []
@@ -643,12 +647,16 @@ class TestScheduleChargeURLFinderUpdated:
             "reasoning": "Found PDF link with fee schedule text",
         }
 
-        with patch(
-            "banks.services.schedule_charge_finder.BeautifulSoup"
-        ) as mock_bs, patch.object(
-            self.finder.orchestrator,
-            "generate_response",
-            return_value={"response": json.dumps(llm_response), "provider": "openrouter"},
+        with (
+            patch("banks.services.schedule_charge_finder.BeautifulSoup") as mock_bs,
+            patch.object(
+                self.finder.orchestrator,
+                "generate_response",
+                return_value={
+                    "response": json.dumps(llm_response),
+                    "provider": "openrouter",
+                },
+            ),
         ):
             mock_soup = Mock()
             mock_link = Mock()
