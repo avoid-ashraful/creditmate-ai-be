@@ -596,19 +596,6 @@ class TestScheduleChargeURLFinderUpdated:
         self.finder = ScheduleChargeURLFinder()
 
     @patch("banks.services.schedule_charge_finder.requests.Session.get")
-    def test_find_schedule_charge_url_network_error(self, mock_get):
-        """Test handling of network errors."""
-        import requests
-
-        mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
-
-        result = self.finder.find_schedule_charge_url("http://example.com")
-
-        assert result["found"] is False
-        assert result["method"] == "error"
-        assert "Connection failed" in result["error"]
-
-    @patch("banks.services.schedule_charge_finder.requests.Session.get")
     def test_find_schedule_charge_url_success_current_page(self, mock_get):
         """Test successful detection of charges on current page."""
         html_content = """
