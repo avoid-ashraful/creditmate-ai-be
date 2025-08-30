@@ -66,6 +66,7 @@ known_django = "django"
 known_first_party = "credit_mate_ai"
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
 skip = ["migrations"]
+skip_glob = [".venv/*", "venv/*", "env/*", ".env/*"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "credit_mate_ai.settings"

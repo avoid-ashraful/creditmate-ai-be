@@ -56,8 +56,8 @@ jobs:
 
     - name: Run Semgrep security analysis
       run: |
-        uv run semgrep --config=auto --json --output=semgrep-report.json . || true
-        uv run semgrep --config=auto .
+        uv run semgrep --config=auto --json --output=semgrep-report.json --exclude=".venv/*" --exclude="venv/*" --exclude="env/*" . || true
+        uv run semgrep --config=auto --exclude=".venv/*" --exclude="venv/*" --exclude="env/*" .
 
     - name: Upload Semgrep results
       uses: actions/upload-artifact@v4
@@ -84,6 +84,9 @@ jobs:
           if grep -r -i "$pattern" --include="*.py" . | \
              grep -v "test" | \
              grep -v "__pycache__" | \
+             grep -v "\.venv" | \
+             grep -v "venv/" | \
+             grep -v "env/" | \
              grep -v "settings\.py" | \
              grep -v "os\.getenv\|getenv\|environ\|settings\.\|getattr.*settings" | \
              grep -v "api_key=api_key\|password=password\|secret_key=secret_key" | \
@@ -150,7 +153,7 @@ jobs:
     - name: Check for SQL injection patterns
       run: |
         echo "Checking for potential SQL injection patterns..."
-        if grep -r -i "format.*sql\|%.*sql\|\.execute.*%" --include="*.py" . | grep -v "test" | grep -v "__pycache__"; then
+        if grep -r -i "format.*sql\|%.*sql\|\.execute.*%" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "\.venv" | grep -v "venv/" | grep -v "env/"; then
           echo "WARNING: Potential SQL injection patterns found!"
           echo "Please use parameterized queries instead."
           exit 1
@@ -160,7 +163,7 @@ jobs:
     - name: Check for eval() usage
       run: |
         echo "Checking for dangerous eval() usage..."
-        if grep -r "eval(" --include="*.py" . | grep -v "test" | grep -v "__pycache__"; then
+        if grep -r "eval(" --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "\.venv" | grep -v "venv/" | grep -v "env/"; then
           echo "WARNING: eval() usage found! This can be dangerous."
           exit 1
         fi
@@ -169,7 +172,7 @@ jobs:
     - name: Check for pickle usage
       run: |
         echo "Checking for potentially unsafe pickle usage..."
-        if grep -r "pickle\." --include="*.py" . | grep -v "test" | grep -v "__pycache__"; then
+        if grep -r "pickle\." --include="*.py" . | grep -v "test" | grep -v "__pycache__" | grep -v "\.venv" | grep -v "venv/" | grep -v "env/"; then
           echo "WARNING: pickle usage found! This can be unsafe with untrusted data."
           # Don't fail here as pickle might be used safely
         fi
