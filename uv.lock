@@ -339,7 +339,7 @@ dependencies = [
     { name = "urllib3" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "black" },
     { name = "flake8" },
@@ -347,15 +347,9 @@ dev = [
     { name = "pre-commit" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "pre-commit" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4" },
-    { name = "black", marker = "extra == 'dev'", specifier = "~=24.10.0" },
     { name = "celery", specifier = "~=5.5.3" },
     { name = "dj-database-url" },
     { name = "django", specifier = "~=5.2.3" },
@@ -363,14 +357,11 @@ requires-dist = [
     { name = "django-filter", specifier = "~=25.1" },
     { name = "djangorestframework", specifier = "~=3.16.0" },
     { name = "factory-boy", specifier = "~=3.3.3" },
-    { name = "flake8", marker = "extra == 'dev'", specifier = "~=7.1.1" },
     { name = "google-generativeai" },
     { name = "gunicorn", specifier = "~=23.0.0" },
-    { name = "isort", marker = "extra == 'dev'", specifier = "~=5.13.2" },
     { name = "openai" },
     { name = "pandas", specifier = "~=2.3.0" },
     { name = "pillow" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = "~=4.0.1" },
     { name = "psycopg2-binary", specifier = "~=2.9.9" },
     { name = "pymupdf" },
     { name = "pypdf" },
@@ -385,10 +376,14 @@ requires-dist = [
     { name = "requests", specifier = "~=2.32.4" },
     { name = "urllib3" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pre-commit", specifier = ">=4.0.1" }]
+dev = [
+    { name = "black", specifier = "~=24.10.0" },
+    { name = "flake8", specifier = "~=7.1.1" },
+    { name = "isort", specifier = "~=5.13.2" },
+    { name = "pre-commit", specifier = "~=4.0.1" },
+]
 
 [[package]]
 name = "distlib"
