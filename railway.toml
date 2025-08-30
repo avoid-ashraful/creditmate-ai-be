@@ -8,43 +8,27 @@ healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
-[services.web]
-# Main Django web service configuration
-variables = [
-  "DJANGO_SETTINGS_MODULE=credit_mate_ai.settings",
-  "DEBUG=False",
-  "ALLOWED_HOSTS=*",
-  "PORT=8000"
-]
+# Environment variables for Railway deployment
+[[deploy.environmentVariables]]
+name = "DJANGO_SETTINGS_MODULE"
+value = "credit_mate_ai.settings"
 
-[services.worker]
-# Celery worker service
-startCommand = "celery -A credit_mate_ai worker --loglevel=info --concurrency=2"
-variables = [
-  "DJANGO_SETTINGS_MODULE=credit_mate_ai.settings",
-  "DEBUG=False"
-]
+[[deploy.environmentVariables]]
+name = "DEBUG"
+value = "False"
 
-[services.beat]
-# Celery beat scheduler service
-startCommand = "celery -A credit_mate_ai beat --loglevel=info"
-variables = [
-  "DJANGO_SETTINGS_MODULE=credit_mate_ai.settings",
-  "DEBUG=False"
-]
+[[deploy.environmentVariables]]
+name = "ALLOWED_HOSTS"
+value = "*"
 
-[environments.production]
-# Production-specific configuration
-variables = [
-  "ENVIRONMENT=production",
-  "DEBUG=False",
-  "SECURE_SSL_REDIRECT=True",
-  "SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https"
-]
+[[deploy.environmentVariables]]
+name = "SECURE_SSL_REDIRECT"
+value = "True"
 
-[environments.staging]
-# Staging-specific configuration
-variables = [
-  "ENVIRONMENT=staging",
-  "DEBUG=False"
-]
+[[deploy.environmentVariables]]
+name = "SECURE_PROXY_SSL_HEADER"
+value = "HTTP_X_FORWARDED_PROTO,https"
+
+[[deploy.environmentVariables]]
+name = "PORT"
+value = "8000"

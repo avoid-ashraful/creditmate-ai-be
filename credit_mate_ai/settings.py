@@ -32,14 +32,14 @@ except ImportError:
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", True)
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv(
     "SECRET_KEY", "django-insecure-dev-key-only-for-development-do-not-use-in-production"
 )
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver,localhost,172.0.0.1").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver,localhost,127.0.0.1").split(",")
 
 # Application definition
 
