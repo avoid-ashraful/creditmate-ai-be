@@ -20,20 +20,20 @@ RUN apt-get update \
         libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pipenv
-RUN pip install pipenv
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy Pipfile and Pipfile.lock
-COPY Pipfile Pipfile.lock ./
+# Copy pyproject.toml and uv.lock
+COPY pyproject.toml uv.lock ./
 
 # Install Python dependencies
-RUN pipenv install --system --deploy
+RUN uv sync --frozen --no-dev
 
 # Copy project
 COPY . .
 
 # Collect static files
-RUN python manage.py collectstatic --noinput
+RUN uv run python manage.py collectstatic --noinput
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \
@@ -44,4 +44,4 @@ USER app
 EXPOSE 8000
 
 # Default command
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "credit_mate_ai.wsgi:application"]
+CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "credit_mate_ai.wsgi:application"]
