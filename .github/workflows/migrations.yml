@@ -42,51 +42,59 @@ jobs:
       with:
         python-version: 3.12
 
-    - name: Install pipenv
+    - name: Cache uv dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+
+    - name: Install uv
       run: |
         python -m pip install --upgrade pip
-        pip install pipenv
+        pip install uv
 
     - name: Install dependencies
       run: |
-        pipenv install --dev --system
+        uv sync --dev
 
     - name: Check for missing migrations
       run: |
         echo "Checking for missing migrations..."
-        python manage.py makemigrations --dry-run --check --verbosity=2
+        uv run python manage.py makemigrations --dry-run --check --verbosity=2
 
     - name: Validate migration files
       run: |
         echo "Validating migration files..."
-        python manage.py migrate --plan
+        uv run python manage.py migrate --plan
 
     - name: Test migration rollback capability
       run: |
         echo "Testing migration rollback capability..."
         # Apply all migrations
-        python manage.py migrate
+        uv run python manage.py migrate
 
         # Get list of apps with migrations
-        APPS=$(python manage.py showmigrations --plan | grep -o '^\w\+' | sort -u)
+        APPS=$(uv run python manage.py showmigrations --plan | grep -o '^\w\+' | sort -u)
 
         for app in $APPS; do
           echo "Testing rollback for app: $app"
           # Get the previous migration (if any)
-          PREV_MIGRATION=$(python manage.py showmigrations $app --plan | tail -2 | head -1 | sed 's/.*] //' || true)
+          PREV_MIGRATION=$(uv run python manage.py showmigrations $app --plan | tail -2 | head -1 | sed 's/.*] //' || true)
           if [ ! -z "$PREV_MIGRATION" ]; then
             echo "Rolling back to: $PREV_MIGRATION"
-            python manage.py migrate $app $PREV_MIGRATION || echo "Rollback failed for $app"
+            uv run python manage.py migrate $app $PREV_MIGRATION || echo "Rollback failed for $app"
           fi
         done
 
         # Migrate back to latest
-        python manage.py migrate
+        uv run python manage.py migrate
 
     - name: Check for conflicting migrations
       run: |
         echo "Checking for conflicting migrations..."
-        python -c "
+        uv run python -c "
         import os
         import django
         from django.apps import apps
@@ -110,7 +118,7 @@ jobs:
     - name: Check migration dependencies
       run: |
         echo "Checking migration dependencies..."
-        python -c "
+        uv run python -c "
         import os
         import django
         from django.apps import apps
@@ -133,7 +141,7 @@ jobs:
     - name: Analyze migration safety
       run: |
         echo "Analyzing migration safety..."
-        python -c "
+        uv run python -c "
         import os
         import re
         from pathlib import Path
@@ -185,7 +193,7 @@ jobs:
         echo "## Migration Summary" > migration-summary.md
         echo "" >> migration-summary.md
 
-        python manage.py showmigrations --plan | head -20 >> migration-summary.md
+        uv run python manage.py showmigrations --plan | head -20 >> migration-summary.md
 
         echo "" >> migration-summary.md
         echo "### Migration Statistics" >> migration-summary.md

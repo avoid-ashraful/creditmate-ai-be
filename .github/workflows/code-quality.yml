@@ -18,53 +18,61 @@ jobs:
       with:
         python-version: 3.12
 
-    - name: Install pipenv and tools
+    - name: Cache uv dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+
+    - name: Install uv
       run: |
         python -m pip install --upgrade pip
-        pip install pipenv
+        pip install uv
 
     - name: Install dependencies
       run: |
-        pipenv install --dev --system
+        uv sync --dev
 
     - name: Run Black formatting check
       run: |
-        black --check --diff --line-length=90 .
+        uv run black --check --diff --line-length=90 .
 
     - name: Run isort import sorting check
       run: |
-        isort --check-only --diff .
+        uv run isort --check-only --diff .
 
     - name: Run flake8 linting
       run: |
-        flake8 .
+        uv run flake8 .
 
     - name: Run mypy type checking
       run: |
         # Install mypy if not in requirements
-        pip install mypy django-stubs djangorestframework-stubs
-        mypy --config-file=setup.cfg . || echo "Type checking completed with warnings"
+        uv add --dev mypy django-stubs djangorestframework-stubs
+        uv run mypy --config-file=setup.cfg . || echo "Type checking completed with warnings"
 
     - name: Run pylint code analysis
       run: |
-        pip install pylint pylint-django
-        pylint --load-plugins pylint_django --django-settings-module=credit_mate_ai.settings **/*.py || echo "Pylint completed with warnings"
+        uv add --dev pylint pylint-django
+        uv run pylint --load-plugins pylint_django --django-settings-module=credit_mate_ai.settings **/*.py || echo "Pylint completed with warnings"
 
     - name: Check docstring coverage
       run: |
-        pip install interrogate
-        interrogate -v --ignore-init-method --ignore-init-module --ignore-magic --ignore-nested-functions --ignore-semiprivate --ignore-private --ignore-property-decorators --ignore-module --fail-under=70 .
+        uv add --dev interrogate
+        uv run interrogate -v --ignore-init-method --ignore-init-module --ignore-magic --ignore-nested-functions --ignore-semiprivate --ignore-private --ignore-property-decorators --ignore-module --fail-under=70 .
 
     - name: Run complexity analysis
       run: |
-        pip install radon
-        radon cc . --min=B --show-complexity
-        radon mi . --min=B
+        uv add --dev radon
+        uv run radon cc . --min=B --show-complexity
+        uv run radon mi . --min=B
 
     - name: Check for dead code
       run: |
-        pip install vulture
-        vulture . --min-confidence 80 || echo "Dead code analysis completed"
+        uv add --dev vulture
+        uv run vulture . --min-confidence 80 || echo "Dead code analysis completed"
 
     - name: Set up PostgreSQL for Django checks
       run: |
@@ -79,7 +87,7 @@ jobs:
         ALLOWED_HOSTS: "localhost,127.0.0.1"
         DATABASE_URL: "postgresql://runner@localhost:5432/creditmate_test"
       run: |
-        python manage.py check --deploy
+        uv run python manage.py check --deploy
 
     - name: Check for common Django anti-patterns
       run: |
@@ -112,11 +120,11 @@ jobs:
         echo "Checking requirements and dependencies..."
 
         # Check for unused dependencies
-        pip install pip-check
-        pip-check || echo "Dependency check completed with warnings"
+        uv add --dev pip-check
+        uv run pip-check || echo "Dependency check completed with warnings"
 
-        # Check Pipfile vs Pipfile.lock consistency
-        pipenv verify
+        # Check pyproject.toml dependencies
+        uv lock --check
 
         echo "Requirements check completed."
 
@@ -135,7 +143,7 @@ jobs:
 
         echo "## Complexity Metrics" >> code-quality-report.md
         echo "```" >> code-quality-report.md
-        radon cc . --total-average >> code-quality-report.md
+        uv run radon cc . --total-average >> code-quality-report.md
         echo "```" >> code-quality-report.md
 
         cat code-quality-report.md
@@ -157,11 +165,22 @@ jobs:
       with:
         python-version: 3.12
 
-    - name: Install dependencies
+    - name: Cache uv dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+
+    - name: Install uv
       run: |
         python -m pip install --upgrade pip
-        pip install pipenv
-        pipenv install --dev --system
+        pip install uv
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
 
     - name: Set up PostgreSQL for performance checks
       run: |
@@ -184,7 +203,7 @@ jobs:
         fi
 
         # Check for missing select_related/prefetch_related
-        python -c "
+        uv run python -c "
         import os
         import ast
         from pathlib import Path

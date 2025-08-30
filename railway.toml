@@ -1,0 +1,50 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:$PORT"
+healthcheckPath = "/api/v1/"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[services.web]
+# Main Django web service configuration
+variables = [
+  "DJANGO_SETTINGS_MODULE=credit_mate_ai.settings",
+  "DEBUG=False",
+  "ALLOWED_HOSTS=*",
+  "PORT=8000"
+]
+
+[services.worker]
+# Celery worker service
+startCommand = "celery -A credit_mate_ai worker --loglevel=info --concurrency=2"
+variables = [
+  "DJANGO_SETTINGS_MODULE=credit_mate_ai.settings",
+  "DEBUG=False"
+]
+
+[services.beat]
+# Celery beat scheduler service
+startCommand = "celery -A credit_mate_ai beat --loglevel=info"
+variables = [
+  "DJANGO_SETTINGS_MODULE=credit_mate_ai.settings",
+  "DEBUG=False"
+]
+
+[environments.production]
+# Production-specific configuration
+variables = [
+  "ENVIRONMENT=production",
+  "DEBUG=False",
+  "SECURE_SSL_REDIRECT=True",
+  "SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https"
+]
+
+[environments.staging]
+# Staging-specific configuration
+variables = [
+  "ENVIRONMENT=staging",
+  "DEBUG=False"
+]
