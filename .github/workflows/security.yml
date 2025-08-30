@@ -21,14 +21,14 @@ jobs:
       with:
         python-version: 3.12
 
-    - name: Install pipenv and security tools
+    - name: Install uv and security tools
       run: |
         python -m pip install --upgrade pip
-        pip install pipenv safety bandit semgrep
+        pip install uv safety bandit semgrep
 
     - name: Install dependencies
       run: |
-        pipenv install --dev --system
+        uv sync --dev
 
     - name: Run Safety check for known vulnerabilities
       run: |
