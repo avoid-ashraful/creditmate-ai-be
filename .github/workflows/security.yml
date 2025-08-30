@@ -21,6 +21,14 @@ jobs:
       with:
         python-version: 3.12
 
+    - name: Cache uv dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+
     - name: Install uv and security tools
       run: |
         python -m pip install --upgrade pip
@@ -32,12 +40,12 @@ jobs:
 
     - name: Run Safety check for known vulnerabilities
       run: |
-        safety check --json || true
+        uv run safety check --json || true
 
     - name: Run Bandit security linter
       run: |
-        bandit -c pyproject.toml -r . -f json -o bandit-report.json || true
-        bandit -c pyproject.toml -r . -f txt
+        uv run bandit -c pyproject.toml -r . -f json -o bandit-report.json || true
+        uv run bandit -c pyproject.toml -r . -f txt
 
     - name: Upload Bandit results
       uses: actions/upload-artifact@v4
@@ -48,8 +56,8 @@ jobs:
 
     - name: Run Semgrep security analysis
       run: |
-        semgrep --config=auto --json --output=semgrep-report.json . || true
-        semgrep --config=auto .
+        uv run semgrep --config=auto --json --output=semgrep-report.json . || true
+        uv run semgrep --config=auto .
 
     - name: Upload Semgrep results
       uses: actions/upload-artifact@v4
@@ -117,7 +125,7 @@ jobs:
         ALLOWED_HOSTS: "localhost,127.0.0.1"
         DATABASE_URL: "postgresql://runner@localhost:5432/security_test"
       run: |
-        python -c "
+        uv run python -c "
         import os
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_mate_ai.settings')
         import django
@@ -129,8 +137,8 @@ jobs:
     - name: Run pip-audit for dependency vulnerabilities
       run: |
         pip install pip-audit
-        pip-audit --format=json --output=pip-audit-report.json || true
-        pip-audit
+        uv run pip-audit --format=json --output=pip-audit-report.json || true
+        uv run pip-audit
 
     - name: Upload pip-audit results
       uses: actions/upload-artifact@v4
