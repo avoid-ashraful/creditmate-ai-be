@@ -79,14 +79,14 @@ This project is currently in active development phase. Core features are impleme
 
 2. **Install dependencies**
    ```bash
-   # Install pipenv if not already installed
-   pip install pipenv
+   # Install uv if not already installed
+   pip install uv
 
    # Install project dependencies
-   pipenv install --dev
+   uv sync --dev
 
-   # Activate virtual environment
-   pipenv shell
+   # Activate virtual environment (if not already activated)
+   source .venv/bin/activate
    ```
 
 3. **Environment setup**
