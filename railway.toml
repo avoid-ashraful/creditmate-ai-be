@@ -1,8 +1,8 @@
 [build]
-builder = "nixpacks"
+builder = "RAILPACK"
 
 [deploy]
-startCommand = "uv run python manage.py migrate --noinput && uv run gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 300 --keep-alive 5 --log-file - --access-logfile - --error-logfile -"
+startCommand = "uv run python manage.py migrate --noinput && uv run gunicorn credit_mate_ai.wsgi"
 healthcheckPath = "/health/"
 healthcheckTimeout = 900
 restartPolicyType = "on_failure"
