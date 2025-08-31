@@ -1,30 +1,10 @@
 [build]
-builder = "RAILPACK"
+builder = "NIXPACKS"
+buildCommand = "uv sync --frozen"
 
 [deploy]
-startCommand = "uv run python manage.py migrate --noinput && uv run gunicorn credit_mate_ai.wsgi"
+preDeployCommand = ["uv run python manage.py migrate"]
+startCommand = "uv run gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:$PORT"
 healthcheckPath = "/health/"
-healthcheckTimeout = 900
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
-
-# Environment variables for Railway deployment
-[[deploy.environmentVariables]]
-name = "DJANGO_SETTINGS_MODULE"
-value = "credit_mate_ai.settings"
-
-[[deploy.environmentVariables]]
-name = "SECURE_SSL_REDIRECT"
-value = "True"
-
-[[deploy.environmentVariables]]
-name = "SECURE_PROXY_SSL_HEADER"
-value = "HTTP_X_FORWARDED_PROTO,https"
-
-[[deploy.environmentVariables]]
-name = "PORT"
-value = "8000"
-
-[[deploy.environmentVariables]]
-name = "PYTHONUNBUFFERED"
-value = "1"
+healthcheckTimeout = 300
+restartPolicyType = "on-failure"
