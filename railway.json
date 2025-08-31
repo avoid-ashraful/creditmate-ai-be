@@ -6,7 +6,7 @@
     },
     "deploy": {
         "preDeployCommand": "uv run python manage.py migrate",
-        "startCommand": "uv run gunicorn credit_mate_ai.wsgi",
+        "startCommand": "uv run gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:8000",
         "healthcheckPath": "/health/",
         "healthcheckTimeout": 300,
         "restartPolicyType": "ALWAYS"
