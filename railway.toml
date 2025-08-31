@@ -2,9 +2,9 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:$PORT"
+startCommand = "uv run python manage.py migrate --noinput && uv run python manage.py collectstatic --noinput && uv run gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:$PORT"
 healthcheckPath = "/health/"
-healthcheckTimeout = 600
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
@@ -12,14 +12,6 @@ restartPolicyMaxRetries = 3
 [[deploy.environmentVariables]]
 name = "DJANGO_SETTINGS_MODULE"
 value = "credit_mate_ai.settings"
-
-[[deploy.environmentVariables]]
-name = "DEBUG"
-value = "False"
-
-[[deploy.environmentVariables]]
-name = "ALLOWED_HOSTS"
-value = "credit-mate-ai-be-production.up.railway.app,*"
 
 [[deploy.environmentVariables]]
 name = "SECURE_SSL_REDIRECT"
@@ -36,7 +28,3 @@ value = "8000"
 [[deploy.environmentVariables]]
 name = "PYTHONUNBUFFERED"
 value = "1"
-
-[[deploy.environmentVariables]]
-name = "ENVIRONMENT"
-value = "production"
