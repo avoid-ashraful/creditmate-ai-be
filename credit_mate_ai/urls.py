@@ -20,7 +20,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from . import views
+
 urlpatterns = [
+    path("health/", views.health_check, name="health_check"),
     path("admin/", admin.site.urls),
     path("api/v1/", include("banks.api.urls")),
     path("api/v1/", include("credit_cards.api.urls")),

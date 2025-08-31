@@ -3,7 +3,7 @@ builder = "nixpacks"
 
 [deploy]
 startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:$PORT"
-healthcheckPath = "/admin/"
+healthcheckPath = "/health/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
