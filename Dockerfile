@@ -37,8 +37,7 @@ RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
 USER app
 
-# Expose port
-EXPOSE 8000
+EXPOSE $PORT
 
-# Default command
-CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "credit_mate_ai.wsgi:application"]
+# Default command - use PORT environment variable
+CMD ["sh", "-c", "uv run gunicorn --bind 0.0.0.0:${PORT:-8000} credit_mate_ai.wsgi:application"]
