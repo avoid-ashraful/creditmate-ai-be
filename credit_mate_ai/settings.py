@@ -150,8 +150,8 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise configuration
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# WhiteNoise configuration (compression disabled for Railway compatibility)
+STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 
 # Media files
 MEDIA_URL = "media/"
