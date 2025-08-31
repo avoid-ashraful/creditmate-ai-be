@@ -32,9 +32,6 @@ RUN uv sync --frozen --no-dev
 # Copy project
 COPY . .
 
-# Collect static files
-RUN uv run python manage.py collectstatic --noinput
-
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app

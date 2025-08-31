@@ -31,6 +31,7 @@ dependencies = [
     "pymupdf",
     "openai",
     "pypdf",
+    "whitenoise",
 ]
 
 [dependency-groups]

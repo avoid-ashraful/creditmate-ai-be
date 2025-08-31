@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:$PORT"
+startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn credit_mate_ai.wsgi:application --bind 0.0.0.0:$PORT --timeout 300 --keep-alive 5 --max-requests 1000"
 healthcheckPath = "/health/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
@@ -32,3 +32,11 @@ value = "HTTP_X_FORWARDED_PROTO,https"
 [[deploy.environmentVariables]]
 name = "PORT"
 value = "8000"
+
+[[deploy.environmentVariables]]
+name = "PYTHONUNBUFFERED"
+value = "1"
+
+[[deploy.environmentVariables]]
+name = "ENVIRONMENT"
+value = "production"
