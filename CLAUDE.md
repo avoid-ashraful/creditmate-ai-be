@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Environment
 
-This is a Django-based AI-powered credit card discovery platform using Python 3.12, pipenv for dependency management, PostgreSQL 17 as the database, and Celery for background tasks.
+This is a Django-based AI-powered credit card discovery platform using Python 3.12, uv for dependency management, PostgreSQL 17 as the database, and Celery for background tasks.
 
 **Required services:**
 - PostgreSQL 17 (primary database)
@@ -16,64 +16,61 @@ This is a Django-based AI-powered credit card discovery platform using Python 3.
 ### Environment Setup
 ```bash
 # Install dependencies
-pipenv install --dev
-
-# Activate virtual environment
-pipenv shell
+uv sync --dev
 
 # Database migrations
-python manage.py migrate
+uv run python manage.py migrate
 
 # Create superuser
-python manage.py createsuperuser
+uv run python manage.py createsuperuser
 ```
 
 ### Development Server
 ```bash
 # Django development server
-python manage.py runserver
+uv run python manage.py runserver
 
 # Celery worker (separate terminal)
-celery -A credit_mate_ai worker --loglevel=info
+uv run celery -A credit_mate_ai worker --loglevel=info
 
 # Celery beat scheduler (separate terminal)
-celery -A credit_mate_ai beat --loglevel=info
+uv run celery -A credit_mate_ai beat --loglevel=info
 ```
 
 ### Testing
 ```bash
 # Run all tests with pytest
-pytest
+uv run pytest
 
 # Run with coverage
-pytest --cov=banks --cov=credit_cards --cov=common --cov-report=html
+uv run pytest --cov=banks --cov=credit_cards --cov=common --cov-report=html
 
 # Run Django tests
-python manage.py test
+uv run python manage.py test
 ```
 
 ### Code Quality
 ```bash
 # Format code
-black .
+uv run black .
 
 # Check imports
-isort .
+uv run isort .
 
 # Lint code
-flake8
+uv run flake8
 ```
 
 ### Web Crawling
 ```bash
 # Manual crawl all sources
-python manage.py crawl_bank_data
+uv run python manage.py crawl_bank_data
 
 # Crawl specific bank
-python manage.py crawl_bank_data --bank-id 1
+uv run python manage.py crawl_bank_data --bank-id 1
 
 # Dry run
-python manage.py crawl_bank_data --dry-run
+uv run python manage.py crawl_bank_data --dry-run
 ```
 
 ## Architecture Overview

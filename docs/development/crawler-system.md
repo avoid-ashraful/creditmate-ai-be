@@ -40,16 +40,16 @@ Use the management command to test crawling:
 
 ```bash
 # Crawl all active data sources
-python manage.py crawl_bank_data
+uv run python manage.py crawl_bank_data
 
 # Crawl specific bank
-python manage.py crawl_bank_data --bank-id 1
+uv run python manage.py crawl_bank_data --bank-id 1
 
 # Crawl specific data source
-python manage.py crawl_bank_data --source-id 5
+uv run python manage.py crawl_bank_data --source-id 5
 
 # Dry run to see what would be crawled
-python manage.py crawl_bank_data --dry-run
+uv run python manage.py crawl_bank_data --dry-run
 ```
 
 ### Automated Crawling
@@ -64,7 +64,7 @@ The system uses Celery for automated crawling:
 
 2. **Install Python dependencies**:
    ```bash
-   pipenv install
+   uv sync
    ```
 
 3. **Start Redis**:
@@ -74,12 +74,12 @@ The system uses Celery for automated crawling:
 
 4. **Start Celery Worker**:
    ```bash
-   celery -A credit_mate_ai worker --loglevel=info
+   uv run celery -A credit_mate_ai worker --loglevel=info
    ```
 
 5. **Start Celery Beat** (for scheduled tasks):
    ```bash
-   celery -A credit_mate_ai beat --loglevel=info
+   uv run celery -A credit_mate_ai beat --loglevel=info
    ```
 
 ### Configuration
@@ -199,12 +199,12 @@ The system includes comprehensive tests:
 
 ```bash
 # Run all crawler tests
-python manage.py test banks.tests.test_services
-python manage.py test banks.tests.test_tasks
-python manage.py test banks.tests.test_models
+uv run python manage.py test banks.tests.test_services
+uv run python manage.py test banks.tests.test_tasks
+uv run python manage.py test banks.tests.test_models
 
 # Run with coverage
-pytest --cov=banks
+uv run pytest --cov=banks
 ```
 
 ## Monitoring and Maintenance

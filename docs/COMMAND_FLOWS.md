@@ -18,16 +18,16 @@ Crawls bank credit card data from configured data sources (PDFs, webpages, image
 
 ```bash
 # Crawl all active data sources
-python manage.py crawl_bank_data
+uv run python manage.py crawl_bank_data
 
 # Crawl specific bank
-python manage.py crawl_bank_data --bank-id 1
+uv run python manage.py crawl_bank_data --bank-id 1
 
 # Crawl specific data source
-python manage.py crawl_bank_data --source-id 5
+uv run python manage.py crawl_bank_data --source-id 5
 
 # Dry run (preview what would be crawled)
-python manage.py crawl_bank_data --dry-run
+uv run python manage.py crawl_bank_data --dry-run
 ```
 
 ### Command Arguments
@@ -152,19 +152,19 @@ Automatically discovers and extracts schedule of charges or fee document URLs fr
 
 ```bash
 # Process all active banks
-python manage.py find_schedule_charge_urls
+uv run python manage.py find_schedule_charge_urls
 
 # Process specific bank by ID
-python manage.py find_schedule_charge_urls --bank-id 1
+uv run python manage.py find_schedule_charge_urls --bank-id 1
 
 # Process banks by name (case-insensitive partial match)
-python manage.py find_schedule_charge_urls --bank-name "Chase"
+uv run python manage.py find_schedule_charge_urls --bank-name "Chase"
 
 # Dry run (preview without making changes)
-python manage.py find_schedule_charge_urls --dry-run
+uv run python manage.py find_schedule_charge_urls --dry-run
 
 # Force update existing URLs
-python manage.py find_schedule_charge_urls --force
+uv run python manage.py find_schedule_charge_urls --force
 ```
 
 ### Command Arguments
@@ -425,14 +425,14 @@ google-generativeai
 
 ```bash
 # Test specific data source
-python manage.py crawl_bank_data --source-id 1 --dry-run
+uv run python manage.py crawl_bank_data --source-id 1 --dry-run
 
 # Test URL discovery for one bank
-python manage.py find_schedule_charge_urls --bank-id 1 --dry-run
+uv run python manage.py find_schedule_charge_urls --bank-id 1 --dry-run
 
 # Check system configuration
-python manage.py check
-python manage.py migrate --check
+uv run python manage.py check
+uv run python manage.py migrate --check
 ```
 
 ### Log Analysis

@@ -55,14 +55,14 @@ def process_bank_data(self, bank_id, data_source_urls):
 git clone https://github.com/avoid-ashraful/creditmate-ai-be.git
 cd creditmate-ai-be
 
-# Install pipenv if not already installed
-pip install pipenv
+# Install uv if not already installed
+pip install uv
 
 # Install dependencies
-pipenv install --dev
+uv install --dev
 
 # Activate virtual environment
-pipenv shell
+uv shell
 ```
 
 ### 2. Environment Configuration
@@ -81,22 +81,22 @@ export ENVIRONMENT=local
 ### 3. Database Setup
 ```bash
 # Run migrations
-python manage.py migrate
+uv run python manage.py migrate
 
 # Create superuser
-python manage.py createsuperuser
+uv run python manage.py createsuperuser
 ```
 
 ### 4. Start Services
 ```bash
 # Terminal 1: Django development server
-python manage.py runserver
+uv run python manage.py runserver
 
 # Terminal 2: Celery worker
-celery -A credit_mate_ai worker --loglevel=info
+uv run celery -A credit_mate_ai worker --loglevel=info
 
 # Terminal 3: Celery beat scheduler
-celery -A credit_mate_ai beat --loglevel=info
+uv run celery -A credit_mate_ai beat --loglevel=info
 ```
 
 ### 5. Access Application
@@ -112,10 +112,10 @@ celery -A credit_mate_ai beat --loglevel=info
 docker-compose -f docker-compose.dev.yml up
 
 # Run migrations in container
-docker-compose -f docker-compose.dev.yml exec web python manage.py migrate
+docker-compose -f docker-compose.dev.yml exec web uv run python manage.py migrate
 
 # Create superuser in container
-docker-compose -f docker-compose.dev.yml exec web python manage.py createsuperuser
+docker-compose -f docker-compose.dev.yml exec web uv run python manage.py createsuperuser
 ```
 
 ## Development Guidelines
@@ -147,17 +147,17 @@ pre-commit run --all-files
 
 #### Running Tests
 ```bash
-# Run all tests with pytest
-pytest
+# Run all tests with uv run pytest
+uv run pytest
 
 # Run with coverage
-pytest --cov=banks --cov=credit_cards --cov=common --cov-report=html
+uv run pytest --cov=banks --cov=credit_cards --cov=common --cov-report=html
 
 # Run specific test module
-pytest banks/tests/test_api.py
+uv run pytest banks/tests/test_api.py
 
 # Run Django tests
-python manage.py test
+uv run python manage.py test
 ```
 
 #### Test Coverage Standards
@@ -219,13 +219,13 @@ To add more origins, update `CORS_ALLOWED_ORIGINS` in `.env`.
 #### Migrations
 ```bash
 # Create migrations for model changes
-python manage.py makemigrations
+uv run python manage.py makemigrations
 
 # Apply migrations
-python manage.py migrate
+uv run python manage.py migrate
 
 # Check migration status
-python manage.py showmigrations
+uv run python manage.py showmigrations
 ```
 
 #### Model Guidelines
@@ -240,7 +240,7 @@ python manage.py showmigrations
 #### Task Development
 ```bash
 # Test tasks manually
-python manage.py shell
+uv run python manage.py shell
 >>> from banks.tasks import crawl_bank_data_source
 >>> crawl_bank_data_source.delay(source_id=1)
 ```
@@ -248,13 +248,13 @@ python manage.py shell
 #### Monitoring Tasks
 ```bash
 # Check active tasks
-celery -A credit_mate_ai inspect active
+uv run celery -A credit_mate_ai inspect active
 
 # Check scheduled tasks
-celery -A credit_mate_ai inspect scheduled
+uv run celery -A credit_mate_ai inspect scheduled
 
 # Monitor task execution
-celery -A credit_mate_ai events
+uv run celery -A credit_mate_ai events
 ```
 
 ### AI Content Processing
@@ -262,7 +262,7 @@ celery -A credit_mate_ai events
 #### Testing OpenAI Integration
 ```bash
 # Test content extraction
-python manage.py shell
+uv run python manage.py shell
 >>> from banks.services import ContentExtractor
 >>> extractor = ContentExtractor()
 >>> content = extractor.extract_from_url("https://example.com")
@@ -303,49 +303,49 @@ credit-mate-ai/
 #### Development Commands
 ```bash
 # Start development server
-python manage.py runserver
+uv run python manage.py runserver
 
 # Create migrations
-python manage.py makemigrations
+uv run python manage.py makemigrations
 
 # Apply migrations
-python manage.py migrate
+uv run python manage.py migrate
 
 # Create superuser
-python manage.py createsuperuser
+uv run python manage.py createsuperuser
 
 # Django shell
-python manage.py shell
+uv run python manage.py shell
 
 # Check project configuration
-python manage.py check
+uv run python manage.py check
 ```
 
 #### Celery Commands
 ```bash
 # Start worker
-celery -A credit_mate_ai worker --loglevel=info
+uv run celery -A credit_mate_ai worker --loglevel=info
 
 # Start beat scheduler
-celery -A credit_mate_ai beat --loglevel=info
+uv run celery -A credit_mate_ai beat --loglevel=info
 
 # Monitor tasks
-celery -A credit_mate_ai inspect active
+uv run celery -A credit_mate_ai inspect active
 
 # Purge all tasks
-celery -A credit_mate_ai purge
+uv run celery -A credit_mate_ai purge
 ```
 
 #### Crawling Commands
 ```bash
 # Crawl all data sources
-python manage.py crawl_bank_data
+uv run python manage.py crawl_bank_data
 
 # Crawl specific bank
-python manage.py crawl_bank_data --bank-id 1
+uv run python manage.py crawl_bank_data --bank-id 1
 
 # Dry run
-python manage.py crawl_bank_data --dry-run
+uv run python manage.py crawl_bank_data --dry-run
 ```
 
 ### Troubleshooting
@@ -368,8 +368,8 @@ sudo systemctl start redis
 ```bash
 # Reset database
 rm db.sqlite3
-python manage.py migrate
-python manage.py createsuperuser
+uv run python manage.py migrate
+uv run python manage.py createsuperuser
 ```
 
 ##### Import Errors
@@ -378,7 +378,7 @@ python manage.py createsuperuser
 python -c "import sys; print('\n'.join(sys.path))"
 
 # Reinstall dependencies
-pipenv install --dev
+uv install --dev
 ```
 
 ##### OpenAI API Issues

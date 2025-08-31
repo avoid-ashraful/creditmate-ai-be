@@ -104,10 +104,10 @@ This project is currently in active development phase. Core features are impleme
 4. **Database setup**
    ```bash
    # Run migrations
-   python manage.py migrate
+   uv run python manage.py migrate
 
    # Create superuser
-   python manage.py createsuperuser
+   uv run python manage.py createsuperuser
    ```
 
 5. **Start Redis (required for Celery)**
@@ -122,13 +122,13 @@ This project is currently in active development phase. Core features are impleme
 6. **Run the development server**
    ```bash
    # Terminal 1: Django development server
-   python manage.py runserver
+   uv run python manage.py runserver
 
    # Terminal 2: Celery worker (in another terminal)
-   celery -A credit_mate_ai worker --loglevel=info
+   uv run celery -A credit_mate_ai worker --loglevel=info
 
    # Terminal 3: Celery beat scheduler (in another terminal)
-   celery -A credit_mate_ai beat --loglevel=info
+   uv run celery -A credit_mate_ai beat --loglevel=info
    ```
 
 7. **Access the application**
@@ -210,7 +210,7 @@ curl "http://localhost:8000/api/v1/credit-cards/?search=travel&bank_ids=1,2,3"
 
 ```bash
 # Add data sources via Django Admin or management command
-python manage.py shell
+uv run python manage.py shell
 >>> from banks.models import Bank, BankDataSource
 >>> bank = Bank.objects.get(name="Chase")
 >>> BankDataSource.objects.create(
@@ -225,16 +225,16 @@ python manage.py shell
 
 ```bash
 # Crawl all active sources
-python manage.py crawl_bank_data
+uv run python manage.py crawl_bank_data
 
 # Crawl specific bank
-python manage.py crawl_bank_data --bank-id 1
+uv run python manage.py crawl_bank_data --bank-id 1
 
 # Crawl specific data source
-python manage.py crawl_bank_data --source-id 5
+uv run python manage.py crawl_bank_data --source-id 5
 
 # Dry run (test without making changes)
-python manage.py crawl_bank_data --dry-run
+uv run python manage.py crawl_bank_data --dry-run
 ```
 
 ## 🧪 Testing
@@ -243,16 +243,16 @@ python manage.py crawl_bank_data --dry-run
 
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run with coverage
-pytest --cov=banks --cov=credit_cards --cov=common --cov-report=html
+uv run pytest --cov=banks --cov=credit_cards --cov=common --cov-report=html
 
 # Run specific test module
-pytest banks/tests/test_api.py
+uv run pytest banks/tests/test_api.py
 
 # Run Django tests
-python manage.py test
+uv run python manage.py test
 ```
 
 ### Test Coverage
@@ -364,26 +364,26 @@ docker-compose exec web python manage.py createsuperuser
 
 ```bash
 # Check system health
-python manage.py check
+uv run python manage.py check
 
 # Check database connectivity
-python manage.py dbshell
+uv run python manage.py dbshell
 
 # Monitor Celery workers
-celery -A credit_mate_ai inspect active
+uv run celery -A credit_mate_ai inspect active
 ```
 
 ### Maintenance Tasks
 
 ```bash
 # Crawl bank data manually
-python manage.py crawl_bank_data
+uv run python manage.py crawl_bank_data
 
 # Crawl specific bank
-python manage.py crawl_bank_data --bank-id 1
+uv run python manage.py crawl_bank_data --bank-id 1
 
 # View available management commands
-python manage.py help
+uv run python manage.py help
 ```
 
 ## 🤝 Contributing
@@ -395,7 +395,7 @@ We welcome contributions! Please see our [Implementation Summary](./docs/develop
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests (`pytest`)
+4. Run tests (`uv run pytest`)
 5. Run code quality checks (`black . && flake8 && isort .`)
 6. Commit your changes (`git commit -m 'Add amazing feature'`)
 7. Push to the branch (`git push origin feature/amazing-feature`)
@@ -436,7 +436,7 @@ We maintain high code quality standards:
 
 1. **Celery tasks not running**
    - Check Redis connection: `redis-cli ping`
-   - Verify worker is running: `celery -A credit_mate_ai inspect active`
+   - Verify worker is running: `uv run celery -A credit_mate_ai inspect active`
 
 2. **OpenAI API errors**
    - Verify API key is set: `echo $OPENAI_API_KEY`
