@@ -78,8 +78,9 @@ class LLMContentParser:
 
         Returns
         -------
-        dict
-            Comprehensive parsed data with all available information
+        tuple of (dict, dict)
+            First element is comprehensive parsed data with all available information,
+            second element contains metadata including provider used
 
         Raises
         ------
@@ -106,7 +107,7 @@ class LLMContentParser:
             parsed_data = self._clean_and_parse_response(raw_response)
 
             logger.info(f"Comprehensive parsing completed using {used_provider}")
-            return {"comprehensive_data": parsed_data, "provider_used": used_provider}
+            return parsed_data, {"provider_used": used_provider}
 
         except AllLLMProvidersFailedError as e:
             logger.error(f"All LLM providers failed for comprehensive parsing: {e}")
