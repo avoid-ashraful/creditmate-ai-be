@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from credit_cards.models import CreditCard
+from credit_cards.models import BenefitCategory, CreditCard, CreditCardBenefit
 
 
 @admin.register(CreditCard)
@@ -12,13 +12,23 @@ class CreditCardAdmin(admin.ModelAdmin):
         "bank",
         "annual_fee",
         "interest_rate_apr",
+        "annual_fee_waiver_difficulty",
+        "spending_tier",
         "has_lounge_access",
         "has_annual_fee",
         "is_active",
         "modified",
     ]
-    list_filter = ["bank", "is_active", "created", "modified"]
-    search_fields = ["name", "bank__name", "reward_points_policy"]
+    list_filter = [
+        "bank",
+        "is_active",
+        "annual_fee_waiver_difficulty",
+        "spending_tier",
+        "benefit_categories",
+        "created",
+        "modified",
+    ]
+    search_fields = ["name", "bank__name", "reward_points_policy", "best_for_tags"]
     readonly_fields = ["created", "modified"]
     ordering = ["bank__name", "name"]
 
@@ -28,9 +38,24 @@ class CreditCardAdmin(admin.ModelAdmin):
             {"fields": ("bank", "name", "annual_fee", "interest_rate_apr", "is_active")},
         ),
         (
+            "AI Classification",
+            {
+                "fields": (
+                    "annual_fee_waiver_difficulty",
+                    "spending_tier",
+                    "best_for_tags",
+                ),
+                "description": "AI-generated classifications for enhanced filtering",
+            },
+        ),
+        (
             "Lounge Access",
             {
-                "fields": ("lounge_access_international", "lounge_access_domestic"),
+                "fields": (
+                    "lounge_access_international",
+                    "lounge_access_domestic",
+                    "lounge_access_condition",
+                ),
                 "classes": ("collapse",),
             },
         ),
@@ -50,7 +75,6 @@ class CreditCardAdmin(admin.ModelAdmin):
             "Additional Information",
             {"fields": ("additional_features",), "classes": ("collapse",)},
         ),
-        ("Computed Fields", {"fields": (), "classes": ("collapse",)}),
         ("Metadata", {"fields": ("created", "modified"), "classes": ("collapse",)}),
     )
 
@@ -67,3 +91,94 @@ class CreditCardAdmin(admin.ModelAdmin):
 
     has_annual_fee.boolean = True
     has_annual_fee.short_description = "Has Annual Fee"
+
+
+@admin.register(BenefitCategory)
+class BenefitCategoryAdmin(admin.ModelAdmin):
+    """Admin interface for BenefitCategory model."""
+
+    list_display = [
+        "name",
+        "category_type",
+        "display_order",
+        "is_active",
+        "icon",
+        "credit_card_count",
+    ]
+    list_filter = ["category_type", "is_active"]
+    search_fields = ["name", "description"]
+    ordering = ["display_order", "name"]
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {"fields": ("name", "category_type", "description", "icon")},
+        ),
+        (
+            "MCC Alignment",
+            {
+                "fields": ("mcc_codes",),
+                "description": "ISO 18245 Merchant Category Codes aligned with this category",
+            },
+        ),
+        (
+            "Display Settings",
+            {"fields": ("display_order", "is_active")},
+        ),
+    )
+
+    def credit_card_count(self, obj):
+        """Display number of credit cards in this category."""
+        return obj.credit_cards.count()
+
+    credit_card_count.short_description = "Credit Cards"
+
+
+class CreditCardBenefitInline(admin.TabularInline):
+    """Inline admin for CreditCardBenefit."""
+
+    model = CreditCardBenefit
+    extra = 1
+    fields = [
+        "benefit_category",
+        "reward_rate",
+        "reward_description",
+        "conditions",
+        "confidence_score",
+        "is_primary",
+    ]
+
+
+@admin.register(CreditCardBenefit)
+class CreditCardBenefitAdmin(admin.ModelAdmin):
+    """Admin interface for CreditCardBenefit model."""
+
+    list_display = [
+        "credit_card",
+        "benefit_category",
+        "reward_rate",
+        "is_primary",
+        "confidence_score",
+    ]
+    list_filter = ["benefit_category", "is_primary", "confidence_score"]
+    search_fields = [
+        "credit_card__name",
+        "benefit_category__name",
+        "reward_description",
+    ]
+    ordering = ["credit_card", "-is_primary", "-reward_rate"]
+
+    fieldsets = (
+        (
+            "Relationship",
+            {"fields": ("credit_card", "benefit_category")},
+        ),
+        (
+            "Reward Details",
+            {"fields": ("reward_rate", "reward_description", "conditions")},
+        ),
+        (
+            "Metadata",
+            {"fields": ("confidence_score", "is_primary")},
+        ),
+    )

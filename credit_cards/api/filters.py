@@ -60,6 +60,35 @@ class CreditCardFilter(django_filters.FilterSet):
     # Waiver policy filters
     has_fee_waiver = django_filters.BooleanFilter(method="filter_has_fee_waiver")
 
+    # NEW: AI Classification filters
+    waiver_difficulty = django_filters.MultipleChoiceFilter(
+        field_name="annual_fee_waiver_difficulty",
+        choices=[
+            ("EASY", "Easy to Waive"),
+            ("MODERATE", "Moderate Conditions"),
+            ("DIFFICULT", "Difficult to Waive"),
+            ("NOT_AVAILABLE", "No Waiver Available"),
+            ("UNKNOWN", "Unknown"),
+        ],
+    )
+    tier = django_filters.MultipleChoiceFilter(
+        field_name="spending_tier",
+        choices=[
+            ("ENTRY", "Entry Level"),
+            ("MID", "Mid-Range"),
+            ("PREMIUM", "Premium"),
+            ("ULTRA_PREMIUM", "Ultra Premium"),
+        ],
+    )
+    best_for = django_filters.CharFilter(method="filter_best_for_tags")
+
+    # NEW: Benefit category filters
+    benefit_category = django_filters.CharFilter(method="filter_benefit_category")
+    benefit_category_ids = django_filters.BaseInFilter(
+        field_name="benefit_categories", lookup_expr="in"
+    )
+    has_benefits = django_filters.BooleanFilter(method="filter_has_benefits")
+
     # IDs filter for filtering multiple credit cards
     ids = django_filters.BaseInFilter(field_name="id", lookup_expr="in")
 
@@ -125,3 +154,23 @@ class CreditCardFilter(django_filters.FilterSet):
         if value:
             return queryset.filter(annual_fee_waiver_policy__isnull=False)
         return queryset.filter(annual_fee_waiver_policy__isnull=True)
+
+    def filter_best_for_tags(self, queryset, name, value):
+        """Filter cards by best_for_tags content."""
+        if value:
+            return queryset.filter(best_for_tags__icontains=value)
+        return queryset
+
+    def filter_benefit_category(self, queryset, name, value):
+        """Filter cards by benefit category name."""
+        if value:
+            return queryset.filter(
+                benefit_categories__name__icontains=value
+            ).distinct()
+        return queryset
+
+    def filter_has_benefits(self, queryset, name, value):
+        """Filter cards that have benefit categories assigned."""
+        if value:
+            return queryset.filter(benefit_categories__isnull=False).distinct()
+        return queryset.filter(benefit_categories__isnull=True)

@@ -185,6 +185,8 @@ CRITICAL INSTRUCTIONS:
 4. Ensure the JSON is complete and properly closed
 
 Extract these fields for each credit card with EXACT formats:
+
+BASIC FIELDS:
 - name: Credit card name/type (e.g., "Platinum Card", "Gold Card", "Classic Card", "World Card", etc.) - NOT the annual fee amount
 - annual_fee: Annual fee as pure number without currency (e.g., "TK. 5,000" becomes 5000, "Free" becomes 0)
 - interest_rate_apr: Interest rate as decimal number (e.g., "20%" becomes 20.0, "17%" becomes 17.0)
@@ -196,6 +198,35 @@ Extract these fields for each credit card with EXACT formats:
 - annual_fee_waiver_policy: Waiver conditions as simple string (or null if not available)
 - reward_points_policy: Reward policy description as string or null
 - additional_features: Array of feature strings or null
+
+AI CLASSIFICATION FIELDS (NEW):
+- annual_fee_waiver_difficulty: Classify how easy it is to waive the annual fee. Choose from:
+  * "EASY" - Simple conditions (e.g., spend 50k BDT, or automatic after first year)
+  * "MODERATE" - Multiple conditions or moderate spending (e.g., spend 200k BDT)
+  * "DIFFICULT" - High spending required (e.g., spend 1M+ BDT)
+  * "NOT_AVAILABLE" - No waiver available
+  * "UNKNOWN" - Cannot determine from the information
+
+- spending_tier: Classify card tier. Choose from:
+  * "ENTRY" - Low annual fee (0-2000 BDT), basic features
+  * "MID" - Medium annual fee (2000-5000 BDT), moderate benefits
+  * "PREMIUM" - High annual fee (5000-15000 BDT), premium benefits
+  * "ULTRA_PREMIUM" - Very high annual fee (15000+ BDT), luxury benefits
+
+- best_for_tags: Array of use case tags. Choose applicable from:
+  ["Cashback", "Travel Miles", "Lounge Access", "No Annual Fee", "Premium Benefits",
+   "Low Interest", "Balance Transfer", "Shopping Rewards", "Fuel Savings"]
+
+- benefit_categories: Array of benefit category objects. For each category where the card offers rewards:
+  {{
+    "category": Choose from ["Restaurant & Dining", "Healthcare & Hospital", "Shopping & Retail",
+                "Travel & Transportation", "Fuel & Gas Stations", "Entertainment & Recreation",
+                "Grocery & Supermarket", "Online Shopping", "Utilities & Bills", "Education & Learning"],
+    "reward_rate": Numeric percentage (e.g., 5.0 for 5% cashback, or null if not specified),
+    "reward_description": Human-readable description (e.g., "5% cashback on all dining"),
+    "conditions": Any conditions or restrictions (or empty string),
+    "is_primary": true if this is a main selling point, false otherwise
+  }}
 
 CRITICAL: Follow these number conversion rules strictly:
 - Remove ALL currency symbols and text (TK., BDT, USD, $)
