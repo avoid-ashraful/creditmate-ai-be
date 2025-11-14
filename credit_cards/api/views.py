@@ -1,11 +1,16 @@
+from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from credit_cards.api.filters import CreditCardFilter
-from credit_cards.api.serializers import CreditCardListSerializer, CreditCardSerializer
-from credit_cards.models import CreditCard
+from credit_cards.api.serializers import (
+    BenefitCategorySerializer,
+    CreditCardListSerializer,
+    CreditCardSerializer,
+)
+from credit_cards.models import BenefitCategory, CreditCard
 
 
 class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
@@ -103,5 +108,107 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
                     .values_list("bank__name", flat=True)
                     .distinct()[:10]
                 ),
+            }
+        )
+
+
+class BenefitCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for Benefit Categories.
+
+    Provides read-only REST API operations for benefit categories with:
+    - List all categories with card counts
+    - Search categories by name
+    - Filter by category type
+    - Order by display order or card count
+    """
+
+    queryset = BenefitCategory.objects.filter(is_active=True)
+    serializer_class = BenefitCategorySerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "description"]
+    ordering_fields = ["display_order", "name", "card_count"]
+    ordering = ["display_order", "name"]
+
+    def get_queryset(self):
+        """Annotate queryset with credit card counts.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        QuerySet
+            BenefitCategory queryset annotated with card_count field
+        """
+        return (
+            super()
+            .get_queryset()
+            .annotate(card_count=Count("credit_cards", distinct=True))
+        )
+
+    def list(self, request, *args, **kwargs):
+        """List benefit categories with enhanced response.
+
+        Parameters
+        ----------
+        request : HttpRequest
+            Django HTTP request object
+        args : tuple
+            Positional arguments
+        kwargs : dict
+            Keyword arguments
+
+        Returns
+        -------
+        Response
+            DRF Response with categories and their card counts
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            # Add card_count to serialized data
+            data = serializer.data
+            for i, category in enumerate(page):
+                data[i]["card_count"] = category.card_count
+            return self.get_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+        for i, category in enumerate(queryset):
+            data[i]["card_count"] = category.card_count
+
+        return Response(data)
+
+    @action(detail=True, methods=["get"])
+    def cards(self, request, pk=None):
+        """Get all credit cards in this benefit category.
+
+        Parameters
+        ----------
+        request : HttpRequest
+            Django HTTP request object
+        pk : int
+            Primary key of the benefit category
+
+        Returns
+        -------
+        Response
+            DRF Response containing list of credit cards in this category
+        """
+        category = self.get_object()
+        cards = CreditCard.objects.filter(
+            benefit_categories=category, is_active=True
+        ).select_related("bank")
+
+        # Apply same filtering as CreditCardViewSet
+        serializer = CreditCardListSerializer(cards, many=True)
+        return Response(
+            {
+                "category": BenefitCategorySerializer(category).data,
+                "card_count": cards.count(),
+                "cards": serializer.data,
             }
         )
