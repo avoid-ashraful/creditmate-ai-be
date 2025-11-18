@@ -1,6 +1,6 @@
 import logging
 
-from credit_cards.models import CreditCard
+from credit_cards.models import BenefitCategory, CreditCard, CreditCardBenefit
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +112,9 @@ class CreditCardDataService:
             logger.info(f"Cleaned up card name from fee to: {card_name}")
 
         try:
+            # Extract benefit categories before preparing defaults
+            benefit_categories_data = card_data.pop("benefit_categories", [])
+
             defaults = self._prepare_card_defaults(card_data)
             logger.info(
                 f"Creating/updating card '{card_name}' for bank {bank_id} with defaults: {defaults}"
@@ -122,6 +125,10 @@ class CreditCardDataService:
                 name=card_name,
                 defaults=defaults,
             )
+
+            # Process benefit categories
+            if benefit_categories_data:
+                self._process_benefit_categories(card, benefit_categories_data)
 
             logger.info(
                 f"{'Created' if created else 'Updated'} credit card: {card.name} (ID: {card.id})"
@@ -145,19 +152,26 @@ class CreditCardDataService:
             Prepared defaults dictionary for database operations
         """
         return {
-            "annual_fee": self._parse_decimal(card_data.get("annual_fee", 0)),
+            "annual_fee": self._parse_decimal(card_data.get("annual_fee")),
             "interest_rate_apr": self._parse_decimal(
-                card_data.get("interest_rate_apr", 0)
+                card_data.get("interest_rate_apr")
             ),
             "lounge_access_international": card_data.get(
                 "lounge_access_international", ""
             ),
             "lounge_access_domestic": card_data.get("lounge_access_domestic", ""),
+            "lounge_access_condition": card_data.get("lounge_access_condition", ""),
             "cash_advance_fee": card_data.get("cash_advance_fee", ""),
             "late_payment_fee": card_data.get("late_payment_fee", ""),
             "annual_fee_waiver_policy": card_data.get("annual_fee_waiver_policy"),
             "reward_points_policy": card_data.get("reward_points_policy", ""),
             "additional_features": card_data.get("additional_features", []),
+            # New AI classification fields
+            "annual_fee_waiver_difficulty": card_data.get(
+                "annual_fee_waiver_difficulty", "UNKNOWN"
+            ),
+            "spending_tier": card_data.get("spending_tier", "MID"),
+            "best_for_tags": card_data.get("best_for_tags", []),
             "is_active": True,
         }
 
@@ -171,18 +185,94 @@ class CreditCardDataService:
 
         Returns
         -------
-        float
-            Parsed decimal value, defaults to 0.0 for invalid inputs
+        float or None
+            Parsed decimal value, or None if value is missing/invalid.
+            Returns None instead of 0 to distinguish between "zero value"
+            and "unknown/missing value" - prevents silent data loss.
         """
+        # Handle None/empty explicitly
+        if value is None or value == "":
+            return None
+
         if isinstance(value, (int, float)):
             return float(value)
 
         if isinstance(value, str):
             # Remove currency symbols and percentage signs
             cleaned = value.replace("$", "").replace("%", "").replace(",", "").strip()
+
+            # If cleaning resulted in empty string, return None
+            if not cleaned:
+                return None
+
             try:
                 return float(cleaned)
             except ValueError:
-                return 0.0
+                logger.warning(f"Could not parse decimal value: '{value}' - returning None")
+                return None
 
-        return 0.0
+        return None
+
+    def _process_benefit_categories(self, card, benefit_categories_data):
+        """Process and create benefit category relationships for a credit card.
+
+        Parameters
+        ----------
+        card : CreditCard
+            The credit card instance to associate benefits with
+        benefit_categories_data : list
+            List of benefit category dictionaries from LLM parsing
+
+        Returns
+        -------
+        None
+        """
+        if not isinstance(benefit_categories_data, list):
+            logger.warning(
+                f"benefit_categories_data is not a list: {type(benefit_categories_data)}"
+            )
+            return
+
+        # Clear existing benefits for this card (we'll recreate them)
+        CreditCardBenefit.objects.filter(credit_card=card).delete()
+
+        created_count = 0
+        for benefit_data in benefit_categories_data:
+            try:
+                category_name = benefit_data.get("category", "").strip()
+                if not category_name:
+                    logger.warning("Benefit category missing 'category' field")
+                    continue
+
+                # Find the matching BenefitCategory
+                try:
+                    benefit_category = BenefitCategory.objects.get(name=category_name)
+                except BenefitCategory.DoesNotExist:
+                    logger.warning(
+                        f"Benefit category '{category_name}' not found in database. Skipping."
+                    )
+                    continue
+
+                # Create the CreditCardBenefit relationship
+                CreditCardBenefit.objects.create(
+                    credit_card=card,
+                    benefit_category=benefit_category,
+                    reward_rate=self._parse_decimal(benefit_data.get("reward_rate"))
+                    if benefit_data.get("reward_rate") is not None
+                    else None,
+                    reward_description=benefit_data.get("reward_description", ""),
+                    conditions=benefit_data.get("conditions", ""),
+                    is_primary=benefit_data.get("is_primary", False),
+                    confidence_score=100,  # Default high confidence for LLM data
+                )
+                created_count += 1
+
+            except Exception as e:
+                logger.error(
+                    f"Error processing benefit category for card {card.id}: {str(e)}"
+                )
+                continue
+
+        logger.info(
+            f"Created {created_count} benefit category relationships for card '{card.name}'"
+        )

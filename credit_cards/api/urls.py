@@ -4,7 +4,7 @@ from django.urls import include, path
 
 from credit_cards.api.views import CreditCardViewSet
 
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 router.register(r"credit-cards", CreditCardViewSet)
 
 urlpatterns = [

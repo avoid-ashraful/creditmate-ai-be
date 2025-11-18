@@ -4,7 +4,7 @@ from django.urls import include, path
 
 from banks.api.views import BankViewSet
 
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 router.register(r"banks", BankViewSet)
 
 urlpatterns = [

@@ -262,7 +262,9 @@ class TestCreditCardDataService:
             (18.99, 18.99),
             ("$95.00", 95.0),
             ("18.99%", 18.99),
-            ("invalid", 0.0),
+            ("invalid", None),  # Changed: invalid values now return None instead of 0.0
+            (None, None),  # Test None input
+            ("", None),  # Test empty string
         ],
     )
     def test_parse_decimal_values(self, value, expected):
