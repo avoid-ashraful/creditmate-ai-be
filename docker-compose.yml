@@ -96,6 +96,24 @@ services:
       - db
       - redis
 
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: creditmate_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://web:8000/api/v1
+      - NEXT_PUBLIC_APP_NAME=CreditMate AI
+    depends_on:
+      - web
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+
 volumes:
   postgres_data:
   redis_data:
