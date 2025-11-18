@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from credit_cards.models import BenefitCategory, CreditCard, CreditCardBenefit
+from credit_cards.models import (
+    BenefitCategory,
+    CreditCard,
+    CreditCardBenefit,
+    CreditCardRating,
+    CreditCardReview,
+)
 
 
 @admin.register(CreditCard)
@@ -194,3 +200,89 @@ class CreditCardBenefitAdmin(admin.ModelAdmin):
             {"fields": ("confidence_score", "is_primary")},
         ),
     )
+
+
+@admin.register(CreditCardRating)
+class CreditCardRatingAdmin(admin.ModelAdmin):
+    """Admin interface for CreditCardRating model."""
+
+    list_display = [
+        "user_name",
+        "credit_card",
+        "rating",
+        "is_verified_user",
+        "created",
+    ]
+    list_filter = ["rating", "is_verified_user", "created"]
+    search_fields = ["user_name", "user_email", "credit_card__name"]
+    readonly_fields = ["created", "modified"]
+    ordering = ["-created"]
+
+    fieldsets = (
+        (
+            "Rating Information",
+            {"fields": ("credit_card", "user_name", "user_email", "rating")},
+        ),
+        (
+            "Verification",
+            {"fields": ("is_verified_user",)},
+        ),
+        (
+            "Timestamps",
+            {"fields": ("created", "modified"), "classes": ("collapse",)},
+        ),
+    )
+
+
+@admin.register(CreditCardReview)
+class CreditCardReviewAdmin(admin.ModelAdmin):
+    """Admin interface for CreditCardReview model."""
+
+    list_display = [
+        "title",
+        "user_name",
+        "credit_card",
+        "rating",
+        "helpful_count",
+        "is_verified_user",
+        "is_approved",
+        "created",
+    ]
+    list_filter = ["rating", "is_verified_user", "is_approved", "created"]
+    search_fields = ["user_name", "user_email", "title", "review_text", "credit_card__name"]
+    readonly_fields = ["helpful_count", "created", "modified"]
+    ordering = ["-created"]
+    actions = ["approve_reviews", "unapprove_reviews"]
+
+    fieldsets = (
+        (
+            "Review Information",
+            {"fields": ("credit_card", "user_name", "user_email", "title", "review_text")},
+        ),
+        (
+            "Rating & Details",
+            {"fields": ("rating", "pros", "cons", "usage_duration_months")},
+        ),
+        (
+            "Moderation",
+            {"fields": ("is_approved", "is_verified_user", "helpful_count")},
+        ),
+        (
+            "Timestamps",
+            {"fields": ("created", "modified"), "classes": ("collapse",)},
+        ),
+    )
+
+    def approve_reviews(self, request, queryset):
+        """Bulk approve selected reviews."""
+        updated = queryset.update(is_approved=True)
+        self.message_user(request, f"{updated} review(s) approved.")
+
+    approve_reviews.short_description = "Approve selected reviews"
+
+    def unapprove_reviews(self, request, queryset):
+        """Bulk unapprove selected reviews."""
+        updated = queryset.update(is_approved=False)
+        self.message_user(request, f"{updated} review(s) unapproved.")
+
+    unapprove_reviews.short_description = "Unapprove selected reviews"

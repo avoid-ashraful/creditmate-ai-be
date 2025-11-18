@@ -221,6 +221,54 @@ class CreditCard(Audit):
         """
         return self.annual_fee > 0
 
+    @property
+    def average_rating(self):
+        """Calculate average rating from all user ratings.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float or None
+            Average rating (1.0-5.0) or None if no ratings exist
+        """
+        from django.db.models import Avg
+
+        result = self.ratings.aggregate(avg_rating=Avg("rating"))
+        return round(result["avg_rating"], 1) if result["avg_rating"] else None
+
+    @property
+    def total_ratings(self):
+        """Get total number of ratings.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        int
+            Total count of ratings for this card
+        """
+        return self.ratings.count()
+
+    @property
+    def total_reviews(self):
+        """Get total number of approved reviews.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        int
+            Total count of approved reviews for this card
+        """
+        return self.reviews.filter(is_approved=True).count()
+
 
 class CreditCardBenefit(models.Model):
     """Through model linking credit cards to benefit categories with metadata.
@@ -271,3 +319,96 @@ class CreditCardBenefit(models.Model):
 
     def __str__(self):
         return f"{self.credit_card.name} - {self.benefit_category.name}"
+
+
+class CreditCardRating(Audit):
+    """Model representing user ratings for credit cards.
+
+    Users can rate credit cards on a scale of 1-5 stars.
+    Each user can only rate a card once (enforced by unique_together).
+    """
+
+    credit_card = models.ForeignKey(
+        CreditCard, on_delete=models.CASCADE, related_name="ratings"
+    )
+    user_name = models.CharField(
+        max_length=100, help_text="Name of the user providing the rating"
+    )
+    user_email = models.EmailField(help_text="Email of the user (not displayed publicly)")
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Rating from 1 to 5 stars",
+    )
+    is_verified_user = models.BooleanField(
+        default=False, help_text="Whether user is verified cardholder"
+    )
+
+    class Meta:
+        ordering = ["-created"]
+        db_table = "credit_cards_rating"
+        verbose_name = "Credit Card Rating"
+        verbose_name_plural = "Credit Card Ratings"
+        indexes = [
+            models.Index(fields=["credit_card", "-created"], name="idx_rating_card_date"),
+            models.Index(fields=["rating"], name="idx_rating_value"),
+        ]
+        # Prevent duplicate ratings from same email
+        unique_together = ["credit_card", "user_email"]
+
+    def __str__(self):
+        return f"{self.user_name} - {self.credit_card.name} ({self.rating}★)"
+
+
+class CreditCardReview(Audit):
+    """Model representing user reviews for credit cards.
+
+    Users can write detailed reviews about their experience with credit cards.
+    Reviews can be upvoted/downvoted by other users for helpfulness.
+    """
+
+    credit_card = models.ForeignKey(
+        CreditCard, on_delete=models.CASCADE, related_name="reviews"
+    )
+    user_name = models.CharField(
+        max_length=100, help_text="Name of the user writing the review"
+    )
+    user_email = models.EmailField(help_text="Email of the user (not displayed publicly)")
+    title = models.CharField(max_length=200, help_text="Review title/headline")
+    review_text = models.TextField(help_text="Detailed review content")
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Overall rating from 1 to 5 stars",
+    )
+    pros = models.TextField(blank=True, help_text="Positive aspects")
+    cons = models.TextField(blank=True, help_text="Negative aspects")
+    helpful_count = models.IntegerField(
+        default=0, help_text="Number of users who found this review helpful"
+    )
+    usage_duration_months = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        help_text="How long user has been using the card (in months)",
+    )
+    is_verified_user = models.BooleanField(
+        default=False, help_text="Whether user is verified cardholder"
+    )
+    is_approved = models.BooleanField(
+        default=False, help_text="Whether review is approved for display"
+    )
+
+    class Meta:
+        ordering = ["-helpful_count", "-created"]
+        db_table = "credit_cards_review"
+        verbose_name = "Credit Card Review"
+        verbose_name_plural = "Credit Card Reviews"
+        indexes = [
+            models.Index(
+                fields=["credit_card", "-helpful_count", "-created"],
+                name="idx_review_card_helpful",
+            ),
+            models.Index(fields=["is_approved", "-created"], name="idx_review_approved"),
+        ]
+
+    def __str__(self):
+        return f"{self.user_name} - {self.credit_card.name}: {self.title}"
