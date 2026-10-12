@@ -193,7 +193,7 @@ class TestCreditCardAPI:
 
     def test_credit_card_search_suggestions_action(self):
         """Test the search_suggestions action endpoint."""
-        response = self.client.get("/api/v1/credit-cards/search_suggestions/")
+        response = self.client.get("/api/v1/credit-cards/search-suggestions/")
 
         assert response.status_code == status.HTTP_200_OK
         assert "annual_fee_ranges" in response.data

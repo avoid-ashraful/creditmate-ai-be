@@ -41,6 +41,35 @@ SECRET_KEY = os.getenv(
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver,localhost,127.0.0.1").split(",")
 
+# Cache Configuration
+# Backend is chosen explicitly via CACHE_BACKEND ("redis" default, "locmem"
+# for local/test runs without a Redis server) to avoid import-time probes.
+CACHE_BACKEND = os.getenv("CACHE_BACKEND", "redis").lower()
+REDIS_CACHE_URL = os.getenv("REDIS_CACHE_URL", "redis://127.0.0.1:6379/1")
+
+_REDIS_CACHE_CONFIG = {
+    "BACKEND": "django.core.cache.backends.redis.RedisCache",
+    "LOCATION": REDIS_CACHE_URL,
+    "KEY_PREFIX": "creditmate",
+}
+
+_LOCmem_CACHE_CONFIG = {
+    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    "LOCATION": "creditmate-cache",
+}
+
+if CACHE_BACKEND == "locmem":
+    CACHES = {"default": _LOCmem_CACHE_CONFIG}
+else:  # default: redis
+    CACHES = {"default": _REDIS_CACHE_CONFIG}
+
+# Cache TTLs (seconds), overridable via environment
+CACHE_TTL_CARD_LIST = int(os.getenv("CACHE_TTL_CARD_LIST", "300"))  # 5 minutes
+CACHE_TTL_FILTER_RESULTS = int(os.getenv("CACHE_TTL_FILTER_RESULTS", "120"))  # 2 min
+CACHE_TTL_SEARCH_SUGGESTIONS = int(
+    os.getenv("CACHE_TTL_SEARCH_SUGGESTIONS", "600")
+)  # 10 min
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -214,7 +243,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "credit_mate_ai.pagination.BoundedPageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",

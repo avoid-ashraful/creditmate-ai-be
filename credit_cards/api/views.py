@@ -3,9 +3,20 @@ from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from django.core.cache import cache
+
 from credit_cards.api.filters import CreditCardFilter
 from credit_cards.api.serializers import CreditCardListSerializer, CreditCardSerializer
 from credit_cards.models import CreditCard
+from credit_mate_ai.cache import (
+    CARD_LIST_TTL,
+    CARD_LIST_VERSION_KEY,
+    FILTER_RESULTS_TTL,
+    FILTER_RESULTS_VERSION_KEY,
+    SEARCH_SUGGESTIONS_TTL,
+    SEARCH_SUGGESTIONS_VERSION_KEY,
+    build_query_cache_key,
+)
 
 
 class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
@@ -55,7 +66,41 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             return CreditCardListSerializer
         return CreditCardSerializer
 
-    @action(detail=False, methods=["get"])
+    def list(self, request, *args, **kwargs):
+        """List credit cards with query-aware caching.
+
+        Filtered or searched queries (CreditCardFilter params or DRF
+        SearchFilter ``search``) use the filter-results TTL (2 min); plain
+        list requests use the card list TTL (5 min). Keys are specific to the
+        normalized query parameters and request origin/path.
+        """
+        filter_param_keys = set(self.filterset_class.get_filters().keys())
+        has_filters = (
+            any(key in request.query_params for key in filter_param_keys)
+            or "search" in request.query_params
+        )
+
+        cache_key = (
+            build_query_cache_key(
+                "credit_cards:filter", FILTER_RESULTS_VERSION_KEY, request
+            )
+            if has_filters
+            else build_query_cache_key(
+                "credit_cards:list", CARD_LIST_VERSION_KEY, request
+            )
+        )
+        ttl = FILTER_RESULTS_TTL if has_filters else CARD_LIST_TTL
+
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+
+        response = super().list(request, *args, **kwargs)
+        if response.status_code == 200:
+            cache.set(cache_key, response.data, ttl)
+        return response
+
+    @action(detail=False, methods=["get"], url_path="search-suggestions")
     def search_suggestions(self, request):
         """Get search suggestions based on popular filters.
 
@@ -72,7 +117,16 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             - Common benefits with filter parameters
             - Popular bank names for filtering
         """
-        return Response(
+        cache_key = build_query_cache_key(
+            "credit_cards:search_suggestions",
+            SEARCH_SUGGESTIONS_VERSION_KEY,
+            request,
+        )
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+
+        response = Response(
             {
                 "annual_fee_ranges": [
                     {"label": "Free", "filter": "annual_fee=0"},
@@ -105,3 +159,5 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
                 ),
             }
         )
+        cache.set(cache_key, response.data, SEARCH_SUGGESTIONS_TTL)
+        return response
