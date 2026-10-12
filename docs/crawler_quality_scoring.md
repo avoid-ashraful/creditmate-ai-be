@@ -79,7 +79,16 @@ Issue codes are machine-readable and distinguish causes:
 | `invalid_<field>` | Field held a malformed/incompatible value (reported instead of `missing_<field>`; reason in `invalid_reasons`) |
 | `no_extracted_content` | No text was extracted |
 | `no_cards_extracted` | No credit cards were found |
-| `validation_error: ...` | Rejected by the real validation stage |
+| `validation_error: ...` | Rejected by the real validation stage (recorded, see below) |
+
+**Validation errors do not all lower the confidence value.** Only the formula
+above changes `confidence`: a validation error reduces it *indirectly*, when it
+concerns a critical numeric field and the sanitize step stores `NULL` for it
+(`cards_completeness` then drops). Validation errors about anything else
+(non-numeric / non-critical fields, format complaints) are **recorded only** -
+they are appended to the issue list and to `validation_errors` on the result,
+and may trip `needs_manual_review` through the issue-count rule, but they never
+multiply the score down on their own.
 
 **Manual review** (`needs_manual_review`) is `True` when
 `confidence < 0.5` **or** the issue list has more than 1 entry
@@ -146,7 +155,8 @@ failures skip the rescue (it would fail the same way).
   bank, skips banks with no active data source, reports per-bank counts, and
   returns `{"status": "completed"|"error", ...}`.
 - Beat entry: `daily-crawl-all-active-banks` in `credit_mate_ai/celery.py`,
-  `crontab(hour=2, minute=0)` with `expires=3600`.
+  `crontab(hour=2, minute=0)` with `expires=21600` (6 * 60 * 60 seconds: a run
+  older than 6 hours is dropped instead of firing late).
 - The beat entry only takes effect when a Celery beat worker is actually
   running with this app's settings (see §9).
 

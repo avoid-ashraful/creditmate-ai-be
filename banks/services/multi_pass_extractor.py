@@ -192,7 +192,8 @@ class MultiPassLLMExtractor:
 
         # Pass 3: real validation stage (sanitize + validate) before the final
         # score is computed, so stored values are always normalized numbers or
-        # NULL and validation problems reduce the confidence.
+        # NULL. A rejected critical value then lowers the confidence (it counts
+        # as not extracted); other validation issues are recorded only.
         cards, validation_issues = self._validate_cards(cards)
         issues.extend(validation_issues)
 
