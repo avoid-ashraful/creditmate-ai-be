@@ -289,7 +289,7 @@ class TestRelatedDocumentSync:
         from django.db import transaction
 
         settings.SEARCH_SYNC_MODE = "queue"
-        with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        with django_capture_on_commit_callbacks(execute=True):
             bank = self._bank()
             card = self._card(bank)
             card_pk, bank_pk = card.pk, bank.pk

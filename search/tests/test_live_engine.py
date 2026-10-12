@@ -418,7 +418,7 @@ class TestSignalQueueIndexFlow:
 
         with django_capture_on_commit_callbacks(execute=True):
             bank = _make_bank("Fresh Env Bank")
-            card = _make_card(bank, name="Platinum Credit Card", annual_fee=0)
+            _make_card(bank, name="Platinum Credit Card", annual_fee=0)
         summary = drain()
 
         assert summary["indexed"] == 2
@@ -450,7 +450,7 @@ class TestSignalQueueIndexFlow:
         from search.tests.fakes import RecordingService
 
         with django_capture_on_commit_callbacks(execute=True):
-            bank = _make_bank("Outage Bank")
+            _make_bank("Outage Bank")
         assert pending_count() == 1
 
         summary = drain(service=RecordingService(fail=True))

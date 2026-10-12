@@ -287,25 +287,31 @@ def claim_batch(batch_size=None, token=None):
     batch_size = batch_size or getattr(settings, "SEARCH_QUEUE_BATCH_SIZE", 200)
     token = token or uuid.uuid4().hex
     now = timezone.now()
-    candidates = list(
-        SearchIndexUpdate.objects.filter(
-            status=SearchIndexUpdate.STATUS_PENDING,
-            available_at__lte=now,
+    with transaction.atomic():
+        # FOR UPDATE SKIP LOCKED: a concurrent claimer skips the rows this
+        # transaction is currently locking instead of racing the UPDATE, so
+        # two simultaneous drainer calls can never see the same candidates.
+        candidates = list(
+            SearchIndexUpdate.objects.select_for_update(skip_locked=True)
+            .filter(
+                status=SearchIndexUpdate.STATUS_PENDING,
+                available_at__lte=now,
+            )
+            .order_by("created", "id")
+            .values_list("pk", flat=True)[:batch_size]
         )
-        .order_by("created", "id")
-        .values_list("pk", flat=True)[:batch_size]
-    )
+        if candidates:
+            SearchIndexUpdate.objects.filter(
+                pk__in=candidates,
+                status=SearchIndexUpdate.STATUS_PENDING,
+            ).update(
+                status=SearchIndexUpdate.STATUS_PROCESSING,
+                claimed_by=token,
+                claimed_at=now,
+                modified=now,
+            )
     if not candidates:
         return token, []
-    SearchIndexUpdate.objects.filter(
-        pk__in=candidates,
-        status=SearchIndexUpdate.STATUS_PENDING,
-    ).update(
-        status=SearchIndexUpdate.STATUS_PROCESSING,
-        claimed_by=token,
-        claimed_at=now,
-        modified=now,
-    )
     rows = list(
         SearchIndexUpdate.objects.filter(
             claimed_by=token,
