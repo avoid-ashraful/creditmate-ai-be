@@ -4,11 +4,13 @@ An annual fee can eat into your savings. A waiver can save you that cash. This g
 
 ## What is an annual fee?
 
-An annual fee is the price of holding a card. Your bank charges it once a year. Bangladesh Bank calls it a non-transactional fee. That name means the fee is not linked to a sale. Other examples are the card report fee and the text alert fee.
+An annual fee is the price of holding a card. Your bank charges it once a year. Bangladesh Bank calls it a non-transactional fee. That name means the fee is not linked to a sale. The rule also names the CIB fee and the SMS fee as examples.
 
 Your bank cannot charge that fee before your card works. A card you never activated must not cost you.
 
 Paying only that fee cannot make you late. If you owe nothing on sales, no extra fine applies. The bank may add the normal interest on the fee. It must not mark you as a bad payer for the fee.
+
+If you pay only part of your bill, the bank may settle that fee first. It then adjusts what you owe on sales.
 
 ## What is a waiver?
 
@@ -19,7 +21,7 @@ A waiver is a promise to drop a fee. The bank sets the terms of the waiver. Comm
 - Pay the full bill on time.
 - Keep a set balance in your account.
 
-Each bank sets its own terms. We list each bank's own words on our [compare page](/compare). Tick the box marked "Has Fee Waiver Policy" to see them.
+Each bank sets its own terms. Start on our [home page](/). Tick the box marked "Has Fee Waiver Policy". The list then shows only the cards that publish a waiver rule.
 
 Some banks state the deal in plain words. Eastern Bank PLC lists cards with a yearly fee waiver. It also lists cards with no renewal fee. Some of its cards ask for 24 sales a year. Others drop the fee for life.
 
@@ -30,10 +32,10 @@ Bangladesh Bank has clear rules on fees. Your bank must follow them all.
 1. No fee before the card is active.
 2. No extra fine when only the fee is left to pay.
 3. No bad credit mark for unpaid fees.
-4. Late fines can be charged only once at a time.
+4. Late fines can be charged only once, and only if no new sale is added.
 5. A late fine never joins the sum used to work out interest.
 
-Your bank must also tell you 30 days before a fee change. It must send that note in clear writing. The changed part must stand out. If the change hurts you, you can close the card. The bank must close it with no extra charge.
+Your bank must also tell you 30 days before a fee change. It must send that note in clear writing. The changed part must stand out. If the change hurts you, you can surrender the card. The bank must allow that with no extra charge.
 
 ## How to get a waiver
 
@@ -48,7 +50,7 @@ Follow these six steps.
 
 Keep every email. Keep every text message. They are your proof. If the fee still shows up, call the bank. Ask them to fix the bill and refund the fee.
 
-Bangladesh Bank keeps links to every bank's fee page. Use that page to find the right link. Our [compare page](/compare) shows the waiver policy for each card we track.
+Bangladesh Bank keeps links to every bank's fee page. Use that page to find the right link. Our [home page](/) lists the waiver rule for each card we track.
 
 ## When a waiver is not worth it
 

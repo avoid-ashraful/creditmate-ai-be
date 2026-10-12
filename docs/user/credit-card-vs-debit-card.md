@@ -20,7 +20,7 @@ A credit card is a small loan in your pocket. Your bank gives you a set sum to s
 
 Only a bank can give you a credit card in Bangladesh. Any scheduled bank may issue a Taka card. A bank that handles foreign cash may issue a foreign card.
 
-If you pay the full bill on time, you get an interest free period. If you pay part of it, interest starts the day after the due date. The bank never charges you interest from the day of sale. Cash advances are the one case that breaks this rule.
+If you pay the full bill on time, you get an interest free period. If you pay part of it, interest starts the day after the due date. The bank never charges you interest from the day of sale. A cash advance may have no interest free period, so you could owe interest sooner on cash.
 
 ## Side by side
 
@@ -54,7 +54,7 @@ Use both for what they do best. Many people in Bangladesh do just that.
 
 ## If you do not have a credit card yet
 
-Read our [first credit card guide](./choosing-your-first-credit-card.md). It walks you through the steps. Then compare cards on our [compare page](/compare). The filters can show only cards with a fee waiver or a lounge plan.
+Read our [first credit card guide](./choosing-your-first-credit-card.md). It walks you through the steps. Then open our [home page](/). The filters there can show only cards with a fee waiver or a lounge plan. Pick two or three, then press Compare Cards.
 
 ## Sources
 

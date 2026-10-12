@@ -4,11 +4,11 @@ Your first credit card is a loan. Your bank lets you spend money now. You pay th
 
 ## Check if you can get one
 
-Bangladesh Bank sets the basic rules. You must be a citizen or a resident. You must be 18 years old or older on the day you apply. A student as young as 16 can get a second card. The student must be a dependent on the main cardholder.
+Bangladesh Bank sets the basic rules. You must be a citizen or a resident. You must be 18 years old or older on the day you apply. A student aged 16 can get a second card. The student must be directly dependent on the main cardholder.
 
 You also need a valid e-TIN. Your credit report, called a CIB report, must be clean. You must pass the bank's Know Your Customer check. That check asks for your identity papers.
 
-Low-income earners can ask for a secured card. A secured card sits on a fixed deposit. Retirees may qualify on pension and savings income.
+A bank may give a low-income applicant a card that sits on a fixed deposit. Retirees may qualify on pension and investment income. Neither one is a right. The bank decides.
 
 ## Know the costs
 
@@ -16,9 +16,9 @@ The annual fee is a price you pay each year. Some cards drop that fee if you spe
 
 Interest is the big cost. Bangladesh Bank caps the yearly interest at 25%. The bank charges that rate only on money you owe. It does not charge you on the full bill.
 
-Pay the full bill by the due date. The card then gives you an interest free period. Cash advances break that rule. You may pay interest from day one on cash.
+Pay the full bill by the due date. The card then gives you an interest free period. A cash advance may not get that free period. You could owe interest sooner on cash than on a purchase.
 
-The late fee is a fine for late payment. The bank can charge it once. It cannot stack a new fine on top each day.
+The late fee is a fine for late payment. The bank can charge it once, unless you have made new buys. It cannot add a fresh fine each day. The fine never joins the sum used to work out interest.
 
 ## Look at these five things
 
@@ -28,7 +28,7 @@ The late fee is a fine for late payment. The bank can charge it once. It cannot 
 4. The rewards, such as points or cash back.
 5. The lounge access, if you fly often.
 
-Check the lounge rules in our [lounge guide](./maximizing-lounge-access-benefits.md). Compare each card on one page with our [compare tool](/compare).
+Check the lounge rules in our [lounge guide](./maximizing-lounge-access-benefits.md). To line cards up side by side, start on the [home page](/). Pick two to four cards there, then press Compare Cards.
 
 ## Read the right pages
 
@@ -49,9 +49,9 @@ Your bank cannot send you a card you did not ask for. It cannot raise your limit
 
 The bank must tell you 30 days before any fee change. It must highlight the new part. You can close the card free if the terms get worse for you.
 
-You can ask to close a card through a hotline, email or a branch. The bank has seven working days to close it. Any credit left on the card goes back to your bank account.
+Only the main cardholder can ask to close a card. You can use a hotline, email, website or a branch. If you owe nothing, the bank must close it within seven working days. Any credit left then goes back to your bank account.
 
-Report a lost card fast. Your bank must block it at once. It must pay back any charge you did not make within seven working days.
+Report a lost card fast. Your bank must block it at once. Once the bank knows the card is lost or stolen, it must pay back any charge you did not make. It has seven working days to do that.
 
 ## Before you apply
 

@@ -221,6 +221,25 @@ def read_guide(path: str) -> str:
     raise ValueError(f"unsupported file type: {path}")
 
 
+def check_guide_links(directory: str) -> list[str]:
+    """Return editorial violations found in the raw Markdown guides.
+
+    The app's compare page only renders cards that were already selected on the
+    home page, where the filter panel lives. A guide must therefore never send
+    readers to ``/compare`` as if it were a browse or filter screen.
+    """
+    violations: list[str] = []
+    for filename in GUIDE_FILES:
+        path = os.path.join(directory, filename)
+        if not os.path.exists(path):
+            continue
+        with open(path, encoding="utf-8") as handle:
+            for lineno, line in enumerate(handle, start=1):
+                if re.search(r"\]\(/compare(?:[?)\s#]|$)", line):
+                    violations.append(f"{filename}:{lineno} links to /compare")
+    return violations
+
+
 def selftest() -> int:
     """Known-answer tests for the syllable counter and the grade formula."""
     cases = {
@@ -290,6 +309,12 @@ def main(argv: list[str]) -> int:
 
     if args.selftest:
         return selftest()
+
+    violations = check_guide_links(args.dir)
+    if violations:
+        for violation in violations:
+            print(f"LINK POLICY FAIL: {violation}", file=sys.stderr)
+        return 1
 
     results: list[Score] = []
     for filename in GUIDE_FILES:

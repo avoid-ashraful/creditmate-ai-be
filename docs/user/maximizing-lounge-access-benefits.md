@@ -17,7 +17,7 @@ Banks run their own lounges in our four big airports. Mutual Trust Bank runs lou
 - Osmani International Airport, Sylhet
 - Cox's Bazar Airport
 
-The bank says its premium cardholders can use the rooms as per policy. That phrase means terms apply. Read the terms for your card before you fly.
+The bank says its privilege clients and premium credit card holders can use the rooms as per policy. That phrase means terms apply. Read the terms for your card before you fly.
 
 Some banks join world wide lounge groups. Eastern Bank PLC lists lounge access with SKYLOUNGE. It also lists a Priority Pass plan. Those groups work in airports outside Bangladesh.
 
@@ -29,7 +29,7 @@ Some banks join world wide lounge groups. Eastern Bank PLC lists lounge access w
 4. Ask if a guest can come in with you.
 5. Save your lounge receipt for your claim.
 
-Our [compare page](/compare) shows the lounge count for each card. Use the lounge filters to sort them. You can set a low mark for a count.
+Our [home page](/) shows the lounge count for each card. Tick "Any Lounge Access" to cut the list down. You can also set a lowest number of visits. Pick the cards you like, then press Compare Cards to see them side by side.
 
 ## Read the fine print
 
