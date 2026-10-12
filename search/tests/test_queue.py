@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from search.models import SearchIndexUpdate
 from search.queue import (
+    claim_batch,
     drain,
     enqueue,
     pending_count,
@@ -210,3 +211,107 @@ class TestDrain:
         drain(service=service)
         assert "ci6_banks" in service.indexed
         assert "banks" not in service.indexed
+
+
+@pytest.mark.django_db
+class TestAutomaticQueueScheduling:
+    """The default queue mode must have a registered periodic worker task."""
+
+    def test_beat_schedule_registers_drain_task(self):
+        from credit_mate_ai.celery import app
+
+        entry = app.conf.beat_schedule["search-index-queue-drain"]
+        assert entry["task"] == "search.process_index_queue"
+        interval = float(entry["schedule"])
+        assert interval > 0
+
+        # Celery discovers tasks lazily; importing default modules mirrors
+        # worker startup and proves beat's task name is actually registered.
+        app.loader.import_default_modules()
+        assert entry["task"] in app.tasks
+
+    def test_beat_task_drains_pending_rows(
+        self, django_capture_on_commit_callbacks, monkeypatch
+    ):
+        from banks.factories import BankFactory
+        from search.tasks import process_search_index_queue
+
+        bank = BankFactory(name="Beat Queue Bank")
+        queued(django_capture_on_commit_callbacks, "banks", bank.pk)
+        service = RecordingService()
+        monkeypatch.setattr("search.service.SearchService", lambda: service)
+
+        summary = process_search_index_queue()
+
+        assert summary["indexed"] == 1
+        assert bank.pk in service.indexed["banks"]
+        assert SearchIndexUpdate.objects.get().status == SearchIndexUpdate.STATUS_DONE
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_claims_are_disjoint():
+    """Two simultaneous drainers must atomically claim disjoint outbox rows."""
+    from threading import Barrier, Thread
+
+    from django.db import close_old_connections
+
+    SearchIndexUpdate.objects.bulk_create(
+        [
+            SearchIndexUpdate(
+                index_name=SearchIndexUpdate.INDEX_CREDIT_CARDS,
+                object_id=object_id,
+            )
+            for object_id in range(10)
+        ]
+    )
+    barrier = Barrier(2)
+    results = {}
+    errors = []
+
+    def claim(name):
+        close_old_connections()
+        try:
+            barrier.wait(timeout=10)
+            _, rows = claim_batch(batch_size=5, token=name)
+            results[name] = {row.pk for row in rows}
+        except Exception as exc:  # surfaced in the main test thread
+            errors.append(exc)
+        finally:
+            close_old_connections()
+
+    threads = [Thread(target=claim, args=(name,)) for name in ("drainer-a", "drainer-b")]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=15)
+
+    assert all(not thread.is_alive() for thread in threads)
+    assert not errors
+    assert set(results) == {"drainer-a", "drainer-b"}
+    assert results["drainer-a"]
+    assert results["drainer-b"]
+    assert results["drainer-a"].isdisjoint(results["drainer-b"])
+
+
+@pytest.mark.django_db
+def test_lease_check_rejects_a_mixed_owner_batch():
+    from search.queue import _holds_lease
+
+    now = timezone.now()
+    first = SearchIndexUpdate.objects.create(
+        index_name="banks",
+        object_id=1001,
+        status=SearchIndexUpdate.STATUS_PROCESSING,
+        claimed_by="token-a",
+        claimed_at=now,
+    )
+    second = SearchIndexUpdate.objects.create(
+        index_name="banks",
+        object_id=1002,
+        status=SearchIndexUpdate.STATUS_PROCESSING,
+        claimed_by="token-b",
+        claimed_at=now,
+    )
+
+    assert _holds_lease("token-a", [first]) is True
+    assert _holds_lease("token-a", [first, second]) is False
