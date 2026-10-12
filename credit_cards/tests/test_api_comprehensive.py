@@ -16,6 +16,7 @@ from django.urls import reverse
 from banks.factories import BankFactory
 from credit_cards.factories import CreditCardFactory
 from credit_cards.models import CreditCard
+from credit_mate_ai.throttling import BurstThrottle
 
 
 @pytest.mark.django_db
@@ -368,8 +369,9 @@ class TestCreditCardAPIPerformance:
             response = self.client.get(reverse("creditcard-list"), params)
             assert response.status_code in [200, 404]  # 404 for pages beyond range
 
-    def test_concurrent_api_access_simulation(self):
+    def test_concurrent_api_access_simulation(self, monkeypatch):
         """Test API behavior under simulated concurrent requests."""
+        monkeypatch.setattr(BurstThrottle, "rate", "20/sec", raising=False)
         card = CreditCardFactory(bank=self.bank)
 
         # Simulate multiple concurrent requests

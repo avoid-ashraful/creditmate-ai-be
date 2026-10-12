@@ -70,6 +70,10 @@ CACHE_TTL_SEARCH_SUGGESTIONS = int(
     os.getenv("CACHE_TTL_SEARCH_SUGGESTIONS", "600")
 )  # 10 min
 
+# API request validation (bytes), overridable via environment
+MAX_JSON_REQUEST_BYTES = int(os.getenv("MAX_JSON_REQUEST_BYTES", "1048576"))
+MAX_UPLOAD_REQUEST_BYTES = int(os.getenv("MAX_UPLOAD_REQUEST_BYTES", "10485760"))
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -96,6 +100,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "credit_mate_ai.middleware.RequestValidationMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -246,13 +251,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "credit_mate_ai.pagination.BoundedPageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "credit_mate_ai.throttling.TrustedClientRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": os.getenv("THROTTLE_RATE_ANON", "1000/hour"),
-        "user": os.getenv("THROTTLE_RATE_USER", "2000/hour"),
-        "burst": os.getenv("THROTTLE_RATE_BURST", "100/min"),
+        "anon": os.getenv("THROTTLE_RATE_ANON", "100/min"),
+        "user": os.getenv("THROTTLE_RATE_USER", "1000/min"),
+        "burst": os.getenv("THROTTLE_RATE_BURST", "10/sec"),
     },
 }
 
