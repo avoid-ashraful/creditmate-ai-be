@@ -16,12 +16,14 @@ class CreditCard(Audit):
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE, related_name="credit_cards")
     name = models.CharField(max_length=255)
     annual_fee = models.DecimalField(
-        max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+        max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)]
     )
     annual_fee_waiver_policy = models.JSONField(blank=True, null=True)
     interest_rate_apr = models.DecimalField(
         max_digits=5,
         decimal_places=2,
+        null=True,
+        blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     lounge_access_international = models.CharField(max_length=255, blank=True, default="")
@@ -93,4 +95,4 @@ class CreditCard(Audit):
         bool
             True if card has an annual fee greater than 0, False otherwise
         """
-        return self.annual_fee > 0
+        return self.annual_fee is not None and self.annual_fee > 0
