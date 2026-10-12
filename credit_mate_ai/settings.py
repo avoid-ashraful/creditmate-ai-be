@@ -113,6 +113,7 @@ INSTALLED_APPS = [
     "common",
     "banks",
     "credit_cards",
+    "search",
 ]
 
 MIDDLEWARE = [
@@ -232,6 +233,28 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+
+# Search (Elasticsearch) Configuration
+# SEARCH_URL points at the local single node container published on 127.0.0.1:19200
+# by creditmate-ai-be/docker-compose.search.yml.
+SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "yes", "on")
+SEARCH_URL = os.getenv("SEARCH_URL", "http://127.0.0.1:19200")
+SEARCH_INDEX_PREFIX = os.getenv("SEARCH_INDEX_PREFIX", "")
+SEARCH_REQUEST_TIMEOUT = int(os.getenv("SEARCH_REQUEST_TIMEOUT", "10"))
+SEARCH_VERIFY_CERTS = os.getenv("SEARCH_VERIFY_CERTS", "True").lower() in ("true", "1", "yes")
+# "queue"  -> signal writes to the outbox, a worker drains it (default)
+# "sync"   -> signal writes to the outbox and drains it inline (no worker needed)
+# "off"    -> signals are not connected at all
+SEARCH_SYNC_MODE = os.getenv("SEARCH_SYNC_MODE", "queue").lower()
+# Route drained queue batches through Celery when True (requires Redis).
+SEARCH_QUEUE_VIA_CELERY = os.getenv("SEARCH_QUEUE_VIA_CELERY", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+SEARCH_QUEUE_BATCH_SIZE = int(os.getenv("SEARCH_QUEUE_BATCH_SIZE", "200"))
+SEARCH_QUEUE_MAX_ATTEMPTS = int(os.getenv("SEARCH_QUEUE_MAX_ATTEMPTS", "5"))
 
 # Environment Configuration
 

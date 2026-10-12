@@ -33,6 +33,7 @@ dependencies = [
     "openai",
     "pypdf",
     "whitenoise",
+    "elasticsearch>=8.18,<9",
 ]
 
 [dependency-groups]
