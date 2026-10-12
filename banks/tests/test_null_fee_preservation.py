@@ -32,14 +32,27 @@ class TestSanitizeKeepsZeroDistinctFromMissing:
             ("Nil", 0.0),
             ("No annual fee", 0.0),
             (95, 95.0),
-            ("$95.00", 95.0),
             ("TK 5,000", 5000.0),
-            ("20% p.a.", 20.0),
+            ("BDT 500", 500.0),
         ],
     )
     def test_valid_values_including_zero(self, raw, expected):
         card = sanitize({"name": "Gold", "annual_fee": raw})
         assert card["annual_fee"] == expected
+
+    @pytest.mark.parametrize(
+        "raw",
+        [
+            "$95.00",  # foreign currency must not be relabeled as BDT
+            "USD 100",
+            "20% p.a.",  # a rate is not an annual fee amount
+            "100 per month",  # a monthly amount is not an annual fee
+            "Waived",  # a waiver may be conditional, so it stays unknown
+        ],
+    )
+    def test_unit_and_period_values_stay_null(self, raw):
+        card = sanitize({"name": "Gold", "annual_fee": raw})
+        assert card["annual_fee"] is None
 
     @pytest.mark.parametrize(
         "raw",

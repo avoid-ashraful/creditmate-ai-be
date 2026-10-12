@@ -253,6 +253,7 @@ class TestQualitySummary:
             "extraction_method",
             "needs_manual_review",
             "extraction_passes",
+            "invalid_reasons",
             "quality_scored_at",
         }
         assert 0.0 <= summary["extraction_confidence"] <= 1.0

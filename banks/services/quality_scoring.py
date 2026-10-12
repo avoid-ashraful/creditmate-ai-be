@@ -43,13 +43,24 @@ from banks.validators.numeric_fields import (
     CRITICAL_FIELDS,
     FIELD_BOUNDS,
     MISSING_SENTINELS,
+    REASON_BOOLEAN,
+    REASON_CONDITIONAL_WAIVER,
+    REASON_FOREIGN_CURRENCY,
+    REASON_NOT_A_NUMBER,
+    REASON_NOT_FINITE,
+    REASON_NON_ANNUAL_PERIOD,
+    REASON_OUT_OF_RANGE,
+    REASON_PERCENTAGE_FOR_FEE,
     STATUS_INVALID,
     STATUS_MISSING,
     STATUS_VALID,
+    card_invalid_reasons,
+    cards_invalid_reasons,
     critical_field_status,
     is_missing_marker,
     normalize_cards,
     parse_numeric_value,
+    parse_numeric_value_detailed,
 )
 
 # Keywords that indicate the document really is a fee/rate schedule.
@@ -270,13 +281,18 @@ class ExtractionQuality:
         Intermediate scores for auditing.
     passes : list of dict
         Multi-pass provenance records (populated by the extractor).
+    invalid_reasons : dict
+        Field name -> ``REASON_*`` code explaining why a critical value was
+        rejected (foreign currency, non-annual period, conditional waiver,
+        ...), so a ``NULL`` fee can always be explained.
     """
 
     confidence: float
     missing_critical_fields: List[str] = field(default_factory=list)
     issues: List[str] = field(default_factory=list)
-    details: Dict[str, float] = field(default_factory=dict)
+    details: Dict[str, Any] = field(default_factory=dict)
     passes: List[Dict[str, Any]] = field(default_factory=list)
+    invalid_reasons: Dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         """Clamp the confidence into the documented 0.0-1.0 range."""
@@ -471,15 +487,21 @@ def score_extraction(content: str, cards, method: str = "unknown") -> Extraction
             if issue not in issues:
                 issues.append(issue)
 
+    # Explain every rejection (foreign currency, non-annual period, conditional
+    # waiver, malformed number, ...) so a NULL fee can always be accounted for.
+    invalid_reasons = cards_invalid_reasons(card_list)
+
     confidence = content_score * completeness * coverage
     return ExtractionQuality(
         confidence=clamp_confidence(confidence),
         missing_critical_fields=missing,
         issues=issues,
+        invalid_reasons=invalid_reasons,
         details={
             "content_score": round(content_score, 4),
             "cards_completeness": round(completeness, 4),
             "coverage_factor": round(coverage, 4),
+            "invalid_reasons": dict(invalid_reasons),
         },
     )
 
@@ -517,12 +539,22 @@ __all__ = [
     "CRITICAL_FIELDS",
     "FIELD_BOUNDS",
     "MISSING_SENTINELS",
+    "REASON_BOOLEAN",
+    "REASON_CONDITIONAL_WAIVER",
+    "REASON_FOREIGN_CURRENCY",
+    "REASON_NOT_A_NUMBER",
+    "REASON_NOT_FINITE",
+    "REASON_NON_ANNUAL_PERIOD",
+    "REASON_OUT_OF_RANGE",
+    "REASON_PERCENTAGE_FOR_FEE",
     "STATUS_INVALID",
     "STATUS_MISSING",
     "STATUS_VALID",
     "ExtractionQuality",
     "card_completeness",
+    "card_invalid_reasons",
     "cards_completeness",
+    "cards_invalid_reasons",
     "clamp_confidence",
     "coalesce_cards",
     "critical_field_states",
@@ -537,6 +569,7 @@ __all__ = [
     "normalize_cards",
     "normalize_missing",
     "parse_numeric_value",
+    "parse_numeric_value_detailed",
     "present_critical_fields",
     "score_content",
     "score_extraction",

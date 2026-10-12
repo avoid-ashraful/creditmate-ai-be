@@ -11,14 +11,24 @@ import pytest
 from banks.validators.numeric_fields import (
     CRITICAL_FIELDS,
     FIELD_BOUNDS,
+    REASON_BOOLEAN,
+    REASON_CONDITIONAL_WAIVER,
+    REASON_FOREIGN_CURRENCY,
+    REASON_NON_ANNUAL_PERIOD,
+    REASON_NOT_A_NUMBER,
+    REASON_OUT_OF_RANGE,
+    REASON_PERCENTAGE_FOR_FEE,
     STATUS_INVALID,
     STATUS_MISSING,
     STATUS_VALID,
+    card_invalid_reasons,
+    cards_invalid_reasons,
     critical_field_status,
     is_valid_critical_value,
     normalize_critical_fields,
     normalize_cards,
     parse_numeric_value,
+    parse_numeric_value_detailed,
 )
 
 
@@ -42,12 +52,24 @@ class TestParseNumericValue:
 
     @pytest.mark.parametrize(
         "value",
-        ["Free", "free of charge", "Nil", "NIL", "No annual fee", "Waived", "Exempted"],
+        ["Free", "free of charge", "Nil", "NIL", "No annual fee", "No fee"],
     )
     def test_free_wording_is_genuine_zero_for_fee(self, value):
         normalized, status = parse_numeric_value(value, "annual_fee")
         assert status == STATUS_VALID
         assert normalized == 0.0
+
+    @pytest.mark.parametrize(
+        "value",
+        ["Waived", "waived", "waiver", "Exempted", "exempt", "conditionally waived"],
+    )
+    def test_conditional_waiver_wording_is_rejected(self, value):
+        """A waiver may be conditional, so it is not proof of a zero fee."""
+        normalized, status = parse_numeric_value(value, "annual_fee")
+        assert status == STATUS_INVALID
+        assert normalized is None
+        _, _, reason = parse_numeric_value_detailed(value, "annual_fee")
+        assert reason == REASON_CONDITIONAL_WAIVER
 
     @pytest.mark.parametrize(
         "value",
@@ -87,21 +109,165 @@ class TestParseNumericValue:
     @pytest.mark.parametrize(
         "value,expected",
         [
+            ("TK 5,000", 5000.0),
+            ("Tk. 1,500", 1500.0),
+            ("BDT 500", 500.0),
+            ("taka 2,500", 2500.0),
+            ("৳ 750", 750.0),
+            ("BD 900", 900.0),
+        ],
+    )
+    def test_domestic_currency_strings_stay_valid(self, value, expected):
+        """Only BDT amounts may become the stored annual fee."""
+        normalized, status = parse_numeric_value(value, "annual_fee")
+        assert status == STATUS_VALID
+        assert normalized == expected
+
+
+class TestUnitAndPeriodSafety:
+    """Foreign currency, non-annual periods and waiver wording never relabel.
+
+    Fees are stored as BDT and the APR is an annual rate, so an amount with a
+    foreign currency marker, an amount or rate covering a shorter period, a
+    percentage in the fee field, or conditional waiver wording must be kept
+    unknown (NULL) with an explicit reason - no conversion is ever invented.
+    """
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "$95.00",
+            "$95",
+            "USD 100",
+            "usd 250",
+            "US$ 40",
+            "Rs. 100",
+            "rs 250",
+            "INR 500",
+            "€50",
+            "€ 60",
+            "£20",
+            "100 dollars",
+            "100 euros",
+        ],
+    )
+    def test_foreign_currency_amount_is_rejected(self, value):
+        normalized, status = parse_numeric_value(value, "annual_fee")
+        assert status == STATUS_INVALID
+        assert normalized is None
+        _, _, reason = parse_numeric_value_detailed(value, "annual_fee")
+        assert reason == REASON_FOREIGN_CURRENCY
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [("$0", 0.0), ("USD 0", 0.0), ("usd 0.00", 0.0)],
+    )
+    def test_zero_is_unambiguous_in_any_currency(self, value, expected):
+        """A zero amount means zero regardless of the currency symbol."""
+        normalized, status = parse_numeric_value(value, "annual_fee")
+        assert status == STATUS_VALID
+        assert normalized == expected
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "100 per month",
+            "TK 500 monthly",
+            "500/month",
+            "TK 500 per week",
+            "quarterly 250",
+            "100 per day",
+        ],
+    )
+    def test_non_annual_period_is_rejected_for_fee(self, value):
+        normalized, status = parse_numeric_value(value, "annual_fee")
+        assert status == STATUS_INVALID
+        assert normalized is None
+        _, _, reason = parse_numeric_value_detailed(value, "annual_fee")
+        assert reason == REASON_NON_ANNUAL_PERIOD
+
+    @pytest.mark.parametrize(
+        "value",
+        ["2% per month", "monthly 2.5%", "2.5% monthly", "1% per week"],
+    )
+    def test_non_annual_period_is_rejected_for_apr(self, value):
+        normalized, status = parse_numeric_value(value, "interest_rate_apr")
+        assert status == STATUS_INVALID
+        assert normalized is None
+        _, _, reason = parse_numeric_value_detailed(value, "interest_rate_apr")
+        assert reason == REASON_NON_ANNUAL_PERIOD
+
+    @pytest.mark.parametrize(
+        "value",
+        ["18.99%", "20%", "20 percent", "20 percentage"],
+    )
+    def test_percentage_in_fee_field_is_rejected(self, value):
+        """A rate is not an amount: a percentage is never an annual fee."""
+        normalized, status = parse_numeric_value(value, "annual_fee")
+        assert status == STATUS_INVALID
+        assert normalized is None
+        _, _, reason = parse_numeric_value_detailed(value, "annual_fee")
+        assert reason == REASON_PERCENTAGE_FOR_FEE
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
             ("20%", 20.0),
             ("18.99%", 18.99),
             ("20% p.a.", 20.0),
             ("20 percent per annum", 20.0),
-            ("TK 5,000", 5000.0),
-            ("Tk. 1,500", 1500.0),
-            ("BDT 500", 500.0),
-            ("$95.00", 95.0),
-            ("taka 2,500", 2500.0),
+            ("20 percent per year", 20.0),
         ],
     )
-    def test_currency_and_percentage_strings(self, value, expected):
-        normalized, status = parse_numeric_value(value, "annual_fee")
+    def test_annual_percentage_strings_stay_valid_for_apr(self, value, expected):
+        normalized, status = parse_numeric_value(value, "interest_rate_apr")
         assert status == STATUS_VALID
         assert normalized == expected
+
+    def test_out_of_range_reports_reason(self):
+        _, _, reason = parse_numeric_value_detailed(120000, "annual_fee")
+        assert reason == REASON_OUT_OF_RANGE
+
+    def test_boolean_reports_reason(self):
+        _, _, reason = parse_numeric_value_detailed(True, "annual_fee")
+        assert reason == REASON_BOOLEAN
+
+    def test_unparseable_string_reports_reason(self):
+        _, _, reason = parse_numeric_value_detailed("ask your RM", "annual_fee")
+        assert reason == REASON_NOT_A_NUMBER
+
+    def test_missing_values_have_no_reason(self):
+        _, status, reason = parse_numeric_value_detailed("N/A", "annual_fee")
+        assert status == STATUS_MISSING
+        assert reason is None
+
+    def test_card_invalid_reasons_maps_fields_to_reasons(self):
+        card = {
+            "name": "Gold",
+            "annual_fee": "USD 100",
+            "interest_rate_apr": "2% per month",
+        }
+        assert card_invalid_reasons(card) == {
+            "annual_fee": REASON_FOREIGN_CURRENCY,
+            "interest_rate_apr": REASON_NON_ANNUAL_PERIOD,
+        }
+
+    def test_card_invalid_reasons_ignores_missing_and_valid(self):
+        card = {"name": "Gold", "annual_fee": 0, "interest_rate_apr": None}
+        assert card_invalid_reasons(card) == {}
+
+    def test_cards_invalid_reasons_merges_and_keeps_first(self):
+        cards = [
+            {"name": "A", "annual_fee": "$95", "interest_rate_apr": 20.0},
+            {"name": "B", "annual_fee": "USD 10", "interest_rate_apr": None},
+        ]
+        assert cards_invalid_reasons(cards) == {
+            "annual_fee": REASON_FOREIGN_CURRENCY
+        }
+
+
+class TestAPRRulesAndBounds:
+    """APR-specific wording rules and the documented bounds."""
 
     @pytest.mark.parametrize(
         "value,status",

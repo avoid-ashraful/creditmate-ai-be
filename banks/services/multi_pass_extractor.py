@@ -38,7 +38,7 @@ from banks.services.quality_scoring import (
 from banks.validators import CreditCardDataValidator
 from banks.validators.numeric_fields import (
     CRITICAL_FIELDS,
-    STATUS_INVALID,
+    card_invalid_reasons,
     critical_field_status,
     is_missing_marker,
     normalize_critical_fields,
@@ -73,6 +73,9 @@ class MultiPassExtractionResult:
         Machine-readable issue codes.
     details : dict
         Per-pass intermediate scores for auditing.
+    invalid_reasons : dict
+        Field name -> ``REASON_*`` code explaining why a critical value was
+        rejected (foreign currency, non-annual period, conditional waiver, ...).
     """
 
     credit_cards: List[Dict[str, Any]] = field(default_factory=list)
@@ -82,6 +85,7 @@ class MultiPassExtractionResult:
     provider_used: Optional[str] = None
     issues: List[str] = field(default_factory=list)
     details: Dict[str, Any] = field(default_factory=dict)
+    invalid_reasons: Dict[str, str] = field(default_factory=dict)
 
 
 class MultiPassLLMExtractor:
@@ -156,9 +160,12 @@ class MultiPassLLMExtractor:
         content = content or ""
         passes: List[Dict[str, Any]] = []
         issues: List[str] = []
+        # Field -> REASON_* for values the model returned but that cannot be
+        # used (collected from the raw output, before normalization to NULL).
+        invalid_reasons: Dict[str, str] = {}
 
         cards, provider_used = self._run_standard_pass(
-            content, bank_name, method, passes, issues
+            content, bank_name, method, passes, issues, invalid_reasons
         )
 
         standard_quality = score_extraction(content, cards, method)
@@ -172,7 +179,7 @@ class MultiPassLLMExtractor:
                 bank_name,
             )
             focused_cards = self._run_focused_pass(
-                content, bank_name, method, passes, issues
+                content, bank_name, method, passes, issues, invalid_reasons
             )
             cards = self.merge_cards(cards, focused_cards)
             focused_pass_ran = True
@@ -190,7 +197,18 @@ class MultiPassLLMExtractor:
         issues.extend(validation_issues)
 
         final_quality = score_extraction(content, cards, method)
-        passes.append(self._build_pass_record(VALIDATION_PASS, None, cards, final_quality))
+        # Raw-output reasons explain the NULLs the validation stage produced.
+        merged_reasons = dict(final_quality.invalid_reasons)
+        merged_reasons.update(invalid_reasons)
+        if merged_reasons:
+            logger.warning(
+                "Rejected critical values for %s: %s", bank_name, merged_reasons
+            )
+        passes.append(
+            self._build_pass_record(
+                VALIDATION_PASS, None, cards, final_quality, merged_reasons
+            )
+        )
 
         # Report a field as "invalid" (cause) rather than also as "missing"
         # when its value was rejected by the normalization rules.
@@ -215,6 +233,7 @@ class MultiPassLLMExtractor:
             passes=passes,
             provider_used=provider_used,
             issues=sorted(set(issues + final_issues)),
+            invalid_reasons=merged_reasons,
             details={
                 "standard_pass_confidence": standard_quality.confidence,
                 "final": final_quality.details,
@@ -226,7 +245,9 @@ class MultiPassLLMExtractor:
     # ------------------------------------------------------------------
     # Passes
     # ------------------------------------------------------------------
-    def _run_standard_pass(self, content, bank_name, method, passes, issues):
+    def _run_standard_pass(
+        self, content, bank_name, method, passes, issues, invalid_reasons=None
+    ):
         """Run pass 1 (bank-specific prompt).
 
         Parameters
@@ -241,6 +262,8 @@ class MultiPassLLMExtractor:
             Provenance list to append the pass record to.
         issues : list of str
             Issue list to append to.
+        invalid_reasons : dict, optional
+            Field -> reason mapping that receives rejection reasons.
 
         Returns
         -------
@@ -265,14 +288,18 @@ class MultiPassLLMExtractor:
             )
             return [], provider_used
 
-        cards = self._parse_cards(response, issues)
+        cards = self._parse_cards(response, issues, invalid_reasons)
         quality = score_extraction(content, cards, method)
         passes.append(
-            self._build_pass_record(STANDARD_PASS, provider_used, cards, quality)
+            self._build_pass_record(
+                STANDARD_PASS, provider_used, cards, quality, invalid_reasons
+            )
         )
         return cards, provider_used
 
-    def _run_focused_pass(self, content, bank_name, method, passes, issues):
+    def _run_focused_pass(
+        self, content, bank_name, method, passes, issues, invalid_reasons=None
+    ):
         """Run pass 2 (critical fields only).
 
         Parameters
@@ -287,6 +314,8 @@ class MultiPassLLMExtractor:
             Provenance list to append the pass record to.
         issues : list of str
             Issue list to append to.
+        invalid_reasons : dict, optional
+            Field -> reason mapping that receives rejection reasons.
 
         Returns
         -------
@@ -311,10 +340,12 @@ class MultiPassLLMExtractor:
             )
             return []
 
-        cards = self._parse_focused_cards(response, issues)
+        cards = self._parse_focused_cards(response, issues, invalid_reasons)
         quality = score_extraction(content, cards, method)
         passes.append(
-            self._build_pass_record(FOCUSED_PASS, provider_used, cards, quality)
+            self._build_pass_record(
+                FOCUSED_PASS, provider_used, cards, quality, invalid_reasons
+            )
         )
         return cards
 
@@ -396,7 +427,7 @@ class MultiPassLLMExtractor:
     # ------------------------------------------------------------------
     # Response parsing / merging
     # ------------------------------------------------------------------
-    def _parse_cards(self, response_text, issues=None):
+    def _parse_cards(self, response_text, issues=None, invalid_reasons=None):
         """Parse a standard-pass response into normalized card dictionaries.
 
         Parameters
@@ -407,6 +438,10 @@ class MultiPassLLMExtractor:
             Issue list that receives ``invalid_<field>`` codes whenever a
             critical field held a malformed value, so the cause survives the
             normalization to ``None``.
+        invalid_reasons : dict, optional
+            Field -> ``REASON_*`` mapping recording *why* a value was
+            rejected (foreign currency, non-annual period, conditional
+            waiver, malformed number, ...).
 
         Returns
         -------
@@ -420,9 +455,13 @@ class MultiPassLLMExtractor:
             logger.warning("Could not parse standard pass response as JSON")
             return []
 
-        return self._normalize_cards(self._coerce_to_cards(payload), issues=issues)
+        return self._normalize_cards(
+            self._coerce_to_cards(payload),
+            issues=issues,
+            invalid_reasons=invalid_reasons,
+        )
 
-    def _parse_focused_cards(self, response_text, issues=None):
+    def _parse_focused_cards(self, response_text, issues=None, invalid_reasons=None):
         """Parse a focused-pass response into partial card dictionaries.
 
         Parameters
@@ -432,6 +471,8 @@ class MultiPassLLMExtractor:
         issues : list of str, optional
             Issue list that receives ``invalid_<field>`` codes for malformed
             critical values found in the focused pass.
+        invalid_reasons : dict, optional
+            Field -> ``REASON_*`` mapping for the rejected values.
 
         Returns
         -------
@@ -447,41 +488,44 @@ class MultiPassLLMExtractor:
         for card in self._coerce_to_cards(payload):
             if not isinstance(card, dict):
                 continue
-            normalized, statuses = normalize_critical_fields(
-                {
-                    "name": card.get("name", ""),
-                    "annual_fee": card.get("annual_fee"),
-                    "interest_rate_apr": card.get("interest_rate_apr"),
-                }
-            )
-            self._record_invalid_fields(statuses, issues)
+            partial = {
+                "name": card.get("name", ""),
+                "annual_fee": card.get("annual_fee"),
+                "interest_rate_apr": card.get("interest_rate_apr"),
+            }
+            self._record_invalid_fields(partial, issues, invalid_reasons)
+            normalized, _ = normalize_critical_fields(partial)
             focused_cards.append(normalized)
         return focused_cards
 
     @staticmethod
-    def _record_invalid_fields(statuses, issues):
-        """Append ``invalid_<field>`` codes for malformed critical values.
+    def _record_invalid_fields(card, issues=None, invalid_reasons=None):
+        """Record rejected critical values of a raw card (code and reason).
 
         Parameters
         ----------
-        statuses : dict
-            Mapping of field name to normalization status.
+        card : dict
+            Raw card dictionary (before normalization).
         issues : list of str, optional
-            Issue list to append to; ``None`` disables recording.
+            Issue list that receives ``invalid_<field>`` codes.
+        invalid_reasons : dict, optional
+            Field -> ``REASON_*`` mapping that receives the reasons.
 
         Returns
         -------
         None
         """
-        if issues is None:
-            return
-        for name, status in statuses.items():
-            code = f"invalid_{name}"
-            if status == STATUS_INVALID and code not in issues:
-                issues.append(code)
+        reasons = card_invalid_reasons(card)
+        for name, reason in reasons.items():
+            if issues is not None:
+                code = f"invalid_{name}"
+                if code not in issues:
+                    issues.append(code)
+            if invalid_reasons is not None:
+                invalid_reasons.setdefault(name, reason)
 
     @staticmethod
-    def _normalize_cards(cards, issues=None):
+    def _normalize_cards(cards, issues=None, invalid_reasons=None):
         """Normalize critical numeric fields of every card.
 
         Parameters
@@ -490,6 +534,8 @@ class MultiPassLLMExtractor:
             Raw card dictionaries.
         issues : list of str, optional
             Issue list that receives ``invalid_<field>`` codes.
+        invalid_reasons : dict, optional
+            Field -> ``REASON_*`` mapping that receives the reasons.
 
         Returns
         -------
@@ -501,8 +547,10 @@ class MultiPassLLMExtractor:
         for card in cards:
             if not isinstance(card, dict):
                 continue
-            normalized, statuses = normalize_critical_fields(card)
-            MultiPassLLMExtractor._record_invalid_fields(statuses, issues)
+            MultiPassLLMExtractor._record_invalid_fields(
+                card, issues, invalid_reasons
+            )
+            normalized, _ = normalize_critical_fields(card)
             normalized_cards.append(normalized)
         return normalized_cards
 
@@ -705,7 +753,9 @@ class MultiPassLLMExtractor:
     # Provenance helpers
     # ------------------------------------------------------------------
     @staticmethod
-    def _build_pass_record(pass_name, provider_used, cards, quality):
+    def _build_pass_record(
+        pass_name, provider_used, cards, quality, invalid_reasons=None
+    ):
         """Build a provenance record for one pass.
 
         Parameters
@@ -718,6 +768,8 @@ class MultiPassLLMExtractor:
             Cards produced by the pass.
         quality : ExtractionQuality
             Quality outcome for the pass.
+        invalid_reasons : dict, optional
+            Field -> ``REASON_*`` mapping for rejected critical values.
 
         Returns
         -------
@@ -731,6 +783,7 @@ class MultiPassLLMExtractor:
             "confidence": quality.confidence,
             "missing_critical_fields": list(quality.missing_critical_fields),
             "issues": list(quality.issues),
+            "invalid_reasons": dict(invalid_reasons or {}),
         }
 
     def unextracted_critical_fields(self, cards):

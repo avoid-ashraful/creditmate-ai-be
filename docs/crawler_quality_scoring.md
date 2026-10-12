@@ -13,25 +13,48 @@ It never imports services (no cycles); everything upstream depends on it.
 
 | Status | Meaning | Examples |
 | --- | --- | --- |
-| `valid` | A normalized, in-range number was obtained | `0`, `95`, `"TK 5,000"`, `"$95.00"`, `"20% p.a."`, `"Free"` (fee only) |
+| `valid` | A normalized, in-range number was obtained | `0`, `95`, `"TK 5,000"`, `"BDT 500"`, `"৳ 750"`, `"20% p.a."` (APR only), `"Free"` (fee only) |
 | `missing` | The document gave an explicit "no value" marker | `None`, `""`, `"N/A"`, `"unknown"`, `"-"`, `"not mentioned"` |
-| `invalid` | A value exists but cannot be trusted | `"abc"`, `"12abc"`, `True`/`False`, `NaN`, `inf`, `-50`, `150` (APR), `[1,2]`, `{...}` |
+| `invalid` | A value exists but cannot be trusted | `"abc"`, `True`/`False`, `NaN`, `inf`, `-50`, `150` (APR), `"USD 100"`, `"100 per month"`, `"Waived"`, `"18.99%"` (fee) |
 
 Rules:
 
 - **A genuine `0` is always `valid`.** `0`/`0.0` mean "the document states the
-  value is zero" - they are never converted to `NULL`.
+  value is zero" - they are never converted to `NULL`. A zero amount is
+  unambiguous in any currency or period (`"$0"` is still `0`).
 - **Zero-equivalent wording is normalized to `0.0` for `annual_fee` only**
-  (`"Free"`, `"Nil"`, `"Waived"`, `"No annual fee"`). The APR has no such
-  wording: `"Free"` as an APR is `invalid`, not `0`.
+  (`"Free"`, `"Nil"`, `"No annual fee"`). The APR has no such wording:
+  `"Free"` as an APR is `invalid`, not `0`.
 - **Bad values stay unknown.** `invalid` values are normalized to `None` before
   scoring and storage - they are *never* turned into `0`. `NULL` therefore means
   "we do not know", while `0` means "genuinely zero".
 - **Bounds** (`FIELD_BOUNDS`): `annual_fee ∈ [0, 100000]`,
   `interest_rate_apr ∈ [0, 100]`. Out-of-range values are `invalid`.
 
-Helpers: `parse_numeric_value`, `critical_field_status`, `is_valid_critical_value`,
-`normalize_critical_fields`, `normalize_cards`.
+### Unit, period and waiver safety
+
+Fees are stored/displayed as **BDT** and the APR is an **annual** rate, so a
+value is only accepted when it already means what the target field means. The
+following are rejected as `invalid` (never relabeled, no conversion invented),
+each with an explicit `REASON_*` code:
+
+| Reason code | Rejected input (examples) |
+| --- | --- |
+| `foreign_currency` | `"USD 100"`, `"$95.00"`, `"Rs. 100"`, `"€50"`, `"£20"`, `"100 dollars"` - a foreign amount is not a BDT fee |
+| `non_annual_period` | `"100 per month"`, `"TK 500 monthly"`, `"500/month"`, `"2% per month"` (APR) - a shorter period is not annualized |
+| `conditional_waiver` | `"Waived"`, `"waiver"`, `"Exempted"`, `"Waived if annual spend exceeds BDT 500,000"` - a waiver may be conditional, so it is not proof of a zero base fee; waiver policy stays a separate field |
+| `percentage_not_a_fee_amount` | `"18.99%"`, `"20 percent"` as `annual_fee` - a rate is not an amount (percentages stay valid for the APR) |
+
+`parse_numeric_value_detailed()` returns the reason alongside the status;
+`card_invalid_reasons()` / `cards_invalid_reasons()` collect them per card / per
+extraction. Reasons are surfaced in the score details, the multi-pass provenance
+records (`extraction_passes[].invalid_reasons`), the quality summary and a
+warning log - so a `NULL` fee is always explainable.
+
+Helpers: `parse_numeric_value`, `parse_numeric_value_detailed`,
+`detect_unit_issue`, `card_invalid_reasons`, `cards_invalid_reasons`,
+`critical_field_status`, `is_valid_critical_value`, `normalize_critical_fields`,
+`normalize_cards`.
 
 ## 2. Confidence scoring (`banks/services/quality_scoring.py`)
 
@@ -53,7 +76,7 @@ Issue codes are machine-readable and distinguish causes:
 | Code | Meaning |
 | --- | --- |
 | `missing_<field>` | Field had an explicit "no value" marker |
-| `invalid_<field>` | Field held a malformed value (reported instead of `missing_<field>`) |
+| `invalid_<field>` | Field held a malformed/incompatible value (reported instead of `missing_<field>`; reason in `invalid_reasons`) |
 | `no_extracted_content` | No text was extracted |
 | `no_cards_extracted` | No credit cards were found |
 | `validation_error: ...` | Rejected by the real validation stage |
@@ -132,11 +155,12 @@ failures skip the rescue (it would fail the same way).
 `banks/services/credit_card_data_service.py` and
 `banks/validators/credit_card_validator.py` share the §1 rules:
 
-- `0` / `"Free"` → stored as `0.00`
+- `0` / `"Free"` / `"TK 5,000"` → stored as a decimal amount
 - `None` / `"N/A"` / `"abc"` / `True` / `-50` → stored as `NULL`
-- The validator rejects booleans, `NaN`/`inf`, negatives and out-of-range
-  values, accepts documented zero wording and currency strings, and never
-  invents a default value.
+- The validator rejects booleans, `NaN`/`inf`, negatives, out-of-range values
+  and foreign/monthly/conditional-waiver wording (§1), accepts documented zero
+  wording and BDT currency strings, and never invents a default value or a
+  conversion rate.
 
 ## 9. Running and verifying offline
 
@@ -156,7 +180,9 @@ Dedicated test modules: `test_numeric_fields.py`, `test_quality_scoring.py`,
 `test_quality_validator.py`, `test_quality_fields.py`,
 `test_multi_pass_extraction.py`, `test_prompt_templates.py`,
 `test_content_extraction_confidence.py`, `test_null_fee_preservation.py`,
-`test_daily_crawl_schedule.py`, `test_crawler_quality_integration.py`.
+`test_daily_crawl_schedule.py`, `test_crawler_quality_integration.py`,
+`test_unit_safety_regressions.py` (foreign currency, monthly period and
+conditional waiver regressions).
 
 ## 10. Status / operational notes
 

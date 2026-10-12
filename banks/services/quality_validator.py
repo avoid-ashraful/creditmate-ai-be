@@ -90,6 +90,13 @@ class ExtractionQualityValidator:
             extraction_passes=extraction_passes,
         )
 
+        if quality.invalid_reasons:
+            logger.warning(
+                "Crawled content %s has rejected critical values: %s",
+                crawled_content.id,
+                quality.invalid_reasons,
+            )
+
         if crawled_content.needs_manual_review:
             logger.warning(
                 "Crawled content %s flagged for manual review (confidence %.3f, issues %s)",
@@ -133,8 +140,17 @@ class ExtractionQualityValidator:
         Returns
         -------
         dict
-            Quality summary (confidence, missing fields, method, review flag).
+            Quality summary (confidence, missing fields, method, review flag,
+            pass provenance and the reasons any critical value was rejected).
         """
+        # Rejection reasons are persisted inside the pass provenance records.
+        invalid_reasons = {}
+        for record in crawled_content.extraction_passes or []:
+            if not isinstance(record, dict):
+                continue
+            for field_name, reason in (record.get("invalid_reasons") or {}).items():
+                invalid_reasons.setdefault(field_name, reason)
+
         return {
             "extraction_confidence": crawled_content.extraction_confidence,
             "missing_critical_fields": list(
@@ -143,6 +159,7 @@ class ExtractionQualityValidator:
             "extraction_method": crawled_content.extraction_method,
             "needs_manual_review": crawled_content.needs_manual_review,
             "extraction_passes": list(crawled_content.extraction_passes or []),
+            "invalid_reasons": invalid_reasons,
             "quality_scored_at": (
                 crawled_content.quality_scored_at.isoformat()
                 if crawled_content.quality_scored_at

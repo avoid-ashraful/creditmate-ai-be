@@ -520,6 +520,16 @@ class BankDataCrawlerService:
             quality.missing_critical_fields,
             crawled_content.needs_manual_review,
         )
+        invalid_reasons = dict(quality.invalid_reasons) or dict(
+            extraction_context.get("invalid_reasons") or {}
+        )
+        if invalid_reasons:
+            logger.warning(
+                "Critical values rejected for crawled content %s: %s "
+                "(stored as NULL, never as 0)",
+                crawled_content.id,
+                invalid_reasons,
+            )
         return quality
 
     def _parse_content_safely(self, data_source, content):
@@ -622,6 +632,7 @@ class BankDataCrawlerService:
             "missing_critical_fields": list(
                 getattr(result, "missing_critical_fields", []) or []
             ),
+            "invalid_reasons": dict(getattr(result, "invalid_reasons", None) or {}),
             "extraction_passes": list(getattr(result, "passes", []) or []),
             "validation_errors": list(getattr(result, "issues", []) or []),
         }
@@ -637,6 +648,7 @@ class BankDataCrawlerService:
             "provider_used": getattr(result, "provider_used", None),
             "confidence": getattr(result, "confidence", None),
             "extraction_method": "multi_pass_llm",
+            "invalid_reasons": dict(getattr(result, "invalid_reasons", None) or {}),
         }
         return structured_data, raw_comprehensive_data, extraction_context
 
