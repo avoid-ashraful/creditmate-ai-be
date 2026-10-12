@@ -262,11 +262,19 @@ class TestCreditCardDataService:
             (18.99, 18.99),
             ("$95.00", 95.0),
             ("18.99%", 18.99),
-            ("invalid", 0.0),
+            ("TK 5,000", 5000.0),
+            (0, 0.0),  # genuine zero fee stays 0 (free card)
+            ("Free", 0.0),
+            ("invalid", None),  # malformed value stays NULL, never 0
+            ("", None),
+            ("N/A", None),
+            (None, None),
+            (True, None),  # booleans are never fees
+            (-50, None),  # negative fee is invalid, not 0
         ],
     )
     def test_parse_decimal_values(self, value, expected):
-        """Test decimal value parsing."""
+        """Test decimal value parsing (zero preserved, missing/invalid -> NULL)."""
         assert self.service._parse_decimal(value) == expected
 
 

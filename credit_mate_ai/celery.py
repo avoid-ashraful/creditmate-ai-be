@@ -1,6 +1,7 @@
 import os
 
 from celery import Celery
+from celery.schedules import crontab
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "credit_mate_ai.settings")
 
@@ -12,6 +13,13 @@ app.conf.beat_schedule = {
     "crawl-bank-data-weekly": {
         "task": "banks.tasks.crawl_all_bank_data",
         "schedule": 604800.0,  # 7 days in seconds
+    },
+    # Daily crawl of every active bank (2:00 UTC, expires after 6 hours so a
+    # missed window does not replay stale work)
+    "daily-crawl-all-active-banks": {
+        "task": "banks.tasks.daily_crawl_all_active_banks",
+        "schedule": crontab(hour=2, minute=0),
+        "options": {"expires": 6 * 60 * 60},
     },
     # Monthly tasks - run on 1st day of each month at 2 AM UTC
     "monthly-data-quality-check": {

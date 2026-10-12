@@ -1,6 +1,15 @@
 """Data validation layer for credit card data."""
 
 import logging
+import math
+
+from banks.validators.numeric_fields import (
+    CRITICAL_FIELDS,
+    STATUS_INVALID,
+    STATUS_MISSING,
+    STATUS_VALID,
+    parse_numeric_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -209,14 +218,31 @@ class CreditCardDataValidator:
             List of validation errors for annual fee field
         """
         errors = []
+        # Booleans are never valid fee values (they would become 1.0/0.0).
+        if isinstance(annual_fee, bool):
+            errors.append(f"{prefix}Invalid annual fee format: {annual_fee}")
+            return errors
         try:
             fee_value = float(annual_fee)
-            if fee_value < 0:
-                errors.append(f"{prefix}Annual fee cannot be negative")
-            elif fee_value > 100000:  # Reasonable upper limit
-                errors.append(f"{prefix}Annual fee seems unusually high: ${fee_value}")
         except (ValueError, TypeError):
+            # Not a plain number: accept documented zero wording ("Free",
+            # "Nil") and currency strings ("TK 5,000"), treat an explicit
+            # unknown marker as absence (the scorer reports it) and reject
+            # anything else as an invalid format.
+            normalized, status = parse_numeric_value(annual_fee, "annual_fee")
+            if status == STATUS_VALID:
+                fee_value = normalized
+            elif status == STATUS_MISSING:
+                return errors
+            else:
+                errors.append(f"{prefix}Invalid annual fee format: {annual_fee}")
+                return errors
+        if not math.isfinite(fee_value):
             errors.append(f"{prefix}Invalid annual fee format: {annual_fee}")
+        elif fee_value < 0:
+            errors.append(f"{prefix}Annual fee cannot be negative")
+        elif fee_value > 100000:  # Reasonable upper limit
+            errors.append(f"{prefix}Annual fee seems unusually high: ${fee_value}")
         return errors
 
     @staticmethod
@@ -236,16 +262,31 @@ class CreditCardDataValidator:
             List of validation errors for interest rate field
         """
         errors = []
+        # Booleans are never valid rate values.
+        if isinstance(interest_rate, bool):
+            errors.append(f"{prefix}Invalid interest rate format: {interest_rate}")
+            return errors
         try:
             rate_value = float(interest_rate)
-            if rate_value < 0:
-                errors.append(f"{prefix}Interest rate cannot be negative")
-            elif rate_value > 100:
-                errors.append(
-                    f"{prefix}Interest rate seems unusually high: {rate_value}%"
-                )
         except (ValueError, TypeError):
+            # Not a plain number: accept percentage strings ("20% p.a."),
+            # treat an explicit unknown marker as absence and reject the rest.
+            normalized, status = parse_numeric_value(
+                interest_rate, "interest_rate_apr"
+            )
+            if status == STATUS_VALID:
+                rate_value = normalized
+            elif status == STATUS_MISSING:
+                return errors
+            else:
+                errors.append(f"{prefix}Invalid interest rate format: {interest_rate}")
+                return errors
+        if not math.isfinite(rate_value):
             errors.append(f"{prefix}Invalid interest rate format: {interest_rate}")
+        elif rate_value < 0:
+            errors.append(f"{prefix}Interest rate cannot be negative")
+        elif rate_value > 100:
+            errors.append(f"{prefix}Interest rate seems unusually high: {rate_value}%")
         return errors
 
     @staticmethod
@@ -375,7 +416,17 @@ class CreditCardDataValidator:
 
     @staticmethod
     def _sanitize_numeric_fields(card_data):
-        """Sanitize numeric fields.
+        """Sanitize numeric fields, keeping zero distinct from missing data.
+
+        Uses the shared normalization rules from
+        :mod:`banks.validators.numeric_fields`:
+
+        * a valid number (including a genuine ``0``) is normalized to a float;
+        * explicit "unknown" markers (``None``, ``""``, ``"N/A"`` ...) become
+          ``None`` so missing data stays ``NULL``;
+        * malformed values (``"abc"``, booleans, ``NaN``/``Infinity``,
+          negative or out-of-range numbers) also become ``None`` - a bad value
+          must never be stored as ``0``.
 
         Parameters
         ----------
@@ -385,23 +436,19 @@ class CreditCardDataValidator:
         Returns
         -------
         dict
-            Dictionary with sanitized numeric field values
+            Dictionary with sanitized numeric field values (float or None)
         """
         sanitized = {}
-        numeric_fields = [
-            "annual_fee",
-            "interest_rate_apr",
-        ]
 
-        for field in numeric_fields:
-            value = card_data.get(field)
-            if value is not None:
-                try:
-                    sanitized[field] = max(0, float(value))
-                except (ValueError, TypeError):
-                    sanitized[field] = 0
-            else:
-                sanitized[field] = 0
+        for field in CRITICAL_FIELDS:
+            value, status = parse_numeric_value(card_data.get(field), field)
+            if status == STATUS_INVALID:
+                logger.warning(
+                    "Invalid %s value %r treated as unknown (NULL)",
+                    field,
+                    card_data.get(field),
+                )
+            sanitized[field] = value
 
         return sanitized
 
