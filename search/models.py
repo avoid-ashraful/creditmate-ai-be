@@ -22,13 +22,26 @@ class SearchIndexUpdate(Audit):
     action : str
         ``index`` to (re)index the object, ``delete`` to remove it.
     status : str
-        ``pending``, ``done`` or ``failed``.
+        ``pending``, ``processing``, ``done`` or ``failed``.
     attempts : int
         Number of times a worker tried to process the row.
     available_at : datetime
         Rows are only drained once this timestamp is in the past (retry backoff).
+    claimed_by : str
+        Token of the drainer that currently leased the row (empty when free).
+    claimed_at : datetime
+        When the current lease started; a lease older than
+        ``settings.SEARCH_QUEUE_LEASE_SECONDS`` is considered dead and the row
+        is handed back to the pending pool.
     last_error : str
         Last processing error, kept for operators.
+
+    Notes
+    -----
+    A row is only coalescable while it is ``pending``.  As soon as a drainer
+    claims it (``processing``), a new save writes a *new* pending row, so an
+    update that lands mid-drain can never be swallowed by the row that is
+    already being shipped to the engine.
     """
 
     INDEX_BANKS = "banks"
@@ -42,13 +55,17 @@ class SearchIndexUpdate(Audit):
     ]
 
     STATUS_PENDING = "pending"
+    STATUS_PROCESSING = "processing"
     STATUS_DONE = "done"
     STATUS_FAILED = "failed"
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
+        (STATUS_PROCESSING, "Processing (claimed)"),
         (STATUS_DONE, "Done"),
         (STATUS_FAILED, "Failed"),
     ]
+    #: Statuses that still owe work to the engine (reported as queue depth).
+    OUTSTANDING_STATUSES = (STATUS_PENDING, STATUS_PROCESSING)
 
     INDEX_CHOICES = [
         (INDEX_BANKS, "Banks"),
@@ -63,6 +80,8 @@ class SearchIndexUpdate(Audit):
     )
     attempts = models.PositiveSmallIntegerField(default=0)
     available_at = models.DateTimeField(default=timezone.now)
+    claimed_by = models.CharField(max_length=64, blank=True, default="")
+    claimed_at = models.DateTimeField(null=True, blank=True)
     last_error = models.TextField(blank=True, default="")
 
     class Meta:
@@ -72,6 +91,7 @@ class SearchIndexUpdate(Audit):
             models.Index(
                 fields=["status", "available_at"], name="search_queue_pending_idx"
             ),
+            models.Index(fields=["status", "claimed_at"], name="search_queue_lease_idx"),
             models.Index(
                 fields=["index_name", "object_id"], name="search_queue_object_idx"
             ),
@@ -89,3 +109,13 @@ class SearchIndexUpdate(Audit):
         bool
         """
         return self.action == self.ACTION_DELETE
+
+    @property
+    def is_claimed(self):
+        """Return True while a drainer holds the lease on this row.
+
+        Returns
+        -------
+        bool
+        """
+        return self.status == self.STATUS_PROCESSING

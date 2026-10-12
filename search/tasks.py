@@ -1,8 +1,27 @@
 """Celery entry point for draining the search outbox queue.
 
-Workers are optional: ``SEARCH_QUEUE_VIA_CELERY=False`` (the default) drains
-the queue inline after each commit, while enabling it routes batches through
-the existing Celery/Redis infrastructure used by the crawler.
+Scheduling model (default configuration, ``SEARCH_SYNC_MODE=queue``)::
+
+    model save  ->  transaction.on_commit()  ->  outbox row (pending)
+                                               ^
+    celery beat (search-index-queue-drain) ----+  every SEARCH_QUEUE_DRAIN_INTERVAL s
+    celery worker -> process_search_index_queue -> drain() -> Elasticsearch
+
+Model saves never touch the broker and never touch the engine: they only
+append an outbox row.  The row becomes an index update when the periodic
+Celery beat entry ``search-index-queue-drain`` (``credit_mate_ai/celery.py``)
+publishes :func:`process_search_index_queue`, which therefore **requires a
+running Celery worker and beat** — without them the queue only grows
+(manageable with ``python manage.py search_index --sync``).
+
+Opt-in variations:
+
+* ``SEARCH_QUEUE_VIA_CELERY=True`` — additionally publish a drain task right
+  after each commit (lower latency, needs a reachable broker in the request
+  path; failures are logged and the row simply stays queued);
+* ``SEARCH_SYNC_MODE=sync`` — drain inline after every commit (blocking, no
+  worker needed);
+* ``SEARCH_SYNC_MODE=off`` — do not queue anything at all.
 """
 
 import logging
@@ -30,9 +49,19 @@ logger = logging.getLogger(__name__)
 TASK_NAME = "search.process_index_queue"
 
 
-@shared_task(name=TASK_NAME, bind=True, max_retries=3, default_retry_delay=60)
+@shared_task(
+    name=TASK_NAME,
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    ignore_result=True,
+)
 def process_search_index_queue(self, batch_size=None):
     """Drain pending outbox rows into the search index.
+
+    This is the task Celery beat dispatches every
+    ``settings.SEARCH_QUEUE_DRAIN_INTERVAL`` seconds, and it is the only
+    thing the default ``SEARCH_SYNC_MODE=queue`` configuration relies on.
 
     Parameters
     ----------
@@ -78,7 +107,12 @@ def rebuild_search_index(self, drop=True):
 
 
 def dispatch_queue_drain(batch_size=None):
-    """Queue a drain on Celery when enabled.
+    """Publish a drain task right after a commit (opt-in low latency path).
+
+    Only used when ``SEARCH_QUEUE_VIA_CELERY=True``.  A broker failure is
+    logged and swallowed: the outbox row stays ``pending`` and the periodic
+    beat drain picks it up, so this call never falls back to a blocking
+    inline drain inside a request.
 
     Parameters
     ----------
@@ -88,7 +122,8 @@ def dispatch_queue_drain(batch_size=None):
     Returns
     -------
     str | None
-        Celery task id, or ``None`` when Celery is disabled.
+        Celery task id, or ``None`` when Celery dispatch is disabled or the
+        broker is unreachable.
     """
     if not getattr(settings, "SEARCH_QUEUE_VIA_CELERY", False):
         return None

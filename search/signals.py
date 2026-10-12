@@ -12,6 +12,14 @@ Previous values are read in ``pre_save`` (before the UPDATE lands) and used in
 ``post_save``/``post_delete``.  Every row still goes through
 ``transaction.on_commit``, so a rolled back transaction queues nothing and
 rows keep their transaction order.
+
+Receiving a row is *not* the same as writing it to the engine.  With the
+default ``SEARCH_SYNC_MODE=queue`` a save only appends the row: the periodic
+Celery beat entry ``search-index-queue-drain`` (``credit_mate_ai/celery.py``)
+publishes ``search.process_index_queue`` on a worker every
+``SEARCH_QUEUE_DRAIN_INTERVAL`` seconds, and that drain turns the row into an
+index update.  No broker call and no engine call ever happens inside a model
+save by default.
 """
 
 import logging
@@ -69,13 +77,29 @@ def _queue_after_commit(index_name, object_id, action):
     -------
     None
     """
-    if _sync_mode() == "off":
+    mode = _sync_mode()
+    if mode == "off":
         # ``SEARCH_SYNC_MODE=off`` disables synchronisation entirely.
         return
     enqueue(index_name, object_id, action)
-    if _sync_mode() == "sync":
-        # ``SEARCH_SYNC_MODE=sync`` drains right after the row is written.
+    if mode == "sync":
+        # ``SEARCH_SYNC_MODE=sync`` drains right after the row is written
+        # (blocking engine call — only used when explicitly selected).
         transaction.on_commit(lambda: dispatch())
+    elif getattr(settings, "SEARCH_QUEUE_VIA_CELERY", False):
+        # Default ``queue`` mode needs no per-save work at all: Celery beat
+        # drains the outbox periodically.  With ``SEARCH_QUEUE_VIA_CELERY``
+        # enabled we *additionally* publish a drain task after the commit for
+        # lower latency; if the broker is down the row simply stays pending
+        # and the beat drain handles it.
+        transaction.on_commit(_dispatch_drain_after_commit)
+
+
+def _dispatch_drain_after_commit():
+    """Publish the opt-in Celery drain task (never drains inline)."""
+    from search.tasks import dispatch_queue_drain
+
+    dispatch_queue_drain()
 
 
 def _sync_mode():
