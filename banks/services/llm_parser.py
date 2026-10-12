@@ -10,6 +10,9 @@ import logging
 import re
 
 from banks.exceptions import AIParsingError, ConfigurationError
+from banks.services.extraction_provider import OrchestratorExtractionProvider
+from banks.services.multi_pass_extractor import MultiPassLLMExtractor
+from banks.services.prompt_templates import BankSpecificPrompts
 from banks.validators import CreditCardDataValidator
 from common.llm import LLMOrchestrator
 from common.llm.exceptions import AllLLMProvidersFailedError
@@ -22,12 +25,122 @@ class LLMContentParser:
 
     This service provides improved parsing capabilities with automatic
     provider fallback, better error handling, and comprehensive validation.
+
+    It also exposes the Phase 2 multi-pass extraction pipeline
+    (:meth:`parse_with_multi_pass`) which runs a bank-specific standard pass,
+    a focused critical-field pass when needed, and a validation pass that
+    produces a bounded confidence score.
     """
 
-    def __init__(self):
-        """Initialize the LLM parser."""
+    def __init__(self, multi_pass_extractor=None, prompt_templates=None):
+        """Initialize the LLM parser.
+
+        Parameters
+        ----------
+        multi_pass_extractor : MultiPassLLMExtractor, optional
+            Extractor used by :meth:`parse_with_multi_pass`. A default
+            orchestrator-backed extractor is created when omitted.
+        prompt_templates : BankSpecificPrompts, optional
+            Bank-specific prompt template registry.
+        """
         self.orchestrator = LLMOrchestrator()
         self.validator = CreditCardDataValidator()
+        self.prompt_templates = prompt_templates or BankSpecificPrompts()
+        self.multi_pass_extractor = multi_pass_extractor or MultiPassLLMExtractor(
+            provider=OrchestratorExtractionProvider(self.orchestrator),
+            prompt_templates=self.prompt_templates,
+        )
+
+    def parse_with_multi_pass(self, content, bank_name, method="unknown"):
+        """Extract credit card data using the multi-pass pipeline.
+
+        Parameters
+        ----------
+        content : str
+            Extracted text content to parse.
+        bank_name : str
+            Bank name used to select the bank-specific prompt template.
+        method : str, optional
+            Extraction method that produced ``content``.
+
+        Returns
+        -------
+        MultiPassExtractionResult
+            Merged cards, bounded confidence, missing critical fields and
+            per-pass provenance.
+
+        Raises
+        ------
+        ConfigurationError
+            If no LLM providers are configured.
+        AIParsingError
+            If every extraction pass failed.
+        """
+        # The extractor owns the provider it will call, so it is the source of
+        # truth for availability (and it works with injected test doubles).
+        if not self.multi_pass_extractor.is_provider_available():
+            raise ConfigurationError(
+                "No LLM providers are available for multi-pass parsing"
+            )
+
+        try:
+            result = self.multi_pass_extractor.extract(content, bank_name, method=method)
+        except AIParsingError:
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error in multi-pass extraction: {e}")
+            raise AIParsingError(
+                f"Unexpected error during multi-pass extraction: {str(e)}"
+            ) from e
+
+        return self._apply_validation_stage(result)
+
+    def _apply_validation_stage(self, result):
+        """Run the real validation stage on a multi-pass result.
+
+        Every card is sanitized with :class:`CreditCardDataValidator` (which
+        keeps genuine ``0`` fees, stores missing/invalid values as ``None``) and
+        then validated; any validation error is appended to the result issues
+        so it reaches the manual-review flag. An error on a critical numeric
+        field lowers the confidence indirectly (the sanitized ``None`` counts
+        as not extracted); other validation errors are recorded only and never
+        multiply the score down on their own.
+
+        Parameters
+        ----------
+        result : MultiPassExtractionResult
+            Result returned by the extractor.
+
+        Returns
+        -------
+        MultiPassExtractionResult
+            The same result with sanitized cards and validation issues.
+        """
+        validated_cards = []
+        validation_issues = []
+
+        for card in result.credit_cards:
+            if not isinstance(card, dict):
+                continue
+            sanitized = self.validator.sanitize_credit_card_data(card)
+            # Keep any extra document columns (provenance) that the schema
+            # validator does not know about, while overriding the normalized
+            # values for the schema fields.
+            sanitized = {**card, **sanitized}
+            is_valid, errors = self.validator.validate_credit_card_data(sanitized)
+            validated_cards.append(sanitized)
+            if not is_valid:
+                validation_issues.extend(f"validation_error: {e}" for e in errors)
+
+        result.credit_cards = validated_cards
+        if validation_issues:
+            logger.warning(
+                "Multi-pass validation issues for %s: %s",
+                result.provider_used,
+                validation_issues,
+            )
+            result.issues = sorted(set(list(result.issues) + validation_issues))
+        return result
 
     def parse_credit_card_data(self, content, bank_name):
         """Parse credit card information from extracted content using LLM orchestrator.
@@ -163,6 +276,11 @@ class LLMContentParser:
     def _build_parsing_prompt(self, content, bank_name):
         """Build the prompt for LLM parsing.
 
+        Uses the bank-specific template registry
+        (:class:`banks.services.prompt_templates.BankSpecificPrompts`) so the
+        model is told where to look for this bank's fee table, combined with
+        the shared output contract (JSON array, zero vs missing rules).
+
         Parameters
         ----------
         content : str
@@ -175,38 +293,7 @@ class LLMContentParser:
         str
             Formatted prompt with instructions and content for LLM
         """
-        return f"""
-You are a data extraction AI. Extract credit card information from the following content for {bank_name}.
-
-CRITICAL INSTRUCTIONS:
-1. You MUST respond with ONLY valid JSON - no markdown, no explanations, no code blocks
-2. Start your response immediately with [ and end with ]
-3. Do not use ```json or ``` or any other formatting
-4. Ensure the JSON is complete and properly closed
-
-Extract these fields for each credit card with EXACT formats:
-- name: Credit card name/type (e.g., "Platinum Card", "Gold Card", "Classic Card", "World Card", etc.) - NOT the annual fee amount
-- annual_fee: Annual fee as pure number without currency (e.g., "TK. 5,000" becomes 5000, "Free" becomes 0)
-- interest_rate_apr: Interest rate as decimal number (e.g., "20%" becomes 20.0, "17%" becomes 17.0)
-- lounge_access_international: Lounge access description as string (e.g., "10 complimentary visits", "Unlimited", or "" if none)
-- lounge_access_domestic: Lounge access description as string (e.g., "Unlimited visits for cardholder only", or "" if none)
-- lounge_access_condition: Conditions or requirements for lounge access as string (e.g., "Available for primary cardholders only", "Valid for first 3 years", or "" if none)
-- cash_advance_fee: Fee description as string
-- late_payment_fee: Fee description as string
-- annual_fee_waiver_policy: Waiver conditions as simple string (or null if not available)
-- reward_points_policy: Reward policy description as string or null
-- additional_features: Array of feature strings or null
-
-CRITICAL: Follow these number conversion rules strictly:
-- Remove ALL currency symbols and text (TK., BDT, USD, $)
-- Remove ALL commas and spaces from numbers
-- Convert percentages to decimals (20% → 20.0, not "20%")
-- Convert "Free" to 0, "Unlimited" to null for numeric fields
-
-Return format: JSON array of objects. If no credit cards found, return []
-
-Content to analyze:
-{content}"""
+        return self.prompt_templates.get_prompt_for_bank(bank_name, content)
 
     def _build_comprehensive_parsing_prompt(self, content, bank_name):
         """Build the prompt for comprehensive LLM parsing to extract all available data.
@@ -223,33 +310,22 @@ Content to analyze:
         str
             Formatted comprehensive parsing prompt for maximum data extraction
         """
+        bank_prompt = self.prompt_templates.get_prompt_for_bank(bank_name, content)
         return f"""
-You are a comprehensive data extraction AI. Extract ALL available information from this {bank_name} credit card document.
+{bank_prompt}
 
-CRITICAL FORMATTING RULES:
+COMPREHENSIVE EXTRACTION RULES:
 1. You MUST respond with ONLY valid JSON - no markdown, no explanations, no code blocks
 2. Start your response immediately with [ and end with ]
 3. Do not use ```json or ``` or any other formatting
 4. Ensure the JSON is complete and properly closed
 5. If content is too long, prioritize completeness of objects over quantity
-
-EXTRACTION INSTRUCTIONS:
-1. For credit card model fields, use these exact field names:
-   - name, annual_fee, interest_rate_apr, lounge_access_international, lounge_access_domestic, lounge_access_condition
-   - cash_advance_fee, late_payment_fee, annual_fee_waiver_policy, reward_points_policy, additional_features
-
-2. For any other data found, use the column header/title as key:
-   - Example: "CIB Fee" -> "CIB Fee": "BDT 100"
-   - Example: "Processing Fee" -> "Processing Fee": "2%"
-
-3. Extract data for each credit card type (World, Platinum, Gold, Classic, etc.)
-
-4. Include ALL charges, fees, benefits, policies mentioned
-
-5. Return as JSON array where each object represents one credit card
-
-Content to analyze:
-{content}"""
+6. For any field not listed in the contract above, use the exact column
+   header/title as the key (e.g. "CIB Fee" -> "CIB Fee": "BDT 100")
+7. Extract data for every credit card tier (World, Platinum, Gold, Classic, ...)
+8. Include ALL charges, fees, benefits and policies mentioned
+9. Never invent a value: a fee that is not stated in the document stays null
+"""
 
     def get_orchestrator_status(self):
         """Get the current status of the LLM orchestrator.

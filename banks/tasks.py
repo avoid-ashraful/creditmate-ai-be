@@ -189,6 +189,107 @@ def crawl_bank_data_sources_by_bank(bank_id):
 
 
 @shared_task
+def daily_crawl_all_active_banks():
+    """Daily crawl of every active bank's active data sources.
+
+    Scheduled once per day by Celery beat
+    (``daily-crawl-all-active-banks`` in ``credit_mate_ai/celery.py``). The task
+    only touches ``Bank`` rows with ``is_active=True`` and only their active
+    data sources, and it uses the same crawler pipeline as manual crawls, so
+    every produced ``CrawledContent`` row carries its extraction quality score.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    dict
+        Dictionary containing task results with keys:
+        - status: 'completed' or 'error'
+        - timestamp: ISO formatted timestamp
+        - banks_total: number of active banks considered
+        - banks_crawled: banks with at least one active data source processed
+        - banks_skipped: banks without active data sources
+        - sources_total / sources_successful / sources_failed: crawl counts
+        - banks: per-bank detail (name, status, counts)
+        - error: error message when status is 'error'
+    """
+    try:
+        active_banks = Bank.objects.filter(is_active=True).order_by("name")
+        summary = {
+            "status": "completed",
+            "timestamp": timezone.now().isoformat(),
+            "banks_total": active_banks.count(),
+            "banks_crawled": 0,
+            "banks_skipped": 0,
+            "sources_total": 0,
+            "sources_successful": 0,
+            "sources_failed": 0,
+            "banks": [],
+        }
+
+        crawler = BankDataCrawlerService()
+
+        for bank in active_banks:
+            bank_detail = _crawl_bank_for_daily_schedule(bank, crawler, summary)
+            summary["banks"].append(bank_detail)
+
+        logger.info(
+            "Daily active-bank crawl completed: %s/%s banks crawled",
+            summary["banks_crawled"],
+            summary["banks_total"],
+        )
+        return summary
+
+    except Exception as exc:
+        logger.error(f"Error in daily_crawl_all_active_banks task: {str(exc)}")
+        return {
+            "status": "error",
+            "timestamp": timezone.now().isoformat(),
+            "error": str(exc),
+        }
+
+
+def _crawl_bank_for_daily_schedule(bank, crawler, summary):
+    """Crawl every active data source of one bank.
+
+    Parameters
+    ----------
+    bank : Bank
+        Active bank to crawl.
+    crawler : BankDataCrawlerService
+        Crawler instance (dependency injected so tests can mock it).
+    summary : dict
+        Aggregate counters, updated in place.
+
+    Returns
+    -------
+    dict
+        Per-bank detail record with bank name, status and source counts.
+    """
+    data_sources = list(bank.data_sources.filter(is_active=True))
+
+    if not data_sources:
+        summary["banks_skipped"] += 1
+        return {"bank": bank.name, "status": "skipped", "sources": 0}
+
+    bank_result = {"bank": bank.name, "status": "completed", "sources": 0}
+    for data_source in data_sources:
+        summary["sources_total"] += 1
+        bank_result["sources"] += 1
+        if crawler.crawl_bank_data_source(data_source.id):
+            summary["sources_successful"] += 1
+            bank_result["successful"] = bank_result.get("successful", 0) + 1
+        else:
+            summary["sources_failed"] += 1
+            bank_result["failed"] = bank_result.get("failed", 0) + 1
+
+    summary["banks_crawled"] += 1
+    return bank_result
+
+
+@shared_task
 def cleanup_old_crawled_content(days_to_keep=30):
     """Celery task to clean up old crawled content records.
 

@@ -1,5 +1,6 @@
 import logging
 
+from banks.validators.numeric_fields import STATUS_MISSING, STATUS_VALID, parse_numeric_value
 from credit_cards.models import CreditCard
 
 logger = logging.getLogger(__name__)
@@ -97,9 +98,9 @@ class CreditCardDataService:
         """
         card_name = card_data.get("name", "").strip()
         if not card_name:
-            # Create fallback name from annual fee
-            annual_fee = card_data.get("annual_fee", 0)
-            card_name = f"Credit Card (Annual Fee: {annual_fee})"
+            # Create fallback name from annual fee (never invent a fee value:
+            # unknown/missing fees are displayed as "unknown")
+            card_name = self._fallback_card_name(card_data)
             logger.warning(f"Credit card name is missing, using fallback: {card_name}")
         # Clean up card name if it's just the annual fee
         elif (
@@ -107,8 +108,7 @@ class CreditCardDataService:
             or card_name.startswith("US$")
             or card_name.replace(",", "").replace(".", "").isdigit()
         ):
-            annual_fee = card_data.get("annual_fee", 0)
-            card_name = f"Credit Card (Annual Fee: {annual_fee})"
+            card_name = self._fallback_card_name(card_data)
             logger.info(f"Cleaned up card name from fee to: {card_name}")
 
         try:
@@ -131,6 +131,33 @@ class CreditCardDataService:
             logger.error(f"Failed to create/update credit card '{card_name}': {str(e)}")
             raise
 
+    @staticmethod
+    def _fallback_card_name(card_data):
+        """Build a fallback card name without inventing a fee value.
+
+        Parameters
+        ----------
+        card_data : dict
+            Raw credit card data from parsing
+
+        Returns
+        -------
+        str
+            ``"Credit Card (Annual Fee: <value>)"`` where ``<value>`` is the
+            normalized fee, ``0.0`` for a genuinely free card, or ``unknown``
+            when the fee was not extracted.
+        """
+        fee_value, fee_status = parse_numeric_value(
+            card_data.get("annual_fee"), "annual_fee"
+        )
+        if fee_status == STATUS_VALID:
+            display = fee_value
+        elif fee_status == STATUS_MISSING:
+            display = "unknown"
+        else:
+            display = "invalid"
+        return f"Credit Card (Annual Fee: {display})"
+
     def _prepare_card_defaults(self, card_data):
         """Prepare default values for credit card creation/update.
 
@@ -145,9 +172,9 @@ class CreditCardDataService:
             Prepared defaults dictionary for database operations
         """
         return {
-            "annual_fee": self._parse_decimal(card_data.get("annual_fee", 0)),
+            "annual_fee": self._parse_decimal(card_data.get("annual_fee")),
             "interest_rate_apr": self._parse_decimal(
-                card_data.get("interest_rate_apr", 0)
+                card_data.get("interest_rate_apr"), field="interest_rate_apr"
             ),
             "lounge_access_international": card_data.get(
                 "lounge_access_international", ""
@@ -161,28 +188,28 @@ class CreditCardDataService:
             "is_active": True,
         }
 
-    def _parse_decimal(self, value):
-        """Parse decimal value from various formats.
+    def _parse_decimal(self, value, field="annual_fee"):
+        """Parse a critical numeric value, preserving zero and NULL semantics.
+
+        Uses the shared normalization rules in
+        :mod:`banks.validators.numeric_fields`: valid numbers (including a
+        genuine ``0``) become floats, while missing markers and malformed
+        values become ``None`` so the database column stays NULL. No default
+        value is ever invented.
 
         Parameters
         ----------
-        value : str, int, or float
+        value : str, int, float, or None
             Value to parse, may contain currency symbols or percentages
+        field : str, optional
+            Critical field being parsed; selects the allowed bounds and the
+            field-specific "free / nil" wording.
 
         Returns
         -------
-        float
-            Parsed decimal value, defaults to 0.0 for invalid inputs
+        float or None
+            Normalized float for valid input, ``None`` for missing/invalid
+            input
         """
-        if isinstance(value, (int, float)):
-            return float(value)
-
-        if isinstance(value, str):
-            # Remove currency symbols and percentage signs
-            cleaned = value.replace("$", "").replace("%", "").replace(",", "").strip()
-            try:
-                return float(cleaned)
-            except ValueError:
-                return 0.0
-
-        return 0.0
+        normalized, _ = parse_numeric_value(value, field)
+        return normalized

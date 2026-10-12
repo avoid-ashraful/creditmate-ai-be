@@ -209,8 +209,10 @@ class TestEndToEndCrawlingWorkflow:
 
         card = cards.first()
         assert "Credit Card (Annual Fee:" in card.name  # Fallback name was created
-        assert card.annual_fee == 0.0  # Invalid decimal was converted to 0
-        assert card.interest_rate_apr == 0.0  # Invalid decimal was converted to 0
+        # Invalid values must stay NULL - never silently converted into a
+        # "free card" (0) or an invented 0% interest rate.
+        assert card.annual_fee is None  # Invalid decimal kept as unknown
+        assert card.interest_rate_apr is None  # Invalid decimal kept as unknown
 
         # But crawled content should still be recorded
         assert self.data_source.crawled_contents.count() == 1

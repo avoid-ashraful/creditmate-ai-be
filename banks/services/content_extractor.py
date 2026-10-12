@@ -10,6 +10,7 @@ from pypdf import PdfReader
 
 from banks.enums import ContentType
 from banks.exceptions import ContentExtractionError, FileFormatError, NetworkError
+from banks.services.quality_scoring import clamp_confidence, score_content
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,9 @@ class ContentExtractor:
     - Web pages (HTML parsing and text extraction)
     - Images (OCR text extraction)
     - CSV files (structured data parsing)
+
+    It also produces a bounded (0.0-1.0) extraction confidence so downstream
+    consumers can tell reliable native PDF text apart from OCR output.
     """
 
     def __init__(self):
@@ -71,14 +75,181 @@ class ContentExtractor:
         extracted_content = self._process_content(raw_content, content_type, url)
 
         # For binary content types, store a placeholder for raw content to avoid NUL character issues
-        if content_type == ContentType.PDF or content_type == ContentType.IMAGE:
-            raw_content_str = (
-                f"<BINARY_CONTENT_{content_type.upper()}_SIZE_{len(raw_content)}>"
-            )
-        else:
-            raw_content_str = raw_content.decode("utf-8", errors="ignore")
+        raw_content_str = self._raw_content_placeholder(raw_content, content_type)
 
         return raw_content_str, extracted_content
+
+    def extract_with_validation(self, url, content_type):
+        """Extract content using every available method and keep the best one.
+
+        Phase 3 of ``docs/improvements.md``. For PDFs both the native text
+        layer and OCR are attempted and the result with the higher bounded
+        confidence is returned, together with provenance of what was tried.
+
+        Parameters
+        ----------
+        url : str
+            The URL to fetch.
+        content_type : str
+            Declared content type (PDF, WEBPAGE, IMAGE, CSV).
+
+        Returns
+        -------
+        dict
+            Dictionary with keys:
+            - ``raw_content``: raw text, or a placeholder for binary content
+            - ``content``: extracted text of the winning attempt
+            - ``confidence``: bounded confidence (0.0-1.0) of the winner
+            - ``method``: extraction method of the winner
+            - ``attempts``: list of per-attempt records (method/confidence)
+
+        Raises
+        ------
+        ContentExtractionError
+            When every extraction method failed.
+        NetworkError
+            When the document could not be fetched.
+        """
+        raw_content = self._fetch_content(url)
+
+        attempts = []
+        primary_method = self._method_for_content_type(content_type)
+
+        try:
+            primary_content = self._process_content(raw_content, content_type, url)
+            attempts.append(
+                self._build_attempt(primary_method, primary_content, None)
+            )
+        except Exception as exc:  # noqa: BLE001 - recorded as a failed attempt
+            logger.warning(f"Primary extraction failed for {url}: {exc}")
+            attempts.append(self._build_attempt(primary_method, "", str(exc)))
+
+        if content_type == ContentType.PDF:
+            try:
+                ocr_content = self._extract_pdf_with_ocr(raw_content)
+                if ocr_content:
+                    attempts.append(self._build_attempt("ocr", ocr_content, None))
+            except Exception as exc:  # noqa: BLE001 - recorded as a failed attempt
+                logger.warning(f"OCR extraction failed for {url}: {exc}")
+                attempts.append(self._build_attempt("ocr", "", str(exc)))
+
+        successful = [
+            attempt
+            for attempt in attempts
+            if attempt["content"] and attempt["error"] is None
+        ]
+        if not successful:
+            raise ContentExtractionError(
+                f"All extraction methods failed for {url}",
+                {"url": url, "content_type": content_type},
+            )
+
+        best = max(successful, key=lambda attempt: attempt["confidence"])
+        logger.info(
+            "Extraction for %s selected method=%s confidence=%.3f (attempts=%d)",
+            url,
+            best["method"],
+            best["confidence"],
+            len(attempts),
+        )
+
+        return {
+            "raw_content": self._raw_content_placeholder(raw_content, content_type),
+            "content": best["content"],
+            "confidence": best["confidence"],
+            "method": best["method"],
+            "attempts": attempts,
+        }
+
+    def calculate_extraction_confidence(self, content, method):
+        """Score how reliable an extracted text is (0.0-1.0).
+
+        The score combines text length, financial keyword coverage, structural
+        markers and a method multiplier (OCR output is discounted). See
+        :func:`banks.services.quality_scoring.score_content` for the exact,
+        documented rules.
+
+        Parameters
+        ----------
+        content : str
+            Extracted text to score.
+        method : str
+            Extraction method that produced the text.
+
+        Returns
+        -------
+        float
+            Bounded confidence in the inclusive range 0.0-1.0.
+        """
+        return clamp_confidence(score_content(content, method))
+
+    def _build_attempt(self, method, content, error):
+        """Build one extraction attempt record.
+
+        Parameters
+        ----------
+        method : str
+            Extraction method name.
+        content : str
+            Extracted text (empty for a failed attempt).
+        error : str or None
+            Error message when the attempt failed.
+
+        Returns
+        -------
+        dict
+            Attempt record with method, confidence, content length and error.
+        """
+        content = content or ""
+        return {
+            "method": method,
+            "content": content,
+            "confidence": self.calculate_extraction_confidence(content, method),
+            "content_length": len(content),
+            "error": error,
+        }
+
+    @staticmethod
+    def _method_for_content_type(content_type):
+        """Map a content type to its extraction method name.
+
+        Parameters
+        ----------
+        content_type : str
+            ContentType value.
+
+        Returns
+        -------
+        str
+            Extraction method name used for confidence scoring.
+        """
+        return {
+            ContentType.PDF: "pdf_text",
+            ContentType.WEBPAGE: "webpage",
+            ContentType.IMAGE: "image_ocr",
+            ContentType.CSV: "csv",
+        }.get(content_type, "unknown")
+
+    @staticmethod
+    def _raw_content_placeholder(raw_content, content_type):
+        """Return storable raw content (placeholder for binary types).
+
+        Parameters
+        ----------
+        raw_content : bytes
+            Raw fetched bytes.
+        content_type : str
+            ContentType value.
+
+        Returns
+        -------
+        str
+            Decoded text, or a ``<BINARY_CONTENT_...>`` placeholder for binary
+            content types (avoids NUL characters in the database).
+        """
+        if content_type in (ContentType.PDF, ContentType.IMAGE):
+            return f"<BINARY_CONTENT_{content_type.upper()}_SIZE_{len(raw_content)}>"
+        return raw_content.decode("utf-8", errors="ignore")
 
     def _fetch_content(self, url):
         """Fetch raw content from URL.
