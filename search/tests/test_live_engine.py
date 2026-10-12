@@ -472,6 +472,161 @@ class TestSignalQueueIndexFlow:
         assert isolated_indexes.count(f"{PREFIX}banks") == 1
 
 
+class TestRelatedDocumentLiveSync:
+    """Real engine regressions for values denormalised across both indexes."""
+
+    def _bank_counts(self, service):
+        hits = service.search("banks", query=None)["hits"]
+        return {hit["name"]: hit["credit_card_count"] for hit in hits}
+
+    def test_bank_rename_refreshes_card_documents(
+        self, isolated_indexes, django_capture_on_commit_callbacks, db
+    ):
+        from search.queue import drain
+
+        service = isolated_indexes
+        with django_capture_on_commit_callbacks(execute=True):
+            bank = _make_bank("Old Bank Name")
+            card = _make_card(bank, name="Renamed Bank Card")
+        assert drain()["indexed"] == 2
+        assert service.search("cards", query="Old Bank Name")["total"] == 1
+
+        with django_capture_on_commit_callbacks(execute=True):
+            bank.name = "New Bank Name"
+            bank.save()
+        summary = drain()
+        assert summary["indexed"] == 2, summary  # bank + every related card
+
+        assert service.search("cards", query="Old Bank Name")["total"] == 0
+        assert service.search("cards", query="New Bank Name")["total"] == 1
+        doc = service.client.mget(index=f"{PREFIX}credit_cards", ids=[card.pk])["docs"][0]
+        assert doc["_source"]["bank_name"] == "New Bank Name"
+
+    def test_bank_rename_leaves_unrelated_banks_untouched(
+        self, isolated_indexes, django_capture_on_commit_callbacks, db
+    ):
+        from search.queue import drain
+
+        service = isolated_indexes
+        with django_capture_on_commit_callbacks(execute=True):
+            renamed = _make_bank("Rename Me Bank")
+            other = _make_bank("Keep Me Bank")
+            _make_card(other, name="Other Bank Card")
+        drain()
+
+        with django_capture_on_commit_callbacks(execute=True):
+            renamed.name = "Renamed Me Bank"
+            renamed.save()
+        drain()
+
+        assert service.search("cards", query="Keep Me Bank")["total"] == 1
+        assert self._bank_counts(service)["Keep Me Bank"] == 1
+
+    def test_card_move_updates_both_bank_counts(
+        self, isolated_indexes, django_capture_on_commit_callbacks, db
+    ):
+        from search.queue import drain
+
+        service = isolated_indexes
+        with django_capture_on_commit_callbacks(execute=True):
+            source = _make_bank("Move Source Bank")
+            target = _make_bank("Move Target Bank")
+            card = _make_card(source, name="Moving Card")
+        drain()
+        assert self._bank_counts(service) == {
+            "Move Source Bank": 1,
+            "Move Target Bank": 0,
+        }
+
+        with django_capture_on_commit_callbacks(execute=True):
+            card.bank = target
+            card.save()
+        summary = drain()
+        assert summary["failed"] == 0, summary
+
+        assert self._bank_counts(service) == {
+            "Move Source Bank": 0,
+            "Move Target Bank": 1,
+        }
+        doc = service.client.mget(index=f"{PREFIX}credit_cards", ids=[card.pk])["docs"][0]
+        assert doc["_source"]["bank_name"] == "Move Target Bank"
+        assert service.search("cards", query="Move Target Bank")["total"] == 1
+        assert service.search("cards", query="Move Source Bank")["total"] == 0
+
+    def test_card_create_and_delete_update_bank_count(
+        self, isolated_indexes, django_capture_on_commit_callbacks, db
+    ):
+        from search.queue import drain
+
+        service = isolated_indexes
+        with django_capture_on_commit_callbacks(execute=True):
+            bank = _make_bank("Counting Bank")
+        drain()
+        assert self._bank_counts(service) == {"Counting Bank": 0}
+
+        with django_capture_on_commit_callbacks(execute=True):
+            card = _make_card(bank, name="Counted Card")
+            card_pk = card.pk
+        drain()
+        assert self._bank_counts(service) == {"Counting Bank": 1}
+
+        with django_capture_on_commit_callbacks(execute=True):
+            card.delete()
+        summary = drain()
+        assert summary["deleted"] == 1
+        assert self._bank_counts(service) == {"Counting Bank": 0}
+        gone = service.client.mget(index=f"{PREFIX}credit_cards", ids=[card_pk])
+        assert gone["docs"][0]["found"] is False
+
+    def test_card_deactivation_updates_bank_count(
+        self, isolated_indexes, django_capture_on_commit_callbacks, db
+    ):
+        from search.queue import drain
+
+        service = isolated_indexes
+        with django_capture_on_commit_callbacks(execute=True):
+            bank = _make_bank("Toggle Bank")
+            card = _make_card(bank, name="Toggle Card")
+        drain()
+        assert self._bank_counts(service) == {"Toggle Bank": 1}
+
+        with django_capture_on_commit_callbacks(execute=True):
+            card.is_active = False
+            card.save(update_fields=["is_active"])
+        drain()
+        assert self._bank_counts(service) == {"Toggle Bank": 0}
+
+    def test_bank_cascade_delete_clears_both_indexes(
+        self, isolated_indexes, django_capture_on_commit_callbacks, db
+    ):
+        from search.queue import drain
+
+        service = isolated_indexes
+        with django_capture_on_commit_callbacks(execute=True):
+            bank = _make_bank("Doomed Bank")
+            card = _make_card(bank, name="Doomed Card")
+            bank_pk, card_pk = bank.pk, card.pk
+        drain()
+
+        with django_capture_on_commit_callbacks(execute=True):
+            bank.delete()
+        summary = drain()
+        assert summary["failed"] == 0, summary
+
+        assert service.count(f"{PREFIX}banks") == 0
+        assert service.count(f"{PREFIX}credit_cards") == 0
+        assert (
+            service.client.mget(index=f"{PREFIX}banks", ids=[bank_pk])["docs"][0]["found"]
+            is False
+        )
+        assert (
+            service.client.mget(index=f"{PREFIX}credit_cards", ids=[card_pk])["docs"][0][
+                "found"
+            ]
+            is False
+        )
+
+
 class TestRebuildCommand:
     def test_rebuild_indexes_everything_from_the_database(
         self, isolated_indexes, django_capture_on_commit_callbacks, db
