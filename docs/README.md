@@ -4,7 +4,7 @@ Welcome to the comprehensive documentation for Credit Mate AI - an AI-powered cr
 
 ## 📖 Documentation Overview
 
-This documentation is organized into three main categories:
+This documentation is organized into four main categories:
 
 ### 🔌 API Documentation
 Complete guides for using the Credit Mate AI REST API.
@@ -32,6 +32,17 @@ Development setup, guidelines, and architecture documentation.
 | **[Setup & Guidelines](./development/setup-and-guidelines.md)** | Development environment setup and coding standards |
 | **[Crawler System](./development/crawler-system.md)** | AI-powered web crawling system documentation |
 | **[Implementation Summary](./development/implementation-summary.md)** | Technical implementation details and architecture |
+
+### 📖 User Guides
+Plain-language how-to guides for credit card users (also rendered at the frontend `/guides` route).
+
+| Document | Description |
+|----------|-------------|
+| **[User Guides Index](./user/README.md)** | Guide list, editorial rules, source and readability checks |
+| **[Choosing your first credit card](./user/choosing-your-first-credit-card.md)** | Eligibility, costs, key terms and cardholder rights |
+| **[Understanding annual fee waivers](./user/understanding-annual-fee-waivers.md)** | What an annual fee is and how to get one waived |
+| **[Maximizing lounge access benefits](./user/maximizing-lounge-access-benefits.md)** | Airport lounge perks, limits and what to check |
+| **[Credit card vs debit card](./user/credit-card-vs-debit-card.md)** | Side-by-side comparison for Bangladesh |
 
 ## 🚀 Quick Start
 
