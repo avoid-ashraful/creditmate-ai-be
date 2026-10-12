@@ -81,14 +81,20 @@ Issue codes are machine-readable and distinguish causes:
 | `no_cards_extracted` | No credit cards were found |
 | `validation_error: ...` | Rejected by the real validation stage (recorded, see below) |
 
-**Validation errors do not all lower the confidence value.** Only the formula
-above changes `confidence`: a validation error reduces it *indirectly*, when it
-concerns a critical numeric field and the sanitize step stores `NULL` for it
-(`cards_completeness` then drops). Validation errors about anything else
-(non-numeric / non-critical fields, format complaints) are **recorded only** -
-they are appended to the issue list and to `validation_errors` on the result,
-and may trip `needs_manual_review` through the issue-count rule, but they never
-multiply the score down on their own.
+**Not every validation error penalises confidence.** Only the formula above
+changes `confidence`:
+
+- A validation error **about a critical numeric field** reduces it
+  *indirectly* - the sanitize step stores `NULL` for that value, so
+  `cards_completeness` drops and `score_extraction` adds a `missing_<field>`
+  issue.
+- Every other validation error (non-numeric / non-critical fields, format
+  complaints) is **recorded only**: it is kept in
+  `parsed_json["validation_errors"]` and in the extraction `issues` context and
+  written to the warning log. It never multiplies the score down on its own,
+  and it is not counted by the manual-review rule below - that rule only looks
+  at the scoring issue codes (`missing_*`, `invalid_*`, `no_*`,
+  `insufficient_content`) produced by `score_extraction`.
 
 **Manual review** (`needs_manual_review`) is `True` when
 `confidence < 0.5` **or** the issue list has more than 1 entry

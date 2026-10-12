@@ -100,11 +100,14 @@ class LLMContentParser:
 
         Every card is sanitized with :class:`CreditCardDataValidator` (which
         keeps genuine ``0`` fees, stores missing/invalid values as ``None``) and
-        then validated; any validation error is appended to the result issues
-        so it reaches the manual-review flag. An error on a critical numeric
-        field lowers the confidence indirectly (the sanitized ``None`` counts
-        as not extracted); other validation errors are recorded only and never
-        multiply the score down on their own.
+        then validated; any validation error is appended to the result issues,
+        from where it reaches ``parsed_json["validation_errors"]`` and the
+        warning log. An error on a critical numeric field lowers the confidence
+        indirectly (the sanitized ``None`` counts as not extracted and
+        ``score_extraction`` reports ``missing_<field>``); other validation
+        errors are recorded only - they neither change the confidence value nor
+        count towards ``needs_manual_review``, which uses the scoring issue
+        codes.
 
         Parameters
         ----------
