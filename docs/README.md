@@ -33,6 +33,13 @@ Development setup, guidelines, and architecture documentation.
 | **[Crawler System](./development/crawler-system.md)** | AI-powered web crawling system documentation |
 | **[Implementation Summary](./development/implementation-summary.md)** | Technical implementation details and architecture |
 
+### 📈 Operations
+Operational tooling for running and monitoring the platform.
+
+| Document | Description |
+|----------|-------------|
+| **[Data Quality Dashboard](./operations/data-quality-dashboard.md)** | Staff-only crawl/extraction quality snapshot at `/admin/data-quality/` |
+
 ### 📖 User Guides
 Plain-language how-to guides for credit card users (also rendered at the frontend `/guides` route).
 

@@ -20,10 +20,15 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from banks.views import data_quality_dashboard
+
 from . import views
 
 urlpatterns = [
     path("health/", views.health_check, name="health_check"),
+    # Staff-only data-quality snapshot; must precede the admin include so it
+    # is never swallowed by the admin URLconf.
+    path("admin/data-quality/", data_quality_dashboard, name="data-quality-dashboard"),
     path("admin/", admin.site.urls),
     path("api/v1/", include("banks.api.urls")),
     path("api/v1/", include("credit_cards.api.urls")),
