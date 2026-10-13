@@ -1,9 +1,12 @@
 """Task 5.4 contracts for API groups added after the first contract suite."""
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core import signing
 from django.core.signing import TimestampSigner
 from django.test import override_settings
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.generators import SchemaGenerator
@@ -110,11 +113,11 @@ class AddedAPIContractTests(APITestCase):
         response = client.post("/api/v1/auth/password-reset/", {"email": self.user.email})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(set(response.data), {"detail"})
-        uid = TimestampSigner().sign(self.user.email)
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token_value = default_token_generator.make_token(self.user)
         response = client.post("/api/v1/auth/password-reset/confirm/", {
-            "uid": uid, "token": "unused-contract-field", "new_password": "Other-strong-password-123", "new_password_confirm": "Other-strong-password-123"
+            "uid": uid, "token": token_value, "new_password": "Other-strong-password-123", "new_password_confirm": "Other-strong-password-123"
         })
-        # The endpoint currently consumes uid and password only; token is accepted as an extra input.
         self.assertEqual(response.status_code, 200)
         self.assertEqual(set(response.data), {"detail"})
         verification_token = TimestampSigner().sign(self.user.email)

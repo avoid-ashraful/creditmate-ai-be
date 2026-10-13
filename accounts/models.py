@@ -29,6 +29,7 @@ class UserProfile(models.Model):
         constraints = [
             models.UniqueConstraint(
                 models.functions.Lower("email"),
+                condition=models.Q(email__gt=""),
                 name="accounts_userprofile_unique_email_ci",
                 violation_error_message="A user with this email already exists (case-insensitive).",
             ),
