@@ -259,10 +259,12 @@ CELERY_BEAT_SCHEDULE = {
     "send-alert-digests-hourly": {
         "task": "alerts.tasks.send_alert_digests",
         "schedule": 3600.0,
+        "options": {"expires": 60 * 60},
     },
     "crawl-bank-data-weekly": {
         "task": "banks.tasks.crawl_all_bank_data",
         "schedule": 604800.0,
+        "options": {"expires": 24 * 60 * 60},
     },
     "daily-crawl-all-active-banks": {
         "task": "banks.tasks.daily_crawl_all_active_banks",

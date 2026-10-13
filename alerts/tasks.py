@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 
 from celery import shared_task
 from django.conf import settings
@@ -9,6 +10,8 @@ from django.utils import timezone
 from credit_cards.models import CreditCard, CreditCardFieldHistory
 
 from .models import AlertSubscription, NotificationPreference, SentAlert
+
+logger = logging.getLogger(__name__)
 
 
 def _subscription_events(subscription, interval, now, history_rows=None, new_card_rows=None):
@@ -91,9 +94,20 @@ def _send_event(subscription, event_id, change):
     return True
 
 
-@shared_task
-def send_alert_digests():
+@shared_task(bind=True, max_retries=3, default_retry_delay=300)
+def send_alert_digests(self):
     """Send pending card change notifications, safely tolerating task retries."""
+    try:
+        return _send_alert_digests()
+    except Exception as exc:
+        logger.exception("Alert digest task failed")
+        raise self.retry(
+            exc=exc,
+            countdown=min(300 * (2**self.request.retries), 3600),
+        )
+
+
+def _send_alert_digests():
     now = timezone.now()
     sent_count = 0
     subscriptions = list(

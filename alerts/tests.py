@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from celery.exceptions import Retry
 from django.core import mail
 from django.core import signing
 from django.db import connection
@@ -57,6 +58,39 @@ def test_digest_sends_plain_and_html_and_is_idempotent(django_user_model, settin
     assert SentAlert.objects.filter(event_key=f"subscription:{subscription.pk}:history:{history.pk}").exists()
     assert send_alert_digests() == 0
     assert len(mail.outbox) == 1
+
+
+def test_digest_beat_entry_expires_before_the_next_hourly_run():
+    from django.conf import settings as django_settings
+
+    entry = django_settings.CELERY_BEAT_SCHEDULE["send-alert-digests-hourly"]
+    assert entry["options"]["expires"] == entry["schedule"]
+
+
+@pytest.mark.django_db
+def test_digest_email_failure_is_logged_and_retried(django_user_model, settings):
+    from unittest.mock import patch
+
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    user = django_user_model.objects.create_user(
+        username="digest-retry", email="retry@example.test"
+    )
+    NotificationPreference.objects.create(user=user, frequency="weekly")
+    card = CreditCard.objects.create(
+        bank=Bank.objects.create(name="Retry Bank"), name="Retry Card"
+    )
+    subscription = AlertSubscription.objects.create(user=user, card=card, kind="fee_change")
+    history = CreditCardFieldHistory.objects.create(
+        card=card, field_name="annual_fee", old_value="10", new_value="20"
+    )
+
+    with patch("alerts.tasks.EmailMultiAlternatives", side_effect=RuntimeError("smtp down")):
+        with pytest.raises(Retry):
+            send_alert_digests.apply(throw=True)
+
+    assert not SentAlert.objects.filter(
+        event_key=f"subscription:{subscription.pk}:history:{history.pk}"
+    ).exists()
 
 
 @pytest.mark.django_db
