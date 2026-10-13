@@ -43,6 +43,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", include("banks.api.urls")),
     path("api/v1/", include("credit_cards.api.urls")),
+    path("api/v1/saved/", include("saved.urls")),
     path("api/search/", include("search.api.urls")),
     path("api-auth/", include("rest_framework.urls")),
     # OpenAPI / Swagger / Redoc schema generation
