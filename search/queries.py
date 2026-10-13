@@ -332,6 +332,63 @@ def _term_clause(field, value):
     return {"term": {field: value}}
 
 
+def _build_defined_filter(definition, value):
+    """Build one clause for a declared scalar or presence filter."""
+    filter_kind, field = definition[:2]
+    if filter_kind == "term":
+        if len(definition) == 3:
+            # Fixed-value clause: the key toggles it on/off by itself.
+            return {"term": {field: definition[2]}} if _coerce_bool(value) is True else None
+
+        numeric = _coerce_float(value)
+        if field in ("is_active", "has_annual_fee", "has_lounge_access"):
+            boolean = _coerce_bool(value)
+            return _term_clause(field, boolean) if boolean is not None else None
+        if numeric is not None and field not in ("name", "bank_name"):
+            numeric = int(numeric) if numeric.is_integer() else numeric
+            return {"term": {field: numeric}}
+        return _term_clause(field, value)
+
+    if filter_kind == "range":
+        numeric = _coerce_float(value)
+        return (
+            {"range": {field: {definition[2]: numeric}}}
+            if numeric is not None
+            else None
+        )
+    if filter_kind == "exists":
+        return {"exists": {"field": field}}
+    if filter_kind == "not_empty":
+        # Text fields must exist and differ from the empty string so cards
+        # without lounge access never match.
+        return {
+            "bool": {
+                "filter": [{"exists": {"field": field}}],
+                "must_not": [{"term": {field: ""}}],
+            }
+        }
+    return None
+
+
+def _build_multi_value_filters(filters):
+    """Build clauses for the supported multi-value and text filters."""
+    clauses = []
+    bank_ids = _coerce_str_list(filters.get("bank_ids"))
+    if bank_ids:
+        ids = [int(item) for item in bank_ids if item.isdigit()]
+        if ids:
+            clauses.append({"terms": {"bank_id": ids}})
+    features = _coerce_str_list(filters.get("features"))
+    if features:
+        clauses.append({"terms": {"additional_features": features}})
+    feature_search = filters.get("feature_search")
+    if feature_search:
+        clauses.append(
+            {"match": {"additional_features.text": {"query": str(feature_search)}}}
+        )
+    return clauses
+
+
 def build_filters(kind, filters):
     """Convert validated request filters into an Elasticsearch filter list.
 
@@ -350,69 +407,13 @@ def build_filters(kind, filters):
     spec = BANK_FILTERS if kind == "banks" else CARD_FILTERS
     clauses = []
     for name, definition in spec.items():
-        if name not in filters:
-            continue
         value = filters.get(name)
-        if value is None or value == "" or value == []:
+        if name not in filters or value is None or value == "" or value == []:
             continue
-        kind_of_filter = definition[0]
-        field = definition[1]
-        if kind_of_filter == "term":
-            if len(definition) == 3:
-                # Fixed-value clause: the key toggles it on/off by itself.
-                if _coerce_bool(value) is not True:
-                    continue
-                clauses.append({"term": {field: definition[2]}})
-                continue
-            numeric = _coerce_float(value)
-            if field in ("is_active", "has_annual_fee", "has_lounge_access"):
-                boolean = _coerce_bool(value)
-                if boolean is None:
-                    continue
-                clause = _term_clause(field, boolean)
-            elif numeric is not None and field not in ("name", "bank_name"):
-                clause = {
-                    "term": {field: int(numeric) if numeric.is_integer() else numeric}
-                }
-            else:
-                clause = _term_clause(field, value)
-            if clause:
-                clauses.append(clause)
-        elif kind_of_filter == "range":
-            operator = definition[2]
-            numeric = _coerce_float(value)
-            if numeric is None:
-                continue
-            clauses.append({"range": {field: {operator: numeric}}})
-        elif kind_of_filter == "exists":
-            clauses.append({"exists": {"field": field}})
-        elif kind_of_filter == "not_empty":
-            # Text fields must both exist and differ from the empty string so
-            # cards without lounge access never match.
-            clauses.append(
-                {
-                    "bool": {
-                        "filter": [{"exists": {"field": field}}],
-                        "must_not": [{"term": {field: ""}}],
-                    }
-                }
-            )
-
-    # Multi valued filters handled explicitly for readability.
-    bank_ids = _coerce_str_list(filters.get("bank_ids"))
-    if bank_ids:
-        ids = [int(item) for item in bank_ids if item.isdigit()]
-        if ids:
-            clauses.append({"terms": {"bank_id": ids}})
-    features = _coerce_str_list(filters.get("features"))
-    if features:
-        clauses.append({"terms": {"additional_features": features}})
-    feature_search = filters.get("feature_search")
-    if feature_search:
-        clauses.append(
-            {"match": {"additional_features.text": {"query": str(feature_search)}}}
-        )
-    return clauses
+        clause = _build_defined_filter(definition, value)
+        if clause:
+            clauses.append(clause)
+    return clauses + _build_multi_value_filters(filters)
 
 
 def build_match_query(query, fields):
