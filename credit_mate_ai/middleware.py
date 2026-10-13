@@ -12,6 +12,28 @@ FORM_MEDIA_TYPES = {"application/x-www-form-urlencoded", "multipart/form-data"}
 ALLOWED_MEDIA_TYPES = JSON_MEDIA_TYPES | FORM_MEDIA_TYPES
 
 
+class SecurityHeadersMiddleware:
+    """Apply defensive HTTP headers to every response.
+
+    Adds Content-Security-Policy, X-Frame-Options, and Referrer-Policy.
+    Values come from settings and are overridable via environment
+    variables (CSP_HEADER, X_FRAME_OPTIONS, REFERRER_POLICY). HSTS and
+    other TLS-related headers stay with Django's SecurityMiddleware.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from django.conf import settings
+
+        response = self.get_response(request)
+        response.headers.setdefault("Content-Security-Policy", settings.CSP_HEADER)
+        response.headers["X-Frame-Options"] = settings.X_FRAME_OPTIONS
+        response.headers["Referrer-Policy"] = settings.REFERRER_POLICY
+        return response
+
+
 class RequestValidationMiddleware:
     """Validate API body size/content type using normal WSGI framing."""
 

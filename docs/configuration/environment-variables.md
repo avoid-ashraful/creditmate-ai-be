@@ -123,6 +123,27 @@ SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
 ```
 
+### Response Security Headers
+```bash
+# Content-Security-Policy applied to every response (safe default shown;
+# override only after auditing scripts/styles/images your pages actually use)
+CSP_HEADER=default-src 'self'; frame-ancestors 'none'
+
+# Clickjacking protection
+X_FRAME_OPTIONS=DENY
+
+# How much referrer information is sent with requests
+REFERRER_POLICY=strict-origin-when-cross-origin
+```
+
+These headers are applied by `credit_mate_ai.middleware.SecurityHeadersMiddleware`
+to every response. HSTS remains handled by Django's `SecurityMiddleware`
+(see `SECURE_HSTS_*` above). Scope limits for the current implementation:
+headers are unit-tested with Django's RequestFactory/middleware only; no
+penetration test has been performed, and this repo has no publisher-safe
+container pipeline, so header verification in a deployed container is out
+of scope.
+
 ## Email Configuration
 
 Email configuration is environment-dependent:
