@@ -242,11 +242,11 @@ CELERY_TIMEZONE = "UTC"
 # Search (Elasticsearch) Configuration
 # SEARCH_URL points at the local single node container published on 127.0.0.1:19200
 # by creditmate-ai-be/docker-compose.search.yml.
-SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "yes", "on")
+SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "yes")
 SEARCH_URL = os.getenv("SEARCH_URL", "http://127.0.0.1:19200")
 SEARCH_INDEX_PREFIX = os.getenv("SEARCH_INDEX_PREFIX", "")
 SEARCH_REQUEST_TIMEOUT = int(os.getenv("SEARCH_REQUEST_TIMEOUT", "10"))
-SEARCH_VERIFY_CERTS = os.getenv("SEARCH_VERIFY_CERTS", "True").lower() in ("true", "1", "yes", "on")
+SEARCH_VERIFY_CERTS = os.getenv("SEARCH_VERIFY_CERTS", "True").lower() in ("true", "1", "yes")
 # "queue"  -> signal writes to the outbox, a worker drains it (default)
 # "sync"   -> signal writes to the outbox and drains it inline (no worker needed)
 # "off"    -> signals are not connected at all
@@ -287,8 +287,8 @@ if ENVIRONMENT == "production":
     EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 else:
-    # For local/staging environments, use console email backend for development
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    # For local/staging environments, disable email service
+    EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@creditmate.ai")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -432,7 +432,7 @@ SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").lower() in (
 SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
     "SECURE_HSTS_INCLUDE_SUBDOMAINS", "False"
-).lower() in ("true", "1", "yes", "on")
+).lower() in ("true", "1", "yes")
 SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "False").lower() in (
     "true",
     "1",
@@ -457,7 +457,7 @@ CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() in (
 # Content Security
 SECURE_CONTENT_TYPE_NOSNIFF = os.getenv(
     "SECURE_CONTENT_TYPE_NOSNIFF", "True"
-).lower() in ("true", "1", "yes", "on")
+).lower() in ("true", "1", "yes")
 SECURE_BROWSER_XSS_FILTER = os.getenv("SECURE_BROWSER_XSS_FILTER", "True").lower() in (
     "true",
     "1",
