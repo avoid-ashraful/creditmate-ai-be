@@ -1,0 +1,2 @@
+{% if is_new_card %}New card available: {{ card.name }} from {{ card.bank.name }}.{% else %}{{ card.name }}: {{ change.field_name }} changed from {{ change.old_value }} to {{ change.new_value }}.{% endif %}
+Manage this alert: {{ unsubscribe_url }}
