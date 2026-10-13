@@ -36,11 +36,23 @@ except ImportError:
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "SECRET_KEY", "django-insecure-dev-key-only-for-development-do-not-use-in-production"
+_configured_secret_key = os.getenv("SECRET_KEY", "")
+_is_production = os.getenv("ENVIRONMENT", "local").lower() == "production"
+if _is_production and not _configured_secret_key:
+    raise RuntimeError("SECRET_KEY must be set when ENVIRONMENT=production")
+SECRET_KEY = _configured_secret_key or (
+    "django-insecure-dev-key-only-for-development-do-not-use-in-production"
 )
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver,localhost,127.0.0.1").split(",")
+_configured_allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
+if _is_production and (
+    not _configured_allowed_hosts.strip()
+    or "*" in {host.strip() for host in _configured_allowed_hosts.split(",")}
+):
+    raise RuntimeError("ALLOWED_HOSTS must contain explicit hosts in production")
+ALLOWED_HOSTS = (
+    _configured_allowed_hosts or "testserver,localhost,127.0.0.1"
+).split(",")
 
 # Cache Configuration
 # Backend is chosen explicitly via CACHE_BACKEND ("redis" default, "locmem"

@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 # Search constants
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
+MAX_PAGE_NUMBER = 10000
 
 
 class ElasticsearchUnavailable(Exception):
@@ -81,8 +82,7 @@ def _try_elasticsearch_search(query_params, request):
 
         # Extract search parameters
         query = query_params.get("search", "").strip()
-        page = max(int(query_params.get("page", 1)), 1)
-        page_size = min(max(int(query_params.get("page_size", DEFAULT_PAGE_SIZE)), 1), MAX_PAGE_SIZE)
+        page, page_size = _pagination_values(query_params)
         ordering = query_params.get("ordering")
 
         # Build filters from query params (excluding control params)
@@ -294,8 +294,7 @@ def _execute_db_search(query_params):
         queryset = queryset.order_by("bank__name", "name")
 
     # Pagination
-    page = max(int(query_params.get("page", 1)), 1)
-    page_size = min(max(int(query_params.get("page_size", DEFAULT_PAGE_SIZE)), 1), MAX_PAGE_SIZE)
+    page, page_size = _pagination_values(query_params)
 
     total = queryset.count()
     start = (page - 1) * page_size
@@ -325,6 +324,18 @@ def _execute_db_search(query_params):
         "took": 0,  # DB doesn't provide timing easily
         "source": "database",
     }
+
+
+def _pagination_values(query_params):
+    """Parse bounded pagination values shared by the DB and ES paths."""
+    try:
+        page = int(query_params.get("page", 1))
+        page_size = int(query_params.get("page_size", DEFAULT_PAGE_SIZE))
+    except (TypeError, ValueError):
+        raise ValueError("page and page_size must be integers") from None
+    if page < 1 or page > MAX_PAGE_NUMBER:
+        raise ValueError(f"page must be between 1 and {MAX_PAGE_NUMBER}")
+    return page, min(max(page_size, 1), MAX_PAGE_SIZE)
 
 
 def _build_cache_key(prefix, query_params, request):
@@ -485,6 +496,10 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
         increment_search("advanced")
         # Normalize query parameters
         normalized_params = normalize_query_params(request.query_params)
+        try:
+            _pagination_values(normalized_params)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=400)
 
         # Check cache
         cache_key = _build_cache_key("credit_cards:advanced_search", normalized_params, request)

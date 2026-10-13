@@ -112,7 +112,7 @@ def test_readyz_returns_200_when_dependencies_answer(client):
 
 @override_settings(SEARCH_ENABLED=False)
 def test_readyz_returns_503_and_sanitized_error_when_database_fails(client):
-    """A failing database gives 503 with the class name only, never the message."""
+    """A failing database gives 503 without exposing exception details."""
     secret_message = "password=hunter2 host=10.0.0.5"
     with healthy_dependencies():
         with mock.patch.object(
@@ -124,7 +124,7 @@ def test_readyz_returns_503_and_sanitized_error_when_database_fails(client):
     body = response.json()
     assert body["status"] == "not ready"
     assert body["checks"]["database"]["healthy"] is False
-    assert body["checks"]["database"]["error"] == "RuntimeError"
+    assert body["checks"]["database"]["error"] == "unavailable"
     assert body["checks"]["cache"]["healthy"] is True
     assert b"hunter2" not in response.content
     assert b"10.0.0.5" not in response.content
@@ -142,7 +142,7 @@ def test_readyz_returns_503_when_cache_fails(client):
             response = client.get(READYZ_URL)
 
     assert response.status_code == 503
-    assert response.json()["checks"]["cache"]["error"] == "ConnectionError"
+    assert response.json()["checks"]["cache"]["error"] == "unavailable"
     assert b"secret@" not in response.content
 
 
@@ -169,7 +169,7 @@ def test_readyz_checks_elasticsearch_with_readiness_timeout(client):
     ping.assert_called_once_with(timeout=0.5)
     es_check = response.json()["checks"]["elasticsearch"]
     assert es_check["healthy"] is False
-    assert es_check["error"] == "DependencyUnavailable"
+    assert es_check["error"] == "unavailable"
 
 
 @override_settings(SEARCH_ENABLED=True)

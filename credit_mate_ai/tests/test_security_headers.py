@@ -98,3 +98,42 @@ def test_production_settings_block_enables_hsts():
         os.environ.clear()
         os.environ.update(env_backup)
         importlib.reload(settings_module)
+
+
+def test_production_settings_require_secret_key():
+    import os
+
+    import pytest
+
+    import credit_mate_ai.settings as settings_module
+
+    env_backup = os.environ.copy()
+    try:
+        os.environ["ENVIRONMENT"] = "production"
+        os.environ.pop("SECRET_KEY", None)
+        with pytest.raises(RuntimeError, match="SECRET_KEY must be set"):
+            importlib.reload(settings_module)
+    finally:
+        os.environ.clear()
+        os.environ.update(env_backup)
+        importlib.reload(settings_module)
+
+
+def test_production_settings_require_explicit_allowed_hosts():
+    import os
+
+    import pytest
+
+    import credit_mate_ai.settings as settings_module
+
+    env_backup = os.environ.copy()
+    try:
+        os.environ["ENVIRONMENT"] = "production"
+        os.environ["SECRET_KEY"] = "configured-for-test"
+        os.environ.pop("ALLOWED_HOSTS", None)
+        with pytest.raises(RuntimeError, match="ALLOWED_HOSTS must contain explicit"):
+            importlib.reload(settings_module)
+    finally:
+        os.environ.clear()
+        os.environ.update(env_backup)
+        importlib.reload(settings_module)
