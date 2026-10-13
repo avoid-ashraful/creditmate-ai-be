@@ -11,11 +11,17 @@ from accounts.models import UserProfile
 def create_user_profile(sender, instance, created, **kwargs):
     """Create a UserProfile when a new User is created."""
     if created:
-        UserProfile.objects.get_or_create(user=instance)
+        UserProfile.objects.get_or_create(
+            user=instance,
+            defaults={"email": instance.email}
+        )
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def save_user_profile(sender, instance, **kwargs):
     """Save the UserProfile when the User is saved."""
     if hasattr(instance, "profile"):
+        # Update denormalized email if it changed
+        if instance.profile.email != instance.email:
+            instance.profile.email = instance.email
         instance.profile.save()

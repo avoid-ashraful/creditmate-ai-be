@@ -9,9 +9,13 @@ from rest_framework.views import APIView
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.core.signing import TimestampSigner
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
+
 
 from accounts.serializers import (
     ChangePasswordSerializer,
@@ -24,11 +28,24 @@ from accounts.serializers import (
     TokenRefreshSerializer,
     UserSerializer,
 )
+from accounts.throttling import AuthAnonThrottle, AuthBurstThrottle, AuthUserThrottle
 
 User = get_user_model()
 
 
-class RegisterView(APIView):
+class _AuthBurstThrottleMixin:
+    throttle_classes = [AuthBurstThrottle]
+
+
+class _AuthAnonThrottleMixin:
+    throttle_classes = [AuthAnonThrottle]
+
+
+class _AuthUserThrottleMixin:
+    throttle_classes = [AuthUserThrottle]
+
+
+class RegisterView(_AuthBurstThrottleMixin, APIView):
     """Register a new user."""
 
     permission_classes = [AllowAny]
@@ -47,6 +64,9 @@ class RegisterView(APIView):
                     "email": "sam@example.com",
                     "password": "StrongPassword123!",
                     "password_confirm": "StrongPassword123!",
+                    "first_name": "Sam",
+                    "last_name": "User",
+                    "email_opt_in": False,
                 },
                 request_only=True,
             )
@@ -87,7 +107,7 @@ class RegisterView(APIView):
         )
 
 
-class LoginView(APIView):
+class LoginView(_AuthBurstThrottleMixin, APIView):
     """Login user and return JWT tokens."""
 
     permission_classes = [AllowAny]
@@ -125,7 +145,7 @@ class LoginView(APIView):
         )
 
 
-class LogoutView(APIView):
+class LogoutView(_AuthUserThrottleMixin, APIView):
     """Logout user by blacklisting the refresh token."""
 
     permission_classes = [IsAuthenticated]
@@ -147,7 +167,7 @@ class LogoutView(APIView):
         )
 
 
-class TokenRefreshView(APIView):
+class TokenRefreshView(_AuthBurstThrottleMixin, APIView):
     """Refresh access token using refresh token."""
 
     permission_classes = [AllowAny]
@@ -169,7 +189,7 @@ class TokenRefreshView(APIView):
         )
 
 
-class PasswordResetRequestView(APIView):
+class PasswordResetRequestView(_AuthBurstThrottleMixin, APIView):
     """Request a password reset email."""
 
     permission_classes = [AllowAny]
@@ -200,11 +220,11 @@ class PasswordResetRequestView(APIView):
         )
 
     def _send_reset_email(self, user):
-        """Send password reset email."""
-        signer = TimestampSigner()
-        uid = signer.sign(user.email)
+        """Send password reset email using Django's default_token_generator."""
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
 
-        reset_url = f"{settings.FRONTEND_URL}/reset-password?uid={uid}"
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
 
         send_mail(
             subject=_("Reset your password"),
@@ -217,7 +237,7 @@ class PasswordResetRequestView(APIView):
         )
 
 
-class PasswordResetConfirmView(APIView):
+class PasswordResetConfirmView(_AuthBurstThrottleMixin, APIView):
     """Confirm password reset with token."""
 
     permission_classes = [AllowAny]
@@ -229,6 +249,18 @@ class PasswordResetConfirmView(APIView):
         responses={200: OpenApiTypes.OBJECT},
         tags=["auth"],
         operation_id="auth_password_reset_confirm",
+        examples=[
+            OpenApiExample(
+                "Password Reset Confirm",
+                value={
+                    "uid": "MQ",
+                    "token": "abc123-token",
+                    "new_password": "NewStrongPassword123!",
+                    "new_password_confirm": "NewStrongPassword123!",
+                },
+                request_only=True,
+            )
+        ],
     )
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
@@ -238,13 +270,25 @@ class PasswordResetConfirmView(APIView):
         user.set_password(serializer.validated_data["new_password"])
         user.save()
 
+        # Blacklist all outstanding refresh tokens for this user
+        self._blacklist_user_refresh_tokens(user)
+
         return Response(
             {"detail": _("Password has been reset successfully.")},
             status=status.HTTP_200_OK,
         )
 
+    def _blacklist_user_refresh_tokens(self, user):
+        """Blacklist all outstanding refresh tokens for a user."""
+        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
-class EmailVerificationView(APIView):
+        # Get all outstanding tokens for this user and blacklist them
+        outstanding_tokens = OutstandingToken.objects.filter(user_id=user.pk)
+        for token in outstanding_tokens:
+            BlacklistedToken.objects.get_or_create(token=token)
+
+
+class EmailVerificationView(_AuthBurstThrottleMixin, APIView):
     """Verify user's email address."""
 
     permission_classes = [AllowAny]
@@ -271,7 +315,7 @@ class EmailVerificationView(APIView):
         )
 
 
-class MeView(APIView):
+class MeView(_AuthUserThrottleMixin, APIView):
     """Get or update current user's profile."""
 
     permission_classes = [IsAuthenticated]
@@ -298,7 +342,7 @@ class MeView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ChangePasswordView(APIView):
+class ChangePasswordView(_AuthUserThrottleMixin, APIView):
     """Change user's password."""
 
     permission_classes = [IsAuthenticated]
@@ -317,7 +361,20 @@ class ChangePasswordView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Blacklist all outstanding refresh tokens for this user (password change invalidates tokens)
+        self._blacklist_user_refresh_tokens(request.user)
+
         return Response(
             {"detail": _("Password changed successfully.")},
             status=status.HTTP_200_OK,
         )
+
+    def _blacklist_user_refresh_tokens(self, user):
+        """Blacklist all outstanding refresh tokens for a user."""
+        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+
+        # Get all outstanding tokens for this user and blacklist them
+        outstanding_tokens = OutstandingToken.objects.filter(user_id=user.pk)
+        for token in outstanding_tokens:
+            BlacklistedToken.objects.get_or_create(token=token)
