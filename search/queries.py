@@ -65,6 +65,9 @@ CARD_FILTERS = {
     "interest_rate_max": ("range", "interest_rate_apr", "lte"),
     "min_lounge_visits_international": ("range", "lounge_visits_international", "gte"),
     "min_lounge_visits_domestic": ("range", "lounge_visits_domestic", "gte"),
+    # Category filters map to multi-field queries (OR logic across fields).
+    # These are handled specially in _build_category_filter.
+    "category": ("category",),
 }
 
 #: ``filters -> Elasticsearch clause`` map for banks.
@@ -331,7 +334,13 @@ def _term_clause(field, value):
 
 def _build_defined_filter(definition, value):
     """Build one clause for a declared scalar or presence filter."""
-    filter_kind, field = definition[:2]
+    filter_kind = definition[0]
+    
+    # Special handling for category filter - it's multi-value and handled in _build_multi_value_filters
+    if filter_kind == "category":
+        return None  # Handled in _build_multi_value_filters
+
+    field = definition[1]
     if filter_kind == "term":
         if len(definition) == 3:
             # Fixed-value clause: the key toggles it on/off by itself.
@@ -373,6 +382,88 @@ def _build_defined_filter(definition, value):
     return None
 
 
+def _build_category_filter(value):
+    """Build ES query for a category slug.
+
+    Mirrors the DB fallback logic in CreditCardAdvancedFilter.filter_categories.
+    Each category maps to a boolean OR query across specific fields.
+
+    Parameters
+    ----------
+    value : str
+        Category slug (e.g., "travel", "cashback", "premium", etc.)
+
+    Returns
+    -------
+    dict | None
+        Elasticsearch query clause or None if slug is unknown.
+    """
+    if not value:
+        return None
+
+    # Map category slugs to ES field queries matching DB logic
+    category_queries = {
+        "travel": {
+            "bool": {
+                "should": [
+                    {"match": {"reward_points_policy": {"query": "travel"}}},
+                    {"match": {"additional_features.text": {"query": "travel"}}},
+                ],
+                "minimum_should_match": 1,
+            }
+        },
+        "cashback": {
+            "bool": {
+                "should": [
+                    {"match": {"reward_points_policy": {"query": "cashback"}}},
+                ],
+                "minimum_should_match": 1,
+            }
+        },
+        "premium": {
+            "bool": {
+                "should": [
+                    {"range": {"annual_fee": {"gte": 2000}}},
+                    {"term": {"has_international_lounge": True}},
+                ],
+                "minimum_should_match": 1,
+            }
+        },
+        "student": {
+            "bool": {
+                "should": [
+                    {"match": {"reward_points_policy": {"query": "student"}}},
+                    {"match": {"additional_features.text": {"query": "student"}}},
+                    {"range": {"annual_fee": {"lte": 500}}},
+                ],
+                "minimum_should_match": 1,
+            }
+        },
+        "business": {
+            "bool": {
+                "should": [
+                    {"match": {"reward_points_policy": {"query": "business"}}},
+                    {"match": {"additional_features.text": {"query": "business"}}},
+                ],
+                "minimum_should_match": 1,
+            }
+        },
+        "no-annual-fee": {
+            "bool": {
+                "should": [
+                    {"term": {"annual_fee": 0}},
+                ],
+                "minimum_should_match": 1,
+            }
+        },
+    }
+
+    if value not in category_queries:
+        return None
+
+    return category_queries[value]
+
+
 def _build_multi_value_filters(filters):
     """Build clauses for the supported multi-value and text filters."""
     clauses = []
@@ -389,6 +480,12 @@ def _build_multi_value_filters(filters):
         clauses.append(
             {"match": {"additional_features.text": {"query": str(feature_search)}}}
         )
+    # Handle category filter (multi-value, OR logic)
+    categories = _coerce_str_list(filters.get("category"))
+    for cat in categories:
+        clause = _build_category_filter(cat)
+        if clause:
+            clauses.append(clause)
     return clauses
 
 
