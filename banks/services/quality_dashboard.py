@@ -204,14 +204,60 @@ def _metric_block(contents_queryset, cards_queryset):
         Status counts, success rate, confidence windows, missing-field counts
         and null-card counts for the subject.
     """
-    counts = _status_counts(contents_queryset)
+    now = timezone.now()
+    since_7d = now - timedelta(days=7)
+    since_30d = now - timedelta(days=30)
+    counts = contents_queryset.aggregate(
+        total=Count("id"),
+        completed=Count("id", filter=Q(processing_status=ProcessingStatus.COMPLETED)),
+        failed=Count("id", filter=Q(processing_status=ProcessingStatus.FAILED)),
+        pending=Count("id", filter=Q(processing_status=ProcessingStatus.PENDING)),
+        processing=Count("id", filter=Q(processing_status=ProcessingStatus.PROCESSING)),
+        confidence_7d=Avg("extraction_confidence", filter=Q(crawled_at__gte=since_7d)),
+        scored_7d=Count(
+            "id",
+            filter=Q(crawled_at__gte=since_7d, extraction_confidence__isnull=False),
+        ),
+        confidence_30d=Avg("extraction_confidence", filter=Q(crawled_at__gte=since_30d)),
+        scored_30d=Count(
+            "id",
+            filter=Q(crawled_at__gte=since_30d, extraction_confidence__isnull=False),
+        ),
+        missing_annual_fee=Count(
+            "id",
+            filter=Q(
+                processing_status=ProcessingStatus.COMPLETED,
+                missing_critical_fields__contains=["annual_fee"],
+            ),
+        ),
+        missing_apr=Count(
+            "id",
+            filter=Q(
+                processing_status=ProcessingStatus.COMPLETED,
+                missing_critical_fields__contains=["interest_rate_apr"],
+            ),
+        ),
+    )
+    card_counts = cards_queryset.aggregate(
+        annual_fee=Count("id", filter=Q(annual_fee__isnull=True)),
+        apr=Count("id", filter=Q(interest_rate_apr__isnull=True)),
+    )
     block = {"total_contents": counts["total"]}
     for key in ("completed", "failed", "pending", "processing"):
         block[key] = counts[key]
     block["success_rate"] = success_rate(counts["completed"], counts["failed"])
-    block.update(_confidence_windows(contents_queryset))
-    block.update(_content_missing_counts(contents_queryset))
-    block.update(_null_card_counts(cards_queryset))
+    block.update(
+        {
+            "average_confidence_7d": _round_or_none(counts["confidence_7d"]),
+            "average_confidence_30d": _round_or_none(counts["confidence_30d"]),
+            "scored_7d": counts["scored_7d"],
+            "scored_30d": counts["scored_30d"],
+            "content_missing_annual_fee": counts["missing_annual_fee"],
+            "content_missing_apr": counts["missing_apr"],
+            "cards_null_annual_fee": card_counts["annual_fee"],
+            "cards_null_apr": card_counts["apr"],
+        }
+    )
     return block
 
 
