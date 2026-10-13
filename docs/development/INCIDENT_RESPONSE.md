@@ -289,16 +289,16 @@ docker-compose exec db psql -U postgres -c "SHOW max_connections;"
 
 # Identify long-running queries
 docker-compose exec db psql -U postgres -c "
-  SELECT pid, query, query_start, state 
-  FROM pg_stat_activity 
+  SELECT pid, query, query_start, state
+  FROM pg_stat_activity
   WHERE state != 'idle'
   ORDER BY query_start;"
 
 # Kill idle connections if needed (carefully!)
 docker-compose exec db psql -U postgres -c "
-  SELECT pg_terminate_backend(pid) 
-  FROM pg_stat_activity 
-  WHERE state = 'idle' 
+  SELECT pg_terminate_backend(pid)
+  FROM pg_stat_activity
+  WHERE state = 'idle'
   AND query_start < now() - interval '5 minutes';"
 ```
 
@@ -418,14 +418,14 @@ docker-compose logs db | grep "duration:"
 
 # Identify problematic queries
 docker-compose exec db psql -U postgres -c "
-  SELECT mean_exec_time, query 
-  FROM pg_stat_statements 
-  ORDER BY mean_exec_time DESC 
+  SELECT mean_exec_time, query
+  FROM pg_stat_statements
+  ORDER BY mean_exec_time DESC
   LIMIT 10;"
 
 # Add indexes if needed
 docker-compose exec db psql -U postgres -c "
-  CREATE INDEX idx_credit_cards_annual_fee 
+  CREATE INDEX idx_credit_cards_annual_fee
   ON credit_cards_creditcard(annual_fee);"
 ```
 

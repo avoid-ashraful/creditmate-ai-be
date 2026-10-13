@@ -157,7 +157,7 @@ uv run python manage.py migrate --plan
 #   Planned operations:
 #   banks.0002_add_validation
 #   credit_cards.0001_initial
-# 
+#
 # Verify no unexpected migrations
 
 # Check migration status
@@ -376,7 +376,7 @@ def migrate_data(apps, schema_editor):
     # Use raw SQL for bulk operations
     schema_editor.execute("""
         UPDATE credit_cards_creditcard
-        SET annual_fee = CASE 
+        SET annual_fee = CASE
             WHEN has_premium THEN 99
             ELSE 0
         END
@@ -423,7 +423,7 @@ uv run python manage.py migrate  # Re-apply migrations if needed
 # Restore from backup
 # (Performed by operations team with database expertise)
 # Contact: [Operations Team]
-# 
+#
 # Procedure:
 # 1. Stop application servers
 # 2. Restore database from backup

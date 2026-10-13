@@ -78,7 +78,7 @@ graph TB
     Services["Services<br/>ContentExtractor<br/>LLMContentParser"]
     Redis["Redis + Celery"]
     External["External APIs<br/>OpenAI (optional)<br/>URLs/PDFs"]
-    
+
     FE -->|HTTP/REST| API
     API --> Models
     API --> DB
@@ -86,7 +86,7 @@ graph TB
     Services --> External
     Services --> Redis
     Redis -->|Tasks| Services
-    
+
     style DB fill:#4CAF50
     style Redis fill:#FF6B35
     style External fill:#FFC107
