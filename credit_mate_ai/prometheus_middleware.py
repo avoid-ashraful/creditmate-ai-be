@@ -15,8 +15,8 @@ and recording rules in the monitoring repository query them directly:
 label set stays bounded whatever paths clients request. ``method`` is limited
 to the standard HTTP verbs, with anything else reported as ``OTHER``.
 
-Metrics, health probes and the health endpoints are not recorded, so scraping
-does not inflate the request rate.
+The /metrics endpoint and the health probes are not recorded, so scraping and
+probing do not inflate the request rate.
 
 The middleware is appended to ``MIDDLEWARE``, so it runs innermost. Responses
 that earlier middleware returns directly, such as CSRF 403s and body-limit
