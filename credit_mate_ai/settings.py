@@ -115,6 +115,7 @@ INSTALLED_APPS = [
     "banks",
     "credit_cards",
     "search",
+    "alerts",
 ]
 
 MIDDLEWARE = [
@@ -235,6 +236,12 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+CELERY_BEAT_SCHEDULE = {
+    "send-alert-digests-hourly": {
+        "task": "alerts.tasks.send_alert_digests",
+        "schedule": 3600.0,
+    },
+}
 
 # Search (Elasticsearch) Configuration
 # SEARCH_URL points at the local single node container published on 127.0.0.1:19200
@@ -294,8 +301,11 @@ if ENVIRONMENT == "production":
     EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 else:
-    # For local/staging environments, disable email service
-    EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+    # Console backend keeps development notifications inspectable without SMTP.
+    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "alerts@creditmate.ai")
+ALERTS_PUBLIC_BASE_URL = os.getenv("ALERTS_PUBLIC_BASE_URL", "http://localhost:8000")
 
 # Django REST Framework
 REST_FRAMEWORK = {
