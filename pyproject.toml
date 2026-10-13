@@ -35,6 +35,7 @@ dependencies = [
     "whitenoise",
     "elasticsearch>=8.18,<9",
     "drf-spectacular~=0.28.0",
+    "prometheus-client>=0.20.0",
 ]
 
 [dependency-groups]
