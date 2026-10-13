@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from banks.api.serializers import BankListSerializer
-from credit_cards.models import CreditCard
+from credit_cards.models import CreditCard, CreditCardFieldHistory
 
 
 class CreditCardSerializer(serializers.ModelSerializer):
@@ -36,13 +36,24 @@ class CreditCardSerializer(serializers.ModelSerializer):
             "created",
             "modified",
         ]
+
+
+class CreditCardFieldHistorySerializer(serializers.ModelSerializer):
+    """Serializer for CreditCard field history entries."""
+
+    class Meta:
+        model = CreditCardFieldHistory
+        fields = [
+            "id",
+            "card_id",
+            "field_name",
+            "old_value",
+            "new_value",
+            "created",
+        ]
         read_only_fields = [
             "id",
             "created",
-            "modified",
-            "has_lounge_access",
-            "total_lounge_access",
-            "has_annual_fee",
         ]
 
 

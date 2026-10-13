@@ -6,5 +6,6 @@ class CreditCardsConfig(AppConfig):
     name = "credit_cards"
 
     def ready(self):
-        """Connect cache invalidation signal handlers."""
+        """Connect cache invalidation and field history tracking signal handlers."""
+        import credit_cards.signals  # noqa: F401
         import credit_mate_ai.cache  # noqa: F401

@@ -96,3 +96,22 @@ class CreditCard(Audit):
             True if card has an annual fee greater than 0, False otherwise
         """
         return self.annual_fee is not None and self.annual_fee > 0
+
+
+class CreditCardFieldHistory(Audit):
+    """A meaningful change to a tracked CreditCard field."""
+
+    card = models.ForeignKey(
+        CreditCard,
+        on_delete=models.CASCADE,
+        related_name="field_history",
+        db_column="credit_card_id",
+    )
+    field_name = models.CharField(max_length=100)
+    old_value = models.JSONField(null=True)
+    new_value = models.JSONField(null=True)
+
+    class Meta:
+        ordering = ["-created", "-id"]
+        indexes = [models.Index(fields=["card", "created", "-id"])]
+        db_table = "credit_cards_creditcardfieldhistory"
