@@ -15,6 +15,7 @@ from banks.services.multi_pass_extractor import (
 )
 from banks.services.prompt_templates import BankSpecificPrompts
 from banks.services.quality_scoring import ExtractionQuality, score_extraction
+from banks.services.review_queue import ReviewQueueService
 from banks.services.quality_validator import ExtractionQualityValidator
 from banks.services.schedule_charge_finder import ScheduleChargeURLFinder
 
@@ -31,4 +32,5 @@ __all__ = [
     "ExtractionQualityValidator",
     "ExtractionQuality",
     "score_extraction",
+    "ReviewQueueService",
 ]

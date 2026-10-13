@@ -19,3 +19,19 @@ class ProcessingStatus(models.TextChoices):
     PROCESSING = "processing", "Processing"
     COMPLETED = "completed", "Completed"
     FAILED = "failed", "Failed"
+
+
+class ReviewPriority(models.TextChoices):
+    """Priority choices for manual review queue items."""
+
+    HIGH = "high", "High"
+    MEDIUM = "medium", "Medium"
+    LOW = "low", "Low"
+
+
+class ReviewStatus(models.TextChoices):
+    """Status choices for manual review queue items."""
+
+    PENDING = "pending", "Pending"
+    APPROVED = "approved", "Approved"
+    REJECTED = "rejected", "Rejected"

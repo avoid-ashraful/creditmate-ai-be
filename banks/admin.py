@@ -1,7 +1,11 @@
-from django.contrib import admin
+import json
+
+from django.core.exceptions import ValidationError
+from django.contrib import admin, messages
 from django.utils.html import format_html
 
-from banks.models import Bank, BankDataSource, CrawledContent
+from banks.models import Bank, BankDataSource, CrawledContent, ReviewQueue
+from banks.services import ReviewQueueService
 
 
 @admin.register(Bank)
@@ -124,3 +128,137 @@ class CrawledContentAdmin(admin.ModelAdmin):
         return content
 
     content_preview.short_description = "Content Preview"
+
+
+@admin.register(ReviewQueue)
+class ReviewQueueAdmin(admin.ModelAdmin):
+    """Admin interface for the focused manual review queue."""
+
+    list_display = [
+        "bank",
+        "crawled_content",
+        "priority",
+        "status",
+        "extracted_summary",
+        "reviewed_by",
+        "reviewed_at",
+        "created",
+    ]
+    list_filter = ["bank", "priority", "status", "created", "reviewed_at"]
+    search_fields = [
+        "bank__name",
+        "crawled_content__credit_card__name",
+        "crawled_content__data_source__url",
+        "reviewer_notes",
+    ]
+    readonly_fields = [
+        "created",
+        "modified",
+        "bank",
+        "priority",
+        "status",
+        "reviewed_by",
+        "reviewed_at",
+        "extracted_values",
+        "trusted_values",
+        "crawled_content",
+    ]
+    fields = [
+        "crawled_content",
+        "bank",
+        "priority",
+        "status",
+        "extracted_values",
+        "trusted_values",
+        "reviewer_notes",
+        "reviewed_by",
+        "reviewed_at",
+        "created",
+        "modified",
+    ]
+    actions = ["approve_items", "reject_items"]
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.has_perm("banks.view_reviewqueue") and request.user.has_perm("banks.change_reviewqueue")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            "bank",
+            "reviewed_by",
+            "crawled_content__data_source",
+            "crawled_content__credit_card",
+        )
+
+    def extracted_summary(self, obj):
+        """Return a compact extraction summary for the changelist."""
+        card_data = obj.crawled_content.review_card_data or {}
+        return f"{card_data.get('name', 'No card')} / fee {card_data.get('annual_fee', 'unknown')}"
+
+    extracted_summary.short_description = "Extraction"
+
+    def extracted_values(self, obj):
+        """Show extracted values beside trusted values for manual comparison."""
+        return json.dumps(obj.crawled_content.review_card_data, indent=2, sort_keys=True)
+
+    extracted_values.short_description = "Extracted values"
+
+    def trusted_values(self, obj):
+        """Show the currently trusted card record for manual comparison."""
+        card = obj.crawled_content.credit_card
+        if card is None:
+            return "No linked credit card"
+        return json.dumps(
+            {
+                "name": card.name,
+                "annual_fee": str(card.annual_fee),
+                "interest_rate_apr": str(card.interest_rate_apr),
+                "lounge_access_international": card.lounge_access_international,
+                "lounge_access_domestic": card.lounge_access_domestic,
+                "cash_advance_fee": card.cash_advance_fee,
+                "late_payment_fee": card.late_payment_fee,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+
+    trusted_values.short_description = "Trusted values"
+
+    def approve_items(self, request, queryset):
+        """Approve selected pending items without changing trusted card data."""
+        service = ReviewQueueService()
+        approved = 0
+        for item in queryset:
+            try:
+                service.approve(item, reviewer=request.user)
+            except ValidationError:
+                self.message_user(
+                    request,
+                    f"{item} could not be approved because it is not pending.",
+                    messages.ERROR,
+                )
+            else:
+                approved += 1
+        if approved:
+            self.message_user(request, f"Approved {approved} review item(s).")
+
+    approve_items.short_description = "Approve selected review items"
+
+    def reject_items(self, request, queryset):
+        """Reject selected pending items without changing trusted card data."""
+        service = ReviewQueueService()
+        rejected = 0
+        for item in queryset:
+            try:
+                service.reject(item, reviewer=request.user)
+            except ValidationError:
+                self.message_user(
+                    request,
+                    f"{item} could not be rejected because it is not pending.",
+                    messages.ERROR,
+                )
+            else:
+                rejected += 1
+        if rejected:
+            self.message_user(request, f"Rejected {rejected} review item(s).")
+
+    reject_items.short_description = "Reject selected review items"

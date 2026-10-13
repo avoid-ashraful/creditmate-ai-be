@@ -2,7 +2,7 @@ from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
 
-from banks.enums import ContentType, ProcessingStatus
+from banks.enums import ContentType, ProcessingStatus, ReviewPriority, ReviewStatus
 from common.models import Audit
 
 
@@ -197,6 +197,64 @@ class CrawledContent(Audit):
     )
     error_message = models.TextField(blank=True, default="")
 
+    @property
+    def review_card_data(self):
+        """Return the extracted card most relevant to this crawl.
+
+        Returns
+        -------
+        dict or None
+            The linked card's matching extraction, the only extraction when
+            one is present, or ``None`` when the data is absent or ambiguous.
+        """
+        parsed_data = self.parsed_json if isinstance(self.parsed_json, dict) else {}
+        cards = parsed_data.get("credit_cards")
+        if not isinstance(cards, list):
+            return None
+        valid_cards = [card for card in cards if isinstance(card, dict)]
+        if self.credit_card_id:
+            for card_data in valid_cards:
+                if card_data.get("name") == self.credit_card.name:
+                    return card_data
+            return None
+        if len(valid_cards) == 1:
+            return valid_cards[0]
+        return None
+
+    @property
+    def review_priority(self):
+        """Derive review priority from extraction quality.
+
+        Returns
+        -------
+        str
+            High for unscored or very low-confidence extractions, otherwise
+            medium for moderate-confidence extractions and low for the rest.
+        """
+        if not self.is_scored or self.extraction_confidence < 0.3:
+            return ReviewPriority.HIGH
+        if self.extraction_confidence < 0.4:
+            return ReviewPriority.MEDIUM
+        return ReviewPriority.LOW
+
+    def enqueue_for_manual_review(self):
+        """Create an idempotent queue item for this completed crawl.
+
+        Returns
+        -------
+        ReviewQueue or None
+            The queue item, or ``None`` when the crawl is ineligible or a
+            queue item already exists.
+        """
+        if not self.needs_manual_review or self.processing_status != ProcessingStatus.COMPLETED:
+            return None
+
+        queue_item, _created = ReviewQueue.objects.get_or_create(
+            crawled_content=self,
+            defaults={"bank": self.data_source.bank, "priority": self.review_priority},
+        )
+        return queue_item
+
     class Meta:
         ordering = ["-crawled_at"]
         db_table = "banks_crawledcontent"
@@ -281,3 +339,50 @@ class CrawledContent(Audit):
     def is_low_confidence(self):
         """Return True when the extraction confidence is below the review threshold."""
         return self.extraction_confidence is not None and self.extraction_confidence < 0.5
+
+
+class ReviewQueue(Audit):
+    """Queue item for manually reviewing a low-confidence extraction."""
+
+    crawled_content = models.OneToOneField(
+        CrawledContent,
+        on_delete=models.CASCADE,
+        related_name="review_queue_item",
+        verbose_name="crawled content",
+    )
+    bank = models.ForeignKey(
+        Bank,
+        on_delete=models.CASCADE,
+        related_name="review_queue_items",
+        editable=False,
+    )
+    priority = models.CharField(
+        max_length=10,
+        choices=ReviewPriority.choices,
+        default=ReviewPriority.MEDIUM,
+        db_index=True,
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.PENDING,
+        db_index=True,
+    )
+    reviewed_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="banks_review_queue_items",
+    )
+    reviewer_notes = models.TextField(blank=True, default="")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-priority", "created"]
+        db_table = "banks_reviewqueue"
+        verbose_name = "review queue item"
+        verbose_name_plural = "review queue items"
+
+    def __str__(self):
+        return f"{self.bank.name} - {self.get_priority_display()} priority"
