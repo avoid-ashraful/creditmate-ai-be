@@ -435,12 +435,12 @@ class TestAdvancedFilterClass:
 
     def test_categories_filter_method(self):
         """Test the filter_categories method directly."""
-        # Use a fresh queryset to avoid pollution from other tests
-        queryset = CreditCard.objects.filter(is_active=True, name__in=["Travel Card", "Cashback Card", "Free Card"])
-        CreditCardFactory(name="Travel Card", reward_points_policy="travel rewards")
-        CreditCardFactory(name="Cashback Card", reward_points_policy="cashback")
-        CreditCardFactory(name="Free Card", annual_fee=0)
+        # Create cards and filter with explicit pks to avoid pollution
+        travel = CreditCardFactory(name="Travel Card", reward_points_policy="travel rewards")
+        cashback = CreditCardFactory(name="Cashback Card", reward_points_policy="cashback")
+        free = CreditCardFactory(name="Free Card", annual_fee=0)
 
+        queryset = CreditCard.objects.filter(pk__in=[travel.pk, cashback.pk, free.pk])
         filter_set = CreditCardAdvancedFilter({"categories": "travel,cashback"}, queryset=queryset)
         results = list(filter_set.qs)
         assert len(results) == 2

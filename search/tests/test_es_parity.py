@@ -121,16 +121,15 @@ class TestAdvancedSearchRelevanceOrdering:
     """Test that ES relevance ordering produces expected results."""
 
     def test_exact_name_match_ranks_higher_than_partial(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Exact name match should rank higher than partial match."""
         service = isolated_indexes
         bank = _make_bank("Test Bank")
-        with django_capture_on_commit_callbacks(execute=True):
-            exact = _make_card(bank, "Visa Platinum Card", annual_fee=0)
-            partial1 = _make_card(bank, "Visa Gold Card", annual_fee=0)
-            partial2 = _make_card(bank, "Platinum Visa Card", annual_fee=0)
-            unrelated = _make_card(bank, "Mastercard Standard", annual_fee=0)
+        exact = _make_card_no_signal(bank, "Visa Platinum Card", annual_fee=0)
+        partial1 = _make_card_no_signal(bank, "Visa Gold Card", annual_fee=0)
+        partial2 = _make_card_no_signal(bank, "Platinum Visa Card", annual_fee=0)
+        unrelated = _make_card_no_signal(bank, "Mastercard Standard", annual_fee=0)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -150,21 +149,20 @@ class TestAdvancedSearchRelevanceOrdering:
         assert unrelated.pk not in hit_ids, "Mastercard should not match"
 
     def test_name_field_boosted_over_content(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Name field has higher boost (^3) than content fields."""
         service = isolated_indexes
         bank = _make_bank("Boost Bank")
-        with django_capture_on_commit_callbacks(execute=True):
-            in_name = _make_card(
-                bank, "Travel Rewards Card", annual_fee=0
-            )
-            in_content = _make_card(
-                bank,
-                "Premium Card",
-                reward_points_policy="Earn travel points on every purchase",
-                annual_fee=0
-            )
+        in_name = _make_card_no_signal(
+            bank, "Travel Rewards Card", annual_fee=0
+        )
+        in_content = _make_card_no_signal(
+            bank,
+            "Premium Card",
+            reward_points_policy="Earn travel points on every purchase",
+            annual_fee=0
+        )
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -176,15 +174,14 @@ class TestAdvancedSearchRelevanceOrdering:
         assert in_name.pk == hit_ids[0], "Name match should rank higher than content match"
 
     def test_bank_name_boosted_in_card_search(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Bank name has boost ^2 in card search."""
         service = isolated_indexes
-        with django_capture_on_commit_callbacks(execute=True):
-            chase = _make_bank("Chase")
-            citi = _make_bank("Citi")
-            chase_card = _make_card(chase, "Sapphire", annual_fee=0)
-            citi_card = _make_card(citi, "Chase Freedom", annual_fee=0)
+        chase = _make_bank("Chase")
+        citi = _make_bank("Citi")
+        chase_card = _make_card_no_signal(chase, "Sapphire", annual_fee=0)
+        citi_card = _make_card_no_signal(citi, "Chase Freedom", annual_fee=0)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -203,16 +200,15 @@ class TestFacetCountsParity:
     """Test that ES facet counts match DB fallback counts for same filters."""
 
     def test_category_facets_match_db_fallback(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Category facet counts should match DB fallback."""
         service = isolated_indexes
         bank = _make_bank("Facet Bank")
-        with django_capture_on_commit_callbacks(execute=True):
-            _make_card(bank, "Travel Card 1", reward_points_policy="travel rewards", annual_fee=0)
-            _make_card(bank, "Travel Card 2", reward_points_policy="travel points", annual_fee=0)
-            _make_card(bank, "Cashback Card", reward_points_policy="2% cashback", annual_fee=0)
-            _make_card(bank, "Premium Card", annual_fee=3000)
+        _make_card_no_signal(bank, "Travel Card 1", reward_points_policy="travel rewards", annual_fee=0)
+        _make_card_no_signal(bank, "Travel Card 2", reward_points_policy="travel points", annual_fee=0)
+        _make_card_no_signal(bank, "Cashback Card", reward_points_policy="2% cashback", annual_fee=0)
+        _make_card_no_signal(bank, "Premium Card", annual_fee=3000)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -227,16 +223,15 @@ class TestFacetCountsParity:
         assert "bank_name" in result["aggregations"]
 
     def test_annual_fee_range_facets_match_db(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Annual fee range facets should match DB fallback."""
         service = isolated_indexes
         bank = _make_bank("Fee Facet Bank")
-        with django_capture_on_commit_callbacks(execute=True):
-            _make_card(bank, "Free Card", annual_fee=0)
-            _make_card(bank, "Low Fee", annual_fee=500)
-            _make_card(bank, "High Fee", annual_fee=3000)
-            _make_card(bank, "Unknown Fee", annual_fee=None)
+        _make_card_no_signal(bank, "Free Card", annual_fee=0)
+        _make_card_no_signal(bank, "Low Fee", annual_fee=500)
+        _make_card_no_signal(bank, "High Fee", annual_fee=3000)
+        _make_card_no_signal(bank, "Unknown Fee", annual_fee=None)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -251,15 +246,14 @@ class TestFacetCountsParity:
         assert fee_counts["0-1000"] == 2
 
     def test_fee_unknown_excluded_from_has_fee_facet(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Cards with unknown fee should not appear in has_annual_fee facet."""
         service = isolated_indexes
         bank = _make_bank("Unknown Fee Bank")
-        with django_capture_on_commit_callbacks(execute=True):
-            _make_card(bank, "Free Card", annual_fee=0)
-            _make_card(bank, "Paid Card", annual_fee=1000)
-            _make_card(bank, "Unknown Card", annual_fee=None)
+        _make_card_no_signal(bank, "Free Card", annual_fee=0)
+        _make_card_no_signal(bank, "Paid Card", annual_fee=1000)
+        _make_card_no_signal(bank, "Unknown Card", annual_fee=None)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -277,14 +271,13 @@ class TestTypeaheadRanking:
     """Test typeahead/autocomplete ranking behavior."""
 
     def test_prefix_matches_before_substring(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Prefix matches should appear before substring-only matches."""
         service = isolated_indexes
         bank = _make_bank("Typeahead Bank")
-        with django_capture_on_commit_callbacks(execute=True):
-            prefix = _make_card(bank, "Visa Infinite", annual_fee=0)
-            substring = _make_card(bank, "Bank of Visa", annual_fee=0)
+        prefix = _make_card_no_signal(bank, "Visa Infinite", annual_fee=0)
+        substring = _make_card_no_signal(bank, "Bank of Visa", annual_fee=0)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -298,15 +291,14 @@ class TestTypeaheadRanking:
         assert suggestion_names[1] == "Bank of Visa"
 
     def test_exact_match_ranks_first_in_typeahead(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Exact name match should rank highest in typeahead."""
         service = isolated_indexes
         bank = _make_bank("Exact Bank")
-        with django_capture_on_commit_callbacks(execute=True):
-            exact = _make_card(bank, "Visa", annual_fee=0)
-            prefix = _make_card(bank, "Visa Gold", annual_fee=0)
-            longer = _make_card(bank, "Visa Platinum Plus", annual_fee=0)
+        exact = _make_card_no_signal(bank, "Visa", annual_fee=0)
+        prefix = _make_card_no_signal(bank, "Visa Gold", annual_fee=0)
+        longer = _make_card_no_signal(bank, "Visa Platinum Plus", annual_fee=0)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -317,13 +309,12 @@ class TestTypeaheadRanking:
         assert suggestion_names[0] == "Visa"
 
     def test_bank_suggestions_included(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Bank suggestions should be included in typeahead."""
         service = isolated_indexes
-        with django_capture_on_commit_callbacks(execute=True):
-            chase = _make_bank("Chase Bank")
-            _make_card(chase, "Sapphire", annual_fee=0)
+        chase = _make_bank("Chase Bank")
+        _make_card_no_signal(chase, "Sapphire", annual_fee=0)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -342,7 +333,7 @@ class TestDidYouMean:
     """Test did_you_mean suggestions for typos."""
 
     def test_did_you_mean_on_close_typo(
-        self, isolated_indexes, django_capture_on_commit_callbacks
+        self, isolated_indexes
     ):
         """Close typo should suggest correct spelling.
         
@@ -352,8 +343,7 @@ class TestDidYouMean:
         """
         service = isolated_indexes
         bank = _make_bank("Typo Bank")
-        with django_capture_on_commit_callbacks(execute=True):
-            card = _make_card(bank, "Sapphire Reserve", annual_fee=0)
+        card = _make_card_no_signal(bank, "Sapphire Reserve", annual_fee=0)
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
@@ -605,7 +595,8 @@ class TestDeleteUpdateSync:
             card = _make_card(bank, "Bank Card", annual_fee=0)
             card_pk = card.pk
 
-        service.refresh()
+        # Rebuild index to ensure all docs are indexed
+        service.rebuild(batch_size=100, drop=False)
         
         # Verify old bank name in card document
         result = service.search("cards", query="Old Bank Name")
