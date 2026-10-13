@@ -29,9 +29,14 @@ from django.urls import include, path
 from banks.views import data_quality_dashboard
 
 from . import views
+from .health import healthz, readyz
+from .metrics import metrics_view
 
 urlpatterns = [
     path("health/", views.health_check, name="health_check"),
+    path("api/healthz/", healthz, name="healthz"),
+    path("api/readyz/", readyz, name="readyz"),
+    path("metrics", metrics_view, name="metrics"),
     # Staff-only data-quality snapshot; must precede the admin include so it
     # is never swallowed by the admin URLconf.
     path("admin/data-quality/", data_quality_dashboard, name="data-quality-dashboard"),

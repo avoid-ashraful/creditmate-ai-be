@@ -129,6 +129,7 @@ MIDDLEWARE = [
     "credit_mate_ai.middleware.RequestValidationMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "credit_mate_ai.middleware.SecurityHeadersMiddleware",
+    "credit_mate_ai.prometheus_middleware.PrometheusMetricsMiddleware",
 ]
 
 ROOT_URLCONF = "credit_mate_ai.urls"
@@ -256,6 +257,16 @@ SEARCH_QUEUE_VIA_CELERY = os.getenv("SEARCH_QUEUE_VIA_CELERY", "False").lower() 
 )
 SEARCH_QUEUE_BATCH_SIZE = int(os.getenv("SEARCH_QUEUE_BATCH_SIZE", "200"))
 SEARCH_QUEUE_MAX_ATTEMPTS = int(os.getenv("SEARCH_QUEUE_MAX_ATTEMPTS", "5"))
+
+# Observability (health probes and /metrics)
+# /metrics is denied unless METRICS_TOKEN or METRICS_ALLOWED_IPS is set.
+# METRICS_ALLOWED_IPS takes IPs or CIDR ranges and is matched against REMOTE_ADDR only.
+METRICS_TOKEN = os.getenv("METRICS_TOKEN", "").strip()
+METRICS_ALLOWED_IPS = [
+    entry.strip() for entry in os.getenv("METRICS_ALLOWED_IPS", "").split(",") if entry.strip()
+]
+# Per-dependency timeout for /api/readyz/ checks, in seconds.
+READYZ_TIMEOUT_SECONDS = float(os.getenv("READYZ_TIMEOUT_SECONDS", "1.0"))
 
 # Environment Configuration
 
