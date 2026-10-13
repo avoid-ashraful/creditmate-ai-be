@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     "credit_cards",
     "saved",
     "search",
+    "reviews",
 ]
 
 MIDDLEWARE = [
@@ -325,6 +326,7 @@ REST_FRAMEWORK = {
         "anon": os.getenv("THROTTLE_RATE_ANON", "100/min"),
         "user": os.getenv("THROTTLE_RATE_USER", "1000/min"),
         "burst": os.getenv("THROTTLE_RATE_BURST", "10/sec"),
+        "review_write": os.getenv("THROTTLE_RATE_REVIEW_WRITE", "5/hour"),
     },
 }
 
