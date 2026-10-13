@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
@@ -121,6 +122,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "django_filters",
     "common",
@@ -130,6 +133,7 @@ INSTALLED_APPS = [
     "search",
     "reviews",
     "alerts",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -260,7 +264,7 @@ CELERY_BEAT_SCHEDULE = {
 # Search (Elasticsearch) Configuration
 # SEARCH_URL points at the local single node container published on 127.0.0.1:19200
 # by creditmate-ai-be/docker-compose.search.yml.
-SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "yes", "on")
+SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "yes")
 SEARCH_URL = os.getenv("SEARCH_URL", "http://127.0.0.1:19200")
 SEARCH_INDEX_PREFIX = os.getenv("SEARCH_INDEX_PREFIX", "")
 SEARCH_REQUEST_TIMEOUT = int(os.getenv("SEARCH_REQUEST_TIMEOUT", "10"))
@@ -321,10 +325,14 @@ else:
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "alerts@creditmate.ai")
 ALERTS_PUBLIC_BASE_URL = os.getenv("ALERTS_PUBLIC_BASE_URL", "http://localhost:8000")
 
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@creditmate.ai")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 # Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -349,7 +357,38 @@ REST_FRAMEWORK = {
         "user": os.getenv("THROTTLE_RATE_USER", "1000/min"),
         "burst": os.getenv("THROTTLE_RATE_BURST", "10/sec"),
         "review_write": os.getenv("THROTTLE_RATE_REVIEW_WRITE", "5/hour"),
+        "auth_burst": os.getenv("THROTTLE_RATE_AUTH_BURST", "20/min"),
+        "auth_anon": os.getenv("THROTTLE_RATE_AUTH_ANON", "30/min"),
+        "auth_user": os.getenv("THROTTLE_RATE_AUTH_USER", "100/min"),
     },
+}
+
+# SimpleJWT Configuration
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=7),
 }
 
 # drf-spectacular configuration (OpenAPI schema generation)
@@ -359,6 +398,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "AI-powered credit card discovery platform API",
     "LICENSE": {"name": "MIT License"},
     "TAGS": [
+        {"name": "auth", "description": "Authentication and user management"},
         {"name": "banks", "description": "Bank-related operations"},
         {"name": "credit-cards", "description": "Credit card-related operations"},
         {"name": "search", "description": "Search and suggestions operations"},
@@ -368,6 +408,12 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_PATH": "/api/v1/docs/swagger",
     "REDOC_PATH": "/api/v1/docs/redoc",
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
+    "SECURITY": [
+        {
+            "Bearer": [],
+        }
+    ],
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 # CORS Configuration
@@ -422,7 +468,7 @@ SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").lower() in (
 SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
     "SECURE_HSTS_INCLUDE_SUBDOMAINS", "False"
-).lower() in ("true", "1", "yes", "on")
+).lower() in ("true", "1", "yes")
 SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "False").lower() in (
     "true",
     "1",
@@ -447,7 +493,7 @@ CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() in (
 # Content Security
 SECURE_CONTENT_TYPE_NOSNIFF = os.getenv(
     "SECURE_CONTENT_TYPE_NOSNIFF", "True"
-).lower() in ("true", "1", "yes", "on")
+).lower() in ("true", "1", "yes")
 SECURE_BROWSER_XSS_FILTER = os.getenv("SECURE_BROWSER_XSS_FILTER", "True").lower() in (
     "true",
     "1",
