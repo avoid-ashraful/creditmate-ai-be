@@ -824,6 +824,7 @@ class BankDataCrawlerService:
         """
         crawled_content.processing_status = "completed"
         crawled_content.save(update_fields=["processing_status"])
+        crawled_content.enqueue_for_manual_review()
 
         # Reset failed attempts on success
         data_source.reset_failed_attempts()

@@ -15,6 +15,7 @@ from banks.services.multi_pass_extractor import (
 )
 from banks.services.prompt_templates import BankSpecificPrompts
 from banks.services.quality_scoring import ExtractionQuality, score_extraction
+from banks.services.review_queue import ReviewQueueService
 from banks.services.quality_validator import ExtractionQualityValidator
 from banks.services.schedule_charge_finder import ScheduleChargeURLFinder
 from banks.services.multi_source_validation import (
@@ -45,4 +46,5 @@ __all__ = [
     "ValidationBatch",
     "run_multi_source_validation",
     "validate_crawled_content",
+    "ReviewQueueService",
 ]

@@ -37,3 +37,19 @@ class SourceType(models.TextChoices):
     BANK_IMAGE = "bank_image", "Bank image"
     BANK_CSV = "bank_csv", "Bank CSV"
     USER_SUBMISSION = "user_submission", "User submission"
+
+
+class ReviewPriority(models.TextChoices):
+    """Priority choices for manual review queue items."""
+
+    HIGH = "high", "High"
+    MEDIUM = "medium", "Medium"
+    LOW = "low", "Low"
+
+
+class ReviewStatus(models.TextChoices):
+    """Status choices for manual review queue items."""
+
+    PENDING = "pending", "Pending"
+    APPROVED = "approved", "Approved"
+    REJECTED = "rejected", "Rejected"
