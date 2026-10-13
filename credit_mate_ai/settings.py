@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from credit_mate_ai.sentry import parse_sample_rate, sanitize_sentry_event
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -73,6 +74,28 @@ CACHE_TTL_SEARCH_SUGGESTIONS = int(
 # API request validation (bytes), overridable via environment
 MAX_JSON_REQUEST_BYTES = int(os.getenv("MAX_JSON_REQUEST_BYTES", "1048576"))
 MAX_UPLOAD_REQUEST_BYTES = int(os.getenv("MAX_UPLOAD_REQUEST_BYTES", "10485760"))
+
+# Error Monitoring
+ENVIRONMENT = os.getenv("ENVIRONMENT", "local").lower()
+SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
+SENTRY_ENVIRONMENT = os.getenv("SENTRY_ENVIRONMENT", ENVIRONMENT).strip()
+SENTRY_RELEASE = os.getenv("SENTRY_RELEASE", "").strip()
+SENTRY_TRACES_SAMPLE_RATE = parse_sample_rate(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
+
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+    except ImportError:
+        pass
+    else:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            environment=SENTRY_ENVIRONMENT,
+            release=SENTRY_RELEASE or None,
+            traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+            send_default_pii=False,
+            before_send=sanitize_sentry_event,
+        )
 
 # Application definition
 
@@ -209,7 +232,6 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
 
 # Environment Configuration
-ENVIRONMENT = os.getenv("ENVIRONMENT", "local").lower()
 
 # Email Configuration
 # Disable email service for non-production environments

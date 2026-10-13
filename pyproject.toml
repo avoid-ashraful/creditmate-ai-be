@@ -24,6 +24,7 @@ dependencies = [
     "psycopg2-binary~=2.9.9",
     "dj-database-url",
     "python-dotenv",
+    "sentry-sdk~=2.0",
     "google-generativeai",
     "beautifulsoup4",
     "pytesseract",
