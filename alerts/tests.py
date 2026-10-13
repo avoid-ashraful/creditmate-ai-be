@@ -3,6 +3,8 @@ from datetime import timedelta
 import pytest
 from django.core import mail
 from django.core import signing
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -136,3 +138,26 @@ def test_immediate_frequency_window_and_timezone_boundary(django_user_model, set
     history.save(update_fields=["created"])
     assert send_alert_digests() == 1
     assert len(mail.outbox) == 1
+
+
+@pytest.mark.django_db
+def test_digest_query_count_with_30_populated_subscriptions(django_user_model, settings):
+    """Digest discovery stays bounded as active subscriptions grow."""
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    now = timezone.now()
+    for index in range(30):
+        user = django_user_model.objects.create_user(username=f"digest-audit-{index}")
+        bank = Bank.objects.create(name=f"Digest Audit Bank {index:02d}")
+        card = CreditCard.objects.create(bank=bank, name=f"Digest Audit Card {index:02d}")
+        AlertSubscription.objects.create(user=user, card=card, kind="fee_change")
+        NotificationPreference.objects.create(user=user, frequency="weekly")
+        history = CreditCardFieldHistory.objects.create(
+            card=card, field_name="annual_fee", old_value="10", new_value="20"
+        )
+        history.created = now - timedelta(days=1)
+        history.save(update_fields=["created"])
+
+    with CaptureQueriesContext(connection) as captured:
+        assert send_alert_digests() == 30
+
+    assert len(captured) == 64

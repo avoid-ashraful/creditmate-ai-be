@@ -26,6 +26,13 @@ class AlertSubscription(Audit):
 
     class Meta:
         ordering = ["-created"]
+        indexes = [
+            models.Index(
+                fields=["-created"],
+                condition=models.Q(is_active=True),
+                name="alerts_active_created_idx",
+            ),
+        ]
 
 
 class NotificationPreference(Audit):

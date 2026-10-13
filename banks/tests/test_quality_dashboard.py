@@ -12,7 +12,9 @@ from datetime import timedelta
 import pytest
 
 from django.contrib.auth import get_user_model
+from django.db import connection
 from django.test import Client
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
@@ -198,6 +200,25 @@ class TestConfidenceWindows:
         assert summary["average_confidence_30d"] is None
         assert summary["scored_7d"] == 0
         assert summary["scored_30d"] == 0
+
+
+@pytest.mark.django_db
+def test_dashboard_query_count_scales_without_metric_n_plus_ones():
+    """The staff dashboard aggregates each bank's metrics in two queries."""
+    from banks.services.quality_dashboard import build_dashboard
+
+    for index in range(30):
+        bank = BankFactory(name=f"Audit Bank {index:02d}")
+        CreditCardFactory(bank=bank)
+        make_content(bank, confidence=0.8, missing=["annual_fee"])
+
+    with CaptureQueriesContext(connection) as captured:
+        result = build_dashboard()
+
+    assert len(result["banks"]) == 30
+    # 2 global metric aggregates + 1 bank listing + 3 method aggregates,
+    # then 2 metric aggregates and 1 source count per bank.
+    assert len(captured) == 98
 
 
 @pytest.mark.django_db

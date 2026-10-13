@@ -11,29 +11,48 @@ from credit_cards.models import CreditCard, CreditCardFieldHistory
 from .models import AlertSubscription, NotificationPreference, SentAlert
 
 
-def _subscription_events(subscription, interval, now):
-    history = CreditCardFieldHistory.objects.filter(created__gte=now - interval)
+def _subscription_events(subscription, interval, now, history_rows=None, new_card_rows=None):
+    history = (
+        CreditCardFieldHistory.objects.filter(created__gte=now - interval).select_related("card")
+        if history_rows is None
+        else [row for row in history_rows if row.created >= now - interval]
+    )
     if subscription.card_id:
-        history = history.filter(card_id=subscription.card_id)
+        history = (
+            history.filter(card_id=subscription.card_id)
+            if history_rows is None
+            else [row for row in history if row.card_id == subscription.card_id]
+        )
     if subscription.kind == AlertSubscription.Kind.FEE_CHANGE:
-        history = history.filter(field_name__in=["annual_fee", "annual_fee_waiver_policy"])
+        history = (
+            history.filter(field_name__in=["annual_fee", "annual_fee_waiver_policy"])
+            if history_rows is None
+            else [row for row in history if row.field_name in {"annual_fee", "annual_fee_waiver_policy"}]
+        )
     elif subscription.kind == AlertSubscription.Kind.APR_CHANGE:
-        history = history.filter(field_name="interest_rate_apr")
+        history = (
+            history.filter(field_name="interest_rate_apr")
+            if history_rows is None
+            else [row for row in history if row.field_name == "interest_rate_apr"]
+        )
     events = []
     if subscription.kind != AlertSubscription.Kind.NEW_CARD:
-        events.extend(
-            (f"history:{change.pk}", change)
-            for change in history.select_related("card")
-        )
+        events.extend((f"history:{change.pk}", change) for change in history)
     if subscription.kind in (
         AlertSubscription.Kind.NEW_CARD,
         AlertSubscription.Kind.ANY_CHANGE,
     ):
-        new_cards = CreditCard.objects.filter(
-            created__gte=now - interval, is_active=True
-        ).select_related("bank")
+        new_cards = (
+            CreditCard.objects.filter(created__gte=now - interval, is_active=True).select_related("bank")
+            if new_card_rows is None
+            else [card for card in new_card_rows if card.created >= now - interval]
+        )
         if subscription.card_id:
-            new_cards = new_cards.filter(pk=subscription.card_id)
+            new_cards = (
+                new_cards.filter(pk=subscription.card_id)
+                if new_card_rows is None
+                else [card for card in new_cards if card.pk == subscription.card_id]
+            )
         events.extend((f"new-card:{card.pk}", card) for card in new_cards)
     return events
 
@@ -77,13 +96,41 @@ def send_alert_digests():
     """Send pending card change notifications, safely tolerating task retries."""
     now = timezone.now()
     sent_count = 0
-    for subscription in AlertSubscription.objects.filter(is_active=True).select_related("user", "card"):
-        pref, _ = NotificationPreference.objects.get_or_create(user=subscription.user)
+    subscriptions = list(
+        AlertSubscription.objects.filter(is_active=True)
+        .select_related("user", "card")
+        .order_by("-created")
+    )
+    preferences = {
+        pref.user_id: pref
+        for pref in NotificationPreference.objects.filter(
+            user_id__in={subscription.user_id for subscription in subscriptions}
+        )
+    }
+    for subscription in subscriptions:
+        if subscription.user_id not in preferences:
+            preferences[subscription.user_id], _ = NotificationPreference.objects.get_or_create(
+                user=subscription.user
+            )
+    history_rows = list(
+        CreditCardFieldHistory.objects.filter(created__gte=now - timedelta(days=7))
+        .select_related("card")
+        .order_by("-created", "-id")
+    )
+    new_card_rows = list(
+        CreditCard.objects.filter(created__gte=now - timedelta(days=7), is_active=True)
+        .select_related("bank")
+        .order_by("bank__name", "name")
+    )
+    for subscription in subscriptions:
+        pref = preferences[subscription.user_id]
         interval = {
             "immediate": timedelta(minutes=5),
             "daily": timedelta(days=1),
             "weekly": timedelta(days=7),
         }[pref.frequency]
-        for event_id, change in _subscription_events(subscription, interval, now):
+        for event_id, change in _subscription_events(
+            subscription, interval, now, history_rows, new_card_rows
+        ):
             sent_count += _send_event(subscription, event_id, change)
     return sent_count
