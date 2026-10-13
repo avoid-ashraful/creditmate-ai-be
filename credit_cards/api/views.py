@@ -6,7 +6,11 @@ from rest_framework.response import Response
 from django.core.cache import cache
 
 from credit_cards.api.filters import CreditCardFilter
-from credit_cards.api.serializers import CreditCardListSerializer, CreditCardSerializer
+from credit_cards.api.serializers import (
+    CreditCardFieldHistorySerializer,
+    CreditCardListSerializer,
+    CreditCardSerializer,
+)
 from credit_cards.models import CreditCard
 from credit_mate_ai.cache import (
     CARD_LIST_TTL,
@@ -161,3 +165,21 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         )
         cache.set(cache_key, response.data, SEARCH_SUGGESTIONS_TTL)
         return response
+
+    @action(detail=True, methods=["get"], url_path="field-history")
+    def field_history(self, request, *args, **kwargs):
+        """Return a bounded, newest-first history for a credit card.
+
+        Requires IsAuthenticated permission to access field history.
+        Anonymous users cannot view modification history.
+        """
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required to view field history."},
+                status=403,
+            )
+        card = self.get_object()
+        history = card.field_history.all()
+        page = self.paginate_queryset(history)
+        serializer = CreditCardFieldHistorySerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
