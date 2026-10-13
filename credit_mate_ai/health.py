@@ -96,15 +96,16 @@ def _run_check(name, check):
     Returns
     -------
     dict
-        ``healthy`` flag, ``latency_ms`` and ``error`` (exception class name)
-        when the check failed.
+        ``healthy`` flag, ``latency_ms`` and a generic ``error`` value when
+        the check failed.
     """
     started = time.perf_counter()
     try:
         check()
     except Exception as exc:  # noqa: BLE001 - any failure means "not ready"
         logger.warning("Readiness check %s failed: %s", name, type(exc).__name__)
-        result = {"healthy": False, "error": type(exc).__name__}
+        # Keep dependency and driver details out of a public readiness probe.
+        result = {"healthy": False, "error": "unavailable"}
     else:
         result = {"healthy": True}
     result["latency_ms"] = _elapsed_ms(started)

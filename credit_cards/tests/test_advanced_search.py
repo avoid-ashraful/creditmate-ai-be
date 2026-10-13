@@ -305,6 +305,11 @@ class TestAdvancedSearchPagination:
         assert len(response.data["results"]) == 100
         assert response.data["page_size"] == 100
 
+    def test_invalid_pagination_is_rejected(self, api_client):
+        for params in ({"page": "not-an-int"}, {"page": 10001}, {"page_size": "x"}):
+            response = api_client.get(ADVANCED_SEARCH_URL, params)
+            assert response.status_code == 400
+
     def test_pagination_second_page(self, api_client):
         """Second page should return correct results."""
         CreditCardFactory.create_batch(25, name="Card")
