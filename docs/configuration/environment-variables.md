@@ -62,6 +62,26 @@ CELERY_BROKER_URL=redis://localhost:6379/0
 CELERY_RESULT_BACKEND=redis://localhost:6379/0
 ```
 
+### Sentry Error Monitoring (Optional)
+```bash
+# Sentry project DSN. Leave unset to disable Sentry entirely.
+SENTRY_DSN=https://your-key@o0.ingest.sentry.io/0
+
+# Sentry environment. Defaults to ENVIRONMENT.
+SENTRY_ENVIRONMENT=production
+
+# Release identifier. If unset, Sentry uses its default release detection.
+SENTRY_RELEASE=1.5.0
+
+# Percentage of traces sampled, from 0.0 (disabled) to 1.0 (all traces).
+SENTRY_TRACES_SAMPLE_RATE=0.1
+```
+
+Sentry is only initialized when `SENTRY_DSN` is present. The event filter keeps
+the request method, URL path without query or fragment, and a numeric or UUID
+internal user ID. It removes email, username, IP address, request body, cookies,
+and request headers while retaining the configured environment and release.
+
 ## Security Configuration
 
 ### CORS (Cross-Origin Resource Sharing)
