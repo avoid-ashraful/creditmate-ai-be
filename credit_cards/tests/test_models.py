@@ -92,11 +92,17 @@ class TestCreditCardModel:
 
     def test_has_lounge_access_property(self):
         """Test has_lounge_access property."""
-        # Card with no lounge access
+        # Card with nothing recorded: lounge access is unknown, not none
         card1 = CreditCardFactory(
             lounge_access_international="", lounge_access_domestic=""
         )
-        assert card1.has_lounge_access is False
+        assert card1.has_lounge_access is None
+
+        # Card whose every direction states there is no access
+        card0 = CreditCardFactory(
+            lounge_access_international="0", lounge_access_domestic="N/A"
+        )
+        assert card0.has_lounge_access is False
 
         # Card with international lounge access
         card2 = CreditCardFactory(

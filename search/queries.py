@@ -51,11 +51,8 @@ CARD_FILTERS = {
     "is_active": ("term", "is_active"),
     "has_annual_fee": ("term", "has_annual_fee"),
     "has_lounge_access": ("term", "has_lounge_access"),
-    "has_lounge_access_international": (
-        "not_empty",
-        "lounge_access_international.keyword",
-    ),
-    "has_lounge_access_domestic": ("not_empty", "lounge_access_domestic.keyword"),
+    "has_lounge_access_international": ("term", "has_international_lounge"),
+    "has_lounge_access_domestic": ("term", "has_domestic_lounge"),
     "has_fee_waiver": ("exists", "annual_fee_waiver_policy"),
     # Exact zero fee: never matches a card whose fee was never published.
     "no_annual_fee": ("term", "annual_fee", 0),
@@ -341,7 +338,13 @@ def _build_defined_filter(definition, value):
             return {"term": {field: definition[2]}} if _coerce_bool(value) is True else None
 
         numeric = _coerce_float(value)
-        if field in ("is_active", "has_annual_fee", "has_lounge_access"):
+        if field in (
+            "is_active",
+            "has_annual_fee",
+            "has_lounge_access",
+            "has_international_lounge",
+            "has_domestic_lounge",
+        ):
             boolean = _coerce_bool(value)
             return _term_clause(field, boolean) if boolean is not None else None
         if numeric is not None and field not in ("name", "bank_name"):

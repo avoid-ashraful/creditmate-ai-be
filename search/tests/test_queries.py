@@ -84,13 +84,13 @@ class TestFilters:
         clauses = build_filters("cards", {"feature_search": "lounge"})
         assert {"match": {"additional_features.text": {"query": "lounge"}}} in clauses
 
-    def test_lounge_presence_ignores_empty_strings(self):
+    def test_lounge_presence_uses_classified_boolean(self):
         clauses = build_filters("cards", {"has_lounge_access_international": True})
-        clause = clauses[0]
-        assert "bool" in clause
-        assert {"term": {"lounge_access_international.keyword": ""}} in clause["bool"][
-            "must_not"
-        ]
+        assert {"term": {"has_international_lounge": True}} in clauses
+
+    def test_lounge_presence_false_selects_known_none_only(self):
+        clauses = build_filters("cards", {"has_lounge_access_domestic": False})
+        assert {"term": {"has_domestic_lounge": False}} in clauses
 
     def test_unknown_keys_are_ignored(self):
         assert build_filters("cards", {"unrelated": "x"}) == []

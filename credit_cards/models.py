@@ -3,6 +3,7 @@ from django.db import models
 
 from banks.models import Bank
 from common.models import Audit
+from credit_cards.lounge import card_has_lounge_access, direction_has_access
 
 
 class CreditCard(Audit):
@@ -53,12 +54,13 @@ class CreditCard(Audit):
 
         Returns
         -------
-        bool
-            True if card has either international or domestic lounge access,
-            False otherwise
+        bool or None
+            True if either direction grants lounge access, False if both
+            directions state there is none, and None if the card's lounge
+            access is unknown. See ``credit_cards.lounge`` for the rules.
         """
-        return bool(self.lounge_access_international.strip()) or bool(
-            self.lounge_access_domestic.strip()
+        return card_has_lounge_access(
+            self.lounge_access_international, self.lounge_access_domestic
         )
 
     @property
@@ -72,15 +74,20 @@ class CreditCard(Audit):
         Returns
         -------
         str
-            Formatted string summarizing all lounge access benefits,
-            or 'No lounge access' if none available
+            Formatted string summarizing the directions that grant access.
+            Returns 'No lounge access' when both directions are a known
+            none, and 'Lounge access not specified' when the value is unknown.
         """
         access_list = []
-        if self.lounge_access_international.strip():
-            access_list.append(f"International: {self.lounge_access_international}")
-        if self.lounge_access_domestic.strip():
-            access_list.append(f"Domestic: {self.lounge_access_domestic}")
-        return "; ".join(access_list) if access_list else "No lounge access"
+        if direction_has_access(self.lounge_access_international):
+            access_list.append(f"International: {self.lounge_access_international.strip()}")
+        if direction_has_access(self.lounge_access_domestic):
+            access_list.append(f"Domestic: {self.lounge_access_domestic.strip()}")
+        if access_list:
+            return "; ".join(access_list)
+        if self.has_lounge_access is False:
+            return "No lounge access"
+        return "Lounge access not specified"
 
     @property
     def has_annual_fee(self):

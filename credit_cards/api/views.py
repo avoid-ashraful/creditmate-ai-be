@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from django.core.cache import cache
 
 from credit_cards.api.filters import CreditCardFilter
+from credit_cards.lounge import card_lounge_access_q
 from credit_cards.api.serializers import (
     CreditCardFieldHistorySerializer,
     CreditCardListSerializer,
@@ -442,9 +443,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             ),
             lounge=Count(
                 "id",
-                filter=~models.Q(
-                    lounge_access_international="", lounge_access_domestic=""
-                ),
+                filter=card_lounge_access_q(True),
             ),
         )
         facets = {

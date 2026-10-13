@@ -258,11 +258,21 @@ class TestCreditCardAPI:
             assert card["has_lounge_access"] is True
 
     def test_credit_card_filter_has_lounge_access_false(self):
-        """Test filtering credit cards without lounge access."""
+        """Test filtering credit cards whose lounge access is a known none."""
+        # Empty lounge values are unknown, so the card states none explicitly.
+        known_none = CreditCardFactory(
+            bank=self.bank2,
+            name="Gamma Card",
+            lounge_access_international="0",
+            lounge_access_domestic="N/A",
+        )
         response = self.client.get("/api/v1/credit-cards/?has_lounge_access=false")
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data["results"]) >= 1
+        names = [card["name"] for card in response.data["results"]]
+        assert known_none.name in names
+        # Unknown cards (Beta Card) are not reported as having no lounge access
+        assert self.card2.name not in names
         # All results should not have lounge access
         for card in response.data["results"]:
             assert card["has_lounge_access"] is False

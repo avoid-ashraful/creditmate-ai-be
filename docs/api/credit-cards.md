@@ -423,7 +423,7 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?page=2&page_size=20"
 | `reward_points_policy` | string | Reward points policy description |
 | `additional_features` | array | List of additional features |
 | `is_active` | boolean | Whether the card is active |
-| `has_lounge_access` | boolean | Whether card has any lounge access (computed) |
+| `has_lounge_access` | boolean or null | `true` if any lounge access, `false` if known to have none, `null` if unknown (computed) |
 | `total_lounge_access` | integer | Total lounge access count (computed) |
 | `has_annual_fee` | boolean | Whether card has annual fee (computed) |
 | `created` | datetime | Record creation timestamp |
@@ -444,6 +444,14 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee_min=100&annua
 ```
 
 ### Lounge Access Filters
+
+Lounge access values are free text per direction. They are classified as follows:
+
+- **Unknown** (`has_lounge_access` is `null`; neither `true` nor `false` filters match it): the value is empty or a placeholder such as `-`, `unknown` or `not specified`.
+- **None** (`0`, `0 visits`, `None`, `N/A`, `Not applicable`, `No lounge access`): the card states it has no access. `has_lounge_access=false` matches only these cards.
+- **Unlimited** (`Unlimited`): access with no finite count. It matches `has_*=true` but never `min_*_lounge`.
+- **Limited** (any other value, such as `4 per year`): access. `min_*_lounge` uses the first number in the text.
+
 ```bash
 # Cards with any lounge access
 curl -X GET "http://localhost:8000/api/v1/credit-cards/?has_lounge_access=true"

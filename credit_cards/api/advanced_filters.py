@@ -7,6 +7,11 @@ including multi-category OR logic, facet aggregations, and relevance tuning.
 import django_filters
 from django.db import models
 
+from credit_cards.lounge import (
+    card_lounge_access_q,
+    filter_lounge_count_min,
+    lounge_access_q,
+)
 from credit_cards.models import CreditCard
 
 
@@ -21,6 +26,10 @@ CANONICAL_CATEGORIES = [
 ]
 
 CATEGORY_SLUGS = [cat["slug"] for cat in CANONICAL_CATEGORIES]
+
+
+#: Lounge access text fields that the boolean facets classify per direction.
+LOUNGE_DIRECTION_FIELDS = ("lounge_access_international", "lounge_access_domestic")
 
 
 class CreditCardAdvancedFilter(django_filters.FilterSet):
@@ -62,10 +71,10 @@ class CreditCardAdvancedFilter(django_filters.FilterSet):
         method="filter_has_domestic_lounge"
     )
     min_international_lounge = django_filters.NumberFilter(
-        field_name="lounge_access_international", lookup_expr="gte"
+        method="filter_min_international_lounge"
     )
     min_domestic_lounge = django_filters.NumberFilter(
-        field_name="lounge_access_domestic", lookup_expr="gte"
+        method="filter_min_domestic_lounge"
     )
 
     # Fee filters
@@ -159,7 +168,7 @@ class CreditCardAdvancedFilter(django_filters.FilterSet):
             elif slug == "premium":
                 category_conditions |= models.Q(
                     models.Q(annual_fee__gte=2000)
-                    | models.Q(lounge_access_international__gt="")
+                    | lounge_access_q("lounge_access_international", True)
                 )
             elif slug == "student":
                 category_conditions |= models.Q(
@@ -211,25 +220,24 @@ class CreditCardAdvancedFilter(django_filters.FilterSet):
         )
 
     def filter_has_lounge_access(self, queryset, name, value):
-        """Filter cards that have any lounge access."""
-        if value:
-            return queryset.exclude(
-                models.Q(lounge_access_international="")
-                & models.Q(lounge_access_domestic="")
-            )
-        return queryset.filter(lounge_access_international="", lounge_access_domestic="")
+        """Filter by card-level lounge access (True: any access, False: known none)."""
+        return queryset.filter(card_lounge_access_q(value))
 
     def filter_has_international_lounge(self, queryset, name, value):
-        """Filter cards that have international lounge access."""
-        if value:
-            return queryset.exclude(lounge_access_international="")
-        return queryset.filter(lounge_access_international="")
+        """Filter by international lounge access (True: access, False: known none)."""
+        return queryset.filter(lounge_access_q("lounge_access_international", value))
 
     def filter_has_domestic_lounge(self, queryset, name, value):
-        """Filter cards that have domestic lounge access."""
-        if value:
-            return queryset.exclude(lounge_access_domestic="")
-        return queryset.filter(lounge_access_domestic="")
+        """Filter by domestic lounge access (True: access, False: known none)."""
+        return queryset.filter(lounge_access_q("lounge_access_domestic", value))
+
+    def filter_min_international_lounge(self, queryset, name, value):
+        """Filter cards whose stated international visit count is at least value."""
+        return filter_lounge_count_min(queryset, "lounge_access_international", value)
+
+    def filter_min_domestic_lounge(self, queryset, name, value):
+        """Filter cards whose stated domestic visit count is at least value."""
+        return filter_lounge_count_min(queryset, "lounge_access_domestic", value)
 
     def filter_has_annual_fee(self, queryset, name, value):
         """Filter cards that have annual fee."""
@@ -406,15 +414,12 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
                     opt_field = option["field"]
                     is_property = option.get("is_property", False)
 
-                    if opt_field == "has_lounge_access" or is_property:
-                        true_count = queryset.exclude(
-                            Q(lounge_access_international="")
-                            & Q(lounge_access_domestic="")
-                        ).count()
-                        false_count = queryset.filter(
-                            lounge_access_international="",
-                            lounge_access_domestic="",
-                        ).count()
+                    if opt_field == "has_lounge_access":
+                        true_count = queryset.filter(card_lounge_access_q(True)).count()
+                        false_count = queryset.filter(card_lounge_access_q(False)).count()
+                    elif opt_field in LOUNGE_DIRECTION_FIELDS:
+                        true_count = queryset.filter(lounge_access_q(opt_field, True)).count()
+                        false_count = queryset.filter(lounge_access_q(opt_field, False)).count()
                     elif opt_field == "has_annual_fee" or is_property:
                         true_count = queryset.filter(annual_fee__gt=0).count()
                         false_count = queryset.filter(annual_fee=0).count()
@@ -443,14 +448,8 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
                         true_count = queryset.filter(annual_fee__gt=0).count()
                         false_count = queryset.filter(annual_fee=0).count()
                     elif field == "has_lounge_access":
-                        true_count = queryset.exclude(
-                            Q(lounge_access_international="")
-                            & Q(lounge_access_domestic="")
-                        ).count()
-                        false_count = queryset.filter(
-                            lounge_access_international="",
-                            lounge_access_domestic="",
-                        ).count()
+                        true_count = queryset.filter(card_lounge_access_q(True)).count()
+                        false_count = queryset.filter(card_lounge_access_q(False)).count()
                     else:
                         true_count = queryset.exclude(**{f"{field}__exact": ""}).count()
                         false_count = queryset.filter(**{f"{field}__exact": ""}).count()
@@ -483,7 +482,8 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
                     ).count()
                 elif slug == "premium":
                     count = queryset.filter(
-                        Q(annual_fee__gte=2000) | Q(lounge_access_international__gt="")
+                        Q(annual_fee__gte=2000)
+                        | lounge_access_q("lounge_access_international", True)
                     ).count()
                 elif slug == "student":
                     count = queryset.filter(

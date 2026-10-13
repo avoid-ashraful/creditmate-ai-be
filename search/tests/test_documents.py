@@ -2,6 +2,7 @@
 
 import pytest
 
+from credit_cards.lounge import card_has_lounge_access
 from search.documents import (
     ANALYZER_BENGALI,
     ANALYZER_MULTILANG,
@@ -189,6 +190,22 @@ class TestDocumentSerialization:
         assert document["lounge_visits_domestic"] is None
         assert document["has_lounge_access"] is True
 
+    def test_lounge_none_values_are_not_access(self):
+        card = _card(lounge_access_international="N/A", lounge_access_domestic="0")
+        document = credit_card_to_document(card)
+        assert document["lounge_visits_international"] == 0
+        assert document["lounge_visits_domestic"] == 0
+        assert document["has_international_lounge"] is False
+        assert document["has_domestic_lounge"] is False
+        assert document["has_lounge_access"] is False
+
+    def test_lounge_unknown_values_leave_flags_unset(self):
+        card = _card(lounge_access_international="", lounge_access_domestic="")
+        document = credit_card_to_document(card)
+        assert document["lounge_visits_international"] is None
+        assert document["has_international_lounge"] is None
+        assert document["has_lounge_access"] is None
+
 
 class _StubBank:
     def __init__(self, name="Dutch-Bangla Bank", pk=1, credit_card_count=2):
@@ -227,7 +244,9 @@ class _StubCard:
 
     @property
     def has_lounge_access(self):
-        return bool(self.lounge_access_international or self.lounge_access_domestic)
+        return card_has_lounge_access(
+            self.lounge_access_international, self.lounge_access_domestic
+        )
 
 
 def _card(**overrides):

@@ -15,7 +15,7 @@ Nothing in here talks to Elasticsearch; it only declares the JSON payloads so
 they can be created by :mod:`search.service` and asserted by unit tests.
 """
 
-import re
+from credit_cards.lounge import direction_has_access, lounge_access_count
 
 # ---------------------------------------------------------------------------
 # Analyzer / filter / normalizer names
@@ -178,6 +178,8 @@ CREDIT_CARD_FILTERABLE_FIELDS = [
     "is_active",
     "has_annual_fee",
     "has_lounge_access",
+    "has_international_lounge",
+    "has_domestic_lounge",
     "created",
     "modified",
 ]
@@ -330,6 +332,8 @@ CREDIT_CARD_MAPPING = {
         "is_active": {"type": "boolean"},
         "has_annual_fee": {"type": "boolean"},
         "has_lounge_access": {"type": "boolean"},
+        "has_international_lounge": {"type": "boolean"},
+        "has_domestic_lounge": {"type": "boolean"},
         "created": {"type": "date"},
         "modified": {"type": "date"},
         # Catch-all field used as the base of every search query.
@@ -344,33 +348,6 @@ CREDIT_CARD_INDEX_BODY = {"settings": INDEX_SETTINGS, "mappings": CREDIT_CARD_MA
 # ---------------------------------------------------------------------------
 # Document serialization helpers
 # ---------------------------------------------------------------------------
-
-_NUMBER_RE = re.compile(r"-?\d+(?:[.,]\d+)?")
-
-
-def parse_visit_count(value):
-    """Extract a numeric visit count from a free text lounge access value.
-
-    Parameters
-    ----------
-    value : str | None
-        Raw value from the model, e.g. ``"5 visits"`` or ``"Unlimited"``.
-
-    Returns
-    -------
-    float | None
-        Parsed number of visits, or ``None`` when no number is present.
-    """
-    if value is None:
-        return None
-    text = str(value)
-    match = _NUMBER_RE.search(text)
-    if not match:
-        return None
-    try:
-        return float(match.group(0).replace(",", "."))
-    except ValueError:
-        return None
 
 
 def _flatten_json(value):
@@ -515,8 +492,8 @@ def credit_card_to_document(card):
         "interest_rate_apr": _to_float(card.interest_rate_apr),
         "lounge_access_international": international,
         "lounge_access_domestic": domestic,
-        "lounge_visits_international": parse_visit_count(international),
-        "lounge_visits_domestic": parse_visit_count(domestic),
+        "lounge_visits_international": lounge_access_count(international),
+        "lounge_visits_domestic": lounge_access_count(domestic),
         "lounge_access_condition": card.lounge_access_condition or "",
         "cash_advance_fee": card.cash_advance_fee or "",
         "late_payment_fee": card.late_payment_fee or "",
@@ -525,6 +502,8 @@ def credit_card_to_document(card):
         "is_active": bool(card.is_active),
         "has_annual_fee": has_annual_fee,
         "has_lounge_access": card.has_lounge_access,
+        "has_international_lounge": direction_has_access(international),
+        "has_domestic_lounge": direction_has_access(domestic),
         "created": card.created,
         "modified": card.modified,
         "content": " ".join(part for part in content_parts if part),

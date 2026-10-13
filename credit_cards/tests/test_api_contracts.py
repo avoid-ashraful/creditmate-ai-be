@@ -91,7 +91,7 @@ class CreditCardAPIContractTests(APITestCase):
         self.assertIsInstance(result["annual_fee_waiver_policy"], dict)
         self.assertIsInstance(result["reward_points_policy"], str)
         self.assertIsInstance(result["additional_features"], list)
-        self.assertIs(result["has_lounge_access"], False)
+        self.assertIsNone(result["has_lounge_access"])
         self.assertIs(result["has_annual_fee"], False)
         self.assertIs(result["is_active"], True)
         self.assertIsInstance(result["created"], str)

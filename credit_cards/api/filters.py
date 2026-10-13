@@ -1,7 +1,10 @@
 import django_filters
 
-from django.db import models
-
+from credit_cards.lounge import (
+    card_lounge_access_q,
+    filter_lounge_count_min,
+    lounge_access_q,
+)
 from credit_cards.models import CreditCard
 
 
@@ -41,10 +44,10 @@ class CreditCardFilter(django_filters.FilterSet):
         method="filter_has_domestic_lounge"
     )
     min_international_lounge = django_filters.NumberFilter(
-        field_name="lounge_access_international", lookup_expr="gte"
+        method="filter_min_international_lounge"
     )
     min_domestic_lounge = django_filters.NumberFilter(
-        field_name="lounge_access_domestic", lookup_expr="gte"
+        method="filter_min_domestic_lounge"
     )
 
     # Fee filters
@@ -76,25 +79,24 @@ class CreditCardFilter(django_filters.FilterSet):
         }
 
     def filter_has_lounge_access(self, queryset, name, value):
-        """Filter cards that have any lounge access."""
-        if value:
-            return queryset.exclude(
-                models.Q(lounge_access_international="")
-                & models.Q(lounge_access_domestic="")
-            )
-        return queryset.filter(lounge_access_international="", lounge_access_domestic="")
+        """Filter by card-level lounge access (True: any access, False: known none)."""
+        return queryset.filter(card_lounge_access_q(value))
 
     def filter_has_international_lounge(self, queryset, name, value):
-        """Filter cards that have international lounge access."""
-        if value:
-            return queryset.exclude(lounge_access_international="")
-        return queryset.filter(lounge_access_international="")
+        """Filter by international lounge access (True: access, False: known none)."""
+        return queryset.filter(lounge_access_q("lounge_access_international", value))
 
     def filter_has_domestic_lounge(self, queryset, name, value):
-        """Filter cards that have domestic lounge access."""
-        if value:
-            return queryset.exclude(lounge_access_domestic="")
-        return queryset.filter(lounge_access_domestic="")
+        """Filter by domestic lounge access (True: access, False: known none)."""
+        return queryset.filter(lounge_access_q("lounge_access_domestic", value))
+
+    def filter_min_international_lounge(self, queryset, name, value):
+        """Filter cards whose stated international visit count is at least value."""
+        return filter_lounge_count_min(queryset, "lounge_access_international", value)
+
+    def filter_min_domestic_lounge(self, queryset, name, value):
+        """Filter cards whose stated domestic visit count is at least value."""
+        return filter_lounge_count_min(queryset, "lounge_access_domestic", value)
 
     def filter_has_annual_fee(self, queryset, name, value):
         """Filter cards that have annual fee."""
