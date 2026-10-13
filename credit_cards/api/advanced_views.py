@@ -97,13 +97,8 @@ def _try_elasticsearch_search(query_params, request):
         if "categories" in query_params:
             category_slugs = query_params["categories"].split(",")
             # Map categories to ES filterable fields
-            for slug in category_slugs:
-                if slug == "travel":
-                    filters["feature_search"] = "travel"
-                elif slug == "cashback":
-                    filters["feature_search"] = "cashback"
-                elif slug == "no-annual-fee":
-                    filters["no_annual_fee"] = "true"
+            # Use "category" filter which maps to proper ES queries matching DB logic
+            filters["category"] = ",".join(category_slugs)
 
         # Build search body with aggregations for facets
         body = build_body(
