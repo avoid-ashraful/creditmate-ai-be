@@ -116,7 +116,7 @@
 | 9.1 User Guides & How-Tos | 🟡 PARTIAL | `docs/user/` folder exists, `src/pages/GuidesPage.tsx` with guide content - **guide articles ("How to choose first credit card", "Annual fee waivers", etc.) not fully verified** |
 | 9.2 Bengali Glossary & Localization Prep | ✅ DONE | `src/locales/` (EN/BN with `useLanguage` hook), `src/data/glossary-bn.ts` (50+ terms), `LOCALIZATION_GUIDE.md`, BDT currency formatting, Bengali calendar option, RTL-ready CSS (logical properties), LanguageSwitcher component |
 | 9.3 API Documentation | ✅ DONE | `credit_mate_ai/settings.py:SPECTACULAR_SETTINGS` (drf-spectacular, auto-generated from DRF), `/api/v1/docs/swagger/` and `/api/v1/docs/redoc/`, examples, auth guide, rate limits, error codes, "Try it" console |
-| 9.4 Developer Documentation | 🟡 PARTIAL | `README.md` (local dev setup, architecture), `docs/development/` folder - **CONTRIBUTING.md, deployment runbooks, incident response playbook not verified** |
+| 9.4 Developer Documentation | ✅ DONE | `CONTRIBUTING.md`, `docs/development/ARCHITECTURE.md` (component diagram + data model), `ENVIRONMENT.md`, `DEPLOYMENT_RUNBOOKS.md`, `INCIDENT_RESPONSE.md`, `scripts/check_docs_links.py`; local checks and parent DevOps references documented. Remote deployment/rotation remains an operations verification. |
 
 ---
 
@@ -155,7 +155,6 @@
 | 11 | **Load test: 1000 VUs sustained 10min** | QA | Expand `load-tests/` beyond smoke.js, identify bottlenecks (DB, cache, CPU) |
 | 12 | **Penetration test & security audit** | Security | External pen test per task 8.5, fix findings before launch |
 | 13 | **Finalize user guides & Bengali content** | Content | Complete 5 guide articles, verify 50+ glossary terms, Flesch-Kincaid < 8th grade |
-| 14 | **Add CONTRIBUTING.md, runbooks, incident playbook** | Docs | Deployment runbooks, rollback procedures, on-call rotation |
 
 ### 🟢 Medium (Post-Launch Iteration)
 
@@ -180,8 +179,8 @@
 | 6 Search & Discovery | 3 | 3 | 0 | 0 |
 | 7 User Accounts | 4 | 4 | 0 | 0 |
 | 8 DevOps | 5 | 3 | 2 | 0 |
-| 9 Documentation | 4 | 2 | 2 | 0 |
+| 9 Documentation | 4 | 3 | 1 | 0 |
 | 10 Analytics | 4 | 2 | 2 | 0 |
-| **TOTAL** | **47** | **37** | **10** | **0** |
+| **TOTAL** | **47** | **38** | **9** | **0** |
 
-**Overall**: 79% DONE, 21% PARTIAL (all partials are "production/remote verification" gaps, not missing code)
+**Overall**: 81% DONE, 19% PARTIAL (all partials are "production/remote verification" gaps, not missing code)
