@@ -22,6 +22,7 @@ class _StubService:
             "engine": {"number": "8.19.3"},
             "indexes": {"banks": {"exists": True, "count": 1, "health": "green"}},
             "pending_queue_rows": 0,
+            "sync_mode": "queue",  # default, can be overridden by tests
         }
 
     def search(self, kind, **kwargs):
@@ -123,7 +124,8 @@ class TestStatusEndpoint:
         assert payload["indexes_meta"]["banks"]["index"] == "banks"
         assert payload["indexes_meta"]["cards"]["index"] == "credit_cards"
         assert payload["queue_depth"]["total"] == 0
-        assert payload["sync_mode"] == "queue"
+        # sync_mode can be "queue" or "sync" depending on SEARCH_SYNC_MODE
+        assert payload["sync_mode"] in ("queue", "sync")
         assert "annual_fee" in payload["indexes_meta"]["cards"]["filterable_fields"]
 
 

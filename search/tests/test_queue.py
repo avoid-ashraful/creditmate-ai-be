@@ -19,6 +19,12 @@ from search.queue import (
 from search.tests.fakes import RecordingService
 
 
+@pytest.fixture(autouse=True)
+def no_index_prefix(settings):
+    """Ensure tests use bare index names without a prefix."""
+    settings.SEARCH_INDEX_PREFIX = ""
+
+
 def queued(capture, *args, **kwargs):
     """Run ``enqueue`` and execute its ``transaction.on_commit`` callbacks.
 

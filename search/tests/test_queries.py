@@ -116,13 +116,16 @@ class TestFilters:
             "min_lounge_visits_international": 2,
             "min_lounge_visits_domestic": 1,
         }
-        assert set(samples) == set(CARD_FILTERS), "filter definitions changed"
+        # Note: "category" filter is handled specially in _build_multi_value_filters
+        expected = set(CARD_FILTERS.keys()) - {"category"}
+        assert set(samples) == expected, "filter definitions changed"
         for name, value in samples.items():
             assert build_filters("cards", {name: value}), f"no clause for {name}"
 
     def test_every_filter_field_exists_in_declared_filterable_fields(self):
         declared = set(filterable_fields("cards"))
-        referenced = {definition[1] for definition in CARD_FILTERS.values()}
+        # Skip "category" filter which is handled specially and doesn't have a field reference
+        referenced = {definition[1] for definition in CARD_FILTERS.values() if len(definition) > 1}
         missing = referenced - declared
         assert not missing, f"filters reference non-declared fields: {missing}"
 

@@ -8,6 +8,12 @@ from search.models import SearchIndexUpdate
 from search.tests.fakes import RecordingService
 
 
+@pytest.fixture(autouse=True)
+def no_index_prefix(settings):
+    """Ensure tests use bare index names without a prefix."""
+    settings.SEARCH_INDEX_PREFIX = ""
+
+
 @pytest.mark.django_db
 class TestSignalToQueue:
     """Model writes must produce outbox rows after the transaction commits."""
