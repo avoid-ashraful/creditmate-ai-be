@@ -77,3 +77,115 @@ def test_one_review_per_user_card(db):
     client.force_authenticate(user)
     response = client.post(reverse("review-list"), {"card": card.pk, "rating": 5, "title": "Second", "body": "Second"})
     assert response.status_code == 400
+
+
+def test_review_rating_bounds_and_duplicate_database_constraint(db):
+    from django.db import IntegrityError, transaction
+    import pytest
+
+    card = card_setup()
+    user = User.objects.create_user(username="rating")
+    client = APIClient()
+    client.force_authenticate(user)
+    url = reverse("review-list")
+    for rating in (0, 6):
+        assert client.post(url, {"card": card.pk, "rating": rating, "title": "T", "body": "B"}).status_code == 400
+    CardReview.objects.create(user=user, card=card, rating=4, title="T", body="B")
+    with pytest.raises(IntegrityError), transaction.atomic():
+        CardReview.objects.create(user=user, card=card, rating=4, title="Again", body="Again")
+
+
+def test_pending_and_rejected_reviews_are_hidden_from_list_and_summary(db):
+    card = card_setup()
+    for index, status in enumerate((CardReview.Status.PENDING, CardReview.Status.REJECTED)):
+        CardReview.objects.create(user=User.objects.create_user(username=f"hidden{index}"), card=card, rating=5, title="Hidden", body="Body", status=status)
+    client = APIClient()
+    assert client.get(reverse("review-list"), {"card": card.pk}).data["count"] == 0
+    summary = client.get(reverse("review-card-summary", args=[card.pk])).data
+    assert summary["review_count"] == 0
+    assert summary["average_rating"] is None
+
+
+def test_summary_cache_invalidates_after_approve_reject_and_delete(db):
+    card = card_setup()
+    user = User.objects.create_user(username="moderated")
+    review = CardReview.objects.create(user=user, card=card, rating=5, title="T", body="B")
+    url = reverse("review-card-summary", args=[card.pk])
+    client = APIClient()
+    assert client.get(url).data["review_count"] == 0
+    review.status = CardReview.Status.APPROVED
+    review.save()
+    assert client.get(url).data["review_count"] == 1
+    review.status = CardReview.Status.REJECTED
+    review.save()
+    assert client.get(url).data["review_count"] == 0
+    review.delete()
+    assert client.get(url).data["review_count"] == 0
+
+
+def test_helpful_vote_is_idempotent_and_disallows_self_vote(db):
+    card = card_setup()
+    author = User.objects.create_user(username="author")
+    voter = User.objects.create_user(username="voter")
+    review = CardReview.objects.create(user=author, card=card, rating=5, title="T", body="B", status="approved")
+    client = APIClient()
+    client.force_authenticate(voter)
+    url = reverse("review-helpful", args=[review.pk])
+    assert client.post(url).status_code == 201
+    response = client.post(url)
+    assert response.status_code == 200
+    assert response.data["helpful_count"] == 1
+    assert review.votes.count() == 1
+    client.force_authenticate(author)
+    assert client.post(url).status_code == 403
+
+
+def test_review_detail_auth_ownership_and_staff_moderation(db):
+    card = card_setup()
+    owner = User.objects.create_user(username="owner")
+    other = User.objects.create_user(username="other")
+    review = CardReview.objects.create(user=owner, card=card, rating=4, title="T", body="B")
+    client = APIClient()
+    detail = reverse("review-detail", args=[review.pk])
+    assert client.get(detail).status_code in (401, 403)
+    client.force_authenticate(other)
+    assert client.get(detail).status_code == 404
+    client.force_authenticate(owner)
+    assert client.get(detail).status_code == 200
+    assert client.delete(detail).status_code == 204
+
+    review = CardReview.objects.create(user=owner, card=card, rating=4, title="T", body="B")
+    moderation = reverse("review-moderation-action", args=[review.pk])
+    assert client.post(moderation, {"status": "approved"}).status_code == 403
+    staff = User.objects.create_superuser(username="staff", email="staff@example.test", password="pw")
+    client.force_authenticate(staff)
+    assert client.get(reverse("review-moderation-queue")).status_code == 200
+    assert client.post(moderation, {"status": "approved"}).status_code == 200
+    review.refresh_from_db()
+    assert review.status == CardReview.Status.APPROVED
+
+
+def test_review_html_is_escaped_from_public_api(db):
+    card = card_setup()
+    user = User.objects.create_user(username="markup")
+    review = CardReview.objects.create(user=user, card=card, rating=3, title="<script>x</script>", body="<b>hello</b>", status="approved")
+    response = APIClient().get(reverse("review-list"), {"card": card.pk})
+    rendered = str(response.data)
+    assert review.title not in rendered
+    assert "<script>" not in rendered
+
+
+def test_review_throttle_and_public_list_query_count(db, django_assert_num_queries, settings):
+    card = card_setup()
+    for index in range(3):
+        CardReview.objects.create(user=User.objects.create_user(username=f"listed{index}"), card=card, rating=5, title="T", body="B", status="approved")
+    with django_assert_num_queries(2):
+        response = APIClient().get(reverse("review-list"), {"card": card.pk})
+    assert response.data["count"] == 3
+    settings.REST_FRAMEWORK = {**settings.REST_FRAMEWORK, "DEFAULT_THROTTLE_RATES": {**settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"], "review_write": "1/hour"}}
+    client = APIClient()
+    client.force_authenticate(User.objects.create_user(username="throttled"))
+    url = reverse("review-list")
+    payload = {"card": card.pk, "rating": 3, "title": "T", "body": "B"}
+    assert client.post(url, payload).status_code == 201
+    assert client.post(url, payload).status_code == 429
