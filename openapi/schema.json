@@ -1,0 +1,1135 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Credit Mate AI API",
+        "version": "v1",
+        "description": "AI-powered credit card discovery platform API",
+        "license": {
+            "name": "MIT License"
+        }
+    },
+    "paths": {
+        "/api/search/": {
+            "get": {
+                "operationId": "search_retrieve",
+                "description": "Full text search over banks and credit cards",
+                "tags": [
+                    "search"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/search/status/": {
+            "get": {
+                "operationId": "search_status_retrieve",
+                "description": "Get search service status including engine, indexes, and queue metrics",
+                "tags": [
+                    "search"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/search/suggest/": {
+            "get": {
+                "operationId": "search_suggest_retrieve",
+                "description": "Get type-ahead suggestions for search queries",
+                "tags": [
+                    "search"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/banks/": {
+            "get": {
+                "operationId": "v1_banks_list",
+                "description": "List all active banks",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "created__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_credit_cards",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_active",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "banks"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedBankListList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/banks/{id}/": {
+            "get": {
+                "operationId": "v1_banks_retrieve",
+                "description": "Retrieve a specific bank by ID",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this bank.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "banks"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Bank"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/credit-cards/": {
+            "get": {
+                "operationId": "v1_credit_cards_list",
+                "description": "List all active credit cards with filtering and search",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "annual_fee_max",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_min",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_range_max",
+                        "schema": {
+                            "type": "string",
+                            "format": "decimal",
+                            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_range_min",
+                        "schema": {
+                            "type": "string",
+                            "format": "decimal",
+                            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank_ids",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "description": "Multiple values may be separated by commas.",
+                        "explode": false,
+                        "style": "form"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank_name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "feature_search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_additional_features",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_annual_fee",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_domestic_lounge",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_fee_waiver",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_international_lounge",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_lounge_access",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "ids",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "description": "Multiple values may be separated by commas.",
+                        "explode": false,
+                        "style": "form"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_max",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_min",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range_max",
+                        "schema": {
+                            "type": "string",
+                            "format": "decimal",
+                            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range_min",
+                        "schema": {
+                            "type": "string",
+                            "format": "decimal",
+                            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_active",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_domestic_lounge",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_international_lounge",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "no_annual_fee",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "credit-cards"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedCreditCardListList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/credit-cards/{id}/": {
+            "get": {
+                "operationId": "v1_credit_cards_retrieve",
+                "description": "Retrieve a specific credit card by ID",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this credit card.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "credit-cards"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreditCard"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/credit-cards/search-suggestions/": {
+            "get": {
+                "operationId": "v1_credit_cards_search_suggestions_retrieve",
+                "description": "Get search suggestions for annual fee ranges, benefits, and popular banks",
+                "tags": [
+                    "credit-cards"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreditCard"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/schema/": {
+            "get": {
+                "operationId": "v1_schema_retrieve",
+                "description": "OpenApi3 schema for this API. Format can be selected via content negotiation.\n\n- YAML: application/vnd.oai.openapi\n- JSON: application/vnd.oai.openapi+json",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "format",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "json",
+                                "yaml"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "lang",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "af",
+                                "ar",
+                                "ar-dz",
+                                "ast",
+                                "az",
+                                "be",
+                                "bg",
+                                "bn",
+                                "br",
+                                "bs",
+                                "ca",
+                                "ckb",
+                                "cs",
+                                "cy",
+                                "da",
+                                "de",
+                                "dsb",
+                                "el",
+                                "en",
+                                "en-au",
+                                "en-gb",
+                                "eo",
+                                "es",
+                                "es-ar",
+                                "es-co",
+                                "es-mx",
+                                "es-ni",
+                                "es-ve",
+                                "et",
+                                "eu",
+                                "fa",
+                                "fi",
+                                "fr",
+                                "fy",
+                                "ga",
+                                "gd",
+                                "gl",
+                                "he",
+                                "hi",
+                                "hr",
+                                "hsb",
+                                "hu",
+                                "hy",
+                                "ia",
+                                "id",
+                                "ig",
+                                "io",
+                                "is",
+                                "it",
+                                "ja",
+                                "ka",
+                                "kab",
+                                "kk",
+                                "km",
+                                "kn",
+                                "ko",
+                                "ky",
+                                "lb",
+                                "lt",
+                                "lv",
+                                "mk",
+                                "ml",
+                                "mn",
+                                "mr",
+                                "ms",
+                                "my",
+                                "nb",
+                                "ne",
+                                "nl",
+                                "nn",
+                                "os",
+                                "pa",
+                                "pl",
+                                "pt",
+                                "pt-br",
+                                "ro",
+                                "ru",
+                                "sk",
+                                "sl",
+                                "sq",
+                                "sr",
+                                "sr-latn",
+                                "sv",
+                                "sw",
+                                "ta",
+                                "te",
+                                "tg",
+                                "th",
+                                "tk",
+                                "tr",
+                                "tt",
+                                "udm",
+                                "ug",
+                                "uk",
+                                "ur",
+                                "uz",
+                                "vi",
+                                "zh-hans",
+                                "zh-hant"
+                            ]
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/vnd.oai.openapi": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            },
+                            "application/yaml": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            },
+                            "application/vnd.oai.openapi+json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Bank": {
+                "type": "object",
+                "description": "Serializer for Bank model.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "logo": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 512
+                    },
+                    "website": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 512
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "credit_card_count": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created",
+                    "credit_card_count",
+                    "id",
+                    "modified",
+                    "name"
+                ]
+            },
+            "BankList": {
+                "type": "object",
+                "description": "Lightweight serializer for Bank list views.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "logo": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 512
+                    },
+                    "credit_card_count": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "credit_card_count",
+                    "id",
+                    "name"
+                ]
+            },
+            "CreditCard": {
+                "type": "object",
+                "description": "Serializer for CreditCard model.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "bank": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/BankList"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "bank_id": {
+                        "type": "integer",
+                        "writeOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "annual_fee": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "interest_rate_apr": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "lounge_access_international": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "lounge_access_domestic": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "cash_advance_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "late_payment_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "annual_fee_waiver_policy": {
+                        "nullable": true
+                    },
+                    "reward_points_policy": {
+                        "type": "string"
+                    },
+                    "additional_features": {},
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "has_lounge_access": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "total_lounge_access": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "has_annual_fee": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "bank",
+                    "bank_id",
+                    "created",
+                    "has_annual_fee",
+                    "has_lounge_access",
+                    "id",
+                    "modified",
+                    "name",
+                    "total_lounge_access"
+                ]
+            },
+            "CreditCardList": {
+                "type": "object",
+                "description": "Serializer for CreditCard list views.\n\nIncludes the bank identity and the detail fields the frontend transforms\nand renders (reward policy, additional features, waiver policy and fee\nstrings), while preserving the existing bank_name field.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "bank": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/BankList"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "bank_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "bank_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "annual_fee": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "interest_rate_apr": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "lounge_access_international": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "lounge_access_domestic": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "cash_advance_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "late_payment_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "annual_fee_waiver_policy": {
+                        "nullable": true
+                    },
+                    "reward_points_policy": {
+                        "type": "string"
+                    },
+                    "additional_features": {},
+                    "has_lounge_access": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "has_annual_fee": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "bank",
+                    "bank_id",
+                    "bank_name",
+                    "created",
+                    "has_annual_fee",
+                    "has_lounge_access",
+                    "id",
+                    "modified",
+                    "name"
+                ]
+            },
+            "PaginatedBankListList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BankList"
+                        }
+                    }
+                }
+            },
+            "PaginatedCreditCardListList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CreditCardList"
+                        }
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "sessionid"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "banks",
+            "description": "Bank-related operations"
+        },
+        {
+            "name": "credit-cards",
+            "description": "Credit card-related operations"
+        },
+        {
+            "name": "search",
+            "description": "Search and suggestions operations"
+        },
+        {
+            "name": "admin",
+            "description": "Staff-only administrative operations"
+        }
+    ]
+}

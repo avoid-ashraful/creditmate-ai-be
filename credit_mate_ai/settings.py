@@ -109,6 +109,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "drf_spectacular",
     "django_filters",
     "common",
     "banks",
@@ -280,6 +281,7 @@ else:
 
 # Django REST Framework
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
     ],
@@ -305,6 +307,24 @@ REST_FRAMEWORK = {
         "user": os.getenv("THROTTLE_RATE_USER", "1000/min"),
         "burst": os.getenv("THROTTLE_RATE_BURST", "10/sec"),
     },
+}
+
+# drf-spectacular configuration (OpenAPI schema generation)
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Credit Mate AI API",
+    "VERSION": "v1",
+    "DESCRIPTION": "AI-powered credit card discovery platform API",
+    "LICENSE": {"name": "MIT License"},
+    "TAGS": [
+        {"name": "banks", "description": "Bank-related operations"},
+        {"name": "credit-cards", "description": "Credit card-related operations"},
+        {"name": "search", "description": "Search and suggestions operations"},
+        {"name": "admin", "description": "Staff-only administrative operations"},
+    ],
+    "SCHEMA_PATH": "/api/v1/schema",
+    "SWAGGER_UI_PATH": "/api/v1/docs/swagger",
+    "REDOC_PATH": "/api/v1/docs/redoc",
+    "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
 
 # CORS Configuration

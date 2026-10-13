@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -23,6 +24,20 @@ from credit_mate_ai.cache import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        description="List all active credit cards with filtering and search",
+        tags=["credit-cards"],
+    ),
+    retrieve=extend_schema(
+        description="Retrieve a specific credit card by ID",
+        tags=["credit-cards"],
+    ),
+    search_suggestions=extend_schema(
+        description="Get search suggestions for annual fee ranges, benefits, and popular banks",
+        tags=["credit-cards"],
+    ),
+)
 class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for Credit Cards.
 

@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import filters, viewsets
 
 from banks.api.filters import BankFilter
@@ -6,6 +7,16 @@ from banks.api.serializers import BankListSerializer, BankSerializer
 from banks.models import Bank
 
 
+@extend_schema_view(
+    list=extend_schema(
+        description="List all active banks",
+        tags=["banks"],
+    ),
+    retrieve=extend_schema(
+        description="Retrieve a specific bank by ID",
+        tags=["banks"],
+    ),
+)
 class BankViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for Banks.
 
