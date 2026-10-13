@@ -465,7 +465,57 @@ class BankDataCrawlerService:
             )
 
         # Update database
-        return self._update_database_safely(data_source, structured_data, crawled_content)
+        success = self._update_database_safely(data_source, structured_data, crawled_content)
+        if success:
+            # Task 2.4: cross-check this record against the bank's other
+            # sources and flag real conflicts for manual review.
+            self._validate_multi_source(crawled_content)
+        return success
+
+    @staticmethod
+    def _validate_multi_source(crawled_content):
+        """Run multi-source validation for one completed crawl record.
+
+        Compares the record's own observations with the latest completed
+        crawls of the bank's other active data sources (and, when provided by
+        callers, user submissions). Real conflicts or same-source
+        inconsistencies set ``needs_manual_review`` and are persisted in
+        ``CrawledContent.multi_source_validation``. Validation is best effort:
+        a failure is logged and never breaks the crawl.
+
+        Parameters
+        ----------
+        crawled_content : CrawledContent
+            Completed crawl record to validate and update.
+
+        Returns
+        -------
+        dict or None
+            The stored validation summary when validation ran, ``None`` when
+            it did not run (e.g. no other source exists yet).
+        """
+        try:
+            from banks.services.validation_collectors import (
+                run_multi_source_validation,
+            )
+
+            run_multi_source_validation(crawled_content)
+            summary = crawled_content.multi_source_validation or {}
+            if summary.get("needs_manual_review"):
+                logger.warning(
+                    "Multi-source validation flagged crawled content %s for "
+                    "manual review (%d conflicting field(s))",
+                    crawled_content.id,
+                    summary.get("conflict_field_count", 0),
+                )
+            return summary
+        except Exception as exc:  # noqa: BLE001 - validation is best effort
+            logger.warning(
+                "Multi-source validation skipped for crawled content %s: %s",
+                getattr(crawled_content, "id", None),
+                exc,
+            )
+            return None
 
     @staticmethod
     def _extraction_method(data_source):

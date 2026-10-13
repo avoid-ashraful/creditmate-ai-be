@@ -179,6 +179,15 @@ class CrawledContent(Audit):
             "pass name, provider, cards found and per-pass confidence"
         ),
     )
+    multi_source_validation = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            "Multi-source validation outcome (Task 2.4): per-card-field agreement/"
+            "conflict status, independent source counts and validated confidences. "
+            "Empty dict when no cross-source comparison has run."
+        ),
+    )
     quality_scored_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -250,6 +259,31 @@ class CrawledContent(Audit):
                 "quality_scored_at",
             ]
         )
+        return self
+
+    def apply_multi_source_validation(self, summary):
+        """Store a multi-source validation summary and raise the review flag.
+
+        The summary is the JSON-safe output of
+        :mod:`banks.services.multi_source_validation`. When it reports a real
+        conflict or same-source inconsistency the record's
+        ``needs_manual_review`` flag is set to ``True``; an existing flag is
+        never cleared by a validation run.
+
+        Parameters
+        ----------
+        summary : dict
+            Serialized validation batch (see ``batch_summary``).
+
+        Returns
+        -------
+        CrawledContent
+            The saved instance.
+        """
+        self.multi_source_validation = dict(summary or {})
+        if (summary or {}).get("needs_manual_review"):
+            self.needs_manual_review = True
+        self.save(update_fields=["multi_source_validation", "needs_manual_review"])
         return self
 
     @staticmethod

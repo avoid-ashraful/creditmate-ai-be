@@ -17,6 +17,15 @@ from banks.services.prompt_templates import BankSpecificPrompts
 from banks.services.quality_scoring import ExtractionQuality, score_extraction
 from banks.services.quality_validator import ExtractionQualityValidator
 from banks.services.schedule_charge_finder import ScheduleChargeURLFinder
+from banks.services.multi_source_validation import (
+    MultiSourceValidator,
+    Observation,
+    ValidationBatch,
+)
+from banks.services.validation_collectors import (
+    run_multi_source_validation,
+    validate_crawled_content,
+)
 
 __all__ = [
     "ContentExtractor",
@@ -31,4 +40,9 @@ __all__ = [
     "ExtractionQualityValidator",
     "ExtractionQuality",
     "score_extraction",
+    "MultiSourceValidator",
+    "Observation",
+    "ValidationBatch",
+    "run_multi_source_validation",
+    "validate_crawled_content",
 ]
