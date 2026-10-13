@@ -259,6 +259,13 @@ SEARCH_QUEUE_MAX_ATTEMPTS = int(os.getenv("SEARCH_QUEUE_MAX_ATTEMPTS", "5"))
 
 # Environment Configuration
 
+# High-priority manual review email recipients are explicitly opt-in.
+REVIEW_QUEUE_NOTIFY_EMAILS = [
+    address.strip()
+    for address in os.getenv("REVIEW_QUEUE_NOTIFY_EMAILS", "").split(",")
+    if address.strip()
+]
+
 # Email Configuration
 # Disable email service for non-production environments
 if ENVIRONMENT == "production":

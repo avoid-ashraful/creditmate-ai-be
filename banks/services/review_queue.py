@@ -1,6 +1,8 @@
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
@@ -44,12 +46,41 @@ class ReviewQueueService:
         return queue_item
 
     def notify_high_priority(self, queue_item):
-        """Record a high-priority review event locally without an external send."""
+        """Log and email configured recipients after the queue item commits."""
         logger.warning(
             "High-priority manual review queued for crawled content %s (bank %s)",
             queue_item.crawled_content_id,
             queue_item.bank_id,
         )
+        recipients = getattr(settings, "REVIEW_QUEUE_NOTIFY_EMAILS", [])
+        if not recipients:
+            return
+
+        content_id = queue_item.crawled_content_id
+        bank_name = queue_item.bank.name
+        transaction.on_commit(
+            lambda: self._send_high_priority_email(content_id, bank_name, recipients)
+        )
+
+    @staticmethod
+    def _send_high_priority_email(content_id, bank_name, recipients):
+        """Send an opt-in review alert; SMTP failures do not roll back the queue."""
+        try:
+            send_mail(
+                subject=f"High-priority credit-card review: {bank_name}",
+                message=(
+                    f"A new high-priority credit-card extraction needs review. "
+                    f"Bank: {bank_name}. Crawled content ID: {content_id}."
+                ),
+                from_email=None,
+                recipient_list=recipients,
+                fail_silently=False,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to email high-priority review alert for crawled content %s",
+                content_id,
+            )
 
     @transaction.atomic
     def approve(self, queue_item, reviewer=None, notes=""):

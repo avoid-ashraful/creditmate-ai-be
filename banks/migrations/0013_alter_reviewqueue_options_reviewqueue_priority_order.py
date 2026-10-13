@@ -3,6 +3,15 @@
 from django.db import migrations, models
 
 
+def backfill_priority_order(apps, schema_editor):
+    """Translate existing priority labels before numeric ordering is used."""
+    ReviewQueue = apps.get_model("banks", "ReviewQueue")
+    manager = ReviewQueue.objects.using(schema_editor.connection.alias)
+    manager.filter(priority="high").update(priority_order=3)
+    manager.filter(priority="medium").update(priority_order=2)
+    manager.filter(priority="low").update(priority_order=1)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -19,4 +28,5 @@ class Migration(migrations.Migration):
             name='priority_order',
             field=models.PositiveSmallIntegerField(db_index=True, default=1, help_text='Numeric order for sorting: 3=HIGH, 2=MEDIUM, 1=LOW'),
         ),
+        migrations.RunPython(backfill_priority_order, migrations.RunPython.noop),
     ]

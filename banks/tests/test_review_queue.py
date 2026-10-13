@@ -2,13 +2,14 @@
 
 import logging
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
-from django.test import Client
+from django.test import Client, override_settings
 from django.urls import reverse
 
 from banks.enums import ProcessingStatus, ReviewPriority, ReviewStatus
@@ -57,6 +58,33 @@ class TestEnqueue:
 
         assert content.enqueue_for_manual_review() is None
         assert ReviewQueue.objects.count() == 0
+
+    @override_settings(REVIEW_QUEUE_NOTIFY_EMAILS=["review@example.test"])
+    def test_high_priority_email_is_scheduled_after_commit(self):
+        content = CrawledContentFactory(
+            extraction_confidence=0.1,
+            needs_manual_review=True,
+        )
+        service = ReviewQueueService()
+
+        with patch("banks.services.review_queue.send_mail") as send_mail:
+            with patch("banks.services.review_queue.transaction.on_commit") as on_commit:
+                item = service.enqueue(content)
+                assert item.priority == ReviewPriority.HIGH
+                send_mail.assert_not_called()
+                on_commit.assert_called_once()
+                on_commit.call_args.args[0]()
+
+            send_mail.assert_called_once_with(
+                subject=f"High-priority credit-card review: {item.bank.name}",
+                message=(
+                    "A new high-priority credit-card extraction needs review. "
+                    f"Bank: {item.bank.name}. Crawled content ID: {item.crawled_content_id}."
+                ),
+                from_email=None,
+                recipient_list=["review@example.test"],
+                fail_silently=False,
+            )
 
     def test_high_priority_enqueue_emits_local_hook_once(self, caplog):
         content = CrawledContentFactory(
