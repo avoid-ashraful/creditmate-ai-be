@@ -76,6 +76,14 @@ def test_healthz_allows_head(client):
     assert client.head(HEALTHZ_URL).status_code == 200
 
 
+def test_legacy_health_endpoint_is_unchanged(client):
+    """The original /health/ endpoint keeps its response shape."""
+    response = client.get("/health/")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
+
+
 def test_healthz_rejects_post(client):
     """Only read methods are allowed on the probe."""
     assert client.post(HEALTHZ_URL).status_code == 405
