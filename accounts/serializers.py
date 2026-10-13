@@ -2,9 +2,14 @@
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+
+
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer as SimpleJWTTokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.models import UserProfile
@@ -29,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "email", "first_name", "last_name", "profile"]
-        read_only_fields = ["id", "username"]
+        read_only_fields = ["id", "username", "email"]
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop("profile", None)
@@ -131,24 +136,15 @@ class LogoutSerializer(serializers.Serializer):
         return value
 
 
-class TokenRefreshSerializer(serializers.Serializer):
-    """Serializer for refreshing access token."""
-
-    refresh = serializers.CharField()
-
-    def validate_refresh(self, value):
-        """Validate the refresh token."""
-        try:
-            RefreshToken(value)
-        except Exception:
-            raise serializers.ValidationError(_("Invalid refresh token."))
-        return value
+class TokenRefreshSerializer(SimpleJWTTokenRefreshSerializer):
+    """Serializer for refreshing access token with rotation and reuse detection."""
 
     def validate(self, attrs):
-        """Validate refresh token and return new access token."""
-        token = RefreshToken(attrs["refresh"])
-        attrs["access"] = str(token.access_token)
-        return attrs
+        """Validate refresh token and return new access (and optionally refresh) token."""
+        try:
+            return super().validate(attrs)
+        except TokenError as e:
+            raise serializers.ValidationError({"refresh": str(e)})
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
@@ -180,17 +176,17 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
                 {"new_password_confirm": _("Passwords do not match.")}
             )
 
-        signer = TimestampSigner()
+        # Use Django's default_token_generator for proper single-use tokens
+        # uid is base64-encoded user pk, token is from default_token_generator
         try:
-            email = signer.unsign(attrs["uid"], max_age=3600)  # 1 hour expiry
-        except SignatureExpired:
-            raise serializers.ValidationError(_("Password reset link has expired."))
-        except BadSignature:
+            from django.utils.http import urlsafe_base64_decode
+            user_pk = urlsafe_base64_decode(attrs["uid"]).decode()
+            user = User.objects.get(pk=user_pk)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             raise serializers.ValidationError(_("Invalid password reset link."))
 
-        user = User.objects.filter(username__iexact=email).first()
-        if not user:
-            raise serializers.ValidationError(_("Invalid password reset link."))
+        if not default_token_generator.check_token(user, attrs["token"]):
+            raise serializers.ValidationError(_("Invalid or expired password reset link."))
 
         attrs["user"] = user
         return attrs
