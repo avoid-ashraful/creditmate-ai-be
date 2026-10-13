@@ -14,7 +14,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 def test_schema_endpoint_live():
     """Test /api/v1/schema/ returns valid OpenAPI schema."""
     client = APIClient()
@@ -31,7 +31,7 @@ def test_schema_endpoint_live():
     assert "paths" in schema, "Missing paths section"
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 def test_swagger_ui_endpoint_live():
     """Test /api/v1/docs/swagger/ returns valid Swagger UI HTML."""
     client = APIClient()
@@ -44,7 +44,7 @@ def test_swagger_ui_endpoint_live():
     assert "swagger" in content.lower(), "Swagger UI not loaded"
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 def test_redoc_endpoint_live():
     """Test /api/v1/docs/redoc/ returns valid Redoc HTML."""
     client = APIClient()
@@ -57,7 +57,7 @@ def test_redoc_endpoint_live():
     assert "redoc" in content.lower(), "Redoc not loaded"
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 def test_schema_has_banks_routes():
     """Verify schema includes banks endpoint group."""
     client = APIClient()
@@ -68,7 +68,7 @@ def test_schema_has_banks_routes():
         f"Banks routes missing. Paths: {list(paths.keys())}"
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 def test_schema_has_credit_cards_routes():
     """Verify schema includes credit-cards endpoint group."""
     client = APIClient()
@@ -79,7 +79,7 @@ def test_schema_has_credit_cards_routes():
         f"Credit-cards routes missing. Paths: {list(paths.keys())}"
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 def test_schema_has_search_routes():
     """Verify schema includes search endpoint group."""
     client = APIClient()
@@ -90,7 +90,7 @@ def test_schema_has_search_routes():
         f"Search routes missing. Paths: {list(paths.keys())}"
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 def test_schema_has_proper_tags():
     """Verify schema uses banks, credit-cards, search, admin tags."""
     client = APIClient()
@@ -156,7 +156,7 @@ def test_public_api_permissions():
     ), f"AllowAny not found in {perms}"
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 def test_schema_no_api_key_scheme():
     """Verify schema does not advertise non-existent API key auth."""
     client = APIClient()

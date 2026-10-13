@@ -9,7 +9,7 @@ response contracts, with specific focus on:
 """
 
 import pytest
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from banks.factories import BankFactory
@@ -23,6 +23,7 @@ SCHEMA_URL = "/api/v1/schema/"
 class TestTypeaheadSchemaDocumentation:
     """Validate typeahead endpoint OpenAPI documentation."""
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_endpoint_exists_in_schema(self, api_client):
         """Typeahead endpoint must be documented in OpenAPI schema."""
         response = api_client.get(SCHEMA_URL)
@@ -32,6 +33,7 @@ class TestTypeaheadSchemaDocumentation:
         assert "paths" in schema
         assert "/api/v1/credit-cards/typeahead/" in schema["paths"]
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_endpoint_response_schema_defined(self, api_client):
         """Typeahead response must have explicit response schema."""
         response = api_client.get(SCHEMA_URL)
@@ -49,6 +51,7 @@ class TestTypeaheadSchemaDocumentation:
         assert "content" in response_200
         assert "application/json" in response_200["content"]
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_response_has_required_fields(self, api_client):
         """Response schema must define all required top-level fields."""
         response = api_client.get(SCHEMA_URL)
@@ -76,6 +79,7 @@ class TestTypeaheadSchemaDocumentation:
         assert "highlight" in properties
         assert "match_policy" in properties
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_suggestions_array_documented(self, api_client):
         """Suggestions array must be documented as mixed type array."""
         response = api_client.get(SCHEMA_URL)
@@ -95,6 +99,7 @@ class TestTypeaheadSchemaDocumentation:
         assert "type" in suggestions
         assert suggestions["type"] == "array"
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_matches_structure_documented(self, api_client):
         """Matches object must document card, bank, category, source fields."""
         response = api_client.get(SCHEMA_URL)
@@ -122,6 +127,7 @@ class TestTypeaheadSchemaDocumentation:
         assert "category" in matches["properties"]
         assert "source" in matches["properties"]
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_facets_structure_documented(self, api_client):
         """Facets must document label, count, filter fields."""
         response = api_client.get(SCHEMA_URL)
@@ -140,6 +146,7 @@ class TestTypeaheadSchemaDocumentation:
         facets = response_schema["properties"]["facets"]
         assert "type" in facets
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_highlight_structure_documented(self, api_client):
         """Highlight must document terms, scope, strategy fields."""
         response = api_client.get(SCHEMA_URL)
@@ -166,6 +173,7 @@ class TestTypeaheadSchemaDocumentation:
         assert "scope" in highlight["properties"]
         assert "strategy" in highlight["properties"]
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_match_policy_structure_documented(self, api_client):
         """Match policy must document minimum_characters, result_limit, active."""
         response = api_client.get(SCHEMA_URL)
@@ -197,6 +205,7 @@ class TestTypeaheadSchemaDocumentation:
 class TestTypeaheadSchemaAccuracyRegression:
     """Regression tests ensuring schema matches actual API responses."""
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_actual_typeahead_response_matches_schema(self, api_client):
         """Actual typeahead response must conform to documented schema."""
         CreditCardFactory.create_batch(3, name="Travel Card")
@@ -255,6 +264,7 @@ class TestTypeaheadSchemaAccuracyRegression:
             for key in ["minimum_characters", "result_limit", "active"]
         )
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_facets_structure_matches_schema(self, api_client):
         """Facets must be dict keyed by slug with label/count/filter items."""
         CreditCardFactory(name="Test", annual_fee=0)
@@ -278,6 +288,7 @@ class TestTypeaheadSchemaAccuracyRegression:
             assert isinstance(facet_item["count"], int)
             assert isinstance(facet_item["filter"], str)
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_suggestions_polymorphic_types(self, api_client):
         """Suggestions must have type discrimination for card/bank/category."""
         CreditCardFactory(name="Sapphire")
@@ -311,6 +322,7 @@ class TestTypeaheadSchemaAccuracyRegression:
                 assert "label" in suggestion
                 assert "id" not in suggestion
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_schema_does_not_reference_creditcard_model(self, api_client):
         """Response schemas must not leak CreditCard model reference."""
         schema_response = api_client.get(SCHEMA_URL)
@@ -327,6 +339,7 @@ class TestTypeaheadSchemaAccuracyRegression:
         assert "TypeaheadResponse" in response_schema_ref
         assert "CreditCard" not in response_schema_ref
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_field_history_schema_is_paginated_and_typed(self, api_client):
         """Field history must document its page envelope and history rows."""
         response = api_client.get(SCHEMA_URL)
@@ -344,6 +357,7 @@ class TestTypeaheadSchemaAccuracyRegression:
         result_items = history_schema["properties"]["results"]["items"]
         assert result_items["$ref"].endswith("/CreditCardFieldHistory")
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_suggestions_field_has_oneof_schema(self, api_client):
         """Suggestions field must declare oneOf with card/bank/category schemas."""
         schema_response = api_client.get(SCHEMA_URL)
@@ -389,6 +403,7 @@ class TestTypeaheadSchemaAccuracyRegression:
             assert "bank" in str(one_of).lower()
             assert "category" in str(one_of).lower()
 
+    @override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
     def test_typeahead_suggestions_with_results_conforms_to_schema(self, api_client):
         """Typeahead suggestions with actual results must match schema."""
         CreditCardFactory(name="Sapphire")
@@ -426,6 +441,7 @@ class TestTypeaheadSchemaAccuracyRegression:
                 assert isinstance(suggestion["label"], str)
 
 
+@override_settings(SECURE_SSL_REDIRECT=False, DEBUG=True)
 class TestSchemaGeneration(TestCase):
     """Test schema generation functionality."""
 

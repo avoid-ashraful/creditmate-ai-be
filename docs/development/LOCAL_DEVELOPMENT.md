@@ -11,6 +11,7 @@ This guide provides step-by-step instructions for setting up the CreditMate AI b
 - [Database Setup](#database-setup)
 - [Running the Application](#running-the-application)
 - [Code Quality Tools](#code-quality-tools)
+- [Running Tests](#running-tests)
 - [Troubleshooting](#troubleshooting)
 
 ## System Requirements
@@ -124,6 +125,14 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 # Rate limiting (permissive for development)
 THROTTLE_RATE_ANON=10000/hour
 THROTTLE_RATE_USER=20000/hour
+THROTTLE_RATE_BURST=1000/min
+
+# Search (disable for local dev without Elasticsearch)
+SEARCH_ENABLED=False
+
+# Observability
+METRICS_TOKEN=
+READYZ_TIMEOUT_SECONDS=1.0
 ```
 
 ### Step 5: Create Database
@@ -251,6 +260,10 @@ docker-compose -f docker-compose.dev.yml exec redis redis-cli
 | `CORS_ALLOWED_ORIGINS` | Allowed CORS origins | `http://localhost:3000` |
 | `CACHE_BACKEND` | Cache backend | `redis` |
 | `SENTRY_DSN` | Sentry error tracking | Disabled if not set |
+| `SEARCH_ENABLED` | Enable Elasticsearch | `True` |
+| `SEARCH_URL` | Elasticsearch URL | `http://127.0.0.1:19200` |
+| `METRICS_TOKEN` | Metrics bearer token | Empty |
+| `METRICS_ALLOWED_IPS` | Metrics allowed IPs | Empty |
 
 **See [Environment Variables Reference](../configuration/environment-variables.md) for complete list.**
 
@@ -384,31 +397,6 @@ uv run mypy .
 uv run mypy banks/
 ```
 
-### Running Tests
-
-```bash
-# Run all tests
-uv run pytest
-
-# Run with coverage report
-uv run pytest --cov=banks --cov=credit_cards --cov=common --cov-report=html
-
-# Run specific test file
-uv run pytest banks/tests/test_api.py
-
-# Run specific test function
-uv run pytest banks/tests/test_api.py::TestBanksAPI::test_list_banks
-
-# Run with verbose output
-uv run pytest -v
-
-# Stop on first failure
-uv run pytest -x
-
-# Show print statements
-uv run pytest -s
-```
-
 ### Pre-commit Hooks (Optional)
 
 ```bash
@@ -421,6 +409,91 @@ pre-commit run --all-files
 # Skip hooks on commit
 git commit --no-verify
 ```
+
+## Running Tests
+
+### Test Environment Requirements
+
+Tests require:
+- PostgreSQL database (create a unique test database per task)
+- Redis on database 14 (shared test Redis instance)
+- Environment variables set appropriately
+
+### Running All Tests
+
+```bash
+# Run all tests (uses Redis DB 14, unique PostgreSQL DB)
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 \
+DEBUG=True \
+SECRET_KEY=test \
+SEARCH_ENABLED=False \
+DB_NAME=test_docs_api \
+DB_USER=postgres \
+DB_PASSWORD=postgres \
+DB_HOST=127.0.0.1 \
+uv run pytest
+```
+
+### Running Specific Test Modules
+
+```bash
+# Credit cards tests
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run pytest credit_cards/tests/ -v
+
+# Typeahead tests
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run pytest credit_cards/tests/test_typeahead.py -v
+
+# Advanced search tests
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run pytest credit_cards/tests/test_advanced_search.py -v
+
+# Schema documentation tests
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run pytest credit_cards/tests/test_schema_documentation.py tests/test_schema_docs.py -v
+
+# Core app tests
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run pytest credit_mate_ai/tests/ -v
+
+# Search tests
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run pytest search/tests/ -v
+
+# Banks tests (includes quality dashboard, review queue, etc.)
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run pytest banks/tests/ -v
+```
+
+### Running Tests with Coverage
+
+```bash
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run pytest --cov=banks --cov=credit_cards --cov=common --cov=credit_mate_ai --cov=search --cov-report=html
+```
+
+### One pytest Session at a Time
+
+**Important**: Redis DB 14 is shared across workers. Only run one pytest session at a time to avoid cache conflicts. If tests are flaky, rerun them alone.
+
+### Test Database Setup
+
+```bash
+# Start PostgreSQL via Docker (unique database per task)
+docker run -d --name task-63-search-db-1 \
+  -e POSTGRES_DB=test_docs_api \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  postgres:15
+
+# Start Redis (shared, uses DB 14 for tests)
+docker run -d -p 6379:6379 redis:7-alpine
+```
+
+### OpenAPI Schema Export & Validation
+
+```bash
+# Export and validate OpenAPI schema
+REDIS_CACHE_URL=redis://127.0.0.1:6379/14 DEBUG=True SECRET_KEY=test SEARCH_ENABLED=False DB_NAME=test_docs_api DB_USER=postgres DB_PASSWORD=postgres DB_HOST=127.0.0.1 uv run python manage.py spectacular --file /tmp/schema.yml --validate
+```
+
+Expected warnings (known, non-blocking):
+- `BankListSerializer`: unable to resolve type hint for "credit_card_count"
+- `BankSerializer`: unable to resolve type hint for "credit_card_count"
 
 ## System Health Checks
 
@@ -605,6 +678,35 @@ htop  # Better version (if installed)
 uv run celery -A credit_mate_ai worker -c 2  # 2 concurrent tasks
 ```
 
+### Readiness Probe Issues
+
+**Problem**: `/api/readyz/` returns 503
+
+**Solutions**:
+```bash
+# Check detailed response
+curl -sS http://localhost:8000/api/readyz/ | jq .
+
+# Common failures:
+# - database: PostgreSQL not reachable or authentication failed
+# - cache: Redis not reachable on REDIS_CACHE_URL
+# - elasticsearch: SEARCH_ENABLED=True but Elasticsearch not reachable
+```
+
+### Metrics Access Issues
+
+**Problem**: 403 Forbidden on /metrics
+
+**Solutions**:
+```bash
+# Set METRICS_TOKEN or METRICS_ALLOWED_IPS
+export METRICS_TOKEN="your-token"
+# or
+export METRICS_ALLOWED_IPS="127.0.0.1"
+
+curl -H "Authorization: Bearer $METRICS_TOKEN" http://localhost:8000/metrics
+```
+
 ## Development Best Practices
 
 ### Commit Code
@@ -636,6 +738,9 @@ uv run black . && uv run isort . && uv run flake8
 
 # Verify migrations
 uv run python manage.py migrate --check
+
+# Export and validate OpenAPI schema
+uv run python manage.py spectacular --file /tmp/schema.yml --validate
 ```
 
 ## Next Steps

@@ -82,11 +82,18 @@ The following headers are automatically allowed:
 
 Rate limiting prevents API abuse by limiting the number of requests from each client within a specific time window.
 
+The implementation uses a custom `TrustedClientRateThrottle` class that applies three throttle policies in sequence:
+1. **Burst throttle** - short-term burst protection (default 10/sec)
+2. **Authenticated throttle** - for logged-in users (default 1000/min)
+3. **Anonymous throttle** - for unauthenticated users (default 100/min)
+
+All throttles use `REMOTE_ADDR` for identification (not `X-Forwarded-For`, which can be spoofed). Authenticated users are identified by user ID.
+
 ### Default Limits
 
-- **Anonymous users**: 1000 requests per hour
-- **Authenticated users**: 2000 requests per hour
-- **Burst protection**: 100 requests per minute
+- **Anonymous users**: 100 requests per minute
+- **Authenticated users**: 1000 requests per minute
+- **Burst protection**: 10 requests per second
 
 ### Environment Variables
 
@@ -94,13 +101,13 @@ Configure rate limiting using these environment variables:
 
 ```bash
 # Anonymous user rate limit (requests per time period)
-THROTTLE_RATE_ANON=1000/hour
+THROTTLE_RATE_ANON=100/min
 
 # Authenticated user rate limit (requests per time period)
-THROTTLE_RATE_USER=2000/hour
+THROTTLE_RATE_USER=1000/min
 
 # Burst rate limit (short-term protection)
-THROTTLE_RATE_BURST=100/min
+THROTTLE_RATE_BURST=10/sec
 ```
 
 ### Rate Limit Formats
@@ -138,9 +145,9 @@ THROTTLE_RATE_BURST=1000/min
 #### Production
 ```bash
 # Strict limits for production
-THROTTLE_RATE_ANON=1000/hour
-THROTTLE_RATE_USER=2000/hour
-THROTTLE_RATE_BURST=100/min
+THROTTLE_RATE_ANON=100/min
+THROTTLE_RATE_USER=1000/min
+THROTTLE_RATE_BURST=10/sec
 ```
 
 #### High-Traffic Production
@@ -174,23 +181,56 @@ Content-Type: application/json
 }
 ```
 
+### Retry-After Behavior
+
+The `CeilingRetryAfterThrottle` base class rounds fractional retry periods up to whole seconds for the `Retry-After` header, ensuring clients never wait less than advertised.
+
 ## Implementation Details
 
 ### CORS Implementation
 
 CORS is implemented using `django-cors-headers`:
 
-1. **Middleware**: `corsheaders.middleware.CorsMiddleware`
-2. **Settings**: Environment-based configuration
-3. **Security**: Whitelist-based origin control
+1. **Middleware**: `corsheaders.middleware.CorsMiddleware` (positioned early in MIDDLEWARE)
+2. **Settings**: Environment-based configuration in `credit_mate_ai/settings.py`
+3. **Security**: Whitelist-based origin control via `CORS_ALLOWED_ORIGINS`
 
 ### Rate Limiting Implementation
 
-Rate limiting uses Django REST Framework's built-in throttling:
+Rate limiting uses Django REST Framework's throttling framework with custom classes:
 
-1. **Anonymous throttling**: `rest_framework.throttling.AnonRateThrottle`
-2. **User throttling**: `rest_framework.throttling.UserRateThrottle`
-3. **Identification**: IP-based for anonymous, user-based for authenticated
+1. **`TrustedClientRateThrottle`** - Main throttle combining all three policies
+2. **`AnonymousThrottle`** - Limits unauthenticated clients by IP (`REMOTE_ADDR`)
+3. **`AuthenticatedThrottle`** - Limits authenticated clients by user ID
+4. **`BurstThrottle`** - Limits short bursts for both anonymous and authenticated clients
+5. **`CeilingRetryAfterThrottle`** - Base class rounding retry times up to whole seconds
+
+All throttles inherit from `SimpleRateThrottle` and use Django's cache framework for storage.
+
+### Throttle Scope Mapping
+
+| Throttle Class | Scope | Default Rate |
+|----------------|-------|--------------|
+| `AnonymousThrottle` | `anon` | `THROTTLE_RATE_ANON` (100/min) |
+| `AuthenticatedThrottle` | `user` | `THROTTLE_RATE_USER` (1000/min) |
+| `BurstThrottle` | `burst` | `THROTTLE_RATE_BURST` (10/sec) |
+
+### Configuration in Settings
+
+The throttles are configured in `REST_FRAMEWORK` settings:
+
+```python
+REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_CLASSES": [
+        "credit_mate_ai.throttling.TrustedClientRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": os.getenv("THROTTLE_RATE_ANON", "100/min"),
+        "user": os.getenv("THROTTLE_RATE_USER", "1000/min"),
+        "burst": os.getenv("THROTTLE_RATE_BURST", "10/sec"),
+    },
+}
+```
 
 ## Testing
 
@@ -216,6 +256,15 @@ curl -H "Origin: http://localhost:3000" \
 # Test rate limiting with rapid requests
 for i in {1..10}; do
   curl -w "Status: %{http_code}\n" \
+       http://localhost:8000/api/v1/credit-cards/ \
+       -o /dev/null -s
+  sleep 0.1
+done
+
+# Test with authentication (if available)
+for i in {1..10}; do
+  curl -H "Authorization: Bearer <token>" \
+       -w "Status: %{http_code}\n" \
        http://localhost:8000/api/v1/credit-cards/ \
        -o /dev/null -s
   sleep 0.1
@@ -251,18 +300,21 @@ Monitor rate limiting by:
 **Solution:** Use HTTPS for production origins
 
 #### Issue: Credentials not being sent
-**Solution:** Ensure `CORS_ALLOW_CREDENTIALS=True` and frontend sends credentials
+**Solution:** Ensure `CORS_ALLOW_CREDENTIALS=True` and frontend sends credentials (`credentials: 'include'`)
 
 ### Common Rate Limiting Issues
 
 #### Issue: Getting 429 errors unexpectedly
-**Solution:** Check if rate limits are too restrictive
+**Solution:** Check if rate limits are too restrictive for your use case
 
 #### Issue: Rate limiting not working
-**Solution:** Verify throttle settings are configured correctly
+**Solution:** 
+- Verify `TrustedClientRateThrottle` is in `DEFAULT_THROTTLE_CLASSES`
+- Check cache backend is working (Redis required for production)
+- Ensure `REST_FRAMEWORK.DEFAULT_THROTTLE_RATES` has the correct scopes
 
 #### Issue: Different limits for different endpoints
-**Solution:** Rate limiting is global by default; implement custom throttling for specific endpoints
+**Solution:** Rate limiting is global by default; implement custom throttle classes for specific endpoints
 
 ## Advanced Configuration
 
@@ -309,6 +361,7 @@ def my_view(request):
 - Implement different limits for different user tiers
 - Monitor for distributed attacks that might bypass IP-based limiting
 - Consider implementing user-based rate limiting for authenticated endpoints
+- The `TrustedClientRateThrottle` applies burst → authenticated → anonymous in sequence, so burst limits protect against credential stuffing
 
 ## Production Checklist
 
@@ -325,3 +378,5 @@ def my_view(request):
 - [ ] Monitoring is in place for 429 responses
 - [ ] Rate limit headers are being sent
 - [ ] Different limits configured for anonymous vs authenticated users
+- [ ] Redis cache backend is configured and accessible
+- [ ] Throttle classes are in `DEFAULT_THROTTLE_CLASSES`
