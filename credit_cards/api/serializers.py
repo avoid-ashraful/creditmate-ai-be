@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
+from rest_framework import serializers
 
 from banks.api.serializers import BankListSerializer
 from credit_cards.models import CreditCard, CreditCardFieldHistory
@@ -209,17 +209,17 @@ class TypeaheadResponseSerializer(serializers.Serializer):
     query = serializers.CharField()
     suggestions = serializers.ListField(
         child=TypeaheadSuggestionField(),
-        help_text="Array of mixed suggestion objects with type discrimination"
+        help_text="Array of mixed suggestion objects with type discrimination",
     )
     matches = TypeaheadMatchesSerializer()
     facets = serializers.DictField(
         child=TypeaheadFacetSerializer(),
-        help_text="Facet counts keyed by facet slug (no_fee, travel, cashback, lounge)"
+        help_text="Facet counts keyed by facet slug (no_fee, travel, cashback, lounge)",
     )
     did_you_mean = serializers.CharField(
         allow_null=True,
         required=False,
-        help_text="Safe typo suggestion when no prefix/substring matches found"
+        help_text="Safe typo suggestion when no prefix/substring matches found",
     )
     highlight = TypeaheadHighlightSerializer()
     match_policy = TypeaheadMatchPolicySerializer()
@@ -230,9 +230,9 @@ class CreditCardSerializer(serializers.ModelSerializer):
 
     bank = BankListSerializer(read_only=True)
     bank_id = serializers.IntegerField(write_only=True)
-    has_lounge_access = serializers.ReadOnlyField()
-    total_lounge_access = serializers.ReadOnlyField()
-    has_annual_fee = serializers.ReadOnlyField()
+    has_lounge_access = serializers.BooleanField(read_only=True, allow_null=True)
+    total_lounge_access = serializers.IntegerField(read_only=True)
+    has_annual_fee = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = CreditCard
@@ -289,8 +289,8 @@ class CreditCardListSerializer(serializers.ModelSerializer):
     bank = BankListSerializer(read_only=True)
     bank_id = serializers.IntegerField(source="bank.id", read_only=True)
     bank_name = serializers.CharField(source="bank.name", read_only=True)
-    has_lounge_access = serializers.ReadOnlyField()
-    has_annual_fee = serializers.ReadOnlyField()
+    has_lounge_access = serializers.BooleanField(read_only=True, allow_null=True)
+    has_annual_fee = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = CreditCard
@@ -323,7 +323,7 @@ class CreditCardComparisonSerializer(serializers.ModelSerializer):
     bank_name = serializers.CharField(source="bank.name", read_only=True)
     bank_logo = serializers.URLField(source="bank.logo", read_only=True)
     has_lounge_access = serializers.ReadOnlyField()
-    total_lounge_access = serializers.ReadOnlyField()
+    total_lounge_access = serializers.IntegerField(read_only=True)
     has_annual_fee = serializers.ReadOnlyField()
 
     class Meta:

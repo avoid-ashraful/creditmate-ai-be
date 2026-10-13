@@ -222,6 +222,7 @@ class CollectionViewSet(viewsets.ModelViewSet):
     tags=["saved"],
     summary="Read a shared comparison (public, no auth)",
     responses={200: PublicSavedComparisonSerializer},
+    auth=[{}],
 )
 @method_decorator(never_cache, name="dispatch")
 class SharedComparisonView(APIView):
@@ -266,6 +267,7 @@ class SharedComparisonView(APIView):
     tags=["saved"],
     summary="Read a public collection by slug (public, no auth)",
     responses={200: PublicCollectionSerializer},
+    auth=[{}],
 )
 @method_decorator(never_cache, name="dispatch")
 class SharedCollectionView(APIView):

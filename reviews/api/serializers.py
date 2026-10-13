@@ -1,6 +1,9 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.html import strip_tags
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from reviews.models import CardReview, ReviewVote
 from reviews.validators import clean_review_text
@@ -11,11 +14,27 @@ class CardReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CardReview
-        fields = ("id", "card", "rating", "title", "body", "pros", "cons", "reviewer_name", "helpful_count", "created", "modified")
+        fields = (
+            "id",
+            "card",
+            "rating",
+            "title",
+            "body",
+            "pros",
+            "cons",
+            "reviewer_name",
+            "helpful_count",
+            "created",
+            "modified",
+        )
         read_only_fields = ("id", "reviewer_name", "helpful_count", "created", "modified")
 
+    @extend_schema_field(serializers.CharField())
     def get_reviewer_name(self, obj):
-        name = (getattr(obj.user, "get_full_name", lambda: "")() or getattr(obj.user, "username", "")).strip()
+        name = (
+            getattr(obj.user, "get_full_name", lambda: "")()
+            or getattr(obj.user, "username", "")
+        ).strip()
         if not name or "@" in name:
             return "Community member"
         return name
@@ -37,7 +56,9 @@ class CardReviewSerializer(serializers.ModelSerializer):
             if self.instance:
                 existing = existing.exclude(pk=self.instance.pk)
             if existing.exists():
-                raise serializers.ValidationError({"card": "You have already reviewed this card."})
+                raise serializers.ValidationError(
+                    {"card": "You have already reviewed this card."}
+                )
         return attrs
 
 
