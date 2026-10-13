@@ -348,10 +348,10 @@ SECURE_BROWSER_XSS_FILTER = os.getenv("SECURE_BROWSER_XSS_FILTER", "True").lower
 X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
 
 # Response header policy (applied to every response by SecurityHeadersMiddleware)
-# Safe default CSP: only same-origin resources, no framing of this site.
+# Restrict framing, plugins, and base URLs without blocking Django admin inline assets.
 CSP_HEADER = os.getenv(
     "CSP_HEADER",
-    "default-src 'self'; frame-ancestors 'none'",
+    "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
 )
 REFERRER_POLICY = os.getenv("REFERRER_POLICY", "strict-origin-when-cross-origin")
 

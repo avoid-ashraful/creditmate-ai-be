@@ -6,7 +6,7 @@ from django.test import RequestFactory, override_settings
 
 from credit_mate_ai.middleware import SecurityHeadersMiddleware
 
-DEFAULT_CSP = "default-src 'self'; frame-ancestors 'none'"
+DEFAULT_CSP = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
 
 
 def ok_response(request):
@@ -25,6 +25,7 @@ def make_request(secure=False):
 def test_default_security_headers_applied():
     response = SecurityHeadersMiddleware(ok_response)(make_request())
     assert response.headers["Content-Security-Policy"] == DEFAULT_CSP
+    assert "default-src" not in DEFAULT_CSP
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
 
