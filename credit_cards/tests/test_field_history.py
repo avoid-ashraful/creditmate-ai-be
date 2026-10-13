@@ -1,10 +1,11 @@
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
 
 from banks.factories import BankFactory
 from credit_cards.factories import CreditCardFactory
@@ -167,8 +168,9 @@ class CreditCardFieldHistoryModelTests(TestCase):
 
     def test_field_history_access_control(self):
         """Field history endpoint should have access control."""
-        from credit_cards.api.views import CreditCardViewSet
         from unittest.mock import Mock
+
+        from credit_cards.api.views import CreditCardViewSet
 
         viewset = CreditCardViewSet()
         request = Mock()

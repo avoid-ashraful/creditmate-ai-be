@@ -1,12 +1,12 @@
+from rest_framework.test import APIClient
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.urls import reverse
-from rest_framework.test import APIClient
 
 from banks.models import Bank
 from credit_cards.models import CreditCard
 from reviews.models import CardReview
-
 
 User = get_user_model()
 
@@ -85,8 +85,9 @@ def test_one_review_per_user_card(db):
 
 
 def test_review_rating_bounds_and_duplicate_database_constraint(db):
-    from django.db import IntegrityError, transaction
     import pytest
+
+    from django.db import IntegrityError, transaction
 
     card = card_setup()
     user = User.objects.create_user(username="rating")

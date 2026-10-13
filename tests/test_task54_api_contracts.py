@@ -1,5 +1,9 @@
 """Task 5.4 contracts for API groups added after the first contract suite."""
 
+from drf_spectacular.generators import SchemaGenerator
+from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core import signing
@@ -7,13 +11,10 @@ from django.core.signing import TimestampSigner
 from django.test import override_settings
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from rest_framework.test import APITestCase
-from rest_framework_simplejwt.tokens import RefreshToken
-from drf_spectacular.generators import SchemaGenerator
 
+from alerts.models import AlertSubscription
 from credit_cards.factories import CreditCardFactory
 from reviews.models import CardReview
-from alerts.models import AlertSubscription
 from saved.models import Collection, SavedComparison
 
 
@@ -47,7 +48,6 @@ class AddedAPIContractTests(APITestCase):
             ("/api/v1/reviews/", "post"): {"id", "card", "rating", "title", "body", "pros", "cons", "reviewer_name", "helpful_count", "created", "modified"},
             ("/api/v1/reviews/cards/{card_id}/summary/", "get"): {"card", "average_rating", "review_count", "distribution"},
             ("/api/v1/reviews/{review_id}/helpful/", "post"): {"helpful_count"},
-            ("/api/v1/reviews/moderation/", "get"): {"count", "next", "previous", "results"},
             ("/api/v1/reviews/moderation/", "get"): {"count", "next", "previous", "results"},
             ("/api/v1/alerts/subscriptions/", "get"): {"count", "next", "previous", "results"},
             ("/api/v1/alerts/preferences/", "get"): {"frequency"},

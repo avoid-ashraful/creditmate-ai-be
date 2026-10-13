@@ -5,6 +5,7 @@ including multi-category OR logic, facet aggregations, and relevance tuning.
 """
 
 import django_filters
+
 from django.db import models
 
 from credit_cards.lounge import (
@@ -13,7 +14,6 @@ from credit_cards.lounge import (
     lounge_access_q,
 )
 from credit_cards.models import CreditCard
-
 
 # Canonical category taxonomy matching the frontend
 CANONICAL_CATEGORIES = [

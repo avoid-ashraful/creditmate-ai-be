@@ -1,24 +1,24 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from django.db.models import Count
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from django.core.cache import cache
+from django.db import models
+from django.db.models import Count
 
+from banks.models import Bank
 from credit_cards.api.filters import CreditCardFilter
-from credit_cards.lounge import card_lounge_access_q
 from credit_cards.api.serializers import (
     CreditCardFieldHistorySerializer,
     CreditCardListSerializer,
     CreditCardSerializer,
     TypeaheadResponseSerializer,
 )
-from banks.models import Bank
+from credit_cards.lounge import card_lounge_access_q
 from credit_cards.models import CreditCard
-from django.db import models
 from credit_mate_ai.cache import (
     CARD_LIST_TTL,
     CARD_LIST_VERSION_KEY,
@@ -29,7 +29,6 @@ from credit_mate_ai.cache import (
     build_query_cache_key,
 )
 from credit_mate_ai.metrics import increment_search
-
 
 AUTOCOMPLETE_MIN_QUERY_LENGTH = 2
 AUTOCOMPLETE_MAX_RESULTS = 8

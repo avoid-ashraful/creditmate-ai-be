@@ -2,12 +2,12 @@ from datetime import timedelta
 
 import pytest
 from celery.exceptions import Retry
-from django.core import mail
-from django.core import signing
+from rest_framework.test import APIClient
+
+from django.core import mail, signing
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
-from rest_framework.test import APIClient
 
 from alerts.models import AlertSubscription, NotificationPreference, SentAlert
 from alerts.tasks import send_alert_digests

@@ -1,15 +1,15 @@
 """Tests for accounts API views."""
 
 import pytest
+from rest_framework import status
+from rest_framework.test import APIClient
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
 from django.core.signing import TimestampSigner
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from rest_framework import status
-from rest_framework.test import APIClient
-
 
 User = get_user_model()
 
@@ -578,8 +578,11 @@ class TestChangePasswordView:
 
     def test_change_password_blacklists_refresh_tokens(self, authenticated_client, user):
         """Test that change password blacklists outstanding refresh tokens."""
+        from rest_framework_simplejwt.token_blacklist.models import (
+            BlacklistedToken,
+            OutstandingToken,
+        )
         from rest_framework_simplejwt.tokens import RefreshToken
-        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
         # Create a refresh token
         refresh = RefreshToken.for_user(user)

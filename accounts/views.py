@@ -16,7 +16,6 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 
-
 from accounts.serializers import (
     ChangePasswordSerializer,
     EmailVerificationSerializer,
@@ -280,7 +279,10 @@ class PasswordResetConfirmView(_AuthBurstThrottleMixin, APIView):
 
     def _blacklist_user_refresh_tokens(self, user):
         """Blacklist all outstanding refresh tokens for a user."""
-        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+        from rest_framework_simplejwt.token_blacklist.models import (
+            BlacklistedToken,
+            OutstandingToken,
+        )
 
         # Get all outstanding tokens for this user and blacklist them
         outstanding_tokens = OutstandingToken.objects.filter(user_id=user.pk)
@@ -372,7 +374,10 @@ class ChangePasswordView(_AuthUserThrottleMixin, APIView):
 
     def _blacklist_user_refresh_tokens(self, user):
         """Blacklist all outstanding refresh tokens for a user."""
-        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+        from rest_framework_simplejwt.token_blacklist.models import (
+            BlacklistedToken,
+            OutstandingToken,
+        )
 
         # Get all outstanding tokens for this user and blacklist them
         outstanding_tokens = OutstandingToken.objects.filter(user_id=user.pk)

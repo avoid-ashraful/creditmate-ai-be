@@ -1,13 +1,12 @@
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+from django.core.cache import cache
+
 from banks.api.serializers import BankListSerializer
 from banks.factories import BankFactory
 from credit_cards.factories import CreditCardFactory
 from credit_cards.models import CreditCard
-
-from django.core.cache import cache
-
 
 CARD_LIST_FIELDS = {
     "id",
