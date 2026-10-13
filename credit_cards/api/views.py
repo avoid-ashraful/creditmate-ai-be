@@ -27,6 +27,7 @@ from credit_mate_ai.cache import (
     SEARCH_SUGGESTIONS_VERSION_KEY,
     build_query_cache_key,
 )
+from credit_mate_ai.metrics import increment_search
 
 
 AUTOCOMPLETE_MIN_QUERY_LENGTH = 2
@@ -376,6 +377,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             and categories (from canonical taxonomy: Travel, Cashback, Premium,
             Student, Business, No Annual Fee).
         """
+        increment_search("typeahead")
         raw_query = request.query_params.get("q", "")
         query = raw_query[:AUTOCOMPLETE_QUERY_MAX_LENGTH].strip()
         if len(query) < AUTOCOMPLETE_MIN_QUERY_LENGTH:

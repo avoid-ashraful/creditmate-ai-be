@@ -34,6 +34,7 @@ from credit_mate_ai.cache import (
     ADVANCED_SEARCH_TTL,
     ADVANCED_SEARCH_VERSION_KEY,
 )
+from credit_mate_ai.metrics import increment_search
 
 logger = logging.getLogger(__name__)
 
@@ -481,6 +482,7 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
         Returns paginated results with facet counts for filter refinement.
         Automatically falls back to database search when Elasticsearch is unavailable.
         """
+        increment_search("advanced")
         # Normalize query parameters
         normalized_params = normalize_query_params(request.query_params)
 

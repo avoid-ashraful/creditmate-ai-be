@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from django.conf import settings
 
+from credit_mate_ai.metrics import increment_search
 from search import client as client_module
 from search import queue as queue_module
 from search.queries import filterable_fields, index_name
@@ -89,6 +90,7 @@ class SearchView(APIView):
         Response
             Search results with totals, hits and facet buckets.
         """
+        increment_search("search")
         service = _service()
         query = request.query_params.get("q", "").strip()
         kind = request.query_params.get("type", "cards").lower()
@@ -150,6 +152,7 @@ class SuggestView(APIView):
         Response
             Suggestion list.
         """
+        increment_search("suggest")
         service = _service()
         query = request.query_params.get("q", "").strip()
         kind = request.query_params.get("type", "cards").lower()

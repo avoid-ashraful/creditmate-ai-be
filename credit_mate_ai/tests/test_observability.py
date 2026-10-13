@@ -398,3 +398,63 @@ def test_increment_search_rejects_unbounded_search_types():
     """Unknown search types raise instead of creating a new label value."""
     with pytest.raises(ValueError):
         increment_search("free-text-from-user")
+
+
+# ---------------------------------------------------------------------------
+# Search handler hooks
+# ---------------------------------------------------------------------------
+
+
+def test_search_endpoint_counts_search_requests(client):
+    """Each request to /api/search/ adds one ``search`` search."""
+    labels = {"search_type": "search"}
+    before = sample("creditmate_searches_total", labels)
+
+    with mock.patch("search.api.views._service") as service:
+        service.return_value.search.return_value = {"total": 0, "hits": []}
+        response = client.get("/api/search/", {"q": "amex", "type": "cards"})
+
+    assert response.status_code == 200
+    assert sample("creditmate_searches_total", labels) == before + 1
+
+
+def test_suggest_endpoint_counts_suggest_requests(client):
+    """Each request to /api/search/suggest/ adds one ``suggest`` search."""
+    labels = {"search_type": "suggest"}
+    before = sample("creditmate_searches_total", labels)
+
+    with mock.patch("search.api.views._service") as service:
+        service.return_value.suggest.return_value = []
+        response = client.get("/api/search/suggest/", {"q": "am", "type": "cards"})
+
+    assert response.status_code == 200
+    assert sample("creditmate_searches_total", labels) == before + 1
+
+
+@pytest.mark.django_db
+def test_typeahead_endpoint_counts_typeahead_requests(client):
+    """Each credit-card typeahead request adds one ``typeahead`` search."""
+    labels = {"search_type": "typeahead"}
+    before = sample("creditmate_searches_total", labels)
+
+    response = client.get("/api/v1/credit-cards/typeahead/", {"q": "ca"})
+
+    assert response.status_code == 200
+    assert sample("creditmate_searches_total", labels) == before + 1
+
+
+@pytest.mark.django_db
+@override_settings(SEARCH_ENABLED=False)
+def test_advanced_search_counts_only_the_search_action(client):
+    """The advanced-search list counts; its sort and category helpers do not."""
+    labels = {"search_type": "advanced"}
+    before = sample("creditmate_searches_total", labels)
+
+    client.get("/api/v1/credit-cards/advanced-search/sort-options/")
+    client.get("/api/v1/credit-cards/advanced-search/categories/")
+    assert sample("creditmate_searches_total", labels) == before
+
+    response = client.get("/api/v1/credit-cards/advanced-search/")
+
+    assert response.status_code == 200
+    assert sample("creditmate_searches_total", labels) == before + 1
