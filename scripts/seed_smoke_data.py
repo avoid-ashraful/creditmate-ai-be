@@ -3,12 +3,12 @@ import os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "credit_mate_ai.settings")
 
-import django
+import django  # noqa: E402
 
 django.setup()
 
-from banks.models import Bank
-from credit_cards.models import CreditCard
+from banks.models import Bank  # noqa: E402
+from credit_cards.models import CreditCard  # noqa: E402
 
 
 def main():

@@ -9,12 +9,12 @@ response contracts, with specific focus on:
 """
 
 import pytest
-from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
+
+from django.test import TestCase, override_settings
 
 from banks.factories import BankFactory
 from credit_cards.factories import CreditCardFactory
-
 
 SCHEMA_URL = "/api/v1/schema/"
 

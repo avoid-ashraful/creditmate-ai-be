@@ -1,6 +1,11 @@
 from django.urls import path
 
-from .views import PreferenceView, PublicUnsubscribeView, SubscriptionDetailView, SubscriptionListCreateView
+from .views import (
+    PreferenceView,
+    PublicUnsubscribeView,
+    SubscriptionDetailView,
+    SubscriptionListCreateView,
+)
 
 urlpatterns = [
     path("subscriptions/", SubscriptionListCreateView.as_view(), name="alert-subscriptions"),

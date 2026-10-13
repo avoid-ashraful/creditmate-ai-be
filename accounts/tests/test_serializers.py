@@ -1,6 +1,7 @@
 """Tests for accounts serializers."""
 
 import pytest
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
@@ -569,7 +570,7 @@ class TestEmailVerificationSerializer:
 
     def test_expired_token_rejected(self):
         """Test expired token is rejected."""
-        from django.core.signing import TimestampSigner, SignatureExpired
+        from django.core.signing import SignatureExpired, TimestampSigner
 
         user = User.objects.create_user(
             username="test@example.com",

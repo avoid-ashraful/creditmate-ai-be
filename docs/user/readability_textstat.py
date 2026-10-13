@@ -183,6 +183,26 @@ def score_file(name: str, prose: str) -> dict[str, object]:
     return row
 
 
+def load_inputs(directory: str, frontend_files: list[str]) -> list[tuple[str, str]] | None:
+    inputs = []
+    for filename in gate.GUIDE_FILES:
+        path = os.path.join(directory, filename)
+        if not os.path.exists(path):
+            print(f"MISSING: {path}", file=sys.stderr)
+            return None
+        with open(path, encoding="utf-8") as handle:
+            inputs.append((filename, gate.strip_markdown(handle.read())))
+
+    for path in frontend_files:
+        if not os.path.exists(path):
+            print(f"MISSING: {path}", file=sys.stderr)
+            return None
+        with open(path, encoding="utf-8") as handle:
+            name = os.path.relpath(path, directory)
+            inputs.append((name, gate.strip_typescript(handle.read())))
+    return inputs
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -200,21 +220,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--max-grade", type=float, default=MAX_GRADE)
     args = parser.parse_args(argv)
 
-    inputs: list[tuple[str, str]] = []
-    for filename in gate.GUIDE_FILES:
-        path = os.path.join(args.dir, filename)
-        if not os.path.exists(path):
-            print(f"MISSING: {path}", file=sys.stderr)
-            return 3
-        with open(path, encoding="utf-8") as handle:
-            inputs.append((filename, gate.strip_markdown(handle.read())))
-
-    for fe_path in args.fe:
-        if not os.path.exists(fe_path):
-            print(f"MISSING: {fe_path}", file=sys.stderr)
-            return 3
-        with open(fe_path, encoding="utf-8") as handle:
-            inputs.append((os.path.relpath(fe_path, args.dir), gate.strip_typescript(handle.read())))
+    inputs = load_inputs(args.dir, args.fe)
+    if inputs is None:
+        return 3
 
     print(
         f"scorer A: textstat {'.'.join(str(p) for p in textstat.__version__)} "
@@ -224,7 +232,7 @@ def main(argv: list[str]) -> int:
         "scorer B: CMU Pronouncing Dictionary syllables "
         + ("(available)" if cmudict is not None else "(NOT INSTALLED - skipped)")
     )
-    print(f"scorer C: readability_check.py own counter (the CI gate)")
+    print("scorer C: readability_check.py own counter (the CI gate)")
     print(f"threshold: Flesch-Kincaid grade < {args.max_grade}, evaluated per file\n")
 
     header = (

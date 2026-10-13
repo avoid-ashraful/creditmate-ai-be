@@ -5,10 +5,11 @@ These tests verify that all documented route groups are present in the
 OpenAPI schema and that docs endpoints are available and functional.
 """
 
-from django.core.cache import cache
-from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from django.core.cache import cache
+from django.test import override_settings
 
 
 @override_settings(SECURE_SSL_REDIRECT=False)

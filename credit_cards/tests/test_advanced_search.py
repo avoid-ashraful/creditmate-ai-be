@@ -4,9 +4,11 @@ Covers multi-category OR logic filtering, faceted counts, sorting,
 query normalization, and DB fallback when Elasticsearch is unavailable.
 """
 
-import pytest
 from decimal import Decimal
 
+import pytest
+
+from banks.factories import BankFactory
 from credit_cards.api.advanced_filters import (
     CATEGORY_SLUGS,
     CreditCardAdvancedFilter,
@@ -15,7 +17,6 @@ from credit_cards.api.advanced_filters import (
 )
 from credit_cards.factories import CreditCardFactory
 from credit_cards.models import CreditCard
-from banks.factories import BankFactory
 
 ADVANCED_SEARCH_URL = "/api/v1/credit-cards/advanced-search/"
 

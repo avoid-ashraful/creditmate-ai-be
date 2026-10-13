@@ -1,9 +1,8 @@
 """Sentry event privacy helpers."""
 
 import math
-from urllib.parse import urlsplit, urlunsplit
 import re
-
+from urllib.parse import urlsplit, urlunsplit
 
 _SAFE_USER_ID = re.compile(
     r"^(?:\d{1,20}|[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12})$"

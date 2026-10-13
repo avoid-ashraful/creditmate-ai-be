@@ -25,11 +25,12 @@ class TestTypeaheadResponseSerializerStructure:
 
     def test_facets_uses_typed_dict_field(self):
         """Facets must be DictField with TypeaheadFacetSerializer child."""
-        from credit_cards.api.serializers import (
-            TypeaheadResponseSerializer,
-            TypeaheadFacetSerializer,
-        )
         from rest_framework.fields import DictField
+
+        from credit_cards.api.serializers import (
+            TypeaheadFacetSerializer,
+            TypeaheadResponseSerializer,
+        )
 
         serializer = TypeaheadResponseSerializer()
         facets_field = serializer.fields["facets"]

@@ -5,7 +5,6 @@ from django.dispatch import receiver
 
 from credit_cards.models import CreditCard, CreditCardFieldHistory
 
-
 TRACKED_FIELDS = {
     "annual_fee",
     "annual_fee_waiver_policy",

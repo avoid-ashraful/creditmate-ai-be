@@ -16,6 +16,7 @@ from pathlib import Path
 
 import dj_database_url
 from celery.schedules import crontab
+
 from credit_mate_ai.sentry import parse_sample_rate, sanitize_sentry_event
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

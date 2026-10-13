@@ -13,13 +13,14 @@ Provides a unified search endpoint with:
 import logging
 from urllib.parse import urlencode
 
-from django.core.cache import cache
-from django.db import models
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+
+from django.core.cache import cache
+from django.db import models
 
 from credit_cards.api.advanced_filters import (
     CANONICAL_CATEGORIES,
@@ -30,10 +31,7 @@ from credit_cards.api.advanced_filters import (
 )
 from credit_cards.api.serializers import CreditCardListSerializer
 from credit_cards.models import CreditCard
-from credit_mate_ai.cache import (
-    ADVANCED_SEARCH_TTL,
-    ADVANCED_SEARCH_VERSION_KEY,
-)
+from credit_mate_ai.cache import ADVANCED_SEARCH_TTL, ADVANCED_SEARCH_VERSION_KEY
 from credit_mate_ai.metrics import increment_search
 
 logger = logging.getLogger(__name__)

@@ -1,9 +1,8 @@
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.utils.html import strip_tags
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.html import strip_tags
 
 from reviews.models import CardReview, ReviewVote
 from reviews.validators import clean_review_text
