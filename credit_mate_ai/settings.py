@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
@@ -109,12 +110,15 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "django_filters",
     "common",
     "banks",
     "credit_cards",
     "search",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -242,7 +246,7 @@ SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "y
 SEARCH_URL = os.getenv("SEARCH_URL", "http://127.0.0.1:19200")
 SEARCH_INDEX_PREFIX = os.getenv("SEARCH_INDEX_PREFIX", "")
 SEARCH_REQUEST_TIMEOUT = int(os.getenv("SEARCH_REQUEST_TIMEOUT", "10"))
-SEARCH_VERIFY_CERTS = os.getenv("SEARCH_VERIFY_CERTS", "True").lower() in ("true", "1", "yes")
+SEARCH_VERIFY_CERTS = os.getenv("SEARCH_VERIFY_CERTS", "True").lower() in ("true", "1", "yes", "on")
 # "queue"  -> signal writes to the outbox, a worker drains it (default)
 # "sync"   -> signal writes to the outbox and drains it inline (no worker needed)
 # "off"    -> signals are not connected at all
@@ -283,13 +287,17 @@ if ENVIRONMENT == "production":
     EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 else:
-    # For local/staging environments, disable email service
-    EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+    # For local/staging environments, use console email backend for development
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@creditmate.ai")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -313,7 +321,38 @@ REST_FRAMEWORK = {
         "anon": os.getenv("THROTTLE_RATE_ANON", "100/min"),
         "user": os.getenv("THROTTLE_RATE_USER", "1000/min"),
         "burst": os.getenv("THROTTLE_RATE_BURST", "10/sec"),
+        "auth_burst": os.getenv("THROTTLE_RATE_AUTH_BURST", "20/min"),
+        "auth_anon": os.getenv("THROTTLE_RATE_AUTH_ANON", "30/min"),
+        "auth_user": os.getenv("THROTTLE_RATE_AUTH_USER", "100/min"),
     },
+}
+
+# SimpleJWT Configuration
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=7),
 }
 
 # drf-spectacular configuration (OpenAPI schema generation)
@@ -323,6 +362,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "AI-powered credit card discovery platform API",
     "LICENSE": {"name": "MIT License"},
     "TAGS": [
+        {"name": "auth", "description": "Authentication and user management"},
         {"name": "banks", "description": "Bank-related operations"},
         {"name": "credit-cards", "description": "Credit card-related operations"},
         {"name": "search", "description": "Search and suggestions operations"},
@@ -332,6 +372,12 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_PATH": "/api/v1/docs/swagger",
     "REDOC_PATH": "/api/v1/docs/redoc",
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
+    "SECURITY": [
+        {
+            "Bearer": [],
+        }
+    ],
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 # CORS Configuration
