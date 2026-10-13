@@ -1,7 +1,7 @@
 """Read-only search API exposed under ``/api/search/``."""
 
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -74,7 +74,37 @@ class SearchView(APIView):
     @extend_schema(
         description="Full text search over banks and credit cards",
         tags=["search"],
+        operation_id="search_results",
+        parameters=[
+            OpenApiParameter("q", OpenApiTypes.STR, description="Search terms"),
+            OpenApiParameter(
+                "type",
+                OpenApiTypes.STR,
+                enum=["banks", "cards", "all"],
+                description="Result type",
+            ),
+            OpenApiParameter("page", OpenApiTypes.INT, description="Page number"),
+            OpenApiParameter(
+                "page_size", OpenApiTypes.INT, description="Results per page (1–100)"
+            ),
+            OpenApiParameter(
+                "ordering", OpenApiTypes.STR, description="Supported result ordering"
+            ),
+        ],
         responses={200: OpenApiTypes.OBJECT},
+        examples=[
+            OpenApiExample(
+                "Card search",
+                value={
+                    "query": "travel",
+                    "type": "cards",
+                    "page": 1,
+                    "page_size": 20,
+                    "results": {},
+                },
+                response_only=True,
+            )
+        ],
     )
     def get(self, request, *args, **kwargs):
         """Run a search.
@@ -137,7 +167,23 @@ class SuggestView(APIView):
     @extend_schema(
         description="Get type-ahead suggestions for search queries",
         tags=["search"],
+        operation_id="search_suggestions",
+        parameters=[
+            OpenApiParameter("q", OpenApiTypes.STR, description="Partial search terms"),
+            OpenApiParameter(
+                "type",
+                OpenApiTypes.STR,
+                enum=["banks", "cards"],
+                description="Suggestion type",
+            ),
+            OpenApiParameter(
+                "limit", OpenApiTypes.INT, description="Maximum suggestions"
+            ),
+        ],
         responses={200: OpenApiTypes.OBJECT},
+        examples=[
+            OpenApiExample("Suggestions", value={"suggestions": []}, response_only=True)
+        ],
     )
     def get(self, request, *args, **kwargs):
         """Return suggestions for a partial query.
@@ -175,6 +221,7 @@ class SearchStatusView(APIView):
     @extend_schema(
         description="Get search service status including engine, indexes, and queue metrics",
         tags=["search"],
+        operation_id="search_service_status",
         responses={200: OpenApiTypes.OBJECT},
     )
     def get(self, request, *args, **kwargs):
