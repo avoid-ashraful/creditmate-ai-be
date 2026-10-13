@@ -11,8 +11,8 @@ from reviews.models import CardReview
 User = get_user_model()
 
 
-def card_setup():
-    bank = Bank.objects.create(name="Review Bank", website="https://example.com")
+def card_setup(bank_name="Review Bank"):
+    bank = Bank.objects.create(name=bank_name, website="https://example.com")
     return CreditCard.objects.create(bank=bank, name="Review Card")
 
 
@@ -33,7 +33,7 @@ def test_create_review_requires_auth_and_is_pending(db):
     client = APIClient()
     url = reverse("review-list")
     payload = {"card": card.pk, "rating": 4, "title": "Great", "body": "Good rewards"}
-    assert client.post(url, payload).status_code == 403
+    assert client.post(url, payload).status_code == 401
     user = User.objects.create_user(username="member")
     client.force_authenticate(user)
     response = client.post(url, payload)
@@ -67,6 +67,11 @@ def test_review_html_and_spam_are_rejected_or_stripped(db):
     assert response.status_code == 201
     saved = CardReview.objects.get(user=user)
     assert "<" not in saved.title + saved.body
+
+    empty_markup = client.post(reverse("review-list"), {
+        "card": card.pk, "rating": 4, "title": "<b></b>", "body": "Useful"
+    })
+    assert empty_markup.status_code == 400
 
 
 def test_one_review_per_user_card(db):
@@ -168,24 +173,45 @@ def test_review_detail_auth_ownership_and_staff_moderation(db):
 def test_review_html_is_escaped_from_public_api(db):
     card = card_setup()
     user = User.objects.create_user(username="markup")
-    review = CardReview.objects.create(user=user, card=card, rating=3, title="<script>x</script>", body="<b>hello</b>", status="approved")
+    client = APIClient()
+    client.force_authenticate(user)
+    created = client.post(reverse("review-list"), {
+        "card": card.pk,
+        "rating": 3,
+        "title": "<script>x</script>",
+        "body": "<b>hello</b>",
+        "pros": "<i>Useful</i>",
+        "cons": "<em>None</em>",
+    })
+    assert created.status_code == 201
+    review = CardReview.objects.get(user=user)
+    assert (review.title, review.body, review.pros, review.cons) == ("x", "hello", "Useful", "None")
+    review.status = CardReview.Status.APPROVED
+    review.save()
     response = APIClient().get(reverse("review-list"), {"card": card.pk})
-    rendered = str(response.data)
-    assert review.title not in rendered
-    assert "<script>" not in rendered
+    result = response.data["results"][0]
+    assert result["title"] == "x"
+    assert result["body"] == "hello"
+    assert all("<" not in result[field] and ">" not in result[field] for field in ("title", "body", "pros", "cons"))
 
 
-def test_review_throttle_and_public_list_query_count(db, django_assert_num_queries, settings):
+def test_review_throttle_and_public_list_query_count(db, django_assert_num_queries):
     card = card_setup()
     for index in range(3):
         CardReview.objects.create(user=User.objects.create_user(username=f"listed{index}"), card=card, rating=5, title="T", body="B", status="approved")
     with django_assert_num_queries(2):
         response = APIClient().get(reverse("review-list"), {"card": card.pk})
     assert response.data["count"] == 3
-    settings.REST_FRAMEWORK = {**settings.REST_FRAMEWORK, "DEFAULT_THROTTLE_RATES": {**settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"], "review_write": "1/hour"}}
+    cache.clear()
     client = APIClient()
     client.force_authenticate(User.objects.create_user(username="throttled"))
     url = reverse("review-list")
     payload = {"card": card.pk, "rating": 3, "title": "T", "body": "B"}
     assert client.post(url, payload).status_code == 201
+    for index in range(1, 5):
+        second_card = card_setup(f"Review Bank {index}")
+        payload["card"] = second_card.pk
+        assert client.post(url, payload).status_code == 201
+    last_card = card_setup("Review Bank 6")
+    payload["card"] = last_card.pk
     assert client.post(url, payload).status_code == 429
