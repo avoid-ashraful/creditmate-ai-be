@@ -189,6 +189,35 @@ class TestReviewValidationAndRollback:
 
 
 @pytest.mark.django_db
+class TestReviewQueueOrdering:
+    """Verify queue ordering puts high priority before medium, then low."""
+
+    def test_queue_orders_by_priority_numeric_not_lexicographic(self):
+        """High priority appears first, then medium, then low."""
+        bank = CrawledContentFactory().data_source.bank
+
+        low = ReviewQueue.objects.create(
+            crawled_content=CrawledContentFactory(data_source__bank=bank),
+            bank=bank,
+            priority="low",
+        )
+        medium = ReviewQueue.objects.create(
+            crawled_content=CrawledContentFactory(data_source__bank=bank),
+            bank=bank,
+            priority="medium",
+        )
+        high = ReviewQueue.objects.create(
+            crawled_content=CrawledContentFactory(data_source__bank=bank),
+            bank=bank,
+            priority="high",
+        )
+
+        ordered = list(ReviewQueue.objects.all())
+        assert ordered == [high, medium, low]
+        assert [q.priority_order for q in ordered] == [3, 2, 1]
+
+
+@pytest.mark.django_db
 class TestReviewQueuePermissionsAndAdmin:
     """Review queue admin permissions and filtered visibility."""
 

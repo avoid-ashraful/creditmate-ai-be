@@ -362,6 +362,11 @@ class ReviewQueue(Audit):
         default=ReviewPriority.MEDIUM,
         db_index=True,
     )
+    priority_order = models.PositiveSmallIntegerField(
+        default=1,
+        db_index=True,
+        help_text="Numeric order for sorting: 3=HIGH, 2=MEDIUM, 1=LOW",
+    )
     status = models.CharField(
         max_length=10,
         choices=ReviewStatus.choices,
@@ -379,10 +384,20 @@ class ReviewQueue(Audit):
     reviewed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ["-priority", "created"]
+        ordering = ["-priority_order", "created"]
         db_table = "banks_reviewqueue"
         verbose_name = "review queue item"
         verbose_name_plural = "review queue items"
+
+    def save(self, *args, **kwargs):
+        """Set priority_order numeric value based on priority string."""
+        priority_order_map = {
+            ReviewPriority.HIGH: 3,
+            ReviewPriority.MEDIUM: 2,
+            ReviewPriority.LOW: 1,
+        }
+        self.priority_order = priority_order_map.get(self.priority, 1)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.bank.name} - {self.get_priority_display()} priority"
