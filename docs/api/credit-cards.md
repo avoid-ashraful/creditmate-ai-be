@@ -124,6 +124,149 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/1/"
 }
 ```
 
+### Typeahead/Autocomplete
+
+**Endpoint:** `GET /api/v1/credit-cards/typeahead/?q=...`
+
+**Description:** Real-time typeahead search for credit cards and banks with grouped results, facets, and typo suggestions. No authentication required.
+
+**Query Parameters:**
+- `q` (string): Search query (required, minimum 2 characters after trimming)
+  - Maximum length: 100 characters (longer queries are truncated)
+  - Queries below 2 characters return empty results
+  - Leading/trailing whitespace is trimmed before validation
+
+**Response Fields:**
+
+The response contains several sections:
+
+- `query` (string): The original query as provided, including whitespace
+- `suggestions` (array): Bounded, ordered matches (max 8 total across all types)
+  - Card suggestions: `type: "card"`, `id` (integer), `label` (string), `detail` (bank name)
+  - Bank suggestions: `type: "bank"`, `id` (integer), `label` (string), `detail` (card count)
+  - Category suggestions: `type: "category"`, `slug` (string), `label` (string)
+- `matches` (object): Query match arrays by type:
+  - `card` (array): List of matching card names (strings)
+  - `bank` (array): List of matching bank names (strings)
+  - `category` (array): List of matching category names (from canonical taxonomy)
+  - `source` (string): Always "database"
+- `facets` (object): Count facets for common filters
+  - Each facet has: `label` (string), `count` (integer), `filter` (string for list endpoint)
+  - Includes: "no_fee", "travel", "cashback", "lounge"
+- `did_you_mean` (string or null): Suggestion for close typos (≥80% similarity)
+- `highlight` (object): Highlighting metadata
+  - `terms` (array): Query terms to highlight (empty if query invalid)
+  - `scope` (string or null): Scope of highlighting ("card_name_and_bank_name")
+  - `strategy` (string or null): Strategy ("case_insensitive_substring")
+- `match_policy` (object): Matching policy metadata
+  - `minimum_characters` (integer): Minimum required query length (always 2)
+  - `result_limit` (integer): Maximum results per group (always 8)
+  - `active` (boolean): Whether results are available (false for short queries)
+
+**Matching Strategy:**
+1. Prefix matches: Cards/banks whose name starts with the query (case-insensitive)
+2. Substring matches: Remaining cards/banks containing the query
+3. Category matches: Cards/banks matching canonical category names/slugs by prefix
+   - Canonical categories: Travel, Cashback, Premium, Student, Business, No Annual Fee
+   - Categories are matched by name or slug (e.g., "no-annual-fee")
+4. Typo detection: Close matches suggested if ≥80% similar (cards/banks only)
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:8000/api/v1/credit-cards/autocomplete/?q=visa"
+```
+
+**Example Response (Travel Category):**
+```json
+{
+  "query": "travel",
+  "suggestions": [
+    {
+      "type": "category",
+      "slug": "travel",
+      "label": "Travel"
+    },
+    {
+      "type": "card",
+      "id": 5,
+      "label": "Travel Rewards Card",
+      "detail": "Premium Bank"
+    },
+    {
+      "type": "card",
+      "id": 8,
+      "label": "Traveler's Choice",
+      "detail": "Global Card Corp"
+    }
+  ],
+  "matches": {
+    "card": ["Travel Rewards Card", "Traveler's Choice"],
+    "bank": [],
+    "category": ["Travel"],
+    "source": "database"
+  },
+  "facets": {
+    "no_fee": {
+      "label": "No Fee",
+      "count": 1,
+      "filter": "no_annual_fee=true"
+    },
+    "travel": {
+      "label": "Travel",
+      "count": 2,
+      "filter": "feature_search=travel"
+    },
+    "cashback": {
+      "label": "Cashback",
+      "count": 1,
+      "filter": "feature_search=cashback"
+    },
+    "lounge": {
+      "label": "Lounge",
+      "count": 2,
+      "filter": "has_lounge_access=true"
+    }
+  },
+  "did_you_mean": null,
+  "highlight": {
+    "terms": ["visa"],
+    "scope": "card_name_and_bank_name",
+    "strategy": "case_insensitive_substring"
+  },
+  "match_policy": {
+    "minimum_characters": 2,
+    "result_limit": 8,
+    "active": true
+  }
+}
+```
+
+**Empty Query Response:**
+```json
+{
+  "query": "v",
+  "suggestions": [],
+  "matches": {
+    "card": [],
+    "bank": [],
+    "category": [],
+    "source": "database"
+  },
+  "facets": {},
+  "did_you_mean": null,
+  "highlight": {
+    "terms": [],
+    "scope": null,
+    "strategy": null
+  },
+  "match_policy": {
+    "minimum_characters": 2,
+    "result_limit": 8,
+    "active": false
+  }
+}
+```
+
 ### Search Suggestions
 
 **Endpoint:** `GET /api/v1/credit-cards/search-suggestions/`
