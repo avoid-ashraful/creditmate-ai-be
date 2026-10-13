@@ -13,6 +13,7 @@ from credit_cards.api.serializers import (
     CreditCardFieldHistorySerializer,
     CreditCardListSerializer,
     CreditCardSerializer,
+    TypeaheadResponseSerializer,
 )
 from banks.models import Bank
 from credit_cards.models import CreditCard
@@ -64,7 +65,6 @@ def _find_matching_categories(query):
         if name_lower.startswith(query_lower) or slug_lower.startswith(query_lower):
             matches.append(category)
     return matches
-
 
 
 def _autocomplete_match_ratio(query, value):
@@ -335,6 +335,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         cache.set(cache_key, response.data, SEARCH_SUGGESTIONS_TTL)
         return response
 
+    @extend_schema(responses=CreditCardFieldHistorySerializer(many=True))
     @action(detail=True, methods=["get"], url_path="field-history")
     def field_history(self, request, *args, **kwargs):
         """Return a bounded, newest-first history for a credit card.
@@ -353,6 +354,10 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = CreditCardFieldHistorySerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @extend_schema(
+        responses=TypeaheadResponseSerializer,
+        description="Return bounded, anonymous-safe card, bank, and category typeahead results.",
+    )
     @action(detail=False, methods=["get"], url_path="typeahead")
     def typeahead(self, request):
         """Return bounded, anonymous-safe card, bank, and category typeahead results.

@@ -573,6 +573,304 @@
                 }
             }
         },
+        "/api/v1/credit-cards/{id}/field-history/": {
+            "get": {
+                "operationId": "v1_credit_cards_field_history_list",
+                "description": "Return a bounded, newest-first history for a credit card.\n\nRequires IsAuthenticated permission to access field history.\nAnonymous users cannot view modification history.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "annual_fee_max",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_min",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_range_max",
+                        "schema": {
+                            "type": "string",
+                            "format": "decimal",
+                            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_range_min",
+                        "schema": {
+                            "type": "string",
+                            "format": "decimal",
+                            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank_ids",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "description": "Multiple values may be separated by commas.",
+                        "explode": false,
+                        "style": "form"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank_name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "feature_search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_additional_features",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_annual_fee",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_domestic_lounge",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_fee_waiver",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_international_lounge",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_lounge_access",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this credit card.",
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "ids",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "description": "Multiple values may be separated by commas.",
+                        "explode": false,
+                        "style": "form"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_max",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_min",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range_max",
+                        "schema": {
+                            "type": "string",
+                            "format": "decimal",
+                            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range_min",
+                        "schema": {
+                            "type": "string",
+                            "format": "decimal",
+                            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                            "nullable": true
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_active",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_domestic_lounge",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_international_lounge",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "no_annual_fee",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedCreditCardFieldHistoryList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/credit-cards/search-suggestions/": {
             "get": {
                 "operationId": "v1_credit_cards_search_suggestions_retrieve",
@@ -592,6 +890,33 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/CreditCard"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/credit-cards/typeahead/": {
+            "get": {
+                "operationId": "v1_credit_cards_typeahead_retrieve",
+                "description": "Return bounded, anonymous-safe card, bank, and category typeahead results.",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TypeaheadResponse"
                                 }
                             }
                         },
@@ -946,6 +1271,41 @@
                     "total_lounge_access"
                 ]
             },
+            "CreditCardFieldHistory": {
+                "type": "object",
+                "description": "Serializer for CreditCard field history entries.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "card_id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "field_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "old_value": {
+                        "nullable": true
+                    },
+                    "new_value": {
+                        "nullable": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "card_id",
+                    "created",
+                    "field_name",
+                    "id"
+                ]
+            },
             "CreditCardList": {
                 "type": "object",
                 "description": "Serializer for CreditCard list views.\n\nIncludes the bank identity and the detail fields the frontend transforms\nand renders (reward policy, additional features, waiver policy and fee\nstrings), while preserving the existing bank_name field.",
@@ -1074,6 +1434,37 @@
                     }
                 }
             },
+            "PaginatedCreditCardFieldHistoryList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CreditCardFieldHistory"
+                        }
+                    }
+                }
+            },
             "PaginatedCreditCardListList": {
                 "type": "object",
                 "required": [
@@ -1104,6 +1495,235 @@
                         }
                     }
                 }
+            },
+            "TypeaheadFacet": {
+                "type": "object",
+                "description": "Individual facet count and filter in typeahead response.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer"
+                    },
+                    "filter": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "count",
+                    "filter",
+                    "label"
+                ]
+            },
+            "TypeaheadHighlight": {
+                "type": "object",
+                "description": "Highlight metadata for UI rendering in typeahead response.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "terms": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "scope": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "strategy": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "scope",
+                    "strategy",
+                    "terms"
+                ]
+            },
+            "TypeaheadMatchPolicy": {
+                "type": "object",
+                "description": "Matching policy constraints in typeahead response.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "minimum_characters": {
+                        "type": "integer"
+                    },
+                    "result_limit": {
+                        "type": "integer"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "active",
+                    "minimum_characters",
+                    "result_limit"
+                ]
+            },
+            "TypeaheadMatches": {
+                "type": "object",
+                "description": "Grouped matches by type in typeahead response.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "card": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "bank": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "category": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "source": {
+                        "type": "string",
+                        "default": "database"
+                    }
+                },
+                "required": [
+                    "bank",
+                    "card",
+                    "category"
+                ]
+            },
+            "TypeaheadResponse": {
+                "type": "object",
+                "description": "Complete typeahead response envelope.\n\nContains mixed suggestion types (cards, banks, categories) and optional\ndid-you-mean suggestions for typo correction.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "suggestions": {
+                        "type": "array",
+                        "items": {
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "title": "TypeaheadCardSuggestion",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "card"
+                                            ]
+                                        },
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "detail": {
+                                            "type": "string"
+                                        },
+                                        "query": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "id",
+                                        "label",
+                                        "detail",
+                                        "query"
+                                    ]
+                                },
+                                {
+                                    "type": "object",
+                                    "title": "TypeaheadBankSuggestion",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "bank"
+                                            ]
+                                        },
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "detail": {
+                                            "type": "string"
+                                        },
+                                        "query": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "id",
+                                        "label",
+                                        "detail",
+                                        "query"
+                                    ]
+                                },
+                                {
+                                    "type": "object",
+                                    "title": "TypeaheadCategorySuggestion",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "category"
+                                            ]
+                                        },
+                                        "slug": {
+                                            "type": "string"
+                                        },
+                                        "label": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "slug",
+                                        "label"
+                                    ]
+                                }
+                            ]
+                        },
+                        "description": "Array of mixed suggestion objects with type discrimination"
+                    },
+                    "matches": {
+                        "$ref": "#/components/schemas/TypeaheadMatches"
+                    },
+                    "facets": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TypeaheadFacet"
+                        },
+                        "description": "Facet counts keyed by facet slug (no_fee, travel, cashback, lounge)"
+                    },
+                    "did_you_mean": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Safe typo suggestion when no prefix/substring matches found"
+                    },
+                    "highlight": {
+                        "$ref": "#/components/schemas/TypeaheadHighlight"
+                    },
+                    "match_policy": {
+                        "$ref": "#/components/schemas/TypeaheadMatchPolicy"
+                    }
+                },
+                "required": [
+                    "facets",
+                    "highlight",
+                    "match_policy",
+                    "matches",
+                    "query",
+                    "suggestions"
+                ]
             }
         },
         "securitySchemes": {
