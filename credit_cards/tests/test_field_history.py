@@ -1,10 +1,16 @@
 from decimal import Decimal
 
+import pytest
+from django.contrib.auth import get_user_model
 from django.test import TestCase
+from rest_framework import status
+from rest_framework.test import APIClient
 
 from banks.factories import BankFactory
 from credit_cards.factories import CreditCardFactory
 from credit_cards.models import CreditCard, CreditCardFieldHistory
+
+User = get_user_model()
 
 
 class CreditCardFieldHistoryModelTests(TestCase):
@@ -314,3 +320,183 @@ class CreditCardUpdateOrCreateHistoryTests(TestCase):
         self.assertEqual(history.first().field_name, "annual_fee")
         self.assertEqual(history.first().old_value, "500.00")
         self.assertEqual(history.first().new_value, "600.00")
+
+
+@pytest.mark.django_db
+class TestFieldHistoryAPIEndpoint:
+    """Real request-level tests for field-history API endpoint."""
+
+    def setup_method(self):
+        """Set up test data before each test method."""
+        self.client = APIClient()
+        self.bank = BankFactory()
+        self.card = CreditCardFactory(
+            bank=self.bank,
+            name="Test Card",
+            annual_fee=Decimal("100.00"),
+            interest_rate_apr=Decimal("20.00"),
+        )
+
+        # Create multiple history entries to test ordering and pagination
+        for i, fee in enumerate([Decimal("200.00"), Decimal("300.00"), Decimal("400.00")]):
+            self.card.annual_fee = fee
+            self.card.save()
+
+    def test_anonymous_user_forbidden(self):
+        """Anonymous GET to field-history should return 403."""
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert "Authentication required" in response.data.get("detail", "")
+
+    def test_authenticated_user_can_access(self):
+        """Authenticated GET to field-history should return 200."""
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_history_returns_paginated_response(self):
+        """History endpoint returns paginated response with results."""
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert "results" in response.data
+        assert "count" in response.data
+
+    def test_history_newest_first_ordering(self):
+        """History should be ordered newest-first."""
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+        results = response.data["results"]
+        assert len(results) > 0
+
+        # Verify ordering: each entry created timestamp should be >= next entry
+        for i in range(len(results) - 1):
+            current_created = results[i]["created"]
+            next_created = results[i + 1]["created"]
+            # Current should be >= next (newest first)
+            assert current_created >= next_created
+
+    def test_history_contains_tracked_fields(self):
+        """History entries should contain expected fields."""
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+        results = response.data["results"]
+        assert len(results) > 0
+
+        for entry in results:
+            assert "id" in entry
+            assert "card_id" in entry
+            assert "field_name" in entry
+            assert "old_value" in entry
+            assert "new_value" in entry
+            assert "created" in entry
+
+    def test_history_only_for_requested_card(self):
+        """History should only include records for the requested card."""
+        other_bank = BankFactory()
+        other_card = CreditCardFactory(
+            bank=other_bank,
+            name="Other Card",
+            annual_fee=Decimal("500.00"),
+        )
+        other_card.annual_fee = Decimal("600.00")
+        other_card.save()
+
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        # Get history for the first card
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+        results = response.data["results"]
+        # All entries should be for self.card
+        for entry in results:
+            assert entry["card_id"] == self.card.id
+
+    def test_history_shows_decimal_values_as_strings(self):
+        """Decimal values should be stored and returned as strings."""
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+        results = response.data["results"]
+        # Find an annual_fee change
+        for entry in results:
+            if entry["field_name"] == "annual_fee":
+                # Values should be strings (Decimal serialized)
+                assert isinstance(entry["old_value"], str)
+                assert isinstance(entry["new_value"], str)
+                # Check format
+                assert "." in entry["new_value"]
+
+    def test_pagination_with_many_records(self):
+        """Test that pagination works with many history records."""
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        # Create more history entries
+        for i in range(10):
+            self.card.lounge_access_domestic = f"Update {i}"
+            self.card.save()
+
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+        # Should have pagination info
+        assert "count" in response.data
+        assert "results" in response.data
+        # Results should be bounded (paginated)
+        assert len(response.data["results"]) <= 20  # Django default page size
+
+    def test_staff_user_can_access(self):
+        """Staff users should also be able to access field history."""
+        user = User.objects.create_user(username="staffuser", password="testpass")
+        user.is_staff = True
+        user.save()
+        self.client.force_authenticate(user=user)
+
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_history_read_only_no_post(self):
+        """Field history endpoint should not accept POST requests."""
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
+        response = self.client.post(url, {})
+        # Should get 405 Method Not Allowed
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_history_for_nonexistent_card(self):
+        """Requesting history for nonexistent card should return 404."""
+        user = User.objects.create_user(username="testuser", password="testpass")
+        self.client.force_authenticate(user=user)
+
+        url = "/api/v1/credit-cards/999999/field-history/"
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
