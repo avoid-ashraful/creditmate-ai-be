@@ -1,5 +1,7 @@
 """Read-only search API exposed under ``/api/search/``."""
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -68,6 +70,11 @@ class SearchView(APIView):
 
     permission_classes = []
 
+    @extend_schema(
+        description="Full text search over banks and credit cards",
+        tags=["search"],
+        responses={200: OpenApiTypes.OBJECT},
+    )
     def get(self, request, *args, **kwargs):
         """Run a search.
 
@@ -125,6 +132,11 @@ class SuggestView(APIView):
 
     permission_classes = []
 
+    @extend_schema(
+        description="Get type-ahead suggestions for search queries",
+        tags=["search"],
+        responses={200: OpenApiTypes.OBJECT},
+    )
     def get(self, request, *args, **kwargs):
         """Return suggestions for a partial query.
 
@@ -157,6 +169,11 @@ class SearchStatusView(APIView):
 
     permission_classes = []
 
+    @extend_schema(
+        description="Get search service status including engine, indexes, and queue metrics",
+        tags=["search"],
+        responses={200: OpenApiTypes.OBJECT},
+    )
     def get(self, request, *args, **kwargs):
         """Return the search service status.
 
