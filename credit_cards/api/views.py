@@ -115,7 +115,11 @@ def _build_autocomplete_response(query, cards, banks, categories, facets, did_yo
     bank_matches = [bank.name for bank in banks]
     category_matches = [cat["name"] for cat in categories]
     card_suggestions = []
-    for card in cards[:AUTOCOMPLETE_MAX_RESULTS]:
+
+    category_slots_reserved = min(len(categories), 1) if categories else 0
+    max_cards_slots = AUTOCOMPLETE_MAX_RESULTS - category_slots_reserved
+
+    for card in cards[:max_cards_slots]:
         card_suggestions.append(
             {
                 "type": "card",
@@ -125,7 +129,9 @@ def _build_autocomplete_response(query, cards, banks, categories, facets, did_yo
                 "query": card.name,
             }
         )
-    for bank in banks[:AUTOCOMPLETE_MAX_RESULTS - len(card_suggestions)]:
+
+    max_banks_slots = max_cards_slots - len(card_suggestions)
+    for bank in banks[:max_banks_slots]:
         card_suggestions.append(
             {
                 "type": "bank",
@@ -135,7 +141,9 @@ def _build_autocomplete_response(query, cards, banks, categories, facets, did_yo
                 "query": bank.name,
             }
         )
-    for category in categories[:AUTOCOMPLETE_MAX_RESULTS - len(card_suggestions)]:
+
+    remaining_slots = AUTOCOMPLETE_MAX_RESULTS - len(card_suggestions)
+    for category in categories[:remaining_slots]:
         card_suggestions.append(
             {
                 "type": "category",

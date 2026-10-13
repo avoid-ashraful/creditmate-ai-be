@@ -609,7 +609,7 @@ class TestTypeaheadCategories:
             assert "_" not in matching[0]["slug"]
 
     def test_categories_bounded_with_cards_banks(self, api_client):
-        """Categories fit into max 8 suggestions limit."""
+        """Categories reserved even when many card matches exist."""
         CreditCardFactory.create_batch(10, name="Card Travel")
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "tra"})
@@ -617,3 +617,9 @@ class TestTypeaheadCategories:
 
         # Total suggestions should not exceed 8
         assert len(response.data["suggestions"]) <= 8
+
+        # Travel category should still appear even with 10 matching cards
+        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        assert len(category_suggestions) > 0, "Category should be reserved despite many card matches"
+        assert category_suggestions[0]["slug"] == "travel", "Travel category slug should survive"
+        assert "Travel" in response.data["matches"]["category"], "Travel in matches.category"
