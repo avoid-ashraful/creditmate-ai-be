@@ -10,7 +10,7 @@ def test_parse_sample_rate_accepts_inclusive_bounds(value, expected):
     assert parse_sample_rate(value) == expected
 
 
-@pytest.mark.parametrize("value", ["-0.01", "1.01"])
+@pytest.mark.parametrize("value", ["-0.01", "1.01", "nan", "inf", "-inf"])
 def test_parse_sample_rate_rejects_out_of_range_values(value):
     with pytest.raises(ValueError, match="between 0.0 and 1.0"):
         parse_sample_rate(value)

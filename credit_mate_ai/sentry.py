@@ -1,5 +1,6 @@
 """Sentry event privacy helpers."""
 
+import math
 from urllib.parse import urlsplit, urlunsplit
 import re
 
@@ -12,7 +13,7 @@ _SAFE_USER_ID = re.compile(
 def parse_sample_rate(value):
     """Parse a Sentry sample rate and reject values outside the SDK range."""
     rate = float(value)
-    if not 0.0 <= rate <= 1.0:
+    if not math.isfinite(rate) or not 0.0 <= rate <= 1.0:
         raise ValueError("SENTRY_TRACES_SAMPLE_RATE must be between 0.0 and 1.0")
     return rate
 

@@ -95,6 +95,7 @@ if SENTRY_DSN:
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
             send_default_pii=False,
             before_send=sanitize_sentry_event,
+            before_send_transaction=sanitize_sentry_event,
         )
 
 # Application definition
