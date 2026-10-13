@@ -15,6 +15,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from celery.schedules import crontab
 from credit_mate_ai.sentry import parse_sample_rate, sanitize_sentry_event
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -258,6 +259,30 @@ CELERY_BEAT_SCHEDULE = {
     "send-alert-digests-hourly": {
         "task": "alerts.tasks.send_alert_digests",
         "schedule": 3600.0,
+    },
+    "crawl-bank-data-weekly": {
+        "task": "banks.tasks.crawl_all_bank_data",
+        "schedule": 604800.0,
+    },
+    "daily-crawl-all-active-banks": {
+        "task": "banks.tasks.daily_crawl_all_active_banks",
+        "schedule": crontab(hour=2, minute=0),
+        "options": {"expires": 6 * 60 * 60},
+    },
+    "monthly-data-quality-check": {
+        "task": "banks.tasks.monthly_data_quality_check",
+        "schedule": 30 * 24 * 60 * 60,
+        "options": {"expires": 24 * 60 * 60},
+    },
+    "monthly-schedule-charge-discovery": {
+        "task": "banks.tasks.monthly_schedule_charge_url_discovery",
+        "schedule": 30 * 24 * 60 * 60,
+        "options": {"expires": 24 * 60 * 60},
+    },
+    "monthly-comprehensive-crawl": {
+        "task": "banks.tasks.monthly_comprehensive_crawl",
+        "schedule": 30 * 24 * 60 * 60,
+        "options": {"expires": 24 * 60 * 60},
     },
 }
 

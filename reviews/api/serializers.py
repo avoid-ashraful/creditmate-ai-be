@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.html import strip_tags
 from rest_framework import serializers
 
 from reviews.models import CardReview, ReviewVote
@@ -22,6 +23,9 @@ class CardReviewSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         for field in ("title", "body", "pros", "cons"):
             if field in attrs:
+                attrs[field] = strip_tags(attrs[field] or "").strip()
+                if not attrs[field]:
+                    raise serializers.ValidationError({field: "This field may not be empty after removing HTML."})
                 try:
                     attrs[field] = clean_review_text(attrs[field])
                 except DjangoValidationError as exc:

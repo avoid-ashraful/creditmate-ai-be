@@ -5,53 +5,20 @@ by the crawler — ``celery -A credit_mate_ai worker`` and
 ``celery -A credit_mate_ai beat`` (see ``docker-compose.yml`` /
 ``docker-compose.dev.yml``), broker ``CELERY_BROKER_URL``.
 
-``beat_schedule`` is assigned directly on ``app.conf`` on purpose: the
-assignment is recorded in Celery's pre-configuration and therefore survives
-the lazy ``config_from_object("django.conf:settings")`` load that happens
-later, while a ``CELERY_BEAT_SCHEDULE`` Django setting would be *replaced* by
-this dictionary.  New periodic work should therefore be appended here.
+Static beat entries live in Django's ``CELERY_BEAT_SCHEDULE`` setting. The
+search queue drain is appended here because its registration depends on the
+active search settings.
 """
 
 import os
 
 from celery import Celery
-from celery.schedules import crontab
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "credit_mate_ai.settings")
 
 app = Celery("credit_mate_ai")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
-
-app.conf.beat_schedule = {
-    "crawl-bank-data-weekly": {
-        "task": "banks.tasks.crawl_all_bank_data",
-        "schedule": 604800.0,  # 7 days in seconds
-    },
-    # Daily crawl of every active bank (2:00 UTC, expires after 6 hours so a
-    # missed window does not replay stale work)
-    "daily-crawl-all-active-banks": {
-        "task": "banks.tasks.daily_crawl_all_active_banks",
-        "schedule": crontab(hour=2, minute=0),
-        "options": {"expires": 6 * 60 * 60},
-    },
-    # Monthly tasks - run on 1st day of each month at 2 AM UTC
-    "monthly-data-quality-check": {
-        "task": "banks.tasks.monthly_data_quality_check",
-        "schedule": 30 * 24 * 60 * 60,  # 30 days in seconds
-        "options": {"expires": 24 * 60 * 60},  # Expire after 24 hours if not run
-    },
-    "monthly-schedule-charge-discovery": {
-        "task": "banks.tasks.monthly_schedule_charge_url_discovery",
-        "schedule": 30 * 24 * 60 * 60,  # 30 days in seconds
-        "options": {"expires": 24 * 60 * 60},
-    },
-    "monthly-comprehensive-crawl": {
-        "task": "banks.tasks.monthly_comprehensive_crawl",
-        "schedule": 30 * 24 * 60 * 60,  # 30 days in seconds
-        "options": {"expires": 24 * 60 * 60},
-    },
-}
 
 SEARCH_DRAIN_BEAT_ENTRY = "search-index-queue-drain"
 
