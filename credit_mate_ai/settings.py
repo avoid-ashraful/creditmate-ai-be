@@ -102,6 +102,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "credit_mate_ai.middleware.RequestValidationMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "credit_mate_ai.middleware.SecurityHeadersMiddleware",
 ]
 
 ROOT_URLCONF = "credit_mate_ai.urls"
@@ -345,6 +346,14 @@ SECURE_BROWSER_XSS_FILTER = os.getenv("SECURE_BROWSER_XSS_FILTER", "True").lower
     "on",
 )
 X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
+
+# Response header policy (applied to every response by SecurityHeadersMiddleware)
+# Safe default CSP: only same-origin resources, no framing of this site.
+CSP_HEADER = os.getenv(
+    "CSP_HEADER",
+    "default-src 'self'; frame-ancestors 'none'",
+)
+REFERRER_POLICY = os.getenv("REFERRER_POLICY", "strict-origin-when-cross-origin")
 
 # Proxy SSL Header for Railway/Heroku
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
