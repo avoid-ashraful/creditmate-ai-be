@@ -86,16 +86,19 @@ uv run black . --check && uv run isort . --check && uv run flake8
 
 ### Step 3: Build Application Image
 
-**Option A: Docker Image Build**
+**Option A: Docker Image Build (CI/CD or Manual)**
 ```bash
-# (Performed by CI/CD pipeline)
+# CI/CD PIPELINE STATUS: **UNVERIFIED** - GitHub Actions configured but deployment
+# automation is NOT currently set up. Remote CI/deploy remain pending.
+#
+# If CI/CD is configured, typical flow:
 # 1. Code pushed to master branch
-# 2. CI pipeline triggers automatically
-# 3. Docker image built from Dockerfile
+# 2. CI pipeline runs tests and code quality checks
+# 3. Docker image built from Dockerfile (if deployment automation exists)
 # 4. Image tagged with git commit SHA
-# 5. Image pushed to Docker registry
+# 5. Image pushed to registry (if deployment automation exists)
 
-# Manual build (if needed)
+# Manual build (current approach until CI/CD deployment is verified)
 docker build -t creditmate-ai-be:latest .
 ```
 
@@ -130,15 +133,17 @@ uv run python manage.py migrate --list
 **⚠️ PRODUCTION DATABASE OPERATIONS - Requires careful coordination**
 
 ```bash
-# Step 5a: Create migration backup (Operations)
-# Database backup created BEFORE applying migrations
-# Retention: Keep until rollback window expires (24 hours)
+# Step 5a: Create migration backup (Operations responsibility)
+# Database backup MUST be created BEFORE applying migrations
+# Retention: Keep until rollback window expires (24 hours minimum)
 
 # Step 5b: Apply migrations in maintenance window
-# Coordinate with infrastructure team for timing
-# Typical maintenance windows: 2-4 AM UTC
+# **Coordinate with infrastructure team for timing**
+# Maintenance window timing is UNVERIFIED and must be set up by operations team
+# Suggested approach: Pick low-traffic time or use zero-downtime migration strategies
+# See "Zero-Downtime Migrations" section in this runbook
 
-# Apply migrations
+# Apply migrations (from project root or container)
 uv run python manage.py migrate
 
 # Verify all migrations applied

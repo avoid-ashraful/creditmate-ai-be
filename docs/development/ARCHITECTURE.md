@@ -23,79 +23,73 @@ CreditMate AI is a Django-based AI-powered credit card discovery platform that a
 
 ## Architecture Diagram
 
+**CreditMate AI Backend - Core Components**
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Frontend (External)                       │
-│                      Web App / Mobile App                        │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-                    HTTP/HTTPS REST API
-                             │
-┌────────────────────────────▼────────────────────────────────────┐
-│                       Django REST API Layer                      │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │ /api/v1/banks/                  (BanksViewSet)         │  │
-│  │ /api/v1/credit-cards/           (CreditCardsViewSet)   │  │
-│  │ /api/v1/credit-cards/search-suggestions/ (SearchAPI)   │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │ Middleware & Security                                    │  │
-│  │ - CORS Configuration  - Rate Limiting  - Authentication │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└────────────────────────────┬────────────────────────────────────┘
-         ┌────────────────────┼────────────────────┐
-         │                    │                    │
-         ▼                    ▼                    ▼
-    ┌─────────┐          ┌─────────┐         ┌──────────────┐
-    │  Models │          │ Services│         │ Serializers  │
-    │ & ORM   │          │ & Logic │         │  & REST API  │
-    └─────────┘          └─────────┘         └──────────────┘
-         │                    │                    │
-         │                    ▼                    │
-         │         ┌──────────────────────┐       │
-         │         │ AI Content Pipeline  │       │
-         │         ├──────────────────────┤       │
-         │         │ ContentExtractor     │       │
-         │         │ LLMContentParser     │       │
-         │         │ CreditCardDataSvc    │       │
-         │         │ BankDataCrawlerSvc   │       │
-         │         └──────────────────────┘       │
-         │                    │                    │
-         └────────────────────┼────────────────────┘
-                              │
-┌─────────────────────────────▼────────────────────────────────────┐
-│                    PostgreSQL Database                           │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │ banks_bank              (Bank entities)                 │  │
-│  │ banks_bankdatasource    (Data sources per bank)         │  │
-│  │ banks_crawledcontent    (Raw extracted content)         │  │
-│  │ credit_cards_creditcard (Processed credit card data)    │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-         ┌───────────────────┼───────────────────┐
-         │                   │                   │
-         ▼                   ▼                   ▼
-    ┌─────────┐         ┌────────┐         ┌──────────┐
-    │  Redis  │         │ OpenAI │         │ External │
-    │  Cache  │         │  API   │         │  URLs    │
-    │ Queue   │         │  GPT   │         │ (PDFs)   │
-    └────┬────┘         └────────┘         └──────────┘
-         │
-         ▼
-    ┌──────────────────────────────────────────┐
-    │     Celery Task Queue & Scheduler        │
-    ├──────────────────────────────────────────┤
-    │ celery_worker      (Task execution)      │
-    │ celery_beat        (Scheduled tasks)     │
-    └──────────────────────────────────────────┘
-         ▲
-         │
-    Periodic Tasks:
-    - crawl_all_bank_data (weekly)
-    - Process data sources
-    - Error retries
+┌─────────────┐
+│  Frontend   │  (External web/mobile app)
+└──────┬──────┘
+       │ HTTP/REST
+       ▼
+┌──────────────────────────────────────────┐
+│   Django REST API (DRF + Middleware)     │
+│  - /api/v1/banks/                        │
+│  - /api/v1/credit-cards/                 │
+│  - CORS, Rate Limiting, Security         │
+└──────────┬───────────────────────────────┘
+           │
+    ┌──────┴───────┐
+    │              │
+    ▼              ▼
+┌─────────┐   ┌────────────────────────┐
+│PostgreSQL   │ Services & Models      │
+│(15+)        │ - ContentExtractor     │
+│ banks       │ - LLMContentParser     │
+│ cards       │ - CreditCardDataSvc    │
+└─────────┘   │ - BankDataCrawlerSvc   │
+              └────────┬───────────────┘
+                       │
+           ┌───────────┼───────────┐
+           │           │           │
+           ▼           ▼           ▼
+        ┌────────┐ ┌─────────┐ ┌──────────┐
+        │ Redis  │ │ OpenAI  │ │ External │
+        │Celery  │ │  API    │ │  URLs    │
+        │Queue   │ │(Optional)│ │ (PDFs)  │
+        └────────┘ └─────────┘ └──────────┘
+           ▲
+           │
+    ┌──────────────────────┐
+    │ Celery Beat Scheduler│ (Periodic tasks)
+    └──────────────────────┘
+
+Optional: Elasticsearch (docker-compose.search.yml)
+- Search index for credit cards (Stream 6.1)
+- Separate from main stack
+```
+
+**Mermaid Diagram** (for visualization tools):
+```mermaid
+graph TB
+    FE["Frontend (Web/Mobile)"]
+    API["Django REST API<br/>+ Middleware"]
+    DB["PostgreSQL 15+"]
+    Models["Models & ORM"]
+    Services["Services<br/>ContentExtractor<br/>LLMContentParser"]
+    Redis["Redis + Celery"]
+    External["External APIs<br/>OpenAI (optional)<br/>URLs/PDFs"]
+    
+    FE -->|HTTP/REST| API
+    API --> Models
+    API --> DB
+    Models --> Services
+    Services --> External
+    Services --> Redis
+    Redis -->|Tasks| Services
+    
+    style DB fill:#4CAF50
+    style Redis fill:#FF6B35
+    style External fill:#FFC107
 ```
 
 ## Core Components
@@ -201,10 +195,29 @@ Orchestrates the entire crawling workflow:
 **Purpose**: Persistent data storage
 
 **Key Aspects**:
-- PostgreSQL 17 for production-grade reliability
+- PostgreSQL 15+ (docker-compose uses postgres:15, not 17)
 - ORM abstractions for SQL queries
 - Migration management with Django migrations
 - Audit trails with `created_at` and `updated_at` fields
+
+### Optional Components
+
+**Elasticsearch** (docker-compose.search.yml)
+- Status: **Optional** - Separate from main stack
+- Purpose: Search index for credit cards (Stream 6.1)
+- Configuration: Start with `docker-compose -f docker-compose.search.yml up -d`
+- Port: 19200 (local development)
+- Credentials: Disabled for local development only
+
+**LLM Providers** (common/llm/)
+- OpenAI/OpenRouter: Optional - required only for content parsing/crawling
+- Google Gemini: Optional - fallback LLM provider
+- Leave API keys empty if only using API for search/retrieval
+
+**Sentry Error Monitoring** (credit_mate_ai/sentry.py)
+- Status: **Optional** - Configuration support exists
+- Implementation: **Unverified** - Not currently deployed
+- Setup: Requires SENTRY_DSN environment variable
 
 ## Data Flow
 
@@ -222,10 +235,11 @@ Orchestrates the entire crawling workflow:
             - Parse format (PDF/HTML/CSV/Image)
             - Extract raw text
                     ▼
-5. Parse: LLMContentParser.parse_content()
-          - Send to OpenAI GPT
+5. Parse: LLMContentParser.parse_content() (requires OPENAI_API_KEY)
+          - Send to OpenAI GPT or Gemini API
           - Parse into structured JSON
           - Validate extracted data
+          - Skip this step if no LLM provider configured
                     ▼
 6. Update: CreditCardDataService.update_credit_cards()
            - Create/update CreditCard records
@@ -264,8 +278,8 @@ Orchestrates the entire crawling workflow:
 - **Gunicorn**: Production WSGI server
 
 ### Database & Caching
-- **PostgreSQL**: 17 - Primary database
-- **Redis**: 7+ - Task queue and caching
+- **PostgreSQL**: 15+ (docker-compose.yml uses postgres:15) - Primary database
+- **Redis**: 7+ (docker-compose uses redis:7-alpine) - Task queue and caching
 - **django-redis**: Redis caching backend
 
 ### Task Queue & Scheduling
@@ -273,8 +287,9 @@ Orchestrates the entire crawling workflow:
 - **Celery Beat**: Periodic task scheduling
 - **Redis**: Message broker for Celery
 
-### AI Integration
-- **OpenAI API**: GPT models for content parsing
+### AI Integration (Optional)
+- **OpenAI API**: GPT models for content parsing (OPTIONAL - required only for LLM parsing)
+- **google-generativeai**: Gemini API fallback (OPTIONAL)
 - **python-dotenv**: Environment variable management
 
 ### Content Processing
@@ -295,8 +310,8 @@ Orchestrates the entire crawling workflow:
 ### Security & Monitoring
 - **django-cors-headers**: CORS support
 - **django-ratelimit**: API rate limiting
-- **djangorestframework-simplejwt**: JWT authentication (optional)
-- **sentry-sdk**: Error tracking (optional)
+- **djangorestframework-simplejwt**: JWT authentication (OPTIONAL)
+- **sentry-sdk**: Error tracking (OPTIONAL - configuration exists but unverified in deployment)
 - **cryptography**: Encryption utilities
 
 ### Utilities
@@ -359,7 +374,8 @@ creditmate-ai-be/
 ├── pyproject.toml               # Project dependencies
 ├── Dockerfile                   # Container image
 ├── docker-compose.yml           # Production containers
-├── docker-compose.dev.yml       # Development containers
+├── docker-compose.dev.yml       # Development containers (Redis + Django only)
+├── docker-compose.search.yml    # Elasticsearch (optional, Stream 6.1)
 ├── .env.example                 # Environment template
 ├── README.md                    # Project README
 ├── CLAUDE.md                    # Development guidelines

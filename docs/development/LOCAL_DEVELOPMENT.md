@@ -17,8 +17,8 @@ This guide provides step-by-step instructions for setting up the CreditMate AI b
 
 ### Minimum Requirements
 - **Python**: 3.12 or higher
-- **PostgreSQL**: 17 (for production-like database)
-- **Redis**: 7.0 or higher
+- **PostgreSQL**: 15+ (docker-compose.yml uses postgres:15; install matching version locally or use Docker)
+- **Redis**: 7.0+ (docker-compose uses redis:7-alpine)
 - **Git**: Latest version
 
 ### Optional
@@ -51,11 +51,11 @@ source .venv/bin/activate
 
 #### macOS (using Homebrew)
 ```bash
-# Install PostgreSQL
-brew install postgresql@17
-brew services start postgresql@17
+# Install PostgreSQL 15+ (matches docker-compose.yml)
+brew install postgresql
+brew services start postgresql
 
-# Install Redis
+# Install Redis 7+ (matches docker-compose)
 brew install redis
 brew services start redis
 
@@ -66,13 +66,13 @@ redis-cli ping
 
 #### Ubuntu/Debian
 ```bash
-# Install PostgreSQL
+# Install PostgreSQL 15+ (matches docker-compose.yml)
 sudo apt-get update
-sudo apt-get install -y postgresql-17 postgresql-contrib-17
+sudo apt-get install -y postgresql postgresql-contrib
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
-# Install Redis
+# Install Redis 7+ (matches docker-compose)
 sudo apt-get install -y redis-server
 sudo systemctl start redis-server
 sudo systemctl enable redis-server
@@ -101,15 +101,17 @@ DEBUG=True
 ENVIRONMENT=local
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Database (PostgreSQL)
+# Database (PostgreSQL 15+)
 DB_NAME=creditmate_db
 DB_USER=postgres
 DB_PASSWORD=postgres  # Change this to your password
 DB_HOST=localhost
 DB_PORT=5432
 
-# OpenAI Integration (required for crawling)
-OPENAI_API_KEY=sk-your-actual-openai-api-key
+# OpenAI/LLM Integration (optional - required only for content parsing/crawling)
+# Leave unset or empty to skip LLM-based content parsing
+OPENAI_API_KEY=sk-your-openai-api-key-or-leave-empty
+GEMINI_API_KEY=your-gemini-key-or-leave-empty
 
 # Redis/Celery
 CELERY_BROKER_URL=redis://localhost:6379/0
@@ -189,7 +191,7 @@ docker-compose -f docker-compose.dev.yml exec web uv run python manage.py create
 docker-compose -f docker-compose.dev.yml logs -f
 ```
 
-### Docker Compose Services (Development)
+### Docker Compose Services (Development - dev.yml)
 
 The `docker-compose.dev.yml` includes:
 
@@ -199,6 +201,8 @@ The `docker-compose.dev.yml` includes:
 | `web` | 8000 | Django development server |
 | `celery` | - | Background task worker |
 | `celery-beat` | - | Scheduled task scheduler |
+
+**Database note**: `docker-compose.dev.yml` does NOT include PostgreSQL. Run PostgreSQL locally (via traditional setup) or use the full `docker-compose.yml` with all services.
 
 ### Access Development Environment
 
