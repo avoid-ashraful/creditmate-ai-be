@@ -142,12 +142,13 @@ The response contains several sections:
 
 - `query` (string): The original query as provided, including whitespace
 - `suggestions` (array): Bounded, ordered matches (max 8 total across all types)
-  - Each suggestion has: `type` ("card" or "bank"), `id` (integer), `label` (string), `detail` (string)
-  - Card details include bank name; bank details include active card count
+  - Card suggestions: `type: "card"`, `id` (integer), `label` (string), `detail` (bank name)
+  - Bank suggestions: `type: "bank"`, `id` (integer), `label` (string), `detail` (card count)
+  - Category suggestions: `type: "category"`, `slug` (string), `label` (string)
 - `matches` (object): Query match arrays by type:
   - `card` (array): List of matching card names (strings)
   - `bank` (array): List of matching bank names (strings)
-  - `category` (array): Empty (no backend category source)
+  - `category` (array): List of matching category names (from canonical taxonomy)
   - `source` (string): Always "database"
 - `facets` (object): Count facets for common filters
   - Each facet has: `label` (string), `count` (integer), `filter` (string for list endpoint)
@@ -165,42 +166,43 @@ The response contains several sections:
 **Matching Strategy:**
 1. Prefix matches: Cards/banks whose name starts with the query (case-insensitive)
 2. Substring matches: Remaining cards/banks containing the query
-3. Fallback ranking: If no matches, all results ranked by similarity (difflib)
-4. Typo detection: Close matches suggested if ≥80% similar to fallback set
+3. Category matches: Cards/banks matching canonical category names/slugs by prefix
+   - Canonical categories: Travel, Cashback, Premium, Student, Business, No Annual Fee
+   - Categories are matched by name or slug (e.g., "no-annual-fee")
+4. Typo detection: Close matches suggested if ≥80% similar (cards/banks only)
 
 **Example Request:**
 ```bash
 curl -X GET "http://localhost:8000/api/v1/credit-cards/autocomplete/?q=visa"
 ```
 
-**Example Response:**
+**Example Response (Travel Category):**
 ```json
 {
-  "query": "visa",
+  "query": "travel",
   "suggestions": [
     {
-      "type": "card",
-      "id": 1,
-      "label": "Visa Infinite",
-      "detail": "Chase"
+      "type": "category",
+      "slug": "travel",
+      "label": "Travel"
     },
     {
       "type": "card",
-      "id": 2,
-      "label": "Visa Platinum",
-      "detail": "Bank of America"
+      "id": 5,
+      "label": "Travel Rewards Card",
+      "detail": "Premium Bank"
     },
     {
-      "type": "bank",
-      "id": 15,
-      "label": "Visa Inc",
-      "detail": "3 cards"
+      "type": "card",
+      "id": 8,
+      "label": "Traveler's Choice",
+      "detail": "Global Card Corp"
     }
   ],
   "matches": {
-    "card": ["Visa Infinite", "Visa Platinum"],
-    "bank": ["Visa Inc"],
-    "category": [],
+    "card": ["Travel Rewards Card", "Traveler's Choice"],
+    "bank": [],
+    "category": ["Travel"],
     "source": "database"
   },
   "facets": {

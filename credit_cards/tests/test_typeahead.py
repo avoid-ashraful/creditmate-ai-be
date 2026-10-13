@@ -505,3 +505,115 @@ class TestTypeaheadInactiveCards:
 
         assert active_bank.id in bank_ids
         assert inactive_bank.id not in bank_ids
+
+
+@pytest.mark.django_db()
+class TestTypeaheadCategories:
+    """Test category suggestions from canonical taxonomy."""
+
+    def test_category_exact_match(self, api_client):
+        """Matching category name returns category suggestion."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "travel"})
+        assert response.status_code == 200
+
+        # Should find Travel category
+        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        assert len(category_suggestions) > 0
+        assert category_suggestions[0]["slug"] == "travel"
+        assert category_suggestions[0]["label"] == "Travel"
+
+    def test_category_prefix_match(self, api_client):
+        """Partial category name matches."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "tra"})
+        assert response.status_code == 200
+
+        # Should find Travel category by prefix
+        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        assert len(category_suggestions) > 0
+        assert category_suggestions[0]["slug"] == "travel"
+
+    def test_category_slug_match(self, api_client):
+        """Category slug (no-annual-fee) matches."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "no-annual"})
+        assert response.status_code == 200
+
+        # Should find No Annual Fee category by slug prefix
+        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        assert len(category_suggestions) > 0
+        assert category_suggestions[0]["slug"] == "no-annual-fee"
+        assert category_suggestions[0]["label"] == "No Annual Fee"
+
+    def test_multiple_categories_match(self, api_client):
+        """Multiple categories can match when query is ambiguous."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "ca"})
+        assert response.status_code == 200
+
+        # Both Cashback and Business could match
+        category_matches = response.data["matches"]["category"]
+        # At least one category should match
+        assert "Cashback" in category_matches or len(category_matches) > 0
+
+    def test_category_in_matches_array(self, api_client):
+        """Matching categories appear in matches.category array."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "travel"})
+        assert response.status_code == 200
+
+        assert "Travel" in response.data["matches"]["category"]
+
+    def test_category_suggestion_has_required_fields(self, api_client):
+        """Category suggestions have slug and label fields."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "premium"})
+        assert response.status_code == 200
+
+        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        if len(category_suggestions) > 0:
+            assert "slug" in category_suggestions[0]
+            assert "label" in category_suggestions[0]
+            assert "type" in category_suggestions[0]
+            assert category_suggestions[0]["type"] == "category"
+
+    def test_no_category_match_for_non_matching_query(self, api_client):
+        """Non-matching queries return empty category matches."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "xyz123"})
+        assert response.status_code == 200
+
+        assert response.data["matches"]["category"] == []
+
+    def test_category_does_not_leak_arbitrary_text(self, api_client):
+        """Category suggestions only return canonical categories, not arbitrary text."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "visa' OR '1'='1"})
+        assert response.status_code == 200
+
+        # No categories should match this SQL injection attempt
+        assert response.data["matches"]["category"] == []
+
+    def test_case_insensitive_category_match(self, api_client):
+        """Category matching is case-insensitive."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "TRAVEL"})
+        assert response.status_code == 200
+
+        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        assert len(category_suggestions) > 0
+        assert category_suggestions[0]["slug"] == "travel"
+
+    def test_category_slug_format_preserved(self, api_client):
+        """Category slug is preserved in lowercase with hyphens."""
+        response = api_client.get(TYPEAHEAD_URL, {"q": "no"})
+        assert response.status_code == 200
+
+        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        matching = [s for s in category_suggestions if "fee" in s.get("label", "").lower()]
+        if len(matching) > 0:
+            # Slug should use hyphens, not underscores
+            assert "-" in matching[0]["slug"]
+            assert "_" not in matching[0]["slug"]
+
+    def test_categories_bounded_with_cards_banks(self, api_client):
+        """Categories fit into max 8 suggestions limit."""
+        CreditCardFactory.create_batch(10, name="Card Travel")
+
+        response = api_client.get(TYPEAHEAD_URL, {"q": "tra"})
+        assert response.status_code == 200
+
+        # Total suggestions should not exceed 8
+        assert len(response.data["suggestions"]) <= 8

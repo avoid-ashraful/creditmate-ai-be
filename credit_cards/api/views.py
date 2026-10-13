@@ -28,6 +28,38 @@ AUTOCOMPLETE_MAX_RESULTS = 8
 AUTOCOMPLETE_TYPO_THRESHOLD = 0.8
 AUTOCOMPLETE_QUERY_MAX_LENGTH = 100
 
+CANONICAL_CATEGORIES = [
+    {"slug": "travel", "name": "Travel"},
+    {"slug": "cashback", "name": "Cashback"},
+    {"slug": "premium", "name": "Premium"},
+    {"slug": "student", "name": "Student"},
+    {"slug": "business", "name": "Business"},
+    {"slug": "no-annual-fee", "name": "No Annual Fee"},
+]
+
+
+def _find_matching_categories(query):
+    """Find categories matching the query by name or slug.
+
+    Parameters
+    ----------
+    query : str
+        The normalized user query (lowercase).
+
+    Returns
+    -------
+    list of dict
+        Matching category objects with slug and name.
+    """
+    matches = []
+    query_lower = query.lower()
+    for category in CANONICAL_CATEGORIES:
+        slug_lower = category["slug"].lower()
+        name_lower = category["name"].lower()
+        if name_lower.startswith(query_lower) or slug_lower.startswith(query_lower):
+            matches.append(category)
+    return matches
+
 
 def _autocomplete_match_ratio(query, value):
     """Return a safe similarity ratio without a database extension.
@@ -56,7 +88,7 @@ def _autocomplete_match_ratio(query, value):
     return SequenceMatcher(None, query, bounded_value).ratio()
 
 
-def _build_autocomplete_response(query, cards, banks, facets, did_you_mean):
+def _build_autocomplete_response(query, cards, banks, categories, facets, did_you_mean):
     """Build the canonical, frontend-facing autocomplete envelope.
 
     Parameters
@@ -67,6 +99,8 @@ def _build_autocomplete_response(query, cards, banks, facets, did_you_mean):
         Bounded, ordered card matches.
     banks : list of Bank
         Bounded, ordered bank matches.
+    categories : list of dict
+        Matching canonical categories with slug and name.
     facets : dict
         Bounded active-card facet counts by key.
     did_you_mean : str or None
@@ -79,6 +113,7 @@ def _build_autocomplete_response(query, cards, banks, facets, did_you_mean):
     """
     card_matches = [card.name for card in cards]
     bank_matches = [bank.name for bank in banks]
+    category_matches = [cat["name"] for cat in categories]
     card_suggestions = []
     for card in cards[:AUTOCOMPLETE_MAX_RESULTS]:
         card_suggestions.append(
@@ -100,13 +135,21 @@ def _build_autocomplete_response(query, cards, banks, facets, did_you_mean):
                 "query": bank.name,
             }
         )
+    for category in categories[:AUTOCOMPLETE_MAX_RESULTS - len(card_suggestions)]:
+        card_suggestions.append(
+            {
+                "type": "category",
+                "slug": category["slug"],
+                "label": category["name"],
+            }
+        )
 
     return {
         "query": query,
         "matches": {
             "card": card_matches[:AUTOCOMPLETE_MAX_RESULTS],
             "bank": bank_matches[:AUTOCOMPLETE_MAX_RESULTS],
-            "category": [],
+            "category": category_matches[:AUTOCOMPLETE_MAX_RESULTS],
             "source": "database",
         },
         "suggestions": card_suggestions[:AUTOCOMPLETE_MAX_RESULTS],
@@ -266,7 +309,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="typeahead")
     def typeahead(self, request):
-        """Return bounded, anonymous-safe card and bank typeahead results.
+        """Return bounded, anonymous-safe card, bank, and category typeahead results.
 
         Parameters
         ----------
@@ -278,13 +321,14 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         Returns
         -------
         Response
-            The canonical typeahead response. Category suggestions are an
-            explicit empty fallback because no reliable category model exists.
+            The canonical typeahead response with suggestions for cards, banks,
+            and categories (from canonical taxonomy: Travel, Cashback, Premium,
+            Student, Business, No Annual Fee).
         """
         raw_query = request.query_params.get("q", "")
         query = raw_query[:AUTOCOMPLETE_QUERY_MAX_LENGTH].strip()
         if len(query) < AUTOCOMPLETE_MIN_QUERY_LENGTH:
-            response = _build_autocomplete_response(raw_query, [], [], {}, None)
+            response = _build_autocomplete_response(raw_query, [], [], [], {}, None)
             response["highlight"] = {"terms": [], "scope": None, "strategy": None}
             response["match_policy"] = {
                 "minimum_characters": AUTOCOMPLETE_MIN_QUERY_LENGTH,
@@ -327,6 +371,8 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
                 .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS - len(prefix_banks)]
             )
         bank_matches = prefix_banks + contains_banks
+
+        category_matches = _find_matching_categories(query)
 
         facet_counts = card_queryset.aggregate(
             no_fee=Count("id", filter=models.Q(annual_fee=0)),
@@ -399,6 +445,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             raw_query,
             card_matches,
             bank_matches,
+            category_matches,
             facets,
             did_you_mean,
         )
