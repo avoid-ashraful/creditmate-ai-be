@@ -264,8 +264,8 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         cache.set(cache_key, response.data, SEARCH_SUGGESTIONS_TTL)
         return response
 
-    @action(detail=False, methods=["get"], url_path="autocomplete")
-    def autocomplete(self, request):
+    @action(detail=False, methods=["get"], url_path="typeahead")
+    def typeahead(self, request):
         """Return bounded, anonymous-safe card and bank typeahead results.
 
         Parameters
@@ -278,7 +278,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         Returns
         -------
         Response
-            The canonical autocomplete response. Category suggestions are an
+            The canonical typeahead response. Category suggestions are an
             explicit empty fallback because no reliable category model exists.
         """
         raw_query = request.query_params.get("q", "")
@@ -299,13 +299,15 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
                 :AUTOCOMPLETE_MAX_RESULTS
             ]
         )
+        contains_cards = []
         if len(prefix_cards) < AUTOCOMPLETE_MAX_RESULTS:
             contains_cards = list(
                 card_queryset.filter(name__icontains=query)
                 .exclude(id__in=[card.id for card in prefix_cards])
-                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS]
+                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS - len(prefix_cards)]
             )
-            prefix_cards.extend(contains_cards)
+        card_matches = prefix_cards + contains_cards
+
         prefix_banks = list(
             Bank.objects.filter(is_active=True, name__istartswith=query)
             .annotate(active_card_count=Count("credit_cards", filter=models.Q(
@@ -313,6 +315,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             )))
             .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS]
         )
+        contains_banks = []
         if len(prefix_banks) < AUTOCOMPLETE_MAX_RESULTS:
             prefix_ids = [bank.id for bank in prefix_banks]
             contains_banks = list(
@@ -321,37 +324,9 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
                 .annotate(active_card_count=Count("credit_cards", filter=models.Q(
                     credit_cards__is_active=True
                 )))
-                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS]
+                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS - len(prefix_banks)]
             )
-            prefix_banks.extend(contains_banks)
-
-        normalized_query = query.casefold()
-        card_candidates = prefix_cards
-        bank_candidates = prefix_banks
-        if not card_candidates and not bank_candidates:
-            fallback_cards = list(
-                card_queryset.order_by("name")[:AUTOCOMPLETE_MAX_RESULTS * 2]
-            )
-            fallback_banks = list(
-                Bank.objects.filter(is_active=True)
-                .annotate(active_card_count=Count("credit_cards", filter=models.Q(
-                    credit_cards__is_active=True
-                )))
-                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS * 2]
-            )
-            card_candidates = fallback_cards
-            bank_candidates = fallback_banks
-
-        card_matches = sorted(
-            card_candidates,
-            key=lambda card: _autocomplete_match_ratio(normalized_query, card.name),
-            reverse=True,
-        )[:AUTOCOMPLETE_MAX_RESULTS]
-        bank_matches = sorted(
-            bank_candidates,
-            key=lambda bank: _autocomplete_match_ratio(normalized_query, bank.name),
-            reverse=True,
-        )[:AUTOCOMPLETE_MAX_RESULTS]
+        bank_matches = prefix_banks + contains_banks
 
         facet_counts = card_queryset.aggregate(
             no_fee=Count("id", filter=models.Q(annual_fee=0)),
@@ -397,11 +372,22 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
 
         did_you_mean = None
         if not card_matches and not bank_matches:
+            candidate_cards = list(
+                card_queryset.order_by("name")[:AUTOCOMPLETE_MAX_RESULTS * 2]
+            )
+            candidate_banks = list(
+                Bank.objects.filter(is_active=True)
+                .annotate(active_card_count=Count("credit_cards", filter=models.Q(
+                    credit_cards__is_active=True
+                )))
+                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS * 2]
+            )
+            normalized_query = query.casefold()
             close_values = [
                 (ratio, value)
                 for value in (
-                    [card.name for card in fallback_cards]
-                    + [bank.name for bank in fallback_banks]
+                    [card.name for card in candidate_cards]
+                    + [bank.name for bank in candidate_banks]
                 )
                 if (ratio := _autocomplete_match_ratio(normalized_query, value))
                 >= AUTOCOMPLETE_TYPO_THRESHOLD

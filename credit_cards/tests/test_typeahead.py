@@ -5,13 +5,11 @@ no results, authentication, rate limiting, and response contract.
 """
 
 import pytest
-from rest_framework.test import APIClient
-from django.core.cache import cache
 
 from banks.factories import BankFactory
 from credit_cards.factories import CreditCardFactory
 
-TYPEAHEAD_URL = "/api/v1/credit-cards/autocomplete/"
+TYPEAHEAD_URL = "/api/v1/credit-cards/typeahead/"
 
 
 @pytest.mark.django_db()
@@ -34,7 +32,7 @@ class TestTypeaheadQueryBounds:
 
     def test_query_minimum_length_accepted(self, api_client):
         """Query with exactly 2 characters is accepted."""
-        card = CreditCardFactory(name="Visa Infinite")
+        CreditCardFactory(name="Visa Infinite")
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "vi"})
         assert response.status_code == 200
@@ -44,15 +42,28 @@ class TestTypeaheadQueryBounds:
 
     def test_query_exceeding_max_length_is_truncated(self, api_client):
         """Query longer than 100 chars is truncated to 100."""
-        card = CreditCardFactory(name="Amex Gold")
-        long_query = "a" * 150 + "mex"
+        CreditCardFactory(name="Visa Signature")
+        long_query = "visa" + "x" * 150  # 154 chars total
 
         response = api_client.get(TYPEAHEAD_URL, {"q": long_query})
         assert response.status_code == 200
-        # Should be truncated internally; first 100 chars are "aaa...aaa"
-        # which won't match "Amex", so no results
+        # Query is internally truncated to 100 chars ("visa" + 96 x's)
+        # which doesn't match anything (just "visa" + x's)
         assert response.data["query"] == long_query
-        assert len(response.data["suggestions"]) == 0
+        # Query won't match any prefix/substring, so empty suggestions expected
+        assert response.data["suggestions"] == []
+
+    def test_query_truncation_preserves_prefix_matches(self, api_client):
+        """Query is truncated but still returns prefix matches."""
+        CreditCardFactory(name="Visa Gold")
+        # "visa" + 96 spaces/chars that get stripped = "visa" -> matches "Visa Gold"
+        long_query = "visa" + " " * 150
+
+        response = api_client.get(TYPEAHEAD_URL, {"q": long_query})
+        assert response.status_code == 200
+        # After truncation to 100 chars and strip(), "visa" remains
+        # which matches "Visa Gold" prefix
+        assert len(response.data["matches"]["card"]) > 0
 
     def test_empty_query_treated_as_empty_string(self, api_client):
         """Missing or empty q parameter returns empty results."""
@@ -81,7 +92,7 @@ class TestTypeaheadGroupsAndCounts:
     def test_cards_group_limited_to_max_results(self, api_client):
         """Card results are bounded to AUTOCOMPLETE_MAX_RESULTS (8)."""
         for i in range(15):
-            CreditCardFactory(name=f"Visa Card {i:02d}")
+            CreditCardFactory(name=f"Visa Card {i:02d}")  # noqa: F841
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "visa"})
         assert response.status_code == 200
@@ -101,7 +112,7 @@ class TestTypeaheadGroupsAndCounts:
 
     def test_mixed_suggestions_combined_not_exceed_max_results(self, api_client):
         """Combined card+bank suggestions don't exceed AUTOCOMPLETE_MAX_RESULTS."""
-        card = CreditCardFactory(name="Visa Card")
+        CreditCardFactory(name="Visa Card")
         bank = BankFactory(name="Visa Bank")
         CreditCardFactory(bank=bank)
 
@@ -148,8 +159,10 @@ class TestTypeaheadGroupsAndCounts:
         response = api_client.get(TYPEAHEAD_URL, {"q": "visa"})
         assert response.status_code == 200
         matches = response.data["matches"]["card"]
-        # "Visa Infinite" starts with "Visa", should come first
-        assert matches[0] == "Visa Infinite"
+        # "Visa Infinite" starts with "Visa", should appear in prefix group
+        assert "Visa Infinite" in matches
+        # "Bank of Visa" is substring-only, should come after prefix matches
+        assert matches.index("Visa Infinite") < matches.index("Bank of Visa")
 
 
 @pytest.mark.django_db()
@@ -158,7 +171,7 @@ class TestTypeaheadFacets:
 
     def test_facets_included_in_response(self, api_client):
         """Response includes facet counts for common filters."""
-        card = CreditCardFactory(
+        CreditCardFactory(
             name="Test Card",
             annual_fee=0,
             reward_points_policy="Travel rewards"
@@ -171,7 +184,7 @@ class TestTypeaheadFacets:
 
     def test_facet_structure(self, api_client):
         """Each facet has label, count, and filter properties."""
-        CreditCardFactory(name="Test", annual_fee=0)
+        CreditCardFactory(name="Test", annual_fee=0)  # noqa: F841
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "te"})
         assert response.status_code == 200
@@ -294,7 +307,7 @@ class TestTypeaheadResponse:
 
     def test_response_includes_required_fields(self, api_client):
         """Response includes all required contract fields."""
-        CreditCardFactory(name="Test Card")
+        CreditCardFactory(name="Test Card")  # noqa: F841
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "te"})
         assert response.status_code == 200
@@ -361,7 +374,7 @@ class TestTypeaheadResponse:
 
     def test_suggestion_has_type_field(self, api_client):
         """Each suggestion includes type (card or bank)."""
-        card = CreditCardFactory(name="Visa")
+        CreditCardFactory(name="Visa")
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "vi"})
         assert response.status_code == 200

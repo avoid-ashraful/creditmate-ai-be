@@ -126,7 +126,7 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/1/"
 
 ### Typeahead/Autocomplete
 
-**Endpoint:** `GET /api/v1/credit-cards/autocomplete/?q=...`
+**Endpoint:** `GET /api/v1/credit-cards/typeahead/?q=...`
 
 **Description:** Real-time typeahead search for credit cards and banks with grouped results, facets, and typo suggestions. No authentication required.
 
