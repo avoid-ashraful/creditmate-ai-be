@@ -42,8 +42,8 @@ def process_bank_data(self, bank_id, data_source_urls):
 
 ### Prerequisites
 - Python 3.12+
-- PostgreSQL 17 (primary database)
-- Redis (for Celery task queue)
+- PostgreSQL 15 (as used in docker-compose.yml; adjust if your infrastructure differs)
+- Redis 7+ (for Celery task queue)
 - OpenAI API Key (for LLM content parsing)
 - Gemini API Key (optional, for LLM fallback)
 - Git

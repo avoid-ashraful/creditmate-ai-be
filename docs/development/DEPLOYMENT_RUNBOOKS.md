@@ -14,28 +14,45 @@ This guide provides safe, step-by-step procedures for deploying CreditMate AI ba
 
 ## Pre-Deployment Checklist
 
-**⚠️ IMPORTANT**: All items below are **external prerequisites**. These steps must be completed by operations/infrastructure team before executing deployment procedures.
+**⚠️ IMPORTANT**: All items below are **external prerequisites** that MUST be confirmed by your operations team BEFORE executing deployment procedures. This runbook is a **template**; you must verify all infrastructure details against your actual deployment environment.
 
-### Prerequisites (Operations Team)
-- [ ] Staging/production infrastructure deployed and accessible
-- [ ] PostgreSQL 17 database provisioned with backup configured
-- [ ] Redis 7+ cluster provisioned and running
-- [ ] OpenAI API keys provisioned and tested
-- [ ] Environment variables configured in deployment system
-- [ ] SSL certificates installed and valid
-- [ ] Load balancer configured (if applicable)
-- [ ] Log aggregation configured (if applicable)
-- [ ] Monitoring/alerting configured (if applicable)
-- [ ] CI/CD pipeline configured to trigger on master branch
-- [ ] Docker registry configured (if using Docker)
+### Prerequisites (Operations Team) — VERIFY ALL BEFORE STARTING
+
+**Database Configuration:**
+- [ ] **CONFIRM** actual PostgreSQL version in use (compose files use **PostgreSQL 15**; adjust if your infrastructure differs)
+- [ ] **CONFIRM** database is provisioned with backup configured
+- [ ] **CONFIRM** SSL enabled for production connections
+
+**Message Queue & Cache:**
+- [ ] **CONFIRM** Redis version in use (compose files use **Redis 7-alpine**)
+- [ ] **CONFIRM** Redis cluster/replication configured if needed
+
+**External Services:**
+- [ ] **CONFIRM** API keys (OpenAI, Gemini, etc.) provisioned and tested
+- [ ] **CONFIRM** Credentials NOT stored in source code
+
+**Infrastructure & Networking:**
+- [ ] **CONFIRM** Staging/production infrastructure deployed and accessible
+- [ ] **CONFIRM** Correct deployment branch (NOT assumed to be `master`)
+- [ ] **CONFIRM** Environment variables configured in your deployment system
+- [ ] **CONFIRM** SSL certificates installed and valid (production only)
+- [ ] **CONFIRM** Load balancer configured (if applicable)
+- [ ] **CONFIRM** Log aggregation configured (if applicable)
+- [ ] **CONFIRM** Monitoring/alerting configured (if applicable)
+- [ ] **CONFIRM** Docker registry configured (if using Docker)
+
+**Deployment Automation (If Applicable):**
+- [ ] **⚠️ CI/CD Status**: GitHub Actions are configured for testing. Remote CI/deployment automation is **PENDING** and must be explicitly set up by your team.
+- [ ] **CONFIRM** Actual CI/CD trigger branch (do not assume `master`)
+- [ ] **CONFIRM** CI/CD deployment procedure documented separately
 
 ### Code Review & Testing (Development Team)
-- [ ] Code changes reviewed and merged to master
+- [ ] Code changes reviewed and merged to **[YOUR_DEPLOYMENT_BRANCH]** (typically `master` or `main`)
 - [ ] All tests passing locally (`uv run pytest`)
 - [ ] Code quality checks passing (`black`, `flake8`, `isort`)
 - [ ] Database migrations created and tested locally
 - [ ] No uncommitted changes in working directory
-- [ ] Latest changes pulled from origin
+- [ ] Latest changes pulled from **[YOUR_REMOTE_NAME]** (typically `origin`)
 
 ### Deployment Configuration (Operations Team)
 - [ ] `.env` file configured for deployment environment
@@ -51,17 +68,21 @@ This guide provides safe, step-by-step procedures for deploying CreditMate AI ba
 
 ### Step 1: Pre-Deployment Verification
 
+**BEFORE RUNNING**: Confirm your actual deployment branch name with your operations team.
+
 ```bash
 # Verify you're on the correct branch
 git branch
-# Output should show: * master
+# Output should show: * [YOUR_DEPLOYMENT_BRANCH]
+# Example: * master (if that is your deployment branch)
+# Replace [YOUR_DEPLOYMENT_BRANCH] with your actual branch name
 
 # Verify latest commits
 git log --oneline -5
 
 # Check for uncommitted changes
 git status
-# Output should show: On branch master, nothing to commit
+# Output should show: On branch [YOUR_DEPLOYMENT_BRANCH], nothing to commit
 
 # Verify tests pass
 uv run pytest
@@ -86,27 +107,43 @@ uv run black . --check && uv run isort . --check && uv run flake8
 
 ### Step 3: Build Application Image
 
-**Option A: Docker Image Build (CI/CD or Manual)**
+**Option A: CI/CD Pipeline (If Configured)**
 ```bash
-# CI/CD PIPELINE STATUS: **UNVERIFIED** - GitHub Actions configured but deployment
-# automation is NOT currently set up. Remote CI/deploy remain pending.
+# ⚠️ DEPLOYMENT AUTOMATION STATUS
+# GitHub Actions are set up for testing. Remote CI/CD deployment automation
+# must be explicitly verified and configured by your operations team.
 #
-# If CI/CD is configured, typical flow:
-# 1. Code pushed to master branch
+# Ask your ops team:
+# 1. Is deployment automation configured? (currently PENDING)
+# 2. What branch does CI/CD watch? (do not assume "master")
+# 3. What registry/deployment system is used?
+# 4. What manual steps remain after CI/CD triggers?
+#
+# If CI/CD exists, typical flow:
+# 1. Code pushed to [YOUR_DEPLOYMENT_BRANCH]
 # 2. CI pipeline runs tests and code quality checks
-# 3. Docker image built from Dockerfile (if deployment automation exists)
+# 3. Docker image built from Dockerfile (if automated)
 # 4. Image tagged with git commit SHA
-# 5. Image pushed to registry (if deployment automation exists)
+# 5. Image pushed to registry (if automated)
+#
+# Verify with your ops team before proceeding
+```
 
-# Manual build (current approach until CI/CD deployment is verified)
+**Option B: Manual Build**
+```bash
+# Build Docker image locally or on deployment server
 docker build -t creditmate-ai-be:latest .
 ```
 
-**Option B: Direct Deployment**
+**Option C: Direct Deployment (Without Docker)**
 ```bash
 # On deployment server
 cd /app/creditmate-ai-be
-git pull origin master
+
+# BEFORE: Verify branch with ops team
+git pull [YOUR_REMOTE] [YOUR_DEPLOYMENT_BRANCH]
+# Example: git pull origin master (replace with your actual branch)
+
 uv sync --frozen  # Install locked dependencies
 ```
 
@@ -239,14 +276,17 @@ journalctl -u creditmate-api -f
 
 Staging deployments are lower-risk and can be performed without maintenance windows.
 
+**BEFORE STARTING**: Confirm your staging branch and remote with your ops team.
+
 ### Quick Staging Deploy
 
 ```bash
 # Verify tests and code quality
 uv run pytest && uv run black . --check && uv run flake8
 
-# Pull latest code
-git pull origin master
+# Pull latest code from [YOUR_REMOTE] [YOUR_STAGING_BRANCH]
+# Example: git pull origin staging (or your actual branch)
+git pull [YOUR_REMOTE] [YOUR_STAGING_BRANCH]
 
 # Update dependencies
 uv sync --frozen
@@ -258,10 +298,12 @@ uv run python manage.py migrate
 uv run python manage.py collectstatic --noinput
 
 # Restart services (Docker)
+# Verify your actual docker-compose filename below
 docker-compose -f docker-compose.yml down
 docker-compose -f docker-compose.yml up -d
 
-# Verify deployment (same as Step 8 above)
+# Verify deployment
+# Replace with your actual staging domain
 curl -I https://staging-api.yourdomain.com/api/v1/banks/
 ```
 
@@ -366,7 +408,10 @@ curl -I https://api.yourdomain.com/api/v1/banks/
 git checkout HEAD~1  # Or specific commit SHA
 
 # Redeploy with reverted code
-git pull origin master
+# Replace [YOUR_REMOTE] and [YOUR_DEPLOYMENT_BRANCH] with your actual values
+git pull [YOUR_REMOTE] [YOUR_DEPLOYMENT_BRANCH]
+# Example: git pull origin master
+
 uv sync --frozen
 uv run python manage.py migrate  # Re-apply migrations if needed
 # ... redeploy via Step 7 above
@@ -457,7 +502,8 @@ docker-compose logs web | grep WARNING
 ### Required Services (Operations Setup)
 
 #### PostgreSQL Database
-- Version: 17+
+- **Version**: PostgreSQL 15 (as configured in compose files; adjust if your infrastructure differs)
+  - **If using different version**: Update all references and test thoroughly before production
 - Configuration:
   - `max_connections`: 200+ (for Gunicorn + Celery workers)
   - `shared_buffers`: 25% of available RAM
@@ -467,7 +513,8 @@ docker-compose logs web | grep WARNING
 - High availability: Streaming replication recommended
 
 #### Redis Cache & Queue
-- Version: 7.0+
+- **Version**: Redis 7-alpine (as configured in compose files; adjust if your infrastructure differs)
+  - **If using different version**: Update all references and test thoroughly before production
 - Configuration:
   - `maxmemory-policy`: `allkeys-lru` (evict oldest keys)
   - `appendonly`: `yes` (persistence)
