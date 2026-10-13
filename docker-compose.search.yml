@@ -1,0 +1,47 @@
+# Search engine for CreditMate AI (Stream 6.1)
+#
+#   docker compose -f docker-compose.search.yml -p creditmate-search6 up -d
+#   docker compose -f docker-compose.search.yml -p creditmate-search6 down
+#
+# The REST API is published on 127.0.0.1:19200 so it never collides with the
+# native PostgreSQL (5432) / Redis (6379) already running on this host or with
+# the other workers' containers.  Override SEARCH_HOST_PORT if needed.
+#
+# Credentials are disabled for local development only; never expose this port
+# publicly (set xpack.security.enabled=true and a TLS layer before deployment).
+
+services:
+  search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
+    container_name: creditmate-search6-es
+    environment:
+      - cluster.name=creditmate-search6
+      - node.name=creditmate-search6-es
+      - discovery.type=single-node
+      - bootstrap.memory_lock=false
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "${SEARCH_HOST_PORT:-127.0.0.1:19200}:9200"
+    volumes:
+      - search_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:9200/_cluster/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  search_data:
+    name: creditmate-search6-data
