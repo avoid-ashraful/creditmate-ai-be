@@ -82,7 +82,7 @@ def _make_card_no_signal(bank, name, **kwargs):
     """Create a credit card with signals muted (for fallback tests)."""
     from django.db.models.signals import post_save, post_delete
     from search.signals import disconnect_all
-    
+
     defaults = {
         "name": name,
         "annual_fee": None,
@@ -96,7 +96,7 @@ def _make_card_no_signal(bank, name, **kwargs):
         defaults["annual_fee"] = Decimal(str(defaults["annual_fee"]))
     if isinstance(defaults["interest_rate_apr"], (int, float)):
         defaults["interest_rate_apr"] = Decimal(str(defaults["interest_rate_apr"]))
-    
+
     disconnect_all()
     try:
         return CreditCard.objects.create(bank=bank, **defaults)
@@ -107,7 +107,7 @@ def _make_card_no_signal(bank, name, **kwargs):
             card_about_to_save, card_saved, card_deleted
         )
         from django.db.models.signals import pre_save, post_save, post_delete
-        
+
         pre_save.connect(bank_about_to_save, sender=Bank, dispatch_uid="search_bank_pre_save")
         post_save.connect(bank_saved, sender=Bank, dispatch_uid="search_bank_post_save")
         post_delete.connect(bank_deleted, sender=Bank, dispatch_uid="search_bank_post_delete")
@@ -322,7 +322,7 @@ class TestTypeaheadRanking:
         suggestions = service.suggest("cards", "cha", size=8)
         # Should include both card and bank suggestions
         suggestion_types = [s.get("bank_name") for s in suggestions if "bank_name" in s]
-        
+
         # Bank suggestions include bank_name
         bank_suggestions = [s for s in suggestions if "bank_name" in s]
         assert len(bank_suggestions) > 0
@@ -336,7 +336,7 @@ class TestDidYouMean:
         self, isolated_indexes
     ):
         """Close typo should suggest correct spelling.
-        
+
         Note: ES fuzziness AUTO requires prefix_length=2, so very short terms
         might not trigger fuzzy matching. This test verifies that the query
         executes without error - actual fuzzy matching behavior may vary.
@@ -350,11 +350,11 @@ class TestDidYouMean:
 
         # Search with typo - fuzziness might find it
         result = service.search("cards", query="sapphire")
-        
+
         # Verify exact match works
         hit_ids = [hit["id"] for hit in result["hits"]]
         assert card.pk in hit_ids, "Exact match should always work"
-        
+
         # Also test with a typo that's more likely to trigger fuzzy matching
         result2 = service.search("cards", query="saphire")  # missing 'p'
         hit_ids2 = [hit["id"] for hit in result2["hits"]]
@@ -379,7 +379,7 @@ class TestDidYouMean:
 @pytest.mark.django_db
 class TestGracefulFallback:
     """Test graceful fallback to DB when ES is unavailable.
-    
+
     These tests don't use the isolated_indexes fixture because they
     intentionally disable or break ES connectivity.
     """
@@ -389,13 +389,13 @@ class TestGracefulFallback:
     ):
         """Search should fall back to DB when SEARCH_ENABLED=False."""
         from search.client import is_enabled as original_is_enabled
-        
+
         # Disable search AND set sync mode to off to prevent any ES calls
         monkeypatch.setattr("search.client.is_enabled", lambda: False)
         settings.SEARCH_SYNC_MODE = "off"
         settings.SEARCH_INDEX_PREFIX = "fallback_"
         reset_client()
-        
+
         bank = _make_bank("Fallback Bank")
         with django_capture_on_commit_callbacks(execute=True):
             _make_card_no_signal(bank, "Fallback Card", annual_fee=0)
@@ -403,9 +403,9 @@ class TestGracefulFallback:
         # Use the advanced search endpoint which has DB fallback
         from rest_framework.test import APIClient
         client = APIClient()
-        
+
         response = client.get("/api/v1/credit-cards/advanced-search/", {"search": "fallback"})
-        
+
         assert response.status_code == 200
         assert response.data["total"] == 1
         assert response.data["source"] == "database"
@@ -424,16 +424,16 @@ class TestGracefulFallback:
         settings.SEARCH_SYNC_MODE = "off"
         settings.SEARCH_INDEX_PREFIX = "unreachable_"
         reset_client()
-        
+
         bank = _make_bank("Unreachable Bank")
         with django_capture_on_commit_callbacks(execute=True):
             _make_card_no_signal(bank, "Unreachable Card", annual_fee=0)
 
         from rest_framework.test import APIClient
         client = APIClient()
-        
+
         response = client.get("/api/v1/credit-cards/advanced-search/", {"search": "unreachable"})
-        
+
         assert response.status_code == 200
         assert response.data["total"] == 1
         assert response.data["source"] == "database"
@@ -451,7 +451,7 @@ class TestGracefulFallback:
         monkeypatch.setattr("search.client.is_enabled", lambda: False)
         settings.SEARCH_SYNC_MODE = "off"
         reset_client()
-        
+
         bank = _make_bank("Facet Fallback Bank")
         with django_capture_on_commit_callbacks(execute=True):
             _make_card_no_signal(bank, "Travel Card", reward_points_policy="travel", annual_fee=0)
@@ -459,9 +459,9 @@ class TestGracefulFallback:
 
         from rest_framework.test import APIClient
         client = APIClient()
-        
+
         response = client.get("/api/v1/credit-cards/advanced-search/", {"search": "card"})
-        
+
         assert response.status_code == 200
         assert response.data["source"] == "database"
         assert "facets" in response.data
@@ -489,14 +489,14 @@ class TestIndexRebuildIdempotency:
 
         # First rebuild
         result1 = service.rebuild(batch_size=100, drop=True)
-        
+
         # Second rebuild
         result2 = service.rebuild(batch_size=100, drop=True)
-        
+
         # Both should have same document counts
         assert result1[f"{PREFIX}banks"]["documents"] == result2[f"{PREFIX}banks"]["documents"]
         assert result1[f"{PREFIX}credit_cards"]["documents"] == result2[f"{PREFIX}credit_cards"]["documents"]
-        
+
         # Both should have no errors
         assert len(result1[f"{PREFIX}banks"]["errors"]) == 0
         assert len(result1[f"{PREFIX}credit_cards"]["errors"]) == 0
@@ -514,10 +514,10 @@ class TestIndexRebuildIdempotency:
 
         # First rebuild
         result1 = service.rebuild(batch_size=100, drop=False)
-        
+
         # Second rebuild (should upsert)
         result2 = service.rebuild(batch_size=100, drop=False)
-        
+
         assert result1[f"{PREFIX}credit_cards"]["documents"] == result2[f"{PREFIX}credit_cards"]["documents"]
 
 
@@ -536,7 +536,7 @@ class TestDeleteUpdateSync:
             card_pk = card.pk
 
         service.refresh()
-        
+
         # Verify card exists in index
         result = service.search("cards", query="To Delete")
         assert result["total"] == 1
@@ -547,7 +547,7 @@ class TestDeleteUpdateSync:
             card.delete()
 
         service.refresh()
-        
+
         # Verify card is removed from index
         result = service.search("cards", query="To Delete")
         assert result["total"] == 0
@@ -563,7 +563,7 @@ class TestDeleteUpdateSync:
             card_pk = card.pk
 
         service.refresh()
-        
+
         # Verify old name in index
         result = service.search("cards", query="Old Name")
         assert result["total"] == 1
@@ -575,7 +575,7 @@ class TestDeleteUpdateSync:
             card.save()
 
         service.refresh()
-        
+
         # Verify new name in index
         result = service.search("cards", query="New Name")
         assert result["total"] == 1
@@ -597,7 +597,7 @@ class TestDeleteUpdateSync:
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
-        
+
         # Verify old bank name in card document
         result = service.search("cards", query="Old Bank Name")
         assert result["total"] == 1
@@ -608,7 +608,7 @@ class TestDeleteUpdateSync:
             bank.save()
 
         service.refresh()
-        
+
         # Verify new bank name in card document
         result = service.search("cards", query="New Bank Name")
         assert result["total"] == 1
@@ -630,7 +630,7 @@ class TestDeleteUpdateSync:
             card_pk = card.pk
 
         service.refresh()
-        
+
         # Check bank counts
         bank_result = service.search("banks", query=None)
         source_bank = next(b for b in bank_result["hits"] if b["name"] == "Source Bank")
@@ -644,7 +644,7 @@ class TestDeleteUpdateSync:
             card.save()
 
         service.refresh()
-        
+
         # Check bank counts updated
         bank_result = service.search("banks", query=None)
         source_bank = next(b for b in bank_result["hits"] if b["name"] == "Source Bank")
@@ -667,7 +667,7 @@ class TestDeleteUpdateSync:
             card = _make_card(bank, "Toggle Card", annual_fee=0)
 
         service.refresh()
-        
+
         bank_result = service.search("banks", query="Toggle Bank")
         assert bank_result["hits"][0]["credit_card_count"] == 1
 
@@ -677,7 +677,7 @@ class TestDeleteUpdateSync:
             card.save(update_fields=["is_active"])
 
         service.refresh()
-        
+
         bank_result = service.search("banks", query="Toggle Bank")
         assert bank_result["hits"][0]["credit_card_count"] == 0
 
@@ -693,7 +693,7 @@ class TestDeleteUpdateSync:
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
-        
+
         # Both should exist
         assert service.search("banks", query="Cascade Bank")["total"] == 1
         assert service.search("cards", query="Cascade Card")["total"] == 1
@@ -703,7 +703,7 @@ class TestDeleteUpdateSync:
             bank.delete()
 
         service.refresh()
-        
+
         # Both should be gone
         assert service.search("banks", query="Cascade Bank")["total"] == 0
         assert service.search("cards", query="Cascade Card")["total"] == 0
