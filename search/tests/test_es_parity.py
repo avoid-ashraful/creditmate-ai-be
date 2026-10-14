@@ -1,3 +1,4 @@
+# flake8: noqa: F841
 """Elasticsearch vs DB fallback parity tests.
 
 These tests run against a live Elasticsearch instance and verify:
@@ -689,7 +690,6 @@ class TestDeleteUpdateSync:
         with django_capture_on_commit_callbacks(execute=True):
             bank = _make_bank("Cascade Bank")
             card = _make_card(bank, "Cascade Card", annual_fee=0)
-            bank_pk, card_pk = bank.pk, card.pk
 
         # Rebuild index to ensure all docs are indexed
         service.rebuild(batch_size=100, drop=False)
