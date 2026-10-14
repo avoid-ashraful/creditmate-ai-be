@@ -5,18 +5,26 @@ Services module for banks app.
 from banks.services.bank_data_crawler import BankDataCrawlerService
 from banks.services.content_extractor import ContentExtractor
 from banks.services.credit_card_data_service import CreditCardDataService
-from banks.services.extraction_provider import (
-    OrchestratorExtractionProvider,
-)
+from banks.services.extraction_provider import OrchestratorExtractionProvider
 from banks.services.llm_parser import LLMContentParser
 from banks.services.multi_pass_extractor import (
     MultiPassExtractionResult,
     MultiPassLLMExtractor,
 )
+from banks.services.multi_source_validation import (
+    MultiSourceValidator,
+    Observation,
+    ValidationBatch,
+)
 from banks.services.prompt_templates import BankSpecificPrompts
 from banks.services.quality_scoring import ExtractionQuality, score_extraction
 from banks.services.quality_validator import ExtractionQualityValidator
+from banks.services.review_queue import ReviewQueueService
 from banks.services.schedule_charge_finder import ScheduleChargeURLFinder
+from banks.services.validation_collectors import (
+    run_multi_source_validation,
+    validate_crawled_content,
+)
 
 __all__ = [
     "ContentExtractor",
@@ -31,4 +39,10 @@ __all__ = [
     "ExtractionQualityValidator",
     "ExtractionQuality",
     "score_extraction",
+    "MultiSourceValidator",
+    "Observation",
+    "ValidationBatch",
+    "run_multi_source_validation",
+    "validate_crawled_content",
+    "ReviewQueueService",
 ]

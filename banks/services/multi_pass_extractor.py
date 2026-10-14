@@ -214,9 +214,7 @@ class MultiPassLLMExtractor:
         # Report a field as "invalid" (cause) rather than also as "missing"
         # when its value was rejected by the normalization rules.
         invalid_fields = {
-            code[len("invalid_") :]
-            for code in issues
-            if code.startswith("invalid_")
+            code[len("invalid_") :] for code in issues if code.startswith("invalid_")
         }
         final_issues = [
             issue
@@ -412,7 +410,9 @@ class MultiPassLLMExtractor:
                 temperature=0.1,
                 max_tokens=4000,
             )
-        except Exception as exc:  # noqa: BLE001 - provider failures are recorded, not raised per pass
+        except (
+            Exception
+        ) as exc:  # noqa: BLE001 - provider failures are recorded, not raised per pass
             logger.warning("%s pass failed: %s", pass_name, exc)
             return None, None, str(exc)
 
@@ -548,9 +548,7 @@ class MultiPassLLMExtractor:
         for card in cards:
             if not isinstance(card, dict):
                 continue
-            MultiPassLLMExtractor._record_invalid_fields(
-                card, issues, invalid_reasons
-            )
+            MultiPassLLMExtractor._record_invalid_fields(card, issues, invalid_reasons)
             normalized, _ = normalize_critical_fields(card)
             normalized_cards.append(normalized)
         return normalized_cards

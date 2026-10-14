@@ -29,9 +29,20 @@ Development setup, guidelines, and architecture documentation.
 
 | Document | Description |
 |----------|-------------|
+| **[Local Development Setup](./development/LOCAL_DEVELOPMENT.md)** | Step-by-step local development environment setup with Docker and traditional approaches |
+| **[System Architecture](./development/ARCHITECTURE.md)** | System architecture diagram, components, data flow, and coding standards |
+| **[Deployment Runbooks](./development/DEPLOYMENT_RUNBOOKS.md)** | Safe production and staging deployment procedures with pre-requisites |
+| **[Incident Response](./development/INCIDENT_RESPONSE.md)** | Incident response playbook for diagnosing and resolving production issues |
 | **[Setup & Guidelines](./development/setup-and-guidelines.md)** | Development environment setup and coding standards |
 | **[Crawler System](./development/crawler-system.md)** | AI-powered web crawling system documentation |
 | **[Implementation Summary](./development/implementation-summary.md)** | Technical implementation details and architecture |
+
+### 📈 Operations
+Operational tooling for running and monitoring the platform.
+
+| Document | Description |
+|----------|-------------|
+| **[Data Quality Dashboard](./operations/data-quality-dashboard.md)** | Staff-only crawl/extraction quality snapshot at `/admin/data-quality/` |
 
 ### 📖 User Guides
 Plain-language how-to guides for credit card users (also rendered at the frontend `/guides` route).
@@ -52,14 +63,19 @@ Plain-language how-to guides for credit card users (also rendered at the fronten
 3. Configure CORS using **[CORS & Rate Limiting](./configuration/cors-and-rate-limiting.md)**
 
 ### For Developers
-1. Follow **[Setup & Guidelines](./development/setup-and-guidelines.md)** for environment setup
-2. Configure environment variables using **[Environment Variables](./configuration/environment-variables.md)**
-3. Review **[Implementation Summary](./development/implementation-summary.md)** for architecture understanding
+1. Start with **[Local Development Setup](./development/LOCAL_DEVELOPMENT.md)** for step-by-step environment setup
+2. Review **[System Architecture](./development/ARCHITECTURE.md)** for architecture understanding
+3. Reference **[Setup & Guidelines](./development/setup-and-guidelines.md)** for coding standards
+4. Configure environment variables using **[Environment Variables](./configuration/environment-variables.md)**
+5. See **[Deployment Runbooks](./development/DEPLOYMENT_RUNBOOKS.md)** for deployment procedures
 
-### For System Administrators
-1. Configure production environment using **[Environment Variables](./configuration/environment-variables.md)**
-2. Set up email services with **[Email Configuration](./configuration/email.md)**
-3. Configure security with **[CORS & Rate Limiting](./configuration/cors-and-rate-limiting.md)**
+### For System Administrators & DevOps
+1. Review **[Deployment Runbooks](./development/DEPLOYMENT_RUNBOOKS.md)** for deployment procedures and prerequisites
+2. Configure production environment using **[Environment Variables](./configuration/environment-variables.md)**
+3. Set up **[System Architecture](./development/ARCHITECTURE.md)** infrastructure requirements
+4. Review **[Incident Response](./development/INCIDENT_RESPONSE.md)** playbook for operations
+5. Set up email services with **[Email Configuration](./configuration/email.md)**
+6. Configure security with **[CORS & Rate Limiting](./configuration/cors-and-rate-limiting.md)**
 
 ## 📊 API Quick Reference
 
@@ -109,9 +125,11 @@ CELERY_BROKER_URL=redis://localhost:6379/0
 - **404 errors**: Verify endpoints in [API documentation](./api/)
 
 ### Development Issues
-- **Setup problems**: Follow [development setup](./development/setup-and-guidelines.md#quick-start-development-setup)
+- **Setup problems**: Follow [Local Development Setup](./development/LOCAL_DEVELOPMENT.md)
 - **Environment variables**: Check [environment reference](./configuration/environment-variables.md)
-- **Celery issues**: See [troubleshooting guide](./development/setup-and-guidelines.md#troubleshooting)
+- **Celery issues**: See [Local Development troubleshooting](./development/LOCAL_DEVELOPMENT.md#troubleshooting)
+- **Production issues**: Check [Incident Response playbook](./development/INCIDENT_RESPONSE.md)
+- **Deployment problems**: See [Deployment Runbooks](./development/DEPLOYMENT_RUNBOOKS.md)
 
 ## 📋 Documentation Standards
 

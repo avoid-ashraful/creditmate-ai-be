@@ -11,9 +11,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from celery.schedules import crontab
+
+from credit_mate_ai.sentry import parse_sample_rate, sanitize_sentry_event
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,11 +39,21 @@ except ImportError:
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "SECRET_KEY", "django-insecure-dev-key-only-for-development-do-not-use-in-production"
+_configured_secret_key = os.getenv("SECRET_KEY", "")
+_is_production = os.getenv("ENVIRONMENT", "local").lower() == "production"
+if _is_production and not _configured_secret_key:
+    raise RuntimeError("SECRET_KEY must be set when ENVIRONMENT=production")
+SECRET_KEY = _configured_secret_key or (
+    "django-insecure-dev-key-only-for-development-do-not-use-in-production"
 )
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver,localhost,127.0.0.1").split(",")
+_configured_allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
+if _is_production and (
+    not _configured_allowed_hosts.strip()
+    or "*" in {host.strip() for host in _configured_allowed_hosts.split(",")}
+):
+    raise RuntimeError("ALLOWED_HOSTS must contain explicit hosts in production")
+ALLOWED_HOSTS = (_configured_allowed_hosts or "testserver,localhost,127.0.0.1").split(",")
 
 # Cache Configuration
 # Backend is chosen explicitly via CACHE_BACKEND ("redis" default, "locmem"
@@ -70,6 +84,35 @@ CACHE_TTL_SEARCH_SUGGESTIONS = int(
     os.getenv("CACHE_TTL_SEARCH_SUGGESTIONS", "600")
 )  # 10 min
 
+# API request validation (bytes), overridable via environment
+MAX_JSON_REQUEST_BYTES = int(os.getenv("MAX_JSON_REQUEST_BYTES", "1048576"))
+MAX_UPLOAD_REQUEST_BYTES = int(os.getenv("MAX_UPLOAD_REQUEST_BYTES", "10485760"))
+
+# Error Monitoring
+ENVIRONMENT = os.getenv("ENVIRONMENT", "local").lower()
+SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
+SENTRY_ENVIRONMENT = os.getenv("SENTRY_ENVIRONMENT", ENVIRONMENT).strip()
+SENTRY_RELEASE = os.getenv("SENTRY_RELEASE", "").strip()
+SENTRY_TRACES_SAMPLE_RATE = parse_sample_rate(
+    os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")
+)
+
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+    except ImportError:
+        pass
+    else:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            environment=SENTRY_ENVIRONMENT,
+            release=SENTRY_RELEASE or None,
+            traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+            send_default_pii=False,
+            before_send=sanitize_sentry_event,
+            before_send_transaction=sanitize_sentry_event,
+        )
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -81,10 +124,18 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "drf_spectacular",
     "django_filters",
     "common",
     "banks",
     "credit_cards",
+    "saved",
+    "search",
+    "reviews",
+    "alerts",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -96,7 +147,10 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "credit_mate_ai.middleware.RequestValidationMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "credit_mate_ai.middleware.SecurityHeadersMiddleware",
+    "credit_mate_ai.prometheus_middleware.PrometheusMetricsMiddleware",
 ]
 
 ROOT_URLCONF = "credit_mate_ai.urls"
@@ -202,9 +256,85 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+CELERY_BEAT_SCHEDULE = {
+    "send-alert-digests-hourly": {
+        "task": "alerts.tasks.send_alert_digests",
+        "schedule": 3600.0,
+        "options": {"expires": 60 * 60},
+    },
+    "crawl-bank-data-weekly": {
+        "task": "banks.tasks.crawl_all_bank_data",
+        "schedule": 604800.0,
+        "options": {"expires": 24 * 60 * 60},
+    },
+    "daily-crawl-all-active-banks": {
+        "task": "banks.tasks.daily_crawl_all_active_banks",
+        "schedule": crontab(hour=2, minute=0),
+        "options": {"expires": 6 * 60 * 60},
+    },
+    "monthly-data-quality-check": {
+        "task": "banks.tasks.monthly_data_quality_check",
+        "schedule": 30 * 24 * 60 * 60,
+        "options": {"expires": 24 * 60 * 60},
+    },
+    "monthly-schedule-charge-discovery": {
+        "task": "banks.tasks.monthly_schedule_charge_url_discovery",
+        "schedule": 30 * 24 * 60 * 60,
+        "options": {"expires": 24 * 60 * 60},
+    },
+    "monthly-comprehensive-crawl": {
+        "task": "banks.tasks.monthly_comprehensive_crawl",
+        "schedule": 30 * 24 * 60 * 60,
+        "options": {"expires": 24 * 60 * 60},
+    },
+}
+
+# Search (Elasticsearch) Configuration
+# SEARCH_URL points at the local single node container published on 127.0.0.1:19200
+# by creditmate-ai-be/docker-compose.search.yml.
+SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "yes")
+SEARCH_URL = os.getenv("SEARCH_URL", "http://127.0.0.1:19200")
+SEARCH_INDEX_PREFIX = os.getenv("SEARCH_INDEX_PREFIX", "")
+SEARCH_REQUEST_TIMEOUT = int(os.getenv("SEARCH_REQUEST_TIMEOUT", "10"))
+SEARCH_VERIFY_CERTS = os.getenv("SEARCH_VERIFY_CERTS", "True").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+# "queue"  -> signal writes to the outbox, a worker drains it (default)
+# "sync"   -> signal writes to the outbox and drains it inline (no worker needed)
+# "off"    -> signals are not connected at all
+SEARCH_SYNC_MODE = os.getenv("SEARCH_SYNC_MODE", "queue").lower()
+# Route drained queue batches through Celery when True (requires Redis).
+SEARCH_QUEUE_VIA_CELERY = os.getenv("SEARCH_QUEUE_VIA_CELERY", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+SEARCH_QUEUE_BATCH_SIZE = int(os.getenv("SEARCH_QUEUE_BATCH_SIZE", "200"))
+SEARCH_QUEUE_MAX_ATTEMPTS = int(os.getenv("SEARCH_QUEUE_MAX_ATTEMPTS", "5"))
+
+# Observability (health probes and /metrics)
+# /metrics is denied unless METRICS_TOKEN or METRICS_ALLOWED_IPS is set.
+# METRICS_ALLOWED_IPS takes IPs or CIDR ranges and is matched against REMOTE_ADDR only.
+METRICS_TOKEN = os.getenv("METRICS_TOKEN", "").strip()
+METRICS_ALLOWED_IPS = [
+    entry.strip()
+    for entry in os.getenv("METRICS_ALLOWED_IPS", "").split(",")
+    if entry.strip()
+]
+# Per-dependency timeout for /api/readyz/ checks, in seconds.
+READYZ_TIMEOUT_SECONDS = float(os.getenv("READYZ_TIMEOUT_SECONDS", "1.0"))
 
 # Environment Configuration
-ENVIRONMENT = os.getenv("ENVIRONMENT", "local").lower()
+
+# High-priority manual review email recipients are explicitly opt-in.
+REVIEW_QUEUE_NOTIFY_EMAILS = [
+    address.strip()
+    for address in os.getenv("REVIEW_QUEUE_NOTIFY_EMAILS", "").split(",")
+    if address.strip()
+]
 
 # Email Configuration
 # Disable email service for non-production environments
@@ -223,12 +353,22 @@ if ENVIRONMENT == "production":
     EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 else:
-    # For local/staging environments, disable email service
-    EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+    # Console backend keeps development notifications inspectable without SMTP.
+    EMAIL_BACKEND = os.getenv(
+        "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+    )
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "alerts@creditmate.ai")
+ALERTS_PUBLIC_BASE_URL = os.getenv("ALERTS_PUBLIC_BASE_URL", "http://localhost:8000")
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@creditmate.ai")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # Django REST Framework
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -246,14 +386,73 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "credit_mate_ai.pagination.BoundedPageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "credit_mate_ai.throttling.TrustedClientRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": os.getenv("THROTTLE_RATE_ANON", "1000/hour"),
-        "user": os.getenv("THROTTLE_RATE_USER", "2000/hour"),
-        "burst": os.getenv("THROTTLE_RATE_BURST", "100/min"),
+        "anon": os.getenv("THROTTLE_RATE_ANON", "100/min"),
+        "user": os.getenv("THROTTLE_RATE_USER", "1000/min"),
+        "burst": os.getenv("THROTTLE_RATE_BURST", "10/sec"),
+        "review_write": os.getenv("THROTTLE_RATE_REVIEW_WRITE", "5/hour"),
+        "auth_burst": os.getenv("THROTTLE_RATE_AUTH_BURST", "20/min"),
+        "auth_anon": os.getenv("THROTTLE_RATE_AUTH_ANON", "30/min"),
+        "auth_user": os.getenv("THROTTLE_RATE_AUTH_USER", "100/min"),
     },
+}
+
+# SimpleJWT Configuration
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=7),
+}
+
+# drf-spectacular configuration (OpenAPI schema generation)
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Credit Mate AI API",
+    "VERSION": "v1",
+    "DESCRIPTION": "AI-powered credit card discovery platform API",
+    "LICENSE": {"name": "MIT License"},
+    "TAGS": [
+        {"name": "auth", "description": "Authentication and user management"},
+        {"name": "banks", "description": "Bank-related operations"},
+        {"name": "credit-cards", "description": "Credit card-related operations"},
+        {"name": "search", "description": "Search and suggestions operations"},
+        {"name": "admin", "description": "Staff-only administrative operations"},
+        {"name": "saved", "description": "Saved comparisons and collections"},
+        {"name": "reviews", "description": "Card reviews and moderation"},
+        {"name": "alerts", "description": "Card alert subscriptions and preferences"},
+    ],
+    "SCHEMA_PATH": "/api/v1/schema",
+    "SWAGGER_UI_PATH": "/api/v1/docs/swagger",
+    "REDOC_PATH": "/api/v1/docs/redoc",
+    "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
+    "SECURITY": [
+        {
+            "Bearer": [],
+        }
+    ],
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 # CORS Configuration
@@ -308,7 +507,7 @@ SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").lower() in (
 SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
     "SECURE_HSTS_INCLUDE_SUBDOMAINS", "False"
-).lower() in ("true", "1", "yes", "on")
+).lower() in ("true", "1", "yes")
 SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "False").lower() in (
     "true",
     "1",
@@ -333,7 +532,7 @@ CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() in (
 # Content Security
 SECURE_CONTENT_TYPE_NOSNIFF = os.getenv(
     "SECURE_CONTENT_TYPE_NOSNIFF", "True"
-).lower() in ("true", "1", "yes", "on")
+).lower() in ("true", "1", "yes")
 SECURE_BROWSER_XSS_FILTER = os.getenv("SECURE_BROWSER_XSS_FILTER", "True").lower() in (
     "true",
     "1",
@@ -341,6 +540,14 @@ SECURE_BROWSER_XSS_FILTER = os.getenv("SECURE_BROWSER_XSS_FILTER", "True").lower
     "on",
 )
 X_FRAME_OPTIONS = os.getenv("X_FRAME_OPTIONS", "DENY")
+
+# Response header policy (applied to every response by SecurityHeadersMiddleware)
+# Restrict framing, plugins, and base URLs without blocking Django admin inline assets.
+CSP_HEADER = os.getenv(
+    "CSP_HEADER",
+    "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+)
+REFERRER_POLICY = os.getenv("REFERRER_POLICY", "strict-origin-when-cross-origin")
 
 # Proxy SSL Header for Railway/Heroku
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

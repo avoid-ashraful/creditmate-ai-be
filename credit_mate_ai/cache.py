@@ -21,6 +21,7 @@ from django.dispatch import receiver
 CARD_LIST_VERSION_KEY = "credit_cards:list:version"
 FILTER_RESULTS_VERSION_KEY = "credit_cards:filter:version"
 SEARCH_SUGGESTIONS_VERSION_KEY = "credit_cards:search_suggestions:version"
+ADVANCED_SEARCH_VERSION_KEY = "credit_cards:advanced_search:version"
 
 # Distinct TTLs per cached surface (seconds, from settings with env overrides)
 CARD_LIST_TTL = getattr(settings, "CACHE_TTL_CARD_LIST", 300)  # 5 minutes
@@ -28,6 +29,7 @@ FILTER_RESULTS_TTL = getattr(settings, "CACHE_TTL_FILTER_RESULTS", 120)  # 2 min
 SEARCH_SUGGESTIONS_TTL = getattr(
     settings, "CACHE_TTL_SEARCH_SUGGESTIONS", 600
 )  # 10 minutes
+ADVANCED_SEARCH_TTL = getattr(settings, "CACHE_TTL_ADVANCED_SEARCH", 120)  # 2 min
 
 
 def _get_cache_version(version_key):
@@ -122,3 +124,29 @@ def invalidate_card_caches_on_bank_change(sender, **kwargs):
     suggestions, so card caches depend on bank data too.
     """
     bump_cache_versions()
+
+
+def bump_advanced_search_version():
+    """Schedule invalidation of advanced search cache at commit."""
+
+    def _bump():
+        from django.core.cache import cache
+
+        cache.add(ADVANCED_SEARCH_VERSION_KEY, 1, None)
+        cache.incr(ADVANCED_SEARCH_VERSION_KEY)
+
+    from django.db import transaction
+
+    transaction.on_commit(_bump)
+
+
+@receiver([post_save, post_delete], sender="credit_cards.CreditCard")
+def invalidate_advanced_search_on_card_change(sender, **kwargs):
+    """Invalidate advanced search cache when a card changes."""
+    bump_advanced_search_version()
+
+
+@receiver([post_save, post_delete], sender="banks.Bank")
+def invalidate_advanced_search_on_bank_change(sender, **kwargs):
+    """Invalidate advanced search cache when bank data changes."""
+    bump_advanced_search_version()

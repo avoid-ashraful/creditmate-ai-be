@@ -434,10 +434,9 @@ class BankDataCrawlerService:
             return False
 
         structured_data, raw_comprehensive_data, extraction_context = parsing_result
-        extraction_method = (
-            content_extraction_context.get("method")
-            or self._extraction_method(data_source)
-        )
+        extraction_method = content_extraction_context.get(
+            "method"
+        ) or self._extraction_method(data_source)
 
         # Store crawled content with both parsed data types
         crawled_content = self._create_crawl_record(
@@ -465,7 +464,57 @@ class BankDataCrawlerService:
             )
 
         # Update database
-        return self._update_database_safely(data_source, structured_data, crawled_content)
+        success = self._update_database_safely(
+            data_source, structured_data, crawled_content
+        )
+        if success:
+            # Task 2.4: cross-check this record against the bank's other
+            # sources and flag real conflicts for manual review.
+            self._validate_multi_source(crawled_content)
+        return success
+
+    @staticmethod
+    def _validate_multi_source(crawled_content):
+        """Run multi-source validation for one completed crawl record.
+
+        Compares the record's own observations with the latest completed
+        crawls of the bank's other active data sources (and, when provided by
+        callers, user submissions). Real conflicts or same-source
+        inconsistencies set ``needs_manual_review`` and are persisted in
+        ``CrawledContent.multi_source_validation``. Validation is best effort:
+        a failure is logged and never breaks the crawl.
+
+        Parameters
+        ----------
+        crawled_content : CrawledContent
+            Completed crawl record to validate and update.
+
+        Returns
+        -------
+        dict or None
+            The stored validation summary when validation ran, ``None`` when
+            it did not run (e.g. no other source exists yet).
+        """
+        try:
+            from banks.services.validation_collectors import run_multi_source_validation
+
+            run_multi_source_validation(crawled_content)
+            summary = crawled_content.multi_source_validation or {}
+            if summary.get("needs_manual_review"):
+                logger.warning(
+                    "Multi-source validation flagged crawled content %s for "
+                    "manual review (%d conflicting field(s))",
+                    crawled_content.id,
+                    summary.get("conflict_field_count", 0),
+                )
+            return summary
+        except Exception as exc:  # noqa: BLE001 - validation is best effort
+            logger.warning(
+                "Multi-source validation skipped for crawled content %s: %s",
+                getattr(crawled_content, "id", None),
+                exc,
+            )
+            return None
 
     @staticmethod
     def _extraction_method(data_source):
@@ -558,9 +607,7 @@ class BankDataCrawlerService:
 
         try:
             structured_data, raw_comprehensive_data = (
-                self.llm_parser.parse_comprehensive_data(
-                    content, data_source.bank.name
-                )
+                self.llm_parser.parse_comprehensive_data(content, data_source.bank.name)
             )
             return structured_data, raw_comprehensive_data, {}
         except (ConfigurationError, AIParsingError) as e:
@@ -774,6 +821,7 @@ class BankDataCrawlerService:
         """
         crawled_content.processing_status = "completed"
         crawled_content.save(update_fields=["processing_status"])
+        crawled_content.enqueue_for_manual_review()
 
         # Reset failed attempts on success
         data_source.reset_failed_attempts()
@@ -836,7 +884,9 @@ class BankDataCrawlerService:
         data_source.increment_failed_attempts()
         logger.error(f"Database update failed for {data_source.bank.name}: {error}")
 
-    def _create_failed_crawl_record(self, data_source, error_message, extraction_method=""):
+    def _create_failed_crawl_record(
+        self, data_source, error_message, extraction_method=""
+    ):
         """Create a failed crawl record.
 
         Parameters

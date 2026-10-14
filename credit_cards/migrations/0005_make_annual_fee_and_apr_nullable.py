@@ -6,24 +6,24 @@ import django.core.validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('credit_cards', '0004_creditcard_lounge_access_condition'),
+        ("credit_cards", "0004_creditcard_lounge_access_condition"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='creditcard',
-            name='annual_fee',
+            model_name="creditcard",
+            name="annual_fee",
             field=models.DecimalField(
                 blank=True,
                 decimal_places=2,
                 max_digits=10,
                 null=True,
-                validators=[django.core.validators.MinValueValidator(0)]
+                validators=[django.core.validators.MinValueValidator(0)],
             ),
         ),
         migrations.AlterField(
-            model_name='creditcard',
-            name='interest_rate_apr',
+            model_name="creditcard",
+            name="interest_rate_apr",
             field=models.DecimalField(
                 blank=True,
                 decimal_places=2,
@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
                 null=True,
                 validators=[
                     django.core.validators.MaxValueValidator(100),
-                    django.core.validators.MinValueValidator(0)
-                ]
+                    django.core.validators.MinValueValidator(0),
+                ],
             ),
         ),
     ]

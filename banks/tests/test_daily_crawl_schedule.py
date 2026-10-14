@@ -50,6 +50,7 @@ class TestBeatSchedule:
         from credit_mate_ai.celery import app
 
         assert "crawl-bank-data-weekly" in app.conf.beat_schedule
+        assert app.conf.beat_schedule["crawl-bank-data-weekly"]["options"]["expires"] > 0
 
 
 @pytest.mark.django_db

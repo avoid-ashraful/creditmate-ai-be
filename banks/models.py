@@ -2,7 +2,7 @@ from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
 
-from banks.enums import ContentType, ProcessingStatus
+from banks.enums import ContentType, ProcessingStatus, ReviewPriority, ReviewStatus
 from common.models import Audit
 
 
@@ -179,6 +179,15 @@ class CrawledContent(Audit):
             "pass name, provider, cards found and per-pass confidence"
         ),
     )
+    multi_source_validation = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            "Multi-source validation outcome (Task 2.4): per-card-field agreement/"
+            "conflict status, independent source counts and validated confidences. "
+            "Empty dict when no cross-source comparison has run."
+        ),
+    )
     quality_scored_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -197,6 +206,67 @@ class CrawledContent(Audit):
     )
     error_message = models.TextField(blank=True, default="")
 
+    @property
+    def review_card_data(self):
+        """Return the extracted card most relevant to this crawl.
+
+        Returns
+        -------
+        dict or None
+            The linked card's matching extraction, the only extraction when
+            one is present, or ``None`` when the data is absent or ambiguous.
+        """
+        parsed_data = self.parsed_json if isinstance(self.parsed_json, dict) else {}
+        cards = parsed_data.get("credit_cards")
+        if not isinstance(cards, list):
+            return None
+        valid_cards = [card for card in cards if isinstance(card, dict)]
+        if self.credit_card_id:
+            for card_data in valid_cards:
+                if card_data.get("name") == self.credit_card.name:
+                    return card_data
+            return None
+        if len(valid_cards) == 1:
+            return valid_cards[0]
+        return None
+
+    @property
+    def review_priority(self):
+        """Derive review priority from extraction quality.
+
+        Returns
+        -------
+        str
+            High for unscored or very low-confidence extractions, otherwise
+            medium for moderate-confidence extractions and low for the rest.
+        """
+        if not self.is_scored or self.extraction_confidence < 0.3:
+            return ReviewPriority.HIGH
+        if self.extraction_confidence < 0.4:
+            return ReviewPriority.MEDIUM
+        return ReviewPriority.LOW
+
+    def enqueue_for_manual_review(self):
+        """Create an idempotent queue item for this completed crawl.
+
+        Returns
+        -------
+        ReviewQueue or None
+            The queue item, or ``None`` when the crawl is ineligible or a
+            queue item already exists.
+        """
+        if (
+            not self.needs_manual_review
+            or self.processing_status != ProcessingStatus.COMPLETED
+        ):
+            return None
+
+        queue_item, _created = ReviewQueue.objects.get_or_create(
+            crawled_content=self,
+            defaults={"bank": self.data_source.bank, "priority": self.review_priority},
+        )
+        return queue_item
+
     class Meta:
         ordering = ["-crawled_at"]
         db_table = "banks_crawledcontent"
@@ -205,7 +275,11 @@ class CrawledContent(Audit):
         return f"{self.data_source.bank.name} - {self.crawled_at}"
 
     def apply_quality_score(
-        self, confidence, missing_critical_fields=None, needs_manual_review=None, extraction_passes=None
+        self,
+        confidence,
+        missing_critical_fields=None,
+        needs_manual_review=None,
+        extraction_passes=None,
     ):
         """Store an extraction quality score on this record.
 
@@ -252,6 +326,31 @@ class CrawledContent(Audit):
         )
         return self
 
+    def apply_multi_source_validation(self, summary):
+        """Store a multi-source validation summary and raise the review flag.
+
+        The summary is the JSON-safe output of
+        :mod:`banks.services.multi_source_validation`. When it reports a real
+        conflict or same-source inconsistency the record's
+        ``needs_manual_review`` flag is set to ``True``; an existing flag is
+        never cleared by a validation run.
+
+        Parameters
+        ----------
+        summary : dict
+            Serialized validation batch (see ``batch_summary``).
+
+        Returns
+        -------
+        CrawledContent
+            The saved instance.
+        """
+        self.multi_source_validation = dict(summary or {})
+        if (summary or {}).get("needs_manual_review"):
+            self.needs_manual_review = True
+        self.save(update_fields=["multi_source_validation", "needs_manual_review"])
+        return self
+
     @staticmethod
     def _clamp_confidence(confidence):
         """Clamp a confidence value into the bounded [0.0, 1.0] range.
@@ -281,3 +380,65 @@ class CrawledContent(Audit):
     def is_low_confidence(self):
         """Return True when the extraction confidence is below the review threshold."""
         return self.extraction_confidence is not None and self.extraction_confidence < 0.5
+
+
+class ReviewQueue(Audit):
+    """Queue item for manually reviewing a low-confidence extraction."""
+
+    crawled_content = models.OneToOneField(
+        CrawledContent,
+        on_delete=models.CASCADE,
+        related_name="review_queue_item",
+        verbose_name="crawled content",
+    )
+    bank = models.ForeignKey(
+        Bank,
+        on_delete=models.CASCADE,
+        related_name="review_queue_items",
+        editable=False,
+    )
+    priority = models.CharField(
+        max_length=10,
+        choices=ReviewPriority.choices,
+        default=ReviewPriority.MEDIUM,
+        db_index=True,
+    )
+    priority_order = models.PositiveSmallIntegerField(
+        default=1,
+        db_index=True,
+        help_text="Numeric order for sorting: 3=HIGH, 2=MEDIUM, 1=LOW",
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.PENDING,
+        db_index=True,
+    )
+    reviewed_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="banks_review_queue_items",
+    )
+    reviewer_notes = models.TextField(blank=True, default="")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-priority_order", "created"]
+        db_table = "banks_reviewqueue"
+        verbose_name = "review queue item"
+        verbose_name_plural = "review queue items"
+
+    def save(self, *args, **kwargs):
+        """Set priority_order numeric value based on priority string."""
+        priority_order_map = {
+            ReviewPriority.HIGH: 3,
+            ReviewPriority.MEDIUM: 2,
+            ReviewPriority.LOW: 1,
+        }
+        self.priority_order = priority_order_map.get(self.priority, 1)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.bank.name} - {self.get_priority_display()} priority"

@@ -61,9 +61,7 @@ class TestPassOrchestration:
 
     def test_high_confidence_skips_focused_pass(self):
         cards = [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}]
-        extractor, _ = make_extractor(
-            [json.dumps(cards)], confidence_threshold=0.0
-        )
+        extractor, _ = make_extractor([json.dumps(cards)], confidence_threshold=0.0)
         result = extractor.extract(LONG_DOCUMENT, "Sonali Bank PLC", method="pdf_text")
 
         pass_names = [record["pass"] for record in result.passes]
@@ -76,9 +74,7 @@ class TestPassOrchestration:
     def test_low_confidence_triggers_focused_pass(self):
         incomplete = [{"name": "Gold", "annual_fee": None, "interest_rate_apr": None}]
         focused = {
-            "cards": [
-                {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}
-            ]
+            "cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}]
         }
         extractor, provider = make_extractor(
             [json.dumps(incomplete), json.dumps(focused)],
@@ -97,7 +93,9 @@ class TestPassOrchestration:
     def test_default_threshold_runs_focused_for_incomplete_first_pass(self):
         incomplete = [{"name": "Gold", "annual_fee": None, "interest_rate_apr": None}]
         focused = {
-            "cards": [{"name": "Gold", "annual_fee": "TK 5,000", "interest_rate_apr": "20%"}]
+            "cards": [
+                {"name": "Gold", "annual_fee": "TK 5,000", "interest_rate_apr": "20%"}
+            ]
         }
         extractor, _ = make_extractor([json.dumps(incomplete), json.dumps(focused)])
         result = extractor.extract(LONG_DOCUMENT, "BRAC Bank PLC", method="pdf_text")

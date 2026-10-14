@@ -117,9 +117,7 @@ class ContentExtractor:
 
         try:
             primary_content = self._process_content(raw_content, content_type, url)
-            attempts.append(
-                self._build_attempt(primary_method, primary_content, None)
-            )
+            attempts.append(self._build_attempt(primary_method, primary_content, None))
         except Exception as exc:  # noqa: BLE001 - recorded as a failed attempt
             logger.warning(f"Primary extraction failed for {url}: {exc}")
             attempts.append(self._build_attempt(primary_method, "", str(exc)))

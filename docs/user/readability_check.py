@@ -161,7 +161,9 @@ def strip_typescript(text: str) -> str:
     for key in ARRAY_KEYS:
         pattern = rf"\b{key}:\s*\[(.*?)\]"
         for match in re.finditer(pattern, text, flags=re.S):
-            for item in re.finditer(r"(?:'(?:[^'\\]|\\.)*')|(?:\"(?:[^\"\\]|\\.)*\")", match.group(1)):
+            for item in re.finditer(
+                r"(?:'(?:[^'\\]|\\.)*')|(?:\"(?:[^\"\\]|\\.)*\")", match.group(1)
+            ):
                 pieces.append(unwrap(item.group(0)))
 
     prose = ". ".join(p for p in pieces if p.strip())
@@ -283,6 +285,23 @@ def selftest() -> int:
     return 0
 
 
+def load_scores(directory: str, frontend_files: list[str]) -> list[Score] | None:
+    results = []
+    for filename in GUIDE_FILES:
+        path = os.path.join(directory, filename)
+        if not os.path.exists(path):
+            print(f"MISSING: {path}", file=sys.stderr)
+            return None
+        results.append(score_text(filename, read_guide(path)))
+
+    for path in frontend_files:
+        if not os.path.exists(path):
+            print(f"MISSING: {path}", file=sys.stderr)
+            return None
+        results.append(score_text(os.path.relpath(path, directory), read_guide(path)))
+    return results
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -316,33 +335,41 @@ def main(argv: list[str]) -> int:
             print(f"LINK POLICY FAIL: {violation}", file=sys.stderr)
         return 1
 
-    results: list[Score] = []
-    for filename in GUIDE_FILES:
-        path = os.path.join(args.dir, filename)
-        if not os.path.exists(path):
-            print(f"MISSING: {path}", file=sys.stderr)
-            return 1
-        results.append(score_text(filename, read_guide(path)))
-
-    for fe_path in args.fe:
-        if not os.path.exists(fe_path):
-            print(f"MISSING: {fe_path}", file=sys.stderr)
-            return 1
-        results.append(
-            score_text(os.path.relpath(fe_path, args.dir), read_guide(fe_path))
-        )
+    results = load_scores(args.dir, args.fe)
+    if results is None:
+        return 1
 
     if args.csv:
         buffer = io.StringIO()
         writer = csv.writer(buffer)
-        writer.writerow(["file", "words", "sentences", "syllables", "fk_grade", "flesch_ease", "gunning_fog"])
+        writer.writerow(
+            [
+                "file",
+                "words",
+                "sentences",
+                "syllables",
+                "fk_grade",
+                "flesch_ease",
+                "gunning_fog",
+            ]
+        )
         for row in results:
             writer.writerow(
-                [row.name, row.words, row.sentences, row.syllables, row.grade, row.ease, row.fog]
+                [
+                    row.name,
+                    row.words,
+                    row.sentences,
+                    row.syllables,
+                    row.grade,
+                    row.ease,
+                    row.fog,
+                ]
             )
         sys.stdout.write(buffer.getvalue())
     else:
-        print(f"{'file':<34}{'words':>7}{'sent':>6}{'syl':>6}{'FK':>8}{'FRE':>8}{'Fog':>8}")
+        print(
+            f"{'file':<34}{'words':>7}{'sent':>6}{'syl':>6}{'FK':>8}{'FRE':>8}{'Fog':>8}"
+        )
         print("-" * 77)
         for row in results:
             flag = "OK " if row.grade < args.max_grade else "FAIL"

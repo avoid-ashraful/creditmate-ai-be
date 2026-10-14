@@ -63,9 +63,7 @@ class FakeProvider:
 def build_crawler(responses):
     extractor = MultiPassLLMExtractor(provider=FakeProvider(responses))
     parser = LLMContentParser(multi_pass_extractor=extractor)
-    crawler = BankDataCrawlerService(
-        multi_pass_extractor=extractor, llm_parser=parser
-    )
+    crawler = BankDataCrawlerService(multi_pass_extractor=extractor, llm_parser=parser)
     crawler.content_extractor.extract_content = MagicMock(
         return_value=("raw content", DOCUMENT)
     )
@@ -115,9 +113,7 @@ class TestScoringRejectsUnsafeUnits:
             DOCUMENT, [dict(VALID_CARD, interest_rate_apr=apr)], "pdf_text"
         )
         assert quality.missing_critical_fields == ["interest_rate_apr"]
-        assert quality.invalid_reasons == {
-            "interest_rate_apr": REASON_NON_ANNUAL_PERIOD
-        }
+        assert quality.invalid_reasons == {"interest_rate_apr": REASON_NON_ANNUAL_PERIOD}
 
     def test_genuine_zero_and_free_wording_stay_valid(self):
         for fee in (0, 0.0, "Free", "Nil", "No annual fee"):
@@ -201,9 +197,7 @@ class TestMultiPassRecordsUnsafeUnits:
         result = extractor.extract(DOCUMENT, "City Bank PLC", method="pdf_text")
 
         assert result.credit_cards[0]["annual_fee"] is None  # never 0
-        assert result.invalid_reasons == {
-            "annual_fee": REASON_CONDITIONAL_WAIVER
-        }
+        assert result.invalid_reasons == {"annual_fee": REASON_CONDITIONAL_WAIVER}
 
 
 @pytest.mark.django_db
@@ -244,7 +238,11 @@ class TestCrawlerStoresUnsafeUnitsAsNull:
             json.dumps(
                 [
                     {"name": "Free Card", "annual_fee": 0, "interest_rate_apr": 18.0},
-                    {"name": "Worded Free", "annual_fee": "Free", "interest_rate_apr": 19.0},
+                    {
+                        "name": "Worded Free",
+                        "annual_fee": "Free",
+                        "interest_rate_apr": 19.0,
+                    },
                 ]
             )
         ]
@@ -262,7 +260,9 @@ class TestCrawlerStoresUnsafeUnitsAsNull:
 
         content = CrawledContent.objects.get(data_source=source)
         assert content.missing_critical_fields == []
-        assert ExtractionQualityValidator.quality_summary(content)["invalid_reasons"] == {}
+        assert (
+            ExtractionQualityValidator.quality_summary(content)["invalid_reasons"] == {}
+        )
 
     def test_legacy_path_also_nulls_unsafe_units(self):
         """The single-pass fallback shares the same normalization rules."""
@@ -279,7 +279,13 @@ class TestCrawlerStoresUnsafeUnitsAsNull:
                 crawler.llm_parser,
                 "parse_comprehensive_data",
                 return_value=(
-                    [{"name": "Legacy", "annual_fee": "$95.00", "interest_rate_apr": 20.0}],
+                    [
+                        {
+                            "name": "Legacy",
+                            "annual_fee": "$95.00",
+                            "interest_rate_apr": 20.0,
+                        }
+                    ],
                     [{"name": "Legacy", "annual_fee": "$95.00"}],
                 ),
             ),

@@ -40,7 +40,7 @@ The Credit Cards API is the core component of the Credit Mate AI platform, provi
 - `has_annual_fee` (boolean): Filter by annual fee presence
 - `no_annual_fee` (boolean): Filter by no annual fee
 - `has_additional_features` (boolean): Filter by additional features presence
-- `feature_search` (string): Search in additional features
+- `feature_search` (string): Search within additional features
 - `has_fee_waiver` (boolean): Filter by fee waiver policy presence
 - `is_active` (boolean): Filter by active status
 
@@ -124,6 +124,149 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/1/"
 }
 ```
 
+### Typeahead/Autocomplete
+
+**Endpoint:** `GET /api/v1/credit-cards/typeahead/?q=...`
+
+**Description:** Real-time typeahead search for credit cards and banks with grouped results, facets, and typo suggestions. No authentication required.
+
+**Query Parameters:**
+- `q` (string): Search query (required, minimum 2 characters after trimming)
+  - Maximum length: 100 characters (longer queries are truncated)
+  - Queries below 2 characters return empty results
+  - Leading/trailing whitespace is trimmed before validation
+
+**Response Fields:**
+
+The response contains several sections:
+
+- `query` (string): The original query as provided, including whitespace
+- `suggestions` (array): Bounded, ordered matches (max 8 total across all types)
+  - Card suggestions: `type: "card"`, `id` (integer), `label` (string), `detail` (bank name)
+  - Bank suggestions: `type: "bank"`, `id` (integer), `label` (string), `detail` (card count)
+  - Category suggestions: `type: "category"`, `slug` (string), `label` (string)
+- `matches` (object): Query match arrays by type:
+  - `card` (array): List of matching card names (strings)
+  - `bank` (array): List of matching bank names (strings)
+  - `category` (array): List of matching category names (from canonical taxonomy)
+  - `source` (string): Always "database"
+- `facets` (object): Count facets for common filters
+  - Each facet has: `label` (string), `count` (integer), `filter` (string for list endpoint)
+  - Includes: "no_fee", "travel", "cashback", "lounge"
+- `did_you_mean` (string or null): Suggestion for close typos (≥80% similarity)
+- `highlight` (object): Highlighting metadata
+  - `terms` (array): Query terms to highlight (empty if query invalid)
+  - `scope` (string or null): Scope of highlighting ("card_name_and_bank_name")
+  - `strategy` (string or null): Strategy ("case_insensitive_substring")
+- `match_policy` (object): Matching policy metadata
+  - `minimum_characters` (integer): Minimum required query length (always 2)
+  - `result_limit` (integer): Maximum results per group (always 8)
+  - `active` (boolean): Whether results are available (false for short queries)
+
+**Matching Strategy:**
+1. Prefix matches: Cards/banks whose name starts with the query (case-insensitive)
+2. Substring matches: Remaining cards/banks containing the query
+3. Category matches: Cards/banks matching canonical category names/slugs by prefix
+   - Canonical categories: Travel, Cashback, Premium, Student, Business, No Annual Fee
+   - Categories are matched by name or slug (e.g., "no-annual-fee")
+4. Typo detection: Close matches suggested if ≥80% similar (cards/banks only)
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:8000/api/v1/credit-cards/typeahead/?q=visa"
+```
+
+**Example Response (Travel Category):**
+```json
+{
+  "query": "travel",
+  "suggestions": [
+    {
+      "type": "category",
+      "slug": "travel",
+      "label": "Travel"
+    },
+    {
+      "type": "card",
+      "id": 5,
+      "label": "Travel Rewards Card",
+      "detail": "Premium Bank"
+    },
+    {
+      "type": "card",
+      "id": 8,
+      "label": "Traveler's Choice",
+      "detail": "Global Card Corp"
+    }
+  ],
+  "matches": {
+    "card": ["Travel Rewards Card", "Traveler's Choice"],
+    "bank": [],
+    "category": ["Travel"],
+    "source": "database"
+  },
+  "facets": {
+    "no_fee": {
+      "label": "No Fee",
+      "count": 1,
+      "filter": "no_annual_fee=true"
+    },
+    "travel": {
+      "label": "Travel",
+      "count": 2,
+      "filter": "feature_search=travel"
+    },
+    "cashback": {
+      "label": "Cashback",
+      "count": 1,
+      "filter": "feature_search=cashback"
+    },
+    "lounge": {
+      "label": "Lounge",
+      "count": 2,
+      "filter": "has_lounge_access=true"
+    }
+  },
+  "did_you_mean": null,
+  "highlight": {
+    "terms": ["visa"],
+    "scope": "card_name_and_bank_name",
+    "strategy": "case_insensitive_substring"
+  },
+  "match_policy": {
+    "minimum_characters": 2,
+    "result_limit": 8,
+    "active": true
+  }
+}
+```
+
+**Empty Query Response:**
+```json
+{
+  "query": "v",
+  "suggestions": [],
+  "matches": {
+    "card": [],
+    "bank": [],
+    "category": [],
+    "source": "database"
+  },
+  "facets": {},
+  "did_you_mean": null,
+  "highlight": {
+    "terms": [],
+    "scope": null,
+    "strategy": null
+  },
+  "match_policy": {
+    "minimum_characters": 2,
+    "result_limit": 8,
+    "active": false
+  }
+}
+```
+
 ### Search Suggestions
 
 **Endpoint:** `GET /api/v1/credit-cards/search-suggestions/`
@@ -151,6 +294,191 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/search-suggestions/"
     {"label": "Fee Waiver Available", "filter": "has_fee_waiver=true"}
   ],
   "popular_banks": ["Chase", "Bank of America", "Citi", "American Express"]
+}
+```
+
+### Field History
+
+**Endpoint:** `GET /api/v1/credit-cards/{id}/field-history/`
+
+**Description:** Retrieve the modification history for a specific credit card's fields. Requires authentication.
+
+**Path Parameters:**
+- `id` (integer): The unique identifier of the credit card
+
+**Query Parameters:**
+- `page` (integer): Page number for pagination
+- `page_size` (integer): Number of results per page
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:8000/api/v1/credit-cards/1/field-history/" \
+  -H "Authorization: Bearer <token>"
+```
+
+**Example Response:**
+```json
+{
+  "count": 5,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 10,
+      "field_name": "annual_fee",
+      "old_value": 95.00,
+      "new_value": 99.00,
+      "created": "2024-02-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+## Advanced Search Endpoints
+
+### Advanced Search
+
+**Endpoint:** `GET /api/v1/credit-cards/advanced-search/`
+
+**Description:** Advanced search for credit cards with filtering, faceting, and sorting. Includes graceful fallback to database when Elasticsearch is unavailable.
+
+**Query Parameters:**
+- `search` (string): Full-text search query across card name, bank, rewards, features
+- `categories` (string): Comma-separated category slugs for OR filtering (travel,cashback,premium,student,business,no-annual-fee)
+- `annual_fee_min` (number): Minimum annual fee
+- `annual_fee_max` (number): Maximum annual fee
+- `interest_rate_min` (number): Minimum APR
+- `interest_rate_max` (number): Maximum APR
+- `has_lounge_access` (boolean): Filter cards with any lounge access
+- `has_international_lounge` (boolean): Filter cards with international lounge access
+- `has_domestic_lounge` (boolean): Filter cards with domestic lounge access
+- `no_annual_fee` (boolean): Filter cards with no annual fee
+- `has_fee_waiver` (boolean): Filter cards with fee waiver policy
+- `feature_search` (string): Search within additional features
+- `bank_ids` (string): Comma-separated bank IDs to filter
+- `ordering` (string): Sort field (relevance, annual_fee, -annual_fee, interest_rate_apr, -interest_rate_apr, -lounge_access_international, -lounge_access_domestic, name, -name, -created, created)
+- `page` (integer): Page number (1-based)
+- `page_size` (integer): Results per page (1-100, default 20)
+- `facets` (string): Comma-separated facet names to include (bank,category,annual_fee_range,interest_rate_range,lounge_access,fee_waiver,has_annual_fee)
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:8000/api/v1/credit-cards/advanced-search/?search=travel&categories=travel,cashback&ordering=-annual_fee&facets=bank,category"
+```
+
+**Example Response:**
+```json
+{
+  "query": "travel",
+  "total": 42,
+  "page": 1,
+  "page_size": 20,
+  "results": [...],
+  "facets": {
+    "bank": {
+      "label": "Bank",
+      "type": "terms",
+      "buckets": [
+        {"key": "Chase", "count": 15},
+        {"key": "American Express", "count": 8}
+      ]
+    },
+    "category": {
+      "label": "Category",
+      "type": "category",
+      "buckets": [
+        {"key": "travel", "label": "Travel", "count": 20, "filter": "categories=travel"},
+        {"key": "cashback", "label": "Cashback", "count": 15, "filter": "categories=cashback"}
+      ]
+    }
+  },
+  "took": 15,
+  "source": "elasticsearch",
+  "cached": false,
+  "sort_options": [...],
+  "categories": [...],
+  "normalized_query": {...}
+}
+```
+
+### Advanced Search: Sort Options
+
+**Endpoint:** `GET /api/v1/credit-cards/advanced-search/sort-options/`
+
+**Description:** Get available sort options for advanced search with descriptions.
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:8000/api/v1/credit-cards/advanced-search/sort-options/"
+```
+
+**Example Response:**
+```json
+{
+  "sort_options": [
+    {"key": "relevance", "label": "Relevance", "description": "Best match first (default with search query)"},
+    {"key": "annual_fee", "label": "Annual Fee (Low to High)", "description": "Sort by annual fee ascending"},
+    {"key": "-annual_fee", "label": "Annual Fee (High to Low)", "description": "Sort by annual fee descending"},
+    {"key": "interest_rate_apr", "label": "APR (Low to High)", "description": "Sort by interest rate ascending"},
+    {"key": "-interest_rate_apr", "label": "APR (High to Low)", "description": "Sort by interest rate descending"},
+    {"key": "-lounge_access_international", "label": "Lounge Access (Most First)", "description": "Sort by international lounge access descending"},
+    {"key": "-lounge_access_domestic", "label": "Domestic Lounge (Most First)", "description": "Sort by domestic lounge access descending"},
+    {"key": "name", "label": "Name (A-Z)", "description": "Sort by card name ascending"},
+    {"key": "-name", "label": "Name (Z-A)", "description": "Sort by card name descending"},
+    {"key": "-created", "label": "Newest First", "description": "Sort by creation date descending"},
+    {"key": "created", "label": "Oldest First", "description": "Sort by creation date ascending"}
+  ]
+}
+```
+
+### Advanced Search: Categories
+
+**Endpoint:** `GET /api/v1/credit-cards/advanced-search/categories/`
+
+**Description:** Get canonical category taxonomy for multi-category filtering.
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:8000/api/v1/credit-cards/advanced-search/categories/"
+```
+
+**Example Response:**
+```json
+{
+  "categories": [
+    {"slug": "travel", "name": "Travel"},
+    {"slug": "cashback", "name": "Cashback"},
+    {"slug": "premium", "name": "Premium"},
+    {"slug": "student", "name": "Student"},
+    {"slug": "business", "name": "Business"},
+    {"slug": "no-annual-fee", "name": "No Annual Fee"}
+  ]
+}
+```
+
+### Advanced Search: Normalize Query
+
+**Endpoint:** `GET /api/v1/credit-cards/advanced-search/normalize/`
+
+**Description:** Normalize query parameters for saved search compatibility and deduplication.
+
+**Query Parameters:** Same as advanced search list endpoint.
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:8000/api/v1/credit-cards/advanced-search/normalize/?search=travel&categories=travel,cashback&annual_fee_min=100"
+```
+
+**Example Response:**
+```json
+{
+  "normalized_query": {
+    "search": "travel",
+    "categories": "cashback,travel",
+    "annual_fee_min": "100"
+  },
+  "query_hash": "a1b2c3d4e5f6g7h8",
+  "canonical_string": "annual_fee_min=100&categories=cashback,travel&search=travel"
 }
 ```
 
@@ -236,14 +564,14 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?ordering=-annual_fee"
 
 ```bash
 # Lowest interest rate first
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?ordering=interest_rate"
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?ordering=interest_rate_apr"
 ```
 
 ### Multiple Sort Criteria
 
 ```bash
 # Sort by annual fee, then by interest rate (descending)
-curl -X GET "http://localhost:8000/api/v1/credit-cards/?ordering=annual_fee,-interest_rate"
+curl -X GET "http://localhost:8000/api/v1/credit-cards/?ordering=annual_fee,-interest_rate_apr"
 ```
 
 ## Pagination Examples
@@ -272,16 +600,16 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?page=2&page_size=20"
 | `bank_id` | integer | Bank ID (write-only) |
 | `annual_fee` | decimal | Annual fee amount |
 | `interest_rate_apr` | decimal | Annual percentage rate (APR) |
-| `lounge_access_international` | integer | Number of international lounge access |
-| `lounge_access_domestic` | integer | Number of domestic lounge access |
+| `lounge_access_international` | string | Raw international lounge access text |
+| `lounge_access_domestic` | string | Raw domestic lounge access text |
 | `cash_advance_fee` | string | Cash advance fee description |
 | `late_payment_fee` | string | Late payment fee description |
 | `annual_fee_waiver_policy` | object | Annual fee waiver policy details |
 | `reward_points_policy` | string | Reward points policy description |
 | `additional_features` | array | List of additional features |
 | `is_active` | boolean | Whether the card is active |
-| `has_lounge_access` | boolean | Whether card has any lounge access (computed) |
-| `total_lounge_access` | integer | Total lounge access count (computed) |
+| `has_lounge_access` | boolean or null | `true` if any lounge access, `false` if known to have none, `null` if unknown (computed) |
+| `total_lounge_access` | integer | Total lounge access count (computed, sums numeric counts) |
 | `has_annual_fee` | boolean | Whether card has annual fee (computed) |
 | `created` | datetime | Record creation timestamp |
 | `modified` | datetime | Last update timestamp |
@@ -301,6 +629,14 @@ curl -X GET "http://localhost:8000/api/v1/credit-cards/?annual_fee_min=100&annua
 ```
 
 ### Lounge Access Filters
+
+Lounge access values are free text per direction. They are classified as follows:
+
+- **Unknown** (`has_lounge_access` is `null`; neither `true` nor `false` filters match it): the value is empty or a placeholder such as `-`, `unknown` or `not specified`.
+- **None** (`0`, `0 visits`, `None`, `N/A`, `Not applicable`, `No lounge access`): the card states it has no access. `has_lounge_access=false` matches only these cards.
+- **Unlimited** (`Unlimited`): access with no finite count. It matches `has_*=true` but never `min_*_lounge`.
+- **Limited** (any other value, such as `4 per year`): access. `min_*_lounge` uses the first number in the text.
+
 ```bash
 # Cards with any lounge access
 curl -X GET "http://localhost:8000/api/v1/credit-cards/?has_lounge_access=true"

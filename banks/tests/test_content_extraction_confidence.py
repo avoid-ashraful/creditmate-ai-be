@@ -68,9 +68,7 @@ class TestExtractWithValidation:
         with (
             patch.object(extractor, "_fetch_content", return_value=b"%PDF-fake"),
             patch.object(extractor, "_process_content", return_value=weak_text),
-            patch.object(
-                extractor, "_extract_pdf_with_ocr", return_value=QUALITY_TEXT
-            ),
+            patch.object(extractor, "_extract_pdf_with_ocr", return_value=QUALITY_TEXT),
         ):
             result = extractor.extract_with_validation(
                 "https://example.com/schedule.pdf", ContentType.PDF

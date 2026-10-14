@@ -350,19 +350,19 @@ class BankSpecificPrompts:
             "document. Ignore every other field.\n\n"
             f"Bank: {bank_name or 'unknown bank'}\n\n"
             "CRITICAL INSTRUCTIONS:\n"
-            "1. Annual Fee patterns: \"TK 5,000\", \"Tk. 1,500\", \"BDT 500\", "
-            "\"Free\", \"Nil\", \"NIL\", \"No annual fee\"\n"
-            "2. Interest rate patterns: \"20% p.a.\", \"2.5% monthly\", "
-            "\"24% per annum\"\n"
+            '1. Annual Fee patterns: "TK 5,000", "Tk. 1,500", "BDT 500", '
+            '"Free", "Nil", "NIL", "No annual fee"\n'
+            '2. Interest rate patterns: "20% p.a.", "2.5% monthly", '
+            '"24% per annum"\n'
             "3. Respond with ONLY this JSON shape: "
-            "{\"cards\": [{\"name\": \"card tier or empty string\", "
-            "\"annual_fee\": number_or_null, \"interest_rate_apr\": number_or_null}]}\n"
+            '{"cards": [{"name": "card tier or empty string", '
+            '"annual_fee": number_or_null, "interest_rate_apr": number_or_null}]}\n'
             "4. Use null only when the value is genuinely absent from the "
-            "document. \"Free\"/\"Nil\"/\"No annual fee\" must be returned as 0, "
+            'document. "Free"/"Nil"/"No annual fee" must be returned as 0, '
             "never null, and never guessed.\n"
-            "5. Strip currency symbols and commas: \"TK 5,000\" -> 5000, "
-            "\"20% p.a.\" -> 20.0\n"
+            '5. Strip currency symbols and commas: "TK 5,000" -> 5000, '
+            '"20% p.a." -> 20.0\n'
             "6. If the document has no card information at all, return "
-            "{\"cards\": []}\n\n"
+            '{"cards": []}\n\n'
             f"Document content:\n{content if content is not None else ''}"
         )

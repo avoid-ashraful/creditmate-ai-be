@@ -6,7 +6,7 @@ from banks.models import Bank
 class BankSerializer(serializers.ModelSerializer):
     """Serializer for Bank model."""
 
-    credit_card_count = serializers.ReadOnlyField()
+    credit_card_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Bank
@@ -26,7 +26,7 @@ class BankSerializer(serializers.ModelSerializer):
 class BankListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for Bank list views."""
 
-    credit_card_count = serializers.ReadOnlyField()
+    credit_card_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Bank

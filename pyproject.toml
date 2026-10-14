@@ -8,14 +8,15 @@ dependencies = [
     "django~=5.2.3",
     "pytest~=8.4.0",
     "pytest-django~=4.11.1",
-    "djangorestframework~=3.16.0",
+    "djangorestframework~=3.17.0",
+    "djangorestframework-simplejwt~=5.5.0",
     "pytest-socket~=0.7.0",
     "pytest-cov~=6.0.0",
     "django-filter~=25.1",
     "factory-boy~=3.3.3",
     "celery~=5.5.3",
     "redis~=6.2.0",
-    "requests~=2.32.4",
+    "requests~=2.33.0",
     "python-magic~=0.4.27",
     "pandas~=2.3.0",
     "urllib3",
@@ -24,6 +25,7 @@ dependencies = [
     "psycopg2-binary~=2.9.9",
     "dj-database-url",
     "python-dotenv",
+    "sentry-sdk~=2.0",
     "google-generativeai",
     "beautifulsoup4",
     "pytesseract",
@@ -32,6 +34,9 @@ dependencies = [
     "openai",
     "pypdf",
     "whitenoise",
+    "elasticsearch>=8.18,<9",
+    "drf-spectacular~=0.28.0",
+    "prometheus-client>=0.20.0",
 ]
 
 [dependency-groups]
@@ -47,7 +52,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["credit_mate_ai", "banks", "credit_cards", "common"]
+packages = ["credit_mate_ai", "banks", "credit_cards", "common", "accounts"]
 
 [tool.black]
 line-length = 90
@@ -88,3 +93,6 @@ exclude_dirs = [
   "scripts",
   "factories.py"
 ]
+
+[tool.uv]
+constraint-dependencies = ["filelock<4", "soupsieve<3", "virtualenv<21"]
