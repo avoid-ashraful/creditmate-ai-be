@@ -216,7 +216,7 @@ class AddedAPIContractTests(APITestCase):
         response = self.client.post("/api/v1/alerts/subscriptions/", {"card": self.card.id, "kind": "fee_change"})
         # The subscription choices are validated by the serializer; use its explicit required contract on failure.
         if response.status_code == 201:
-            self.assertEqual(set(response.data), {"id", "card", "kind", "is_active", "created"})
+            self.assertEqual(set(response.data), {"id", "card", "card_name", "bank_name", "kind", "is_active", "created"})
             subscription = AlertSubscription.objects.get(pk=response.data["id"])
             response = self.client.get(f"/api/v1/alerts/unsubscribe/{subscription.unsubscribe_token}/")
             self.assertEqual(response.status_code, 200)

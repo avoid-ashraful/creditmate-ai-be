@@ -18,7 +18,7 @@ class SubscriptionListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return AlertSubscription.objects.none()
-        return AlertSubscription.objects.filter(user=self.request.user)
+        return AlertSubscription.objects.filter(user=self.request.user).select_related("card__bank")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -31,7 +31,7 @@ class SubscriptionDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return AlertSubscription.objects.none()
-        return AlertSubscription.objects.filter(user=self.request.user)
+        return AlertSubscription.objects.filter(user=self.request.user).select_related("card__bank")
 
 
 @extend_schema_view(

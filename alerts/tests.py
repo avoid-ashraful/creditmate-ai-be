@@ -195,3 +195,23 @@ def test_digest_query_count_with_30_populated_subscriptions(django_user_model, s
         assert send_alert_digests() == 30
 
     assert len(captured) == 64
+
+
+@pytest.mark.django_db
+def test_subscription_exposes_card_and_bank_names(django_user_model):
+    from rest_framework.test import APIClient
+
+    from banks.factories import BankFactory
+    from credit_cards.factories import CreditCardFactory
+
+    user = django_user_model.objects.create_user(username="names@example.com", password="x")
+    bank = BankFactory(name="Names Bank")
+    card = CreditCardFactory(bank=bank, name="Names Card")
+    client = APIClient()
+    client.force_authenticate(user)
+    created = client.post("/api/v1/alerts/subscriptions/", {"card": card.pk, "kind": "any_change"})
+    assert created.status_code == 201
+    listing = client.get("/api/v1/alerts/subscriptions/")
+    row = listing.data["results"][0] if isinstance(listing.data, dict) else listing.data[0]
+    assert row["card_name"] == "Names Card"
+    assert row["bank_name"] == "Names Bank"
