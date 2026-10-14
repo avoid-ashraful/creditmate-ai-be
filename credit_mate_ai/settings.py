@@ -247,6 +247,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # AI Configuration for Bank Crawler
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+# "-latest" alias always resolves to Google's newest fast Flash model
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
 # Celery Configuration (Redis broker)
