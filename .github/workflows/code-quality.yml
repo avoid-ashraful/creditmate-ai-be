@@ -61,7 +61,7 @@ jobs:
     - name: Check docstring coverage
       run: |
         uv add --dev interrogate
-        uv run interrogate -v --ignore-init-method --ignore-init-module --ignore-magic --ignore-nested-functions --ignore-semiprivate --ignore-private --ignore-property-decorators --ignore-module --fail-under=70 .
+        uv run interrogate -v --ignore-init-method --ignore-init-module --ignore-magic --ignore-nested-functions --ignore-semiprivate --ignore-private --ignore-property-decorators --ignore-module -e "*/tests/*" -e "tests/*" -e "*/migrations/*" --fail-under=70 .
 
     - name: Run complexity analysis
       run: |

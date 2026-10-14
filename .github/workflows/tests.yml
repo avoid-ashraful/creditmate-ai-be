@@ -12,6 +12,7 @@ env:
   DEBUG: "True"
   ALLOWED_HOSTS: "localhost,127.0.0.1"
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/creditmate_test"
+  REDIS_CACHE_URL: "redis://localhost:6379/14"
 
 jobs:
   test:
