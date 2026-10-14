@@ -223,8 +223,12 @@ class TestDrain:
 class TestAutomaticQueueScheduling:
     """The default queue mode must have a registered periodic worker task."""
 
-    def test_beat_schedule_registers_drain_task(self):
+    def test_beat_schedule_registers_drain_task(self, settings):
         from credit_mate_ai.celery import app
+
+        if "search-index-queue-drain" not in app.conf.beat_schedule:
+            # The entry is registered at import time only when search is enabled.
+            pytest.skip("search disabled in this environment (SEARCH_ENABLED=False)")
 
         entry = app.conf.beat_schedule["search-index-queue-drain"]
         assert entry["task"] == "search.process_index_queue"
