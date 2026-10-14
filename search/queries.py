@@ -335,7 +335,7 @@ def _term_clause(field, value):
 def _build_defined_filter(definition, value):
     """Build one clause for a declared scalar or presence filter."""
     filter_kind = definition[0]
-    
+
     # Special handling for category filter - it's multi-value and handled in _build_multi_value_filters
     if filter_kind == "category":
         return None  # Handled in _build_multi_value_filters
