@@ -34,7 +34,7 @@ class GeminiProvider(BaseLLMProvider):
         """Initialize Gemini provider."""
         super().__init__("gemini")
         self.model = None
-        self.default_model_name = "gemini-1.5-flash"
+        self.default_model_name = getattr(settings, "GEMINI_MODEL", "gemini-flash-latest")
         self.configure()
 
     def configure(self):
@@ -314,9 +314,8 @@ class GeminiProvider(BaseLLMProvider):
             List of available Gemini model identifiers
         """
         return [
-            "gemini-1.5-flash",
-            "gemini-1.5-pro",
-            "gemini-1.0-pro",
+            "gemini-flash-latest",
+            "gemini-pro-latest",
         ]
 
     def get_provider_info(self):
