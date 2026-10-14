@@ -62,13 +62,9 @@ class CreditCardAPIContractTests(APITestCase):
         self.assertIsNone(response.data["previous"])
         self.assertIsInstance(response.data["results"], list)
 
-        result = next(
-            item for item in response.data["results"] if item["id"] == card.id
-        )
+        result = next(item for item in response.data["results"] if item["id"] == card.id)
         paid_result = next(
-            item
-            for item in response.data["results"]
-            if item["id"] == paid_card.id
+            item for item in response.data["results"] if item["id"] == paid_card.id
         )
         self.assertEqual(set(result.keys()), CARD_LIST_FIELDS)
         self.assertEqual(result["id"], card.id)
@@ -140,9 +136,7 @@ class CreditCardAPIContractTests(APITestCase):
         self.assertEqual(second_page.data["count"], 3)
         self.assertEqual(len(second_page.data["results"]), 1)
         self.assertIsNone(second_page.data["next"])
-        self.assertEqual(
-            set(second_page.data["results"][0].keys()), CARD_LIST_FIELDS
-        )
+        self.assertEqual(set(second_page.data["results"][0].keys()), CARD_LIST_FIELDS)
         self.assertNotEqual(first_page.data["results"], second_page.data["results"])
         self.assertEqual(
             {item["id"] for item in first_page.data["results"]}
@@ -194,5 +188,7 @@ class CreditCardAPIContractTests(APITestCase):
         response = self.client.get(f"/api/v1/credit-cards/{unavailable_id}/")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(str(response.data["detail"]), "No CreditCard matches the given query.")
+        self.assertEqual(
+            str(response.data["detail"]), "No CreditCard matches the given query."
+        )
         self.assertEqual(response.data["detail"].code, "not_found")

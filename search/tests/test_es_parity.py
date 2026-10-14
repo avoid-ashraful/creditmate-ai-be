@@ -12,17 +12,17 @@ These tests run against a live Elasticsearch instance and verify:
 """
 
 import os
+from decimal import Decimal
 
 import pytest
-from decimal import Decimal
 
 from django.core.management import call_command
 from django.test import override_settings
 
-from search.service import SearchService
-from search.client import is_enabled, reset_client, get_client
 from banks.models import Bank
 from credit_cards.models import CreditCard
+from search.client import get_client, is_enabled, reset_client
+from search.service import SearchService
 
 LIVE = os.getenv("SEARCH_LIVE") == "1"
 
@@ -81,7 +81,8 @@ def _make_card(bank, name, **kwargs):
 
 def _make_card_no_signal(bank, name, **kwargs):
     """Create a credit card with signals muted (for fallback tests)."""
-    from django.db.models.signals import post_save, post_delete
+    from django.db.models.signals import post_delete, post_save
+
     from search.signals import disconnect_all
 
     defaults = {
@@ -103,27 +104,40 @@ def _make_card_no_signal(bank, name, **kwargs):
         return CreditCard.objects.create(bank=bank, **defaults)
     finally:
         # Reconnect signals after test
-        from search.signals import (
-            bank_about_to_save, bank_saved, bank_deleted,
-            card_about_to_save, card_saved, card_deleted
-        )
-        from django.db.models.signals import pre_save, post_save, post_delete
+        from django.db.models.signals import post_delete, post_save, pre_save
 
-        pre_save.connect(bank_about_to_save, sender=Bank, dispatch_uid="search_bank_pre_save")
+        from search.signals import (
+            bank_about_to_save,
+            bank_deleted,
+            bank_saved,
+            card_about_to_save,
+            card_deleted,
+            card_saved,
+        )
+
+        pre_save.connect(
+            bank_about_to_save, sender=Bank, dispatch_uid="search_bank_pre_save"
+        )
         post_save.connect(bank_saved, sender=Bank, dispatch_uid="search_bank_post_save")
-        post_delete.connect(bank_deleted, sender=Bank, dispatch_uid="search_bank_post_delete")
-        pre_save.connect(card_about_to_save, sender=CreditCard, dispatch_uid="search_card_pre_save")
-        post_save.connect(card_saved, sender=CreditCard, dispatch_uid="search_card_post_save")
-        post_delete.connect(card_deleted, sender=CreditCard, dispatch_uid="search_card_post_delete")
+        post_delete.connect(
+            bank_deleted, sender=Bank, dispatch_uid="search_bank_post_delete"
+        )
+        pre_save.connect(
+            card_about_to_save, sender=CreditCard, dispatch_uid="search_card_pre_save"
+        )
+        post_save.connect(
+            card_saved, sender=CreditCard, dispatch_uid="search_card_post_save"
+        )
+        post_delete.connect(
+            card_deleted, sender=CreditCard, dispatch_uid="search_card_post_delete"
+        )
 
 
 @pytest.mark.django_db
 class TestAdvancedSearchRelevanceOrdering:
     """Test that ES relevance ordering produces expected results."""
 
-    def test_exact_name_match_ranks_higher_than_partial(
-        self, isolated_indexes
-    ):
+    def test_exact_name_match_ranks_higher_than_partial(self, isolated_indexes):
         """Exact name match should rank higher than partial match."""
         service = isolated_indexes
         bank = _make_bank("Test Bank")
@@ -149,20 +163,16 @@ class TestAdvancedSearchRelevanceOrdering:
         assert partial1.pk not in hit_ids, "Visa Gold should not match (missing platinum)"
         assert unrelated.pk not in hit_ids, "Mastercard should not match"
 
-    def test_name_field_boosted_over_content(
-        self, isolated_indexes
-    ):
+    def test_name_field_boosted_over_content(self, isolated_indexes):
         """Name field has higher boost (^3) than content fields."""
         service = isolated_indexes
         bank = _make_bank("Boost Bank")
-        in_name = _make_card_no_signal(
-            bank, "Travel Rewards Card", annual_fee=0
-        )
+        in_name = _make_card_no_signal(bank, "Travel Rewards Card", annual_fee=0)
         in_content = _make_card_no_signal(
             bank,
             "Premium Card",
             reward_points_policy="Earn travel points on every purchase",
-            annual_fee=0
+            annual_fee=0,
         )
 
         # Rebuild index to ensure all docs are indexed
@@ -172,11 +182,11 @@ class TestAdvancedSearchRelevanceOrdering:
         hit_ids = [hit["id"] for hit in result["hits"]]
 
         # Name match should rank higher than content match
-        assert in_name.pk == hit_ids[0], "Name match should rank higher than content match"
+        assert (
+            in_name.pk == hit_ids[0]
+        ), "Name match should rank higher than content match"
 
-    def test_bank_name_boosted_in_card_search(
-        self, isolated_indexes
-    ):
+    def test_bank_name_boosted_in_card_search(self, isolated_indexes):
         """Bank name has boost ^2 in card search."""
         service = isolated_indexes
         chase = _make_bank("Chase")
@@ -200,15 +210,19 @@ class TestAdvancedSearchRelevanceOrdering:
 class TestFacetCountsParity:
     """Test that ES facet counts match DB fallback counts for same filters."""
 
-    def test_category_facets_match_db_fallback(
-        self, isolated_indexes
-    ):
+    def test_category_facets_match_db_fallback(self, isolated_indexes):
         """Category facet counts should match DB fallback."""
         service = isolated_indexes
         bank = _make_bank("Facet Bank")
-        _make_card_no_signal(bank, "Travel Card 1", reward_points_policy="travel rewards", annual_fee=0)
-        _make_card_no_signal(bank, "Travel Card 2", reward_points_policy="travel points", annual_fee=0)
-        _make_card_no_signal(bank, "Cashback Card", reward_points_policy="2% cashback", annual_fee=0)
+        _make_card_no_signal(
+            bank, "Travel Card 1", reward_points_policy="travel rewards", annual_fee=0
+        )
+        _make_card_no_signal(
+            bank, "Travel Card 2", reward_points_policy="travel points", annual_fee=0
+        )
+        _make_card_no_signal(
+            bank, "Cashback Card", reward_points_policy="2% cashback", annual_fee=0
+        )
         _make_card_no_signal(bank, "Premium Card", annual_fee=3000)
 
         # Rebuild index to ensure all docs are indexed
@@ -223,9 +237,7 @@ class TestFacetCountsParity:
         assert es_bank_counts == {"Facet Bank": 4}
         assert "bank_name" in result["aggregations"]
 
-    def test_annual_fee_range_facets_match_db(
-        self, isolated_indexes
-    ):
+    def test_annual_fee_range_facets_match_db(self, isolated_indexes):
         """Annual fee range facets should match DB fallback."""
         service = isolated_indexes
         bank = _make_bank("Fee Facet Bank")
@@ -246,9 +258,7 @@ class TestFacetCountsParity:
         # "0-1000" should have 2 cards (free + low)
         assert fee_counts["0-1000"] == 2
 
-    def test_fee_unknown_excluded_from_has_fee_facet(
-        self, isolated_indexes
-    ):
+    def test_fee_unknown_excluded_from_has_fee_facet(self, isolated_indexes):
         """Cards with unknown fee should not appear in has_annual_fee facet."""
         service = isolated_indexes
         bank = _make_bank("Unknown Fee Bank")
@@ -271,9 +281,7 @@ class TestFacetCountsParity:
 class TestTypeaheadRanking:
     """Test typeahead/autocomplete ranking behavior."""
 
-    def test_prefix_matches_before_substring(
-        self, isolated_indexes
-    ):
+    def test_prefix_matches_before_substring(self, isolated_indexes):
         """Prefix matches should appear before substring-only matches."""
         service = isolated_indexes
         bank = _make_bank("Typeahead Bank")
@@ -291,9 +299,7 @@ class TestTypeaheadRanking:
         assert suggestion_names[0] == "Visa Infinite"
         assert suggestion_names[1] == "Bank of Visa"
 
-    def test_exact_match_ranks_first_in_typeahead(
-        self, isolated_indexes
-    ):
+    def test_exact_match_ranks_first_in_typeahead(self, isolated_indexes):
         """Exact name match should rank highest in typeahead."""
         service = isolated_indexes
         bank = _make_bank("Exact Bank")
@@ -309,9 +315,7 @@ class TestTypeaheadRanking:
 
         assert suggestion_names[0] == "Visa"
 
-    def test_bank_suggestions_included(
-        self, isolated_indexes
-    ):
+    def test_bank_suggestions_included(self, isolated_indexes):
         """Bank suggestions should be included in typeahead."""
         service = isolated_indexes
         chase = _make_bank("Chase Bank")
@@ -333,9 +337,7 @@ class TestTypeaheadRanking:
 class TestDidYouMean:
     """Test did_you_mean suggestions for typos."""
 
-    def test_did_you_mean_on_close_typo(
-        self, isolated_indexes
-    ):
+    def test_did_you_mean_on_close_typo(self, isolated_indexes):
         """Close typo should suggest correct spelling.
 
         Note: ES fuzziness AUTO requires prefix_length=2, so very short terms
@@ -362,9 +364,7 @@ class TestDidYouMean:
         # Fuzzy matching is not guaranteed for all typos with prefix_length=2
         # but the query should execute without error
 
-    def test_suggest_endpoint_did_you_mean(
-        self, isolated_indexes
-    ):
+    def test_suggest_endpoint_did_you_mean(self, isolated_indexes):
         """Typeahead endpoint provides did_you_mean for typos."""
         service = isolated_indexes
         bank = _make_bank("Suggest Bank")
@@ -403,9 +403,12 @@ class TestGracefulFallback:
 
         # Use the advanced search endpoint which has DB fallback
         from rest_framework.test import APIClient
+
         client = APIClient()
 
-        response = client.get("/api/v1/credit-cards/advanced-search/", {"search": "fallback"})
+        response = client.get(
+            "/api/v1/credit-cards/advanced-search/", {"search": "fallback"}
+        )
 
         assert response.status_code == 200
         assert response.data["total"] == 1
@@ -431,9 +434,12 @@ class TestGracefulFallback:
             _make_card_no_signal(bank, "Unreachable Card", annual_fee=0)
 
         from rest_framework.test import APIClient
+
         client = APIClient()
 
-        response = client.get("/api/v1/credit-cards/advanced-search/", {"search": "unreachable"})
+        response = client.get(
+            "/api/v1/credit-cards/advanced-search/", {"search": "unreachable"}
+        )
 
         assert response.status_code == 200
         assert response.data["total"] == 1
@@ -449,16 +455,20 @@ class TestGracefulFallback:
     ):
         """Facets should work in DB fallback mode."""
         from search.client import is_enabled as original_is_enabled
+
         monkeypatch.setattr("search.client.is_enabled", lambda: False)
         settings.SEARCH_SYNC_MODE = "off"
         reset_client()
 
         bank = _make_bank("Facet Fallback Bank")
         with django_capture_on_commit_callbacks(execute=True):
-            _make_card_no_signal(bank, "Travel Card", reward_points_policy="travel", annual_fee=0)
+            _make_card_no_signal(
+                bank, "Travel Card", reward_points_policy="travel", annual_fee=0
+            )
             _make_card_no_signal(bank, "Free Card", annual_fee=0)
 
         from rest_framework.test import APIClient
+
         client = APIClient()
 
         response = client.get("/api/v1/credit-cards/advanced-search/", {"search": "card"})
@@ -495,8 +505,14 @@ class TestIndexRebuildIdempotency:
         result2 = service.rebuild(batch_size=100, drop=True)
 
         # Both should have same document counts
-        assert result1[f"{PREFIX}banks"]["documents"] == result2[f"{PREFIX}banks"]["documents"]
-        assert result1[f"{PREFIX}credit_cards"]["documents"] == result2[f"{PREFIX}credit_cards"]["documents"]
+        assert (
+            result1[f"{PREFIX}banks"]["documents"]
+            == result2[f"{PREFIX}banks"]["documents"]
+        )
+        assert (
+            result1[f"{PREFIX}credit_cards"]["documents"]
+            == result2[f"{PREFIX}credit_cards"]["documents"]
+        )
 
         # Both should have no errors
         assert len(result1[f"{PREFIX}banks"]["errors"]) == 0
@@ -519,7 +535,10 @@ class TestIndexRebuildIdempotency:
         # Second rebuild (should upsert)
         result2 = service.rebuild(batch_size=100, drop=False)
 
-        assert result1[f"{PREFIX}credit_cards"]["documents"] == result2[f"{PREFIX}credit_cards"]["documents"]
+        assert (
+            result1[f"{PREFIX}credit_cards"]["documents"]
+            == result2[f"{PREFIX}credit_cards"]["documents"]
+        )
 
 
 @pytest.mark.django_db

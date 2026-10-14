@@ -270,9 +270,7 @@ class TestReviewQueuePermissionsAndAdmin:
         user = get_user_model().objects.create_user(
             username="staff", password="pw", is_staff=True
         )
-        user.user_permissions.add(
-            Permission.objects.get(codename="view_reviewqueue")
-        )
+        user.user_permissions.add(Permission.objects.get(codename="view_reviewqueue"))
 
         response = self._client(username="staff", password="pw").get(
             reverse("admin:banks_reviewqueue_changelist")

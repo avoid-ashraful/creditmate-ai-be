@@ -17,7 +17,11 @@ class CreditCard(Audit):
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE, related_name="credit_cards")
     name = models.CharField(max_length=255)
     annual_fee = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)]
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
     )
     annual_fee_waiver_policy = models.JSONField(blank=True, null=True)
     interest_rate_apr = models.DecimalField(
@@ -80,7 +84,9 @@ class CreditCard(Audit):
         """
         access_list = []
         if direction_has_access(self.lounge_access_international):
-            access_list.append(f"International: {self.lounge_access_international.strip()}")
+            access_list.append(
+                f"International: {self.lounge_access_international.strip()}"
+            )
         if direction_has_access(self.lounge_access_domestic):
             access_list.append(f"Domestic: {self.lounge_access_domestic.strip()}")
         if access_list:

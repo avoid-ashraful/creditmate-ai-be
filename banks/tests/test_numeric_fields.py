@@ -25,8 +25,8 @@ from banks.validators.numeric_fields import (
     cards_invalid_reasons,
     critical_field_status,
     is_valid_critical_value,
-    normalize_critical_fields,
     normalize_cards,
+    normalize_critical_fields,
     parse_numeric_value,
     parse_numeric_value_detailed,
 )
@@ -261,9 +261,7 @@ class TestUnitAndPeriodSafety:
             {"name": "A", "annual_fee": "$95", "interest_rate_apr": 20.0},
             {"name": "B", "annual_fee": "USD 10", "interest_rate_apr": None},
         ]
-        assert cards_invalid_reasons(cards) == {
-            "annual_fee": REASON_FOREIGN_CURRENCY
-        }
+        assert cards_invalid_reasons(cards) == {"annual_fee": REASON_FOREIGN_CURRENCY}
 
 
 class TestAPRRulesAndBounds:

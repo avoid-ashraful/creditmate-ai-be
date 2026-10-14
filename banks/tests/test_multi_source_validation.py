@@ -93,24 +93,34 @@ class TestAgreement:
         validate = MultiSourceValidator().validate
         one = validate([obs(value=5000, confidence=0.5, source_key="a")])
         two = validate(
-            [obs(value=5000, confidence=0.5, source_key="a"),
-             obs(value=5000, confidence=0.5, source_key="b")]
+            [
+                obs(value=5000, confidence=0.5, source_key="a"),
+                obs(value=5000, confidence=0.5, source_key="b"),
+            ]
         )
         three = validate(
-            [obs(value=5000, confidence=0.5, source_key="a"),
-             obs(value=5000, confidence=0.5, source_key="b"),
-             obs(value=5000, confidence=0.5, source_key="c")]
+            [
+                obs(value=5000, confidence=0.5, source_key="a"),
+                obs(value=5000, confidence=0.5, source_key="b"),
+                obs(value=5000, confidence=0.5, source_key="c"),
+            ]
         )
-        assert card_field(three).validated_confidence > card_field(two).validated_confidence
+        assert (
+            card_field(three).validated_confidence > card_field(two).validated_confidence
+        )
         assert card_field(two).validated_confidence > card_field(one).validated_confidence
 
     def test_bank_website_and_pdf_agree(self):
         """The acceptance scenario: bank website + PDF + user submission."""
         batch = MultiSourceValidator().validate(
             [
-                obs(value=5000, source_type=SourceType.BANK_WEBSITE, source_key="web-url"),
+                obs(
+                    value=5000, source_type=SourceType.BANK_WEBSITE, source_key="web-url"
+                ),
                 obs(value=5000, source_type=SourceType.BANK_PDF, source_key="pdf-url"),
-                obs(value=5000, source_type=SourceType.USER_SUBMISSION, source_key="sub-1"),
+                obs(
+                    value=5000, source_type=SourceType.USER_SUBMISSION, source_key="sub-1"
+                ),
             ]
         )
         batch_field = card_field(batch)
@@ -284,9 +294,7 @@ class TestNormalization:
         assert field.agreed_value == 95
         assert field.needs_manual_review is False
         web_record = next(
-            record
-            for record in field.observations
-            if record.source_key == "web-url"
+            record for record in field.observations if record.source_key == "web-url"
         )
         assert web_record.status == "invalid"
         assert web_record.reason == "foreign_currency"
@@ -301,17 +309,21 @@ class TestNormalization:
         field = card_field(batch)
         assert field.status == STATUS_SINGLE_SOURCE
         usd_record = next(
-            record
-            for record in field.observations
-            if record.source_key == "web-url"
+            record for record in field.observations if record.source_key == "web-url"
         )
         assert usd_record.reason == "unit_mismatch"
 
     def test_non_critical_text_field_compares_canonical_text(self):
         batch = MultiSourceValidator().validate(
             [
-                obs(field="lounge_access_international", value=" 2 visits ", source_key="a"),
-                obs(field="lounge_access_international", value="2 VISITS", source_key="b"),
+                obs(
+                    field="lounge_access_international",
+                    value=" 2 visits ",
+                    source_key="a",
+                ),
+                obs(
+                    field="lounge_access_international", value="2 VISITS", source_key="b"
+                ),
             ]
         )
         field = card_field(batch, field="lounge_access_international")

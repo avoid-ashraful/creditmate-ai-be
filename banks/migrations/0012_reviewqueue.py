@@ -8,30 +8,83 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('banks', '0011_crawledcontent_extraction_confidence_and_more'),
+        ("banks", "0011_crawledcontent_extraction_confidence_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ReviewQueue',
+            name="ReviewQueue",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('priority', models.CharField(choices=[('high', 'High'), ('medium', 'Medium'), ('low', 'Low')], db_index=True, default='medium', max_length=10)),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], db_index=True, default='pending', max_length=10)),
-                ('reviewer_notes', models.TextField(blank=True, default='')),
-                ('reviewed_at', models.DateTimeField(blank=True, null=True)),
-                ('bank', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='review_queue_items', to='banks.bank')),
-                ('crawled_content', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='review_queue_item', to='banks.crawledcontent', verbose_name='crawled content')),
-                ('reviewed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='banks_review_queue_items', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "priority",
+                    models.CharField(
+                        choices=[("high", "High"), ("medium", "Medium"), ("low", "Low")],
+                        db_index=True,
+                        default="medium",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("approved", "Approved"),
+                            ("rejected", "Rejected"),
+                        ],
+                        db_index=True,
+                        default="pending",
+                        max_length=10,
+                    ),
+                ),
+                ("reviewer_notes", models.TextField(blank=True, default="")),
+                ("reviewed_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "bank",
+                    models.ForeignKey(
+                        editable=False,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="review_queue_items",
+                        to="banks.bank",
+                    ),
+                ),
+                (
+                    "crawled_content",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="review_queue_item",
+                        to="banks.crawledcontent",
+                        verbose_name="crawled content",
+                    ),
+                ),
+                (
+                    "reviewed_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="banks_review_queue_items",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'review queue item',
-                'verbose_name_plural': 'review queue items',
-                'db_table': 'banks_reviewqueue',
-                'ordering': ['-priority', 'created'],
+                "verbose_name": "review queue item",
+                "verbose_name_plural": "review queue items",
+                "db_table": "banks_reviewqueue",
+                "ordering": ["-priority", "created"],
             },
         ),
     ]

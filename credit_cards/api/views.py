@@ -401,15 +401,17 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             contains_cards = list(
                 card_queryset.filter(name__icontains=query)
                 .exclude(id__in=[card.id for card in prefix_cards])
-                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS - len(prefix_cards)]
+                .order_by("name")[: AUTOCOMPLETE_MAX_RESULTS - len(prefix_cards)]
             )
         card_matches = prefix_cards + contains_cards
 
         prefix_banks = list(
             Bank.objects.filter(is_active=True, name__istartswith=query)
-            .annotate(active_card_count=Count("credit_cards", filter=models.Q(
-                credit_cards__is_active=True
-            )))
+            .annotate(
+                active_card_count=Count(
+                    "credit_cards", filter=models.Q(credit_cards__is_active=True)
+                )
+            )
             .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS]
         )
         contains_banks = []
@@ -418,10 +420,12 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             contains_banks = list(
                 Bank.objects.filter(is_active=True, name__icontains=query)
                 .exclude(id__in=prefix_ids)
-                .annotate(active_card_count=Count("credit_cards", filter=models.Q(
-                    credit_cards__is_active=True
-                )))
-                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS - len(prefix_banks)]
+                .annotate(
+                    active_card_count=Count(
+                        "credit_cards", filter=models.Q(credit_cards__is_active=True)
+                    )
+                )
+                .order_by("name")[: AUTOCOMPLETE_MAX_RESULTS - len(prefix_banks)]
             )
         bank_matches = prefix_banks + contains_banks
 
@@ -437,8 +441,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
                 ),
             ),
             cashback=Count(
-                "id",
-                filter=models.Q(reward_points_policy__icontains="cashback")
+                "id", filter=models.Q(reward_points_policy__icontains="cashback")
             ),
             lounge=Count(
                 "id",
@@ -470,14 +473,16 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         did_you_mean = None
         if not card_matches and not bank_matches:
             candidate_cards = list(
-                card_queryset.order_by("name")[:AUTOCOMPLETE_MAX_RESULTS * 2]
+                card_queryset.order_by("name")[: AUTOCOMPLETE_MAX_RESULTS * 2]
             )
             candidate_banks = list(
                 Bank.objects.filter(is_active=True)
-                .annotate(active_card_count=Count("credit_cards", filter=models.Q(
-                    credit_cards__is_active=True
-                )))
-                .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS * 2]
+                .annotate(
+                    active_card_count=Count(
+                        "credit_cards", filter=models.Q(credit_cards__is_active=True)
+                    )
+                )
+                .order_by("name")[: AUTOCOMPLETE_MAX_RESULTS * 2]
             )
             normalized_query = query.casefold()
             close_values = [

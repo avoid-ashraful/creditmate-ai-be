@@ -93,10 +93,16 @@ class TestCollectors:
     def test_observations_from_crawled_content(self):
         pdf = BankDataSourceFactory(content_type="pdf")
         content = completed_content(
-            {"credit_cards": [
-                {"name": "Gold", "annual_fee": "TK 5,000",
-                 "interest_rate_apr": 20, "reward_points_policy": "long prose"},
-            ]},
+            {
+                "credit_cards": [
+                    {
+                        "name": "Gold",
+                        "annual_fee": "TK 5,000",
+                        "interest_rate_apr": 20,
+                        "reward_points_policy": "long prose",
+                    },
+                ]
+            },
             data_source=pdf,
             extraction_confidence=0.77,
         )
@@ -109,15 +115,11 @@ class TestCollectors:
             assert observation.bank_key == content.data_source.bank.name
             assert observation.confidence == 0.77
         # Free-text fields are excluded from cross-source comparison.
-        assert not any(
-            obs.field == "reward_points_policy" for obs in observations
-        )
+        assert not any(obs.field == "reward_points_policy" for obs in observations)
         assert {obs.field for obs in observations} >= {"annual_fee", "interest_rate_apr"}
 
     def test_unnamed_card_uses_positional_identity(self):
-        content = completed_content(
-            {"credit_cards": [{"annual_fee": 95}]}
-        )
+        content = completed_content({"credit_cards": [{"annual_fee": 95}]})
         observations = observations_from_crawled_content(content)
         assert observations
         assert all(obs.card_key == "card-1" for obs in observations)
@@ -127,11 +129,19 @@ class TestCollectors:
         pdf = BankDataSourceFactory(bank=bank, content_type="pdf")
         web = BankDataSourceFactory(bank=bank, content_type="webpage")
         completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=pdf,
         )
         completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=web,
         )
         observations = latest_observations_for_bank(bank)
@@ -177,11 +187,19 @@ class TestCrossSourceAgreement:
         pdf = BankDataSourceFactory(bank=bank, content_type="pdf")
         web = BankDataSourceFactory(bank=bank, content_type="webpage")
         pdf_content = completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": "TK 5,000", "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": "TK 5,000", "interest_rate_apr": 20}
+                ]
+            },
             data_source=pdf,
         )
         completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=web,
         )
 
@@ -201,11 +219,19 @@ class TestCrossSourceAgreement:
         pdf = BankDataSourceFactory(bank=bank, content_type="pdf")
         web = BankDataSourceFactory(bank=bank, content_type="webpage")
         pdf_content = completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=pdf,
         )
         completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=web,
         )
 
@@ -226,11 +252,19 @@ class TestCrossSourceConflict:
         pdf = BankDataSourceFactory(bank=bank, content_type="pdf")
         web = BankDataSourceFactory(bank=bank, content_type="webpage")
         pdf_content = completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=pdf,
         )
         completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 6000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 6000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=web,
         )
 
@@ -243,13 +277,22 @@ class TestCrossSourceConflict:
         bank = BankFactory()
         pdf = BankDataSourceFactory(bank=bank, content_type="pdf")
         pdf_content = completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=pdf,
         )
         run_multi_source_validation(
             pdf_content,
             user_submissions=[
-                {"bank_key": bank.name, "card_key": "Gold", "field": "annual_fee", "value": 7500},
+                {
+                    "bank_key": bank.name,
+                    "card_key": "Gold",
+                    "field": "annual_fee",
+                    "value": 7500,
+                },
             ],
         )
         pdf_content.refresh_from_db()
@@ -258,18 +301,29 @@ class TestCrossSourceConflict:
         assert summary["conflict_field_count"] == 1
         field_summary = summary["cards"][0]["fields"]["annual_fee"]
         assert field_summary["status"] == STATUS_CONFLICT
-        assert {conflict["value"] for conflict in field_summary["conflicts"]} == {5000.0, 7500.0}
+        assert {conflict["value"] for conflict in field_summary["conflicts"]} == {
+            5000.0,
+            7500.0,
+        }
 
     def test_missing_fee_does_not_conflict(self):
         bank = BankFactory()
         pdf = BankDataSourceFactory(bank=bank, content_type="pdf")
         web = BankDataSourceFactory(bank=bank, content_type="webpage")
         pdf_content = completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20}
+                ]
+            },
             data_source=pdf,
         )
         completed_content(
-            {"credit_cards": [{"name": "Gold", "annual_fee": None, "interest_rate_apr": 20}]},
+            {
+                "credit_cards": [
+                    {"name": "Gold", "annual_fee": None, "interest_rate_apr": 20}
+                ]
+            },
             data_source=web,
         )
         batch = validate_crawled_content(pdf_content)
@@ -288,16 +342,26 @@ class TestCrawlerIntegration:
         web = BankDataSourceFactory(bank=bank, content_type="webpage")
 
         crawler_one = build_crawler(
-            [json.dumps([{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}])]
+            [
+                json.dumps(
+                    [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}]
+                )
+            ]
         )
         assert crawler_one.crawl_bank_data_source(pdf.id) is True
 
         crawler_two = build_crawler(
-            [json.dumps([{"name": "Gold", "annual_fee": 6000, "interest_rate_apr": 20.0}])]
+            [
+                json.dumps(
+                    [{"name": "Gold", "annual_fee": 6000, "interest_rate_apr": 20.0}]
+                )
+            ]
         )
         assert crawler_two.crawl_bank_data_source(web.id) is True
 
-        contents = CrawledContent.objects.filter(data_source__bank=bank).order_by("crawled_at")
+        contents = CrawledContent.objects.filter(data_source__bank=bank).order_by(
+            "crawled_at"
+        )
         assert contents.count() == 2
         first, second = contents
         # A single independent source does not trigger review...
@@ -317,18 +381,26 @@ class TestCrawlerIntegration:
         web = BankDataSourceFactory(bank=bank, content_type="webpage")
 
         crawler_one = build_crawler(
-            [json.dumps([{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}])]
+            [
+                json.dumps(
+                    [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}]
+                )
+            ]
         )
         assert crawler_one.crawl_bank_data_source(pdf.id) is True
 
         crawler_two = build_crawler(
-            [json.dumps([{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}])]
+            [
+                json.dumps(
+                    [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}]
+                )
+            ]
         )
         assert crawler_two.crawl_bank_data_source(web.id) is True
 
-        second = CrawledContent.objects.filter(
-            data_source__bank=bank
-        ).latest("crawled_at")
+        second = CrawledContent.objects.filter(data_source__bank=bank).latest(
+            "crawled_at"
+        )
         assert second.needs_manual_review is False
         summary = second.multi_source_validation
         assert summary["cards"][0]["fields"]["annual_fee"]["status"] == STATUS_AGREEMENT
@@ -340,7 +412,11 @@ class TestCrawlerIntegration:
     )
     def test_failing_validation_never_breaks_the_crawl(self, _mock_validation):
         crawler = build_crawler(
-            [json.dumps([{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}])]
+            [
+                json.dumps(
+                    [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}]
+                )
+            ]
         )
         source = BankDataSourceFactory(content_type="pdf")
         assert crawler.crawl_bank_data_source(source.id) is True

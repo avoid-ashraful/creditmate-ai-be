@@ -7,13 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('alerts', '0001_initial'),
+        ("alerts", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='alertsubscription',
-            name='unsubscribe_token',
-            field=models.CharField(default=alerts.models.make_unsubscribe_token, max_length=128, unique=True),
+            model_name="alertsubscription",
+            name="unsubscribe_token",
+            field=models.CharField(
+                default=alerts.models.make_unsubscribe_token, max_length=128, unique=True
+            ),
         ),
     ]

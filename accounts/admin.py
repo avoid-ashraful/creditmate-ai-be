@@ -15,7 +15,12 @@ class UserProfileAdmin(admin.ModelAdmin):
 
     list_display = ["user", "email_verified", "email_opt_in", "created"]
     list_filter = ["email_verified", "email_opt_in", "created"]
-    search_fields = ["user__username", "user__email", "user__first_name", "user__last_name"]
+    search_fields = [
+        "user__username",
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+    ]
     readonly_fields = ["created", "modified"]
     raw_id_fields = ["user"]
 
@@ -33,7 +38,14 @@ class UserAdmin(BaseUserAdmin):
     """Extended User admin with profile inline."""
 
     inlines = [UserProfileInline]
-    list_display = ["username", "email", "first_name", "last_name", "is_staff", "is_active"]
+    list_display = [
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "is_staff",
+        "is_active",
+    ]
     list_filter = ["is_staff", "is_superuser", "is_active", "groups"]
     search_fields = ["username", "email", "first_name", "last_name"]
 

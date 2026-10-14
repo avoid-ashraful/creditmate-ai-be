@@ -62,7 +62,9 @@ def check(name, fn):
 def expect(method, path, codes=(200,), payload=None, auth=False):
     status, data = request(method, path, payload, auth)
     if status not in codes:
-        raise AssertionError(f"{method} {path}: HTTP {status}, expected {codes}; {data!r}")
+        raise AssertionError(
+            f"{method} {path}: HTTP {status}, expected {codes}; {data!r}"
+        )
     return data
 
 
@@ -90,14 +92,27 @@ def card_suite():
 def auth_suite():
     global token, refresh
     email = "smoke-user@example.test"
-    expect("POST", "/api/v1/auth/register/", (201,), {
-        "email": email, "password": "Smoke-test-pass-482!",
-        "password_confirm": "Smoke-test-pass-482!", "first_name": "Smoke",
-        "last_name": "Runner",
-    })
-    data = expect("POST", "/api/v1/auth/login/", (200,), {
-        "email": email, "password": "Smoke-test-pass-482!",
-    })
+    expect(
+        "POST",
+        "/api/v1/auth/register/",
+        (201,),
+        {
+            "email": email,
+            "password": "Smoke-test-pass-482!",
+            "password_confirm": "Smoke-test-pass-482!",
+            "first_name": "Smoke",
+            "last_name": "Runner",
+        },
+    )
+    data = expect(
+        "POST",
+        "/api/v1/auth/login/",
+        (200,),
+        {
+            "email": email,
+            "password": "Smoke-test-pass-482!",
+        },
+    )
     token, refresh = data.get("access"), data.get("refresh")
     if not token or not refresh:
         raise AssertionError("login omitted access/refresh tokens")
@@ -109,9 +124,17 @@ def auth_suite():
 
 def comparison_suite():
     global share_token
-    data = expect("POST", "/api/v1/saved/comparisons/", (201,), {
-        "name": "Smoke comparison", "card_ids": [card_id], "is_public": True,
-    }, auth=True)
+    data = expect(
+        "POST",
+        "/api/v1/saved/comparisons/",
+        (201,),
+        {
+            "name": "Smoke comparison",
+            "card_ids": [card_id],
+            "is_public": True,
+        },
+        auth=True,
+    )
     expect("GET", "/api/v1/saved/comparisons/", auth=True)
     share_token = data.get("share_token")
     if not share_token:
@@ -120,9 +143,18 @@ def comparison_suite():
 
 
 def review_suite():
-    data = expect("POST", "/api/v1/reviews/", (201,), {
-        "card": card_id, "rating": 4, "title": "Smoke review", "body": "Smoke run review content.",
-    }, auth=True)
+    data = expect(
+        "POST",
+        "/api/v1/reviews/",
+        (201,),
+        {
+            "card": card_id,
+            "rating": 4,
+            "title": "Smoke review",
+            "body": "Smoke run review content.",
+        },
+        auth=True,
+    )
     expect("GET", f"/api/v1/reviews/?card={card_id}")
     expect("GET", f"/api/v1/reviews/cards/{card_id}/summary/")
     if not data:
@@ -130,9 +162,16 @@ def review_suite():
 
 
 def alert_suite():
-    data = expect("POST", "/api/v1/alerts/subscriptions/", (201,), {
-        "kind": "fee_change", "card": card_id,
-    }, auth=True)
+    data = expect(
+        "POST",
+        "/api/v1/alerts/subscriptions/",
+        (201,),
+        {
+            "kind": "fee_change",
+            "card": card_id,
+        },
+        auth=True,
+    )
     expect("GET", "/api/v1/alerts/subscriptions/", auth=True)
     # Owner deletion is the supported authenticated unsubscribe path; the
     # public signed-token route is for links delivered in alert email.
@@ -143,14 +182,23 @@ def main():
     check("GET /health/", lambda: expect("GET", "/health/"))
     check("GET /api/healthz/", lambda: expect("GET", "/api/healthz/"))
     check("GET /api/readyz/", lambda: expect("GET", "/api/readyz/"))
-    check("Cards: list, filter, detail, typeahead, suggestions, advanced search", card_suite)
+    check(
+        "Cards: list, filter, detail, typeahead, suggestions, advanced search", card_suite
+    )
     check("Auth: register → login → me → refresh → logout", auth_suite)
-    check("Cards: field history (authenticated)", lambda: expect("GET", f"/api/v1/credit-cards/{card_id}/field-history/", auth=True))
+    check(
+        "Cards: field history (authenticated)",
+        lambda: expect(
+            "GET", f"/api/v1/credit-cards/{card_id}/field-history/", auth=True
+        ),
+    )
     check("Saved comparisons: create, list, public share", comparison_suite)
     check("Reviews: create pending, public list and summary", review_suite)
     check("Alerts: subscribe, list, unsubscribe", alert_suite)
     check("GET /api/v1/schema/", lambda: expect("GET", "/api/v1/schema/"))
-    check("GET /metrics denied without token", lambda: expect("GET", "/metrics", (401, 403)))
+    check(
+        "GET /metrics denied without token", lambda: expect("GET", "/metrics", (401, 403))
+    )
     width = max(len(name) for name, _, _ in results)
     print(f"{'CHECK':<{width}}  RESULT  DETAILS")
     print(f"{'-' * width}  ------  -------")

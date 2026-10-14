@@ -22,8 +22,11 @@ class SchemaAPITests(APITestCase):
     def test_schema_endpoint_available(self):
         """Verify the OpenAPI schema endpoint is accessible and valid."""
         response = self.client.get("/api/v1/schema/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         f"Schema endpoint failed: {response.status_code}")
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            f"Schema endpoint failed: {response.status_code}",
+        )
         schema = response.data
         self.assertIn("info", schema, "Schema missing info section")
         info = schema["info"]
@@ -34,42 +37,60 @@ class SchemaAPITests(APITestCase):
     def test_swagger_ui_endpoint_available(self):
         """Verify the Swagger UI endpoint is accessible."""
         response = self.client.get("/api/v1/docs/swagger/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         f"Swagger endpoint failed: {response.status_code}")
-        self.assertIn("text/html", response["content-type"],
-                      f"Swagger not HTML: {response['content-type']}")
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            f"Swagger endpoint failed: {response.status_code}",
+        )
+        self.assertIn(
+            "text/html",
+            response["content-type"],
+            f"Swagger not HTML: {response['content-type']}",
+        )
 
     def test_redoc_endpoint_available(self):
         """Verify the Redoc UI endpoint is accessible."""
         response = self.client.get("/api/v1/docs/redoc/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         f"Redoc endpoint failed: {response.status_code}")
-        self.assertIn("text/html", response["content-type"],
-                      f"Redoc not HTML: {response['content-type']}")
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            f"Redoc endpoint failed: {response.status_code}",
+        )
+        self.assertIn(
+            "text/html",
+            response["content-type"],
+            f"Redoc not HTML: {response['content-type']}",
+        )
 
     def test_schema_has_banks_paths(self):
         """Verify the schema includes banks endpoint paths."""
         response = self.client.get("/api/v1/schema/")
         schema = response.data
         bank_paths = [p for p in schema.get("paths", {}).keys() if "banks" in p]
-        self.assertTrue(len(bank_paths) > 0,
-                        f"Banks routes missing. Paths: {list(schema.get('paths', {}).keys())}")
+        self.assertTrue(
+            len(bank_paths) > 0,
+            f"Banks routes missing. Paths: {list(schema.get('paths', {}).keys())}",
+        )
 
     def test_schema_has_credit_cards_paths(self):
         """Verify the schema includes credit cards endpoint paths."""
         response = self.client.get("/api/v1/schema/")
         schema = response.data
         cc_paths = [p for p in schema.get("paths", {}).keys() if "credit-cards" in p]
-        self.assertTrue(len(cc_paths) > 0,
-                        f"Credit-cards routes missing. Paths: {list(schema.get('paths', {}).keys())}")
+        self.assertTrue(
+            len(cc_paths) > 0,
+            f"Credit-cards routes missing. Paths: {list(schema.get('paths', {}).keys())}",
+        )
 
     def test_schema_has_search_paths(self):
         """Verify the schema includes search endpoint paths."""
         response = self.client.get("/api/v1/schema/")
         schema = response.data
         search_paths = [p for p in schema.get("paths", {}).keys() if "search" in p]
-        self.assertTrue(len(search_paths) > 0,
-                        f"Search routes missing. Paths: {list(schema.get('paths', {}).keys())}")
+        self.assertTrue(
+            len(search_paths) > 0,
+            f"Search routes missing. Paths: {list(schema.get('paths', {}).keys())}",
+        )
 
 
 @override_settings(SECURE_SSL_REDIRECT=False)
@@ -117,5 +138,4 @@ class RouteGroupTests(APITestCase):
         response = self.client.get("/api/v1/schema/")
         schema = response.data
         search_paths = [p for p in schema.get("paths", {}).keys() if "search" in p]
-        self.assertTrue(len(search_paths) > 0,
-                        "Schema should document search routes")
+        self.assertTrue(len(search_paths) > 0, "Schema should document search routes")

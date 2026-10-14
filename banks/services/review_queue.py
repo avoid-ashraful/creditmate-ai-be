@@ -34,6 +34,7 @@ class ReviewQueueService:
             The new or existing queue item, or ``None`` for an ineligible crawl.
         """
         from banks.models import ReviewQueue as RQ
+
         queue_item, created = RQ.objects.get_or_create(
             crawled_content=crawled_content,
             defaults={
@@ -136,7 +137,11 @@ class ReviewQueueService:
                 raise ValidationError({field: "Enter a valid numeric value."})
 
     def _sync_reviewed_card_data(self, crawled_content, card_data):
-        parsed_json = crawled_content.parsed_json if isinstance(crawled_content.parsed_json, dict) else {}
+        parsed_json = (
+            crawled_content.parsed_json
+            if isinstance(crawled_content.parsed_json, dict)
+            else {}
+        )
         cards = parsed_json.get("credit_cards")
         if not isinstance(cards, list):
             cards = []

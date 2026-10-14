@@ -1,7 +1,7 @@
 import json
 
-from django.core.exceptions import ValidationError
 from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
 from banks.models import Bank, BankDataSource, CrawledContent, ReviewQueue
@@ -179,14 +179,20 @@ class ReviewQueueAdmin(admin.ModelAdmin):
     actions = ["approve_items", "reject_items"]
 
     def has_view_permission(self, request, obj=None):
-        return request.user.has_perm("banks.view_reviewqueue") and request.user.has_perm("banks.change_reviewqueue")
+        return request.user.has_perm("banks.view_reviewqueue") and request.user.has_perm(
+            "banks.change_reviewqueue"
+        )
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            "bank",
-            "reviewed_by",
-            "crawled_content__data_source",
-            "crawled_content__credit_card",
+        return (
+            super()
+            .get_queryset(request)
+            .select_related(
+                "bank",
+                "reviewed_by",
+                "crawled_content__data_source",
+                "crawled_content__credit_card",
+            )
         )
 
     def extracted_summary(self, obj):

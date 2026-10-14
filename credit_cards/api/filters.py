@@ -46,9 +46,7 @@ class CreditCardFilter(django_filters.FilterSet):
     min_international_lounge = django_filters.NumberFilter(
         method="filter_min_international_lounge"
     )
-    min_domestic_lounge = django_filters.NumberFilter(
-        method="filter_min_domestic_lounge"
-    )
+    min_domestic_lounge = django_filters.NumberFilter(method="filter_min_domestic_lounge")
 
     # Fee filters
     has_annual_fee = django_filters.BooleanFilter(method="filter_has_annual_fee")

@@ -55,7 +55,9 @@ class TestUserProfileSerializer:
         )
 
         serializer = UserProfileSerializer(
-            user.profile, data={"email_opt_in": True, "preferences": {"lang": "en"}}, partial=True
+            user.profile,
+            data={"email_opt_in": True, "preferences": {"lang": "en"}},
+            partial=True,
         )
         assert serializer.is_valid()
         serializer.save()
@@ -116,7 +118,9 @@ class TestUserSerializer:
         )
 
         serializer = UserSerializer(
-            user, data={"first_name": "Jane", "profile": {"email_opt_in": True}}, partial=True
+            user,
+            data={"first_name": "Jane", "profile": {"email_opt_in": True}},
+            partial=True,
         )
         assert serializer.is_valid()
         serializer.save()
@@ -133,7 +137,9 @@ class TestUserSerializer:
             password="testpass123",
         )
 
-        serializer = UserSerializer(user, data={"username": "new@example.com"}, partial=True)
+        serializer = UserSerializer(
+            user, data={"username": "new@example.com"}, partial=True
+        )
         assert serializer.is_valid()
         serializer.save()
 

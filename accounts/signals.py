@@ -12,8 +12,7 @@ def create_user_profile(sender, instance, created, **kwargs):
     """Create a UserProfile when a new User is created."""
     if created:
         UserProfile.objects.get_or_create(
-            user=instance,
-            defaults={"email": instance.email}
+            user=instance, defaults={"email": instance.email}
         )
 
 

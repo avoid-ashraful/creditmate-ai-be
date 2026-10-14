@@ -70,7 +70,9 @@ class RegisterSerializer(serializers.Serializer):
     def validate(self, attrs):
         """Check that passwords match."""
         if attrs["password"] != attrs["password_confirm"]:
-            raise serializers.ValidationError({"password_confirm": _("Passwords do not match.")})
+            raise serializers.ValidationError(
+                {"password_confirm": _("Passwords do not match.")}
+            )
         return attrs
 
     def create(self, validated_data):
@@ -181,13 +183,16 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         # uid is base64-encoded user pk, token is from default_token_generator
         try:
             from django.utils.http import urlsafe_base64_decode
+
             user_pk = urlsafe_base64_decode(attrs["uid"]).decode()
             user = User.objects.get(pk=user_pk)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             raise serializers.ValidationError(_("Invalid password reset link."))
 
         if not default_token_generator.check_token(user, attrs["token"]):
-            raise serializers.ValidationError(_("Invalid or expired password reset link."))
+            raise serializers.ValidationError(
+                _("Invalid or expired password reset link.")
+            )
 
         attrs["user"] = user
         return attrs
@@ -232,11 +237,17 @@ class ChangePasswordSerializer(serializers.Serializer):
         """Validate old password and confirm new passwords match."""
         user = self.context["request"].user
         if not user.check_password(attrs["old_password"]):
-            raise serializers.ValidationError({"old_password": _("Current password is incorrect.")})
+            raise serializers.ValidationError(
+                {"old_password": _("Current password is incorrect.")}
+            )
 
         if attrs["new_password"] == attrs["old_password"]:
             raise serializers.ValidationError(
-                {"new_password": _("New password must be different from current password.")}
+                {
+                    "new_password": _(
+                        "New password must be different from current password."
+                    )
+                }
             )
 
         if attrs["new_password"] != attrs["new_password_confirm"]:

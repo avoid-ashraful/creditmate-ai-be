@@ -238,7 +238,9 @@ def validate_crawled_content(
     validator = validator or MultiSourceValidator()
     observations = list(observations_from_crawled_content(content))
     observations.extend(
-        latest_observations_for_bank(content.data_source.bank, exclude_content_id=content.pk)
+        latest_observations_for_bank(
+            content.data_source.bank, exclude_content_id=content.pk
+        )
     )
     observations.extend(observations_from_user_submissions(user_submissions))
     return validator.validate(observations)
@@ -269,7 +271,9 @@ def run_multi_source_validation(
     ValidationBatch
         The computed validation outcome.
     """
-    batch = validate_crawled_content(content, user_submissions=user_submissions, validator=validator)
+    batch = validate_crawled_content(
+        content, user_submissions=user_submissions, validator=validator
+    )
     summary = batch_summary(batch)
     if batch.has_comparison:
         # Only persist an outcome once there is something to compare: a
@@ -290,10 +294,20 @@ def _payload_to_dict(payload) -> Dict[str, Any]:
     """Normalize a mapping or object payload into a dictionary."""
     if isinstance(payload, dict):
         return dict(payload)
-    return {key: getattr(payload, key) for key in (
-        "card_key", "card_name", "field", "value", "bank_key",
-        "source_key", "confidence", "unit",
-    ) if hasattr(payload, key)}
+    return {
+        key: getattr(payload, key)
+        for key in (
+            "card_key",
+            "card_name",
+            "field",
+            "value",
+            "bank_key",
+            "source_key",
+            "confidence",
+            "unit",
+        )
+        if hasattr(payload, key)
+    }
 
 
 __all__ = [

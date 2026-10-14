@@ -21,7 +21,9 @@ def test_subscription_crud_is_owner_scoped(django_user_model):
     other = django_user_model.objects.create_user(username="other", password="pw")
     client = APIClient()
     client.force_authenticate(owner)
-    response = client.post("/api/v1/alerts/subscriptions/", {"kind": "fee_change"}, format="json")
+    response = client.post(
+        "/api/v1/alerts/subscriptions/", {"kind": "fee_change"}, format="json"
+    )
     assert response.status_code == 201
     sub_id = response.data["id"]
     client.force_authenticate(other)
@@ -33,7 +35,12 @@ def test_preferences_and_public_unsubscribe(django_user_model):
     user = django_user_model.objects.create_user(username="prefs", password="pw")
     client = APIClient()
     client.force_authenticate(user)
-    assert client.put("/api/v1/alerts/preferences/", {"frequency": "daily"}, format="json").status_code == 200
+    assert (
+        client.put(
+            "/api/v1/alerts/preferences/", {"frequency": "daily"}, format="json"
+        ).status_code
+        == 200
+    )
     sub = AlertSubscription.objects.create(user=user)
     client.force_authenticate(None)
     response = client.post(f"/api/v1/alerts/unsubscribe/{sub.unsubscribe_token}/")
@@ -46,16 +53,26 @@ def test_preferences_and_public_unsubscribe(django_user_model):
 def test_digest_sends_plain_and_html_and_is_idempotent(django_user_model, settings):
     settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     settings.ALERTS_PUBLIC_BASE_URL = "https://example.test"
-    user = django_user_model.objects.create_user(username="digest", email="digest@example.test", password="pw")
+    user = django_user_model.objects.create_user(
+        username="digest", email="digest@example.test", password="pw"
+    )
     NotificationPreference.objects.create(user=user, frequency="weekly")
-    card = CreditCard.objects.create(bank=Bank.objects.create(name="Example Bank"), name="Example Card")
-    subscription = AlertSubscription.objects.create(user=user, card=card, kind="fee_change")
-    history = CreditCardFieldHistory.objects.create(card=card, field_name="annual_fee", old_value="10", new_value="20")
+    card = CreditCard.objects.create(
+        bank=Bank.objects.create(name="Example Bank"), name="Example Card"
+    )
+    subscription = AlertSubscription.objects.create(
+        user=user, card=card, kind="fee_change"
+    )
+    history = CreditCardFieldHistory.objects.create(
+        card=card, field_name="annual_fee", old_value="10", new_value="20"
+    )
     assert send_alert_digests() == 1
     assert len(mail.outbox) == 1
     assert mail.outbox[0].alternatives[0][1] == "text/html"
     assert subscription.unsubscribe_token in mail.outbox[0].body
-    assert SentAlert.objects.filter(event_key=f"subscription:{subscription.pk}:history:{history.pk}").exists()
+    assert SentAlert.objects.filter(
+        event_key=f"subscription:{subscription.pk}:history:{history.pk}"
+    ).exists()
     assert send_alert_digests() == 0
     assert len(mail.outbox) == 1
 
@@ -79,12 +96,16 @@ def test_digest_email_failure_is_logged_and_retried(django_user_model, settings)
     card = CreditCard.objects.create(
         bank=Bank.objects.create(name="Retry Bank"), name="Retry Card"
     )
-    subscription = AlertSubscription.objects.create(user=user, card=card, kind="fee_change")
+    subscription = AlertSubscription.objects.create(
+        user=user, card=card, kind="fee_change"
+    )
     history = CreditCardFieldHistory.objects.create(
         card=card, field_name="annual_fee", old_value="10", new_value="20"
     )
 
-    with patch("alerts.tasks.EmailMultiAlternatives", side_effect=RuntimeError("smtp down")):
+    with patch(
+        "alerts.tasks.EmailMultiAlternatives", side_effect=RuntimeError("smtp down")
+    ):
         with pytest.raises(Retry):
             send_alert_digests.apply(throw=True)
 
@@ -119,22 +140,33 @@ def test_unsubscribe_rejects_tampered_and_expired_tokens(django_user_model, monk
     assert client.post(url + "x/").status_code == 404
     signed = signing.dumps({"nonce": "old"}, salt="alerts.unsubscribe")
     import django.core.signing
+
     real_time = django.core.signing.time.time
-    monkeypatch.setattr(django.core.signing.time, "time", lambda: real_time() + 11 * 365 * 24 * 60 * 60)
+    monkeypatch.setattr(
+        django.core.signing.time, "time", lambda: real_time() + 11 * 365 * 24 * 60 * 60
+    )
     assert client.post(f"/api/v1/alerts/unsubscribe/{signed}/").status_code == 404
     sub.refresh_from_db()
     assert sub.is_active
 
 
 @pytest.mark.django_db
-def test_digest_frequency_windows_inactive_skip_and_history_content(django_user_model, settings, monkeypatch):
+def test_digest_frequency_windows_inactive_skip_and_history_content(
+    django_user_model, settings, monkeypatch
+):
     settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     settings.ALERTS_PUBLIC_BASE_URL = "https://example.test"
     now = timezone.now()
     monkeypatch.setattr("alerts.tasks.timezone.now", lambda: now)
-    user = django_user_model.objects.create_user(username="window", email="window@example.test")
-    card = CreditCard.objects.create(bank=Bank.objects.create(name="Window Bank"), name="Window Card")
-    old = CreditCardFieldHistory.objects.create(card=card, field_name="annual_fee", old_value="10", new_value="20")
+    user = django_user_model.objects.create_user(
+        username="window", email="window@example.test"
+    )
+    card = CreditCard.objects.create(
+        bank=Bank.objects.create(name="Window Bank"), name="Window Card"
+    )
+    old = CreditCardFieldHistory.objects.create(
+        card=card, field_name="annual_fee", old_value="10", new_value="20"
+    )
     old.created = now - timedelta(days=2)
     old.save(update_fields=["created"])
     sub = AlertSubscription.objects.create(user=user, card=card, kind="fee_change")
@@ -149,22 +181,32 @@ def test_digest_frequency_windows_inactive_skip_and_history_content(django_user_
     assert "Window Card" in mail.outbox[0].subject
     sub.is_active = False
     sub.save()
-    CreditCardFieldHistory.objects.create(card=card, field_name="annual_fee", old_value="20", new_value="30")
+    CreditCardFieldHistory.objects.create(
+        card=card, field_name="annual_fee", old_value="20", new_value="30"
+    )
     assert send_alert_digests() == 0
     assert len(mail.outbox) == 1
 
 
 @pytest.mark.django_db
-def test_immediate_frequency_window_and_timezone_boundary(django_user_model, settings, monkeypatch):
+def test_immediate_frequency_window_and_timezone_boundary(
+    django_user_model, settings, monkeypatch
+):
     settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     settings.ALERTS_PUBLIC_BASE_URL = "https://example.test"
     now = timezone.now()
     monkeypatch.setattr("alerts.tasks.timezone.now", lambda: now)
-    user = django_user_model.objects.create_user(username="immediate", email="immediate@example.test")
-    card = CreditCard.objects.create(bank=Bank.objects.create(name="Time Bank"), name="Time Card")
+    user = django_user_model.objects.create_user(
+        username="immediate", email="immediate@example.test"
+    )
+    card = CreditCard.objects.create(
+        bank=Bank.objects.create(name="Time Bank"), name="Time Card"
+    )
     AlertSubscription.objects.create(user=user, card=card, kind="fee_change")
     NotificationPreference.objects.create(user=user, frequency="immediate")
-    history = CreditCardFieldHistory.objects.create(card=card, field_name="annual_fee", old_value="0", new_value="1")
+    history = CreditCardFieldHistory.objects.create(
+        card=card, field_name="annual_fee", old_value="0", new_value="1"
+    )
     history.created = now - timedelta(minutes=6)
     history.save(update_fields=["created"])
     assert send_alert_digests() == 0
@@ -204,14 +246,20 @@ def test_subscription_exposes_card_and_bank_names(django_user_model):
     from banks.factories import BankFactory
     from credit_cards.factories import CreditCardFactory
 
-    user = django_user_model.objects.create_user(username="names@example.com", password="x")
+    user = django_user_model.objects.create_user(
+        username="names@example.com", password="x"
+    )
     bank = BankFactory(name="Names Bank")
     card = CreditCardFactory(bank=bank, name="Names Card")
     client = APIClient()
     client.force_authenticate(user)
-    created = client.post("/api/v1/alerts/subscriptions/", {"card": card.pk, "kind": "any_change"})
+    created = client.post(
+        "/api/v1/alerts/subscriptions/", {"card": card.pk, "kind": "any_change"}
+    )
     assert created.status_code == 201
     listing = client.get("/api/v1/alerts/subscriptions/")
-    row = listing.data["results"][0] if isinstance(listing.data, dict) else listing.data[0]
+    row = (
+        listing.data["results"][0] if isinstance(listing.data, dict) else listing.data[0]
+    )
     assert row["card_name"] == "Names Card"
     assert row["bank_name"] == "Names Bank"

@@ -15,9 +15,13 @@ from .models import AlertSubscription, NotificationPreference, SentAlert
 logger = logging.getLogger(__name__)
 
 
-def _subscription_events(subscription, interval, now, history_rows=None, new_card_rows=None):
+def _subscription_events(
+    subscription, interval, now, history_rows=None, new_card_rows=None
+):
     history = (
-        CreditCardFieldHistory.objects.filter(created__gte=now - interval).select_related("card")
+        CreditCardFieldHistory.objects.filter(created__gte=now - interval).select_related(
+            "card"
+        )
         if history_rows is None
         else [row for row in history_rows if row.created >= now - interval]
     )
@@ -31,7 +35,11 @@ def _subscription_events(subscription, interval, now, history_rows=None, new_car
         history = (
             history.filter(field_name__in=["annual_fee", "annual_fee_waiver_policy"])
             if history_rows is None
-            else [row for row in history if row.field_name in {"annual_fee", "annual_fee_waiver_policy"}]
+            else [
+                row
+                for row in history
+                if row.field_name in {"annual_fee", "annual_fee_waiver_policy"}
+            ]
         )
     elif subscription.kind == AlertSubscription.Kind.APR_CHANGE:
         history = (
@@ -47,7 +55,9 @@ def _subscription_events(subscription, interval, now, history_rows=None, new_car
         AlertSubscription.Kind.ANY_CHANGE,
     ):
         new_cards = (
-            CreditCard.objects.filter(created__gte=now - interval, is_active=True).select_related("bank")
+            CreditCard.objects.filter(
+                created__gte=now - interval, is_active=True
+            ).select_related("bank")
             if new_card_rows is None
             else [card for card in new_card_rows if card.created >= now - interval]
         )
@@ -77,9 +87,7 @@ def _send_event(subscription, event_id, change):
         "is_new_card": is_new_card,
     }
     subject = (
-        f"New card: {change.name}"
-        if is_new_card
-        else f"Card update: {change.card.name}"
+        f"New card: {change.name}" if is_new_card else f"Card update: {change.card.name}"
     )
     text = render_to_string("alerts/change.txt", context)
     html = render_to_string("alerts/change.html", context)
@@ -124,8 +132,8 @@ def _send_alert_digests():
     }
     for subscription in subscriptions:
         if subscription.user_id not in preferences:
-            preferences[subscription.user_id], _ = NotificationPreference.objects.get_or_create(
-                user=subscription.user
+            preferences[subscription.user_id], _ = (
+                NotificationPreference.objects.get_or_create(user=subscription.user)
             )
     history_rows = list(
         CreditCardFieldHistory.objects.filter(created__gte=now - timedelta(days=7))

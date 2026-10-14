@@ -49,9 +49,7 @@ def build_crawler(responses, available=True):
     """Build a crawler whose parser runs the multi-pass pipeline offline."""
     extractor = MultiPassLLMExtractor(provider=FakeProvider(responses, available))
     parser = LLMContentParser(multi_pass_extractor=extractor)
-    crawler = BankDataCrawlerService(
-        multi_pass_extractor=extractor, llm_parser=parser
-    )
+    crawler = BankDataCrawlerService(multi_pass_extractor=extractor, llm_parser=parser)
     crawler.content_extractor.extract_content = MagicMock(
         return_value=("raw content", DOCUMENT)
     )
@@ -64,9 +62,7 @@ class TestMultiPassCrawlEndToEnd:
 
     def test_successful_crawl_records_quality_fields(self):
         responses = [
-            json.dumps(
-                [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}]
-            )
+            json.dumps([{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}])
         ]
         crawler = build_crawler(responses)
         source = BankDataSourceFactory(content_type="pdf")
@@ -90,7 +86,9 @@ class TestMultiPassCrawlEndToEnd:
 
     def test_invalid_fee_is_stored_as_null_and_flagged(self):
         responses = [
-            json.dumps([{"name": "Broken", "annual_fee": "abc", "interest_rate_apr": 20.0}])
+            json.dumps(
+                [{"name": "Broken", "annual_fee": "abc", "interest_rate_apr": 20.0}]
+            )
         ]
         crawler = build_crawler(responses)
         source = BankDataSourceFactory(content_type="pdf")
@@ -108,7 +106,11 @@ class TestMultiPassCrawlEndToEnd:
         responses = [
             json.dumps(
                 [
-                    {"name": "No Data Card", "annual_fee": None, "interest_rate_apr": 20.0},
+                    {
+                        "name": "No Data Card",
+                        "annual_fee": None,
+                        "interest_rate_apr": 20.0,
+                    },
                     {"name": "Free Card", "annual_fee": 0, "interest_rate_apr": 18.0},
                 ]
             )
@@ -145,7 +147,11 @@ class TestMultiPassCrawlEndToEnd:
         responses = [
             json.dumps([{"name": "Gold", "annual_fee": None, "interest_rate_apr": None}]),
             json.dumps(
-                {"cards": [{"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}]}
+                {
+                    "cards": [
+                        {"name": "Gold", "annual_fee": 5000, "interest_rate_apr": 20.0}
+                    ]
+                }
             ),
         ]
         crawler = build_crawler(responses)

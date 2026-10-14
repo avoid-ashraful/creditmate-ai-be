@@ -27,10 +27,7 @@ class TestAdvancedFilters:
 
     def test_categories_filter_travel(self, api_client):
         """Filter by travel category."""
-        CreditCardFactory(
-            name="Travel Card",
-            reward_points_policy="2x travel rewards"
-        )
+        CreditCardFactory(name="Travel Card", reward_points_policy="2x travel rewards")
         CreditCardFactory(name="Cashback Card", reward_points_policy="2% cashback")
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"categories": "travel"})
@@ -40,14 +37,8 @@ class TestAdvancedFilters:
 
     def test_categories_filter_multiple_or_logic(self, api_client):
         """Multiple categories should use OR logic."""
-        CreditCardFactory(
-            name="Travel Card",
-            reward_points_policy="2x travel rewards"
-        )
-        CreditCardFactory(
-            name="Cashback Card",
-            reward_points_policy="2% cashback"
-        )
+        CreditCardFactory(name="Travel Card", reward_points_policy="2x travel rewards")
+        CreditCardFactory(name="Cashback Card", reward_points_policy="2% cashback")
         CreditCardFactory(name="Premium Card", annual_fee=3000)
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"categories": "travel,cashback"})
@@ -68,10 +59,9 @@ class TestAdvancedFilters:
         CreditCardFactory(name="Low Fee", annual_fee=500)
         CreditCardFactory(name="High Fee", annual_fee=2000)
 
-        response = api_client.get(ADVANCED_SEARCH_URL, {
-            "annual_fee_min": "100",
-            "annual_fee_max": "1000"
-        })
+        response = api_client.get(
+            ADVANCED_SEARCH_URL, {"annual_fee_min": "100", "annual_fee_max": "1000"}
+        )
         assert response.status_code == 200
         assert response.data["total"] == 1
         assert response.data["results"][0]["name"] == "Low Fee"
@@ -81,9 +71,7 @@ class TestAdvancedFilters:
         CreditCardFactory(name="Low APR", interest_rate_apr=Decimal("15.00"))
         CreditCardFactory(name="High APR", interest_rate_apr=Decimal("30.00"))
 
-        response = api_client.get(ADVANCED_SEARCH_URL, {
-            "interest_rate_max": "20"
-        })
+        response = api_client.get(ADVANCED_SEARCH_URL, {"interest_rate_max": "20"})
         assert response.status_code == 200
         assert response.data["total"] == 1
         assert response.data["results"][0]["name"] == "Low APR"
@@ -103,12 +91,12 @@ class TestAdvancedFilters:
         CreditCardFactory(
             name="Lounge Card",
             lounge_access_international="2 visits",
-            lounge_access_domestic="1 visit"
+            lounge_access_domestic="1 visit",
         )
         CreditCardFactory(
             name="No Lounge Card",
             lounge_access_international="",
-            lounge_access_domestic=""
+            lounge_access_domestic="",
         )
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"has_lounge_access": "true"})
@@ -179,17 +167,18 @@ class TestAdvancedSearchFacets:
         assert response.status_code == 200
         facets = response.data["facets"]
         assert "bank" in facets
-        bank_bucket = next(b for b in facets["bank"]["buckets"] if b["key"] == "Test Bank")
+        bank_bucket = next(
+            b for b in facets["bank"]["buckets"] if b["key"] == "Test Bank"
+        )
         assert bank_bucket["count"] == 3
 
     def test_selected_facets_only(self, api_client):
         """Request specific facets only."""
         CreditCardFactory(name="Test Card")
 
-        response = api_client.get(ADVANCED_SEARCH_URL, {
-            "search": "test",
-            "facets": "category,annual_fee_range"
-        })
+        response = api_client.get(
+            ADVANCED_SEARCH_URL, {"search": "test", "facets": "category,annual_fee_range"}
+        )
         assert response.status_code == 200
         facets = response.data["facets"]
         assert "category" in facets
@@ -207,10 +196,9 @@ class TestAdvancedSearchSorting:
         CreditCardFactory(name="Low Fee Card", annual_fee=500)
         CreditCardFactory(name="Free Card", annual_fee=0)
 
-        response = api_client.get(ADVANCED_SEARCH_URL, {
-            "search": "card",
-            "ordering": "annual_fee"
-        })
+        response = api_client.get(
+            ADVANCED_SEARCH_URL, {"search": "card", "ordering": "annual_fee"}
+        )
         assert response.status_code == 200
         fees = [r["annual_fee"] for r in response.data["results"]]
         assert fees == ["0.00", "500.00", "2000.00"]
@@ -221,10 +209,9 @@ class TestAdvancedSearchSorting:
         CreditCardFactory(name="Low Fee Card", annual_fee=500)
         CreditCardFactory(name="Free Card", annual_fee=0)
 
-        response = api_client.get(ADVANCED_SEARCH_URL, {
-            "search": "card",
-            "ordering": "-annual_fee"
-        })
+        response = api_client.get(
+            ADVANCED_SEARCH_URL, {"search": "card", "ordering": "-annual_fee"}
+        )
         assert response.status_code == 200
         fees = [r["annual_fee"] for r in response.data["results"]]
         assert fees == ["2000.00", "500.00", "0.00"]
@@ -234,23 +221,30 @@ class TestAdvancedSearchSorting:
         CreditCardFactory(name="High APR Card", interest_rate_apr=Decimal("30.00"))
         CreditCardFactory(name="Low APR Card", interest_rate_apr=Decimal("15.00"))
 
-        response = api_client.get(ADVANCED_SEARCH_URL, {
-            "search": "card",
-            "ordering": "interest_rate_apr"
-        })
+        response = api_client.get(
+            ADVANCED_SEARCH_URL, {"search": "card", "ordering": "interest_rate_apr"}
+        )
         assert response.status_code == 200
         aprs = [r["interest_rate_apr"] for r in response.data["results"]]
         assert aprs == ["15.00", "30.00"]
 
     def test_sort_by_lounge_access_desc(self, api_client):
         """Sort by lounge access descending."""
-        CreditCardFactory(name="Lounge Card", lounge_access_international="5 visits", lounge_access_domestic="1 visit")
-        CreditCardFactory(name="No Lounge Card", lounge_access_international="", lounge_access_domestic="")
+        CreditCardFactory(
+            name="Lounge Card",
+            lounge_access_international="5 visits",
+            lounge_access_domestic="1 visit",
+        )
+        CreditCardFactory(
+            name="No Lounge Card",
+            lounge_access_international="",
+            lounge_access_domestic="",
+        )
 
-        response = api_client.get(ADVANCED_SEARCH_URL, {
-            "search": "card",
-            "ordering": "-lounge_access_international"
-        })
+        response = api_client.get(
+            ADVANCED_SEARCH_URL,
+            {"search": "card", "ordering": "-lounge_access_international"},
+        )
         assert response.status_code == 200
         assert response.data["results"][0]["name"] == "Lounge Card"
 
@@ -259,10 +253,9 @@ class TestAdvancedSearchSorting:
         CreditCardFactory(name="Zebra Card")
         CreditCardFactory(name="Alpha Card")
 
-        response = api_client.get(ADVANCED_SEARCH_URL, {
-            "search": "card",
-            "ordering": "name"
-        })
+        response = api_client.get(
+            ADVANCED_SEARCH_URL, {"search": "card", "ordering": "name"}
+        )
         assert response.status_code == 200
         names = [r["name"] for r in response.data["results"]]
         assert names == ["Alpha Card", "Zebra Card"]
@@ -327,6 +320,7 @@ class TestQueryNormalization:
     def test_normalize_basic_params(self):
         """Normalize basic scalar parameters."""
         from django.http import QueryDict
+
         query = QueryDict("search=visa&annual_fee_min=100&annual_fee_max=1000")
         normalized = normalize_query_params(query)
         assert normalized["search"] == "visa"
@@ -336,6 +330,7 @@ class TestQueryNormalization:
     def test_normalize_boolean_params(self):
         """Normalize boolean parameters (only include when true)."""
         from django.http import QueryDict
+
         query = QueryDict("no_annual_fee=true&has_lounge_access=false")
         normalized = normalize_query_params(query)
         assert normalized["no_annual_fee"] == "true"
@@ -344,6 +339,7 @@ class TestQueryNormalization:
     def test_normalize_multi_value_params(self):
         """Normalize multi-value parameters (sorted for consistency)."""
         from django.http import QueryDict
+
         query = QueryDict("categories=travel,cashback&bank_ids=3,1,2")
         normalized = normalize_query_params(query)
         assert normalized["categories"] == "cashback,travel"
@@ -352,6 +348,7 @@ class TestQueryNormalization:
     def test_normalize_ordering(self):
         """Normalize ordering parameter."""
         from django.http import QueryDict
+
         query = QueryDict("ordering=-annual_fee")
         normalized = normalize_query_params(query)
         assert normalized["ordering"] == "-annual_fee"
@@ -359,6 +356,7 @@ class TestQueryNormalization:
     def test_normalize_excludes_empty(self):
         """Empty parameters should be excluded."""
         from django.http import QueryDict
+
         query = QueryDict("search=&annual_fee_min=")
         normalized = normalize_query_params(query)
         assert "search" not in normalized
@@ -373,7 +371,11 @@ class TestNormalizeEndpoint:
         """Normalize endpoint should return normalized query and hash."""
         response = api_client.get(
             "/api/v1/credit-cards/advanced-search/normalize/",
-            {"search": "visa", "categories": "travel,cashback", "ordering": "-annual_fee"}
+            {
+                "search": "visa",
+                "categories": "travel,cashback",
+                "ordering": "-annual_fee",
+            },
         )
         assert response.status_code == 200
         assert "normalized_query" in response.data
@@ -386,11 +388,11 @@ class TestNormalizeEndpoint:
         """Same query should produce same hash regardless of parameter order."""
         response1 = api_client.get(
             "/api/v1/credit-cards/advanced-search/normalize/",
-            {"search": "visa", "categories": "travel,cashback"}
+            {"search": "visa", "categories": "travel,cashback"},
         )
         response2 = api_client.get(
             "/api/v1/credit-cards/advanced-search/normalize/",
-            {"categories": "cashback,travel", "search": "visa"}
+            {"categories": "cashback,travel", "search": "visa"},
         )
         assert response1.data["query_hash"] == response2.data["query_hash"]
 
@@ -437,12 +439,18 @@ class TestAdvancedFilterClass:
     def test_categories_filter_method(self):
         """Test the filter_categories method directly."""
         # Create cards and filter with explicit pks to avoid pollution
-        travel = CreditCardFactory(name="Travel Card", reward_points_policy="travel rewards")
-        cashback = CreditCardFactory(name="Cashback Card", reward_points_policy="cashback")
+        travel = CreditCardFactory(
+            name="Travel Card", reward_points_policy="travel rewards"
+        )
+        cashback = CreditCardFactory(
+            name="Cashback Card", reward_points_policy="cashback"
+        )
         free = CreditCardFactory(name="Free Card", annual_fee=0)
 
         queryset = CreditCard.objects.filter(pk__in=[travel.pk, cashback.pk, free.pk])
-        filter_set = CreditCardAdvancedFilter({"categories": "travel,cashback"}, queryset=queryset)
+        filter_set = CreditCardAdvancedFilter(
+            {"categories": "travel,cashback"}, queryset=queryset
+        )
         results = list(filter_set.qs)
         assert len(results) == 2
 
@@ -496,6 +504,7 @@ class TestDBFallback:
         """Search should work even when Elasticsearch is unavailable."""
         # Disable Elasticsearch
         import search.client as client_module
+
         monkeypatch.setattr(client_module, "is_enabled", lambda: False)
 
         CreditCardFactory(name="Test Card", annual_fee=0)
@@ -508,6 +517,7 @@ class TestDBFallback:
     def test_facets_work_in_db_fallback(self, api_client, monkeypatch):
         """Facets should work in DB fallback mode."""
         import search.client as client_module
+
         monkeypatch.setattr(client_module, "is_enabled", lambda: False)
 
         CreditCardFactory(name="Travel Card", reward_points_policy="travel")
@@ -528,23 +538,21 @@ class TestSavedSearchCompatibility:
         """Same query with different param order should produce same hash."""
         response1 = api_client.get(
             "/api/v1/credit-cards/advanced-search/normalize/",
-            {"search": "visa", "annual_fee_min": "100", "categories": "travel"}
+            {"search": "visa", "annual_fee_min": "100", "categories": "travel"},
         )
         response2 = api_client.get(
             "/api/v1/credit-cards/advanced-search/normalize/",
-            {"categories": "travel", "search": "visa", "annual_fee_min": "100"}
+            {"categories": "travel", "search": "visa", "annual_fee_min": "100"},
         )
         assert response1.data["query_hash"] == response2.data["query_hash"]
 
     def test_different_query_different_hash(self, api_client):
         """Different queries should produce different hashes."""
         response1 = api_client.get(
-            "/api/v1/credit-cards/advanced-search/normalize/",
-            {"search": "visa"}
+            "/api/v1/credit-cards/advanced-search/normalize/", {"search": "visa"}
         )
         response2 = api_client.get(
-            "/api/v1/credit-cards/advanced-search/normalize/",
-            {"search": "mastercard"}
+            "/api/v1/credit-cards/advanced-search/normalize/", {"search": "mastercard"}
         )
         assert response1.data["query_hash"] != response2.data["query_hash"]
 
@@ -552,7 +560,7 @@ class TestSavedSearchCompatibility:
         """Only true boolean params should appear in normalized query."""
         response = api_client.get(
             "/api/v1/credit-cards/advanced-search/normalize/",
-            {"no_annual_fee": "true", "has_lounge_access": "false"}
+            {"no_annual_fee": "true", "has_lounge_access": "false"},
         )
         assert "no_annual_fee" in response.data["normalized_query"]
         assert "has_lounge_access" not in response.data["normalized_query"]

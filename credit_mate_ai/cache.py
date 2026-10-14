@@ -128,11 +128,15 @@ def invalidate_card_caches_on_bank_change(sender, **kwargs):
 
 def bump_advanced_search_version():
     """Schedule invalidation of advanced search cache at commit."""
+
     def _bump():
         from django.core.cache import cache
+
         cache.add(ADVANCED_SEARCH_VERSION_KEY, 1, None)
         cache.incr(ADVANCED_SEARCH_VERSION_KEY)
+
     from django.db import transaction
+
     transaction.on_commit(_bump)
 
 

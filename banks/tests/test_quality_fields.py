@@ -8,7 +8,6 @@ import pytest
 
 from banks.factories import CrawledContentFactory
 
-
 QUALITY_FIELDS = (
     "extraction_confidence",
     "missing_critical_fields",

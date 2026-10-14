@@ -198,9 +198,7 @@ class TestDataServiceStoresNullNotZero:
     def test_fallback_name_does_not_invent_a_fee(self):
         bank = BankFactory()
         service = CreditCardDataService()
-        service.update_credit_card_data(
-            bank.id, [{"name": "", "annual_fee": "bogus"}]
-        )
+        service.update_credit_card_data(bank.id, [{"name": "", "annual_fee": "bogus"}])
         card = CreditCard.objects.get(bank=bank)
         assert "Credit Card (Annual Fee:" in card.name
         assert "bogus" not in card.name

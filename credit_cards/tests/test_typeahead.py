@@ -97,7 +97,11 @@ class TestTypeaheadGroupsAndCounts:
         response = api_client.get(TYPEAHEAD_URL, {"q": "visa"})
         assert response.status_code == 200
         assert len(response.data["matches"]["card"]) <= 8
-        assert all(s["type"] == "card" for s in response.data["suggestions"] if s["type"] == "card")
+        assert all(
+            s["type"] == "card"
+            for s in response.data["suggestions"]
+            if s["type"] == "card"
+        )
 
     def test_banks_group_limited_to_max_results(self, api_client):
         """Bank results are bounded to AUTOCOMPLETE_MAX_RESULTS (8)."""
@@ -108,7 +112,11 @@ class TestTypeaheadGroupsAndCounts:
         response = api_client.get(TYPEAHEAD_URL, {"q": "bank"})
         assert response.status_code == 200
         assert len(response.data["matches"]["bank"]) <= 8
-        assert all(s["type"] == "bank" for s in response.data["suggestions"] if s["type"] == "bank")
+        assert all(
+            s["type"] == "bank"
+            for s in response.data["suggestions"]
+            if s["type"] == "bank"
+        )
 
     def test_mixed_suggestions_combined_not_exceed_max_results(self, api_client):
         """Combined card+bank suggestions don't exceed AUTOCOMPLETE_MAX_RESULTS."""
@@ -129,8 +137,7 @@ class TestTypeaheadGroupsAndCounts:
         response = api_client.get(TYPEAHEAD_URL, {"q": "sa"})
         assert response.status_code == 200
         card_suggestion = next(
-            (s for s in response.data["suggestions"] if s["type"] == "card"),
-            None
+            (s for s in response.data["suggestions"] if s["type"] == "card"), None
         )
         assert card_suggestion is not None
         assert card_suggestion["detail"] == "Chase"
@@ -145,8 +152,7 @@ class TestTypeaheadGroupsAndCounts:
         response = api_client.get(TYPEAHEAD_URL, {"q": "cha"})
         assert response.status_code == 200
         bank_suggestion = next(
-            (s for s in response.data["suggestions"] if s["type"] == "bank"),
-            None
+            (s for s in response.data["suggestions"] if s["type"] == "bank"), None
         )
         assert bank_suggestion is not None
         assert "3 cards" in bank_suggestion["detail"]
@@ -172,9 +178,7 @@ class TestTypeaheadFacets:
     def test_facets_included_in_response(self, api_client):
         """Response includes facet counts for common filters."""
         CreditCardFactory(
-            name="Test Card",
-            annual_fee=0,
-            reward_points_policy="Travel rewards"
+            name="Test Card", annual_fee=0, reward_points_policy="Travel rewards"
         )
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "te"})
@@ -208,10 +212,7 @@ class TestTypeaheadFacets:
 
     def test_travel_facet(self, api_client):
         """Travel facet counts cards with travel rewards."""
-        CreditCardFactory(
-            name="Travel Card",
-            reward_points_policy="2x travel"
-        )
+        CreditCardFactory(name="Travel Card", reward_points_policy="2x travel")
         CreditCardFactory(name="Cashback", reward_points_policy="2% cashback")
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "ca"})
@@ -222,10 +223,7 @@ class TestTypeaheadFacets:
 
     def test_cashback_facet(self, api_client):
         """Cashback facet counts cards with cashback rewards."""
-        CreditCardFactory(
-            name="CB Card",
-            reward_points_policy="5% cashback"
-        )
+        CreditCardFactory(name="CB Card", reward_points_policy="5% cashback")
 
         response = api_client.get(TYPEAHEAD_URL, {"q": "ca"})
         assert response.status_code == 200
@@ -390,8 +388,7 @@ class TestTypeaheadResponse:
         response = api_client.get(TYPEAHEAD_URL, {"q": "sa"})
         assert response.status_code == 200
         card_suggestion = next(
-            (s for s in response.data["suggestions"] if s["type"] == "card"),
-            None
+            (s for s in response.data["suggestions"] if s["type"] == "card"), None
         )
         assert card_suggestion is not None
         assert card_suggestion["id"] == card.id
@@ -407,8 +404,7 @@ class TestTypeaheadResponse:
         response = api_client.get(TYPEAHEAD_URL, {"q": "cha"})
         assert response.status_code == 200
         bank_suggestion = next(
-            (s for s in response.data["suggestions"] if s["type"] == "bank"),
-            None
+            (s for s in response.data["suggestions"] if s["type"] == "bank"), None
         )
         assert bank_suggestion is not None
         assert bank_suggestion["id"] == bank.id
@@ -517,7 +513,9 @@ class TestTypeaheadCategories:
         assert response.status_code == 200
 
         # Should find Travel category
-        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        category_suggestions = [
+            s for s in response.data["suggestions"] if s.get("type") == "category"
+        ]
         assert len(category_suggestions) > 0
         assert category_suggestions[0]["slug"] == "travel"
         assert category_suggestions[0]["label"] == "Travel"
@@ -528,7 +526,9 @@ class TestTypeaheadCategories:
         assert response.status_code == 200
 
         # Should find Travel category by prefix
-        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        category_suggestions = [
+            s for s in response.data["suggestions"] if s.get("type") == "category"
+        ]
         assert len(category_suggestions) > 0
         assert category_suggestions[0]["slug"] == "travel"
 
@@ -538,7 +538,9 @@ class TestTypeaheadCategories:
         assert response.status_code == 200
 
         # Should find No Annual Fee category by slug prefix
-        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        category_suggestions = [
+            s for s in response.data["suggestions"] if s.get("type") == "category"
+        ]
         assert len(category_suggestions) > 0
         assert category_suggestions[0]["slug"] == "no-annual-fee"
         assert category_suggestions[0]["label"] == "No Annual Fee"
@@ -565,7 +567,9 @@ class TestTypeaheadCategories:
         response = api_client.get(TYPEAHEAD_URL, {"q": "premium"})
         assert response.status_code == 200
 
-        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        category_suggestions = [
+            s for s in response.data["suggestions"] if s.get("type") == "category"
+        ]
         if len(category_suggestions) > 0:
             assert "slug" in category_suggestions[0]
             assert "label" in category_suggestions[0]
@@ -592,7 +596,9 @@ class TestTypeaheadCategories:
         response = api_client.get(TYPEAHEAD_URL, {"q": "TRAVEL"})
         assert response.status_code == 200
 
-        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
+        category_suggestions = [
+            s for s in response.data["suggestions"] if s.get("type") == "category"
+        ]
         assert len(category_suggestions) > 0
         assert category_suggestions[0]["slug"] == "travel"
 
@@ -601,8 +607,12 @@ class TestTypeaheadCategories:
         response = api_client.get(TYPEAHEAD_URL, {"q": "no"})
         assert response.status_code == 200
 
-        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
-        matching = [s for s in category_suggestions if "fee" in s.get("label", "").lower()]
+        category_suggestions = [
+            s for s in response.data["suggestions"] if s.get("type") == "category"
+        ]
+        matching = [
+            s for s in category_suggestions if "fee" in s.get("label", "").lower()
+        ]
         if len(matching) > 0:
             # Slug should use hyphens, not underscores
             assert "-" in matching[0]["slug"]
@@ -619,7 +629,15 @@ class TestTypeaheadCategories:
         assert len(response.data["suggestions"]) <= 8
 
         # Travel category should still appear even with 10 matching cards
-        category_suggestions = [s for s in response.data["suggestions"] if s.get("type") == "category"]
-        assert len(category_suggestions) > 0, "Category should be reserved despite many card matches"
-        assert category_suggestions[0]["slug"] == "travel", "Travel category slug should survive"
-        assert "Travel" in response.data["matches"]["category"], "Travel in matches.category"
+        category_suggestions = [
+            s for s in response.data["suggestions"] if s.get("type") == "category"
+        ]
+        assert (
+            len(category_suggestions) > 0
+        ), "Category should be reserved despite many card matches"
+        assert (
+            category_suggestions[0]["slug"] == "travel"
+        ), "Travel category slug should survive"
+        assert (
+            "Travel" in response.data["matches"]["category"]
+        ), "Travel in matches.category"

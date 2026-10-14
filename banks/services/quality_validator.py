@@ -77,9 +77,7 @@ class ExtractionQualityValidator:
             cards = coalesce_cards(crawled_content.parsed_json)
 
         method = crawled_content.extraction_method or "unknown"
-        quality = score_extraction(
-            crawled_content.extracted_content or "", cards, method
-        )
+        quality = score_extraction(crawled_content.extracted_content or "", cards, method)
         if extraction_passes:
             quality.passes = list(extraction_passes)
 

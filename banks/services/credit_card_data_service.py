@@ -1,6 +1,10 @@
 import logging
 
-from banks.validators.numeric_fields import STATUS_MISSING, STATUS_VALID, parse_numeric_value
+from banks.validators.numeric_fields import (
+    STATUS_MISSING,
+    STATUS_VALID,
+    parse_numeric_value,
+)
 from credit_cards.models import CreditCard
 
 logger = logging.getLogger(__name__)

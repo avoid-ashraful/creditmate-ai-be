@@ -11,95 +11,200 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('credit_cards', '0007_alter_creditcard_interest_rate_apr_validator_order'),
+        ("credit_cards", "0007_alter_creditcard_interest_rate_apr_validator_order"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Collection',
+            name="Collection",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=120)),
-                ('description', models.TextField(blank=True, default='')),
-                ('is_public', models.BooleanField(default=False)),
-                ('slug', models.SlugField(blank=True, editable=False, max_length=80, unique=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saved_collections', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=120)),
+                ("description", models.TextField(blank=True, default="")),
+                ("is_public", models.BooleanField(default=False)),
+                (
+                    "slug",
+                    models.SlugField(
+                        blank=True, editable=False, max_length=80, unique=True
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="saved_collections",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-modified', '-id'],
+                "ordering": ["-modified", "-id"],
             },
         ),
         migrations.CreateModel(
-            name='CollectionItem',
+            name="CollectionItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('notes', models.TextField(blank=True, default='')),
-                ('card', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='collection_items', to='credit_cards.creditcard')),
-                ('collection', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='saved.collection')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                ("notes", models.TextField(blank=True, default="")),
+                (
+                    "card",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="collection_items",
+                        to="credit_cards.creditcard",
+                    ),
+                ),
+                (
+                    "collection",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="items",
+                        to="saved.collection",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['created', 'id'],
+                "ordering": ["created", "id"],
             },
         ),
         migrations.AddField(
-            model_name='collection',
-            name='cards',
-            field=models.ManyToManyField(related_name='collections', through='saved.CollectionItem', to='credit_cards.creditcard'),
+            model_name="collection",
+            name="cards",
+            field=models.ManyToManyField(
+                related_name="collections",
+                through="saved.CollectionItem",
+                to="credit_cards.creditcard",
+            ),
         ),
         migrations.CreateModel(
-            name='SavedComparison',
+            name="SavedComparison",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=120)),
-                ('notes', models.TextField(blank=True, default='')),
-                ('is_public', models.BooleanField(default=False)),
-                ('share_token', models.CharField(default=saved.models.generate_share_token, editable=False, max_length=64, unique=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saved_comparisons', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=120)),
+                ("notes", models.TextField(blank=True, default="")),
+                ("is_public", models.BooleanField(default=False)),
+                (
+                    "share_token",
+                    models.CharField(
+                        default=saved.models.generate_share_token,
+                        editable=False,
+                        max_length=64,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="saved_comparisons",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-modified', '-id'],
+                "ordering": ["-modified", "-id"],
             },
         ),
         migrations.CreateModel(
-            name='SavedComparisonItem',
+            name="SavedComparisonItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('position', models.PositiveSmallIntegerField()),
-                ('card', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saved_comparison_items', to='credit_cards.creditcard')),
-                ('comparison', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='saved.savedcomparison')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                ("position", models.PositiveSmallIntegerField()),
+                (
+                    "card",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="saved_comparison_items",
+                        to="credit_cards.creditcard",
+                    ),
+                ),
+                (
+                    "comparison",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="items",
+                        to="saved.savedcomparison",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['position'],
+                "ordering": ["position"],
             },
         ),
         migrations.AddField(
-            model_name='savedcomparison',
-            name='cards',
-            field=models.ManyToManyField(related_name='saved_comparisons', through='saved.SavedComparisonItem', to='credit_cards.creditcard'),
+            model_name="savedcomparison",
+            name="cards",
+            field=models.ManyToManyField(
+                related_name="saved_comparisons",
+                through="saved.SavedComparisonItem",
+                to="credit_cards.creditcard",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='collectionitem',
-            constraint=models.UniqueConstraint(fields=('collection', 'card'), name='collection_item_unique_card'),
+            model_name="collectionitem",
+            constraint=models.UniqueConstraint(
+                fields=("collection", "card"), name="collection_item_unique_card"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='savedcomparisonitem',
-            constraint=models.UniqueConstraint(fields=('comparison', 'card'), name='saved_comparison_item_unique_card'),
+            model_name="savedcomparisonitem",
+            constraint=models.UniqueConstraint(
+                fields=("comparison", "card"), name="saved_comparison_item_unique_card"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='savedcomparisonitem',
-            constraint=models.UniqueConstraint(fields=('comparison', 'position'), name='saved_comparison_item_unique_position'),
+            model_name="savedcomparisonitem",
+            constraint=models.UniqueConstraint(
+                fields=("comparison", "position"),
+                name="saved_comparison_item_unique_position",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='savedcomparisonitem',
-            constraint=models.CheckConstraint(condition=models.Q(('position__lt', 4)), name='saved_comparison_item_position_max'),
+            model_name="savedcomparisonitem",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("position__lt", 4)),
+                name="saved_comparison_item_position_max",
+            ),
         ),
     ]

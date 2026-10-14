@@ -18,11 +18,23 @@ class AlertSubscription(Audit):
         NEW_CARD = "new_card", "New card"
         ANY_CHANGE = "any_change", "Any change"
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="alert_subscriptions")
-    card = models.ForeignKey("credit_cards.CreditCard", null=True, blank=True, on_delete=models.CASCADE, related_name="alert_subscriptions")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="alert_subscriptions",
+    )
+    card = models.ForeignKey(
+        "credit_cards.CreditCard",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="alert_subscriptions",
+    )
     kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.ANY_CHANGE)
     is_active = models.BooleanField(default=True)
-    unsubscribe_token = models.CharField(max_length=128, unique=True, default=make_unsubscribe_token)
+    unsubscribe_token = models.CharField(
+        max_length=128, unique=True, default=make_unsubscribe_token
+    )
 
     class Meta:
         ordering = ["-created"]
@@ -41,10 +53,18 @@ class NotificationPreference(Audit):
         DAILY = "daily", "Daily"
         WEEKLY = "weekly", "Weekly"
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notification_preference")
-    frequency = models.CharField(max_length=10, choices=Frequency.choices, default=Frequency.WEEKLY)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notification_preference",
+    )
+    frequency = models.CharField(
+        max_length=10, choices=Frequency.choices, default=Frequency.WEEKLY
+    )
 
 
 class SentAlert(Audit):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_alerts")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_alerts"
+    )
     event_key = models.CharField(max_length=100, unique=True)

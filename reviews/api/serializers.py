@@ -43,7 +43,9 @@ class CardReviewSerializer(serializers.ModelSerializer):
             if field in attrs:
                 attrs[field] = strip_tags(attrs[field] or "").strip()
                 if not attrs[field]:
-                    raise serializers.ValidationError({field: "This field may not be empty after removing HTML."})
+                    raise serializers.ValidationError(
+                        {field: "This field may not be empty after removing HTML."}
+                    )
                 try:
                     attrs[field] = clean_review_text(attrs[field])
                 except DjangoValidationError as exc:

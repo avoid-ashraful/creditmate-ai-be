@@ -183,7 +183,8 @@ class TestScoreCrawledContent:
             parsed_json={"credit_cards": [{"name": "raw", "annual_fee": "TK 5,000"}]},
         )
         quality = ExtractionQualityValidator.score_crawled_content(
-            content, cards=[{"name": "v", "annual_fee": 5000.0, "interest_rate_apr": 20.0}]
+            content,
+            cards=[{"name": "v", "annual_fee": 5000.0, "interest_rate_apr": 20.0}],
         )
         assert quality.missing_critical_fields == []
 
@@ -228,8 +229,7 @@ class TestManualReviewDecision:
     )
     def test_rules(self, confidence, issues, expected):
         assert (
-            ExtractionQualityValidator.needs_manual_review(confidence, issues)
-            is expected
+            ExtractionQualityValidator.needs_manual_review(confidence, issues) is expected
         )
 
     def test_none_issues_treated_as_empty(self):

@@ -118,9 +118,7 @@ class TestPromptConstruction:
 
     def test_registry_helpers_are_available_on_the_class(self):
         prompts = BankSpecificPrompts()
-        assert "Document content:" in prompts.get_prompt_for_bank(
-            "Sonali Bank PLC", "x"
-        )
+        assert "Document content:" in prompts.get_prompt_for_bank("Sonali Bank PLC", "x")
         assert "ONLY" in prompts.get_focused_prompt("BRAC Bank PLC", "x")
 
     @pytest.mark.parametrize("bank_name", [None, "", "   "])

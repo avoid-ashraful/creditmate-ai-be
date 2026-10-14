@@ -163,8 +163,8 @@ class CreditCardFieldHistoryModelTests(TestCase):
         from credit_cards.api.views import CreditCardViewSet
 
         viewset = CreditCardViewSet()
-        self.assertTrue(hasattr(viewset, 'field_history'))
-        self.assertTrue(callable(getattr(viewset, 'field_history')))
+        self.assertTrue(hasattr(viewset, "field_history"))
+        self.assertTrue(callable(getattr(viewset, "field_history")))
 
     def test_field_history_access_control(self):
         """Field history endpoint should have access control."""
@@ -177,7 +177,7 @@ class CreditCardFieldHistoryModelTests(TestCase):
         request.user.is_authenticated = False
 
         # Simulate the request - the method should check authentication
-        method = getattr(viewset, 'field_history')
+        method = getattr(viewset, "field_history")
         self.assertTrue(callable(method))
 
 
@@ -223,9 +223,7 @@ class CreditCardUpdateOrCreateHistoryTests(TestCase):
         history = CreditCardFieldHistory.objects.filter(card=card)
         # Should have one entry for annual_fee change
         self.assertGreaterEqual(history.count(), 1)
-        self.assertTrue(
-            history.filter(field_name="annual_fee").exists()
-        )
+        self.assertTrue(history.filter(field_name="annual_fee").exists())
 
     def test_update_or_create_no_history_when_values_unchanged(self):
         """update_or_create with same values should not create history."""
@@ -340,7 +338,9 @@ class TestFieldHistoryAPIEndpoint:
         )
 
         # Create multiple history entries to test ordering and pagination
-        for i, fee in enumerate([Decimal("200.00"), Decimal("300.00"), Decimal("400.00")]):
+        for i, fee in enumerate(
+            [Decimal("200.00"), Decimal("300.00"), Decimal("400.00")]
+        ):
             self.card.annual_fee = fee
             self.card.save()
 

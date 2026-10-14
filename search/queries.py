@@ -344,7 +344,9 @@ def _build_defined_filter(definition, value):
     if filter_kind == "term":
         if len(definition) == 3:
             # Fixed-value clause: the key toggles it on/off by itself.
-            return {"term": {field: definition[2]}} if _coerce_bool(value) is True else None
+            return (
+                {"term": {field: definition[2]}} if _coerce_bool(value) is True else None
+            )
 
         numeric = _coerce_float(value)
         if field in (
@@ -364,9 +366,7 @@ def _build_defined_filter(definition, value):
     if filter_kind == "range":
         numeric = _coerce_float(value)
         return (
-            {"range": {field: {definition[2]: numeric}}}
-            if numeric is not None
-            else None
+            {"range": {field: {definition[2]: numeric}}} if numeric is not None else None
         )
     if filter_kind == "exists":
         return {"exists": {"field": field}}

@@ -73,9 +73,7 @@ class CreditCardAdvancedFilter(django_filters.FilterSet):
     min_international_lounge = django_filters.NumberFilter(
         method="filter_min_international_lounge"
     )
-    min_domestic_lounge = django_filters.NumberFilter(
-        method="filter_min_domestic_lounge"
-    )
+    min_domestic_lounge = django_filters.NumberFilter(method="filter_min_domestic_lounge")
 
     # Fee filters
     has_annual_fee = django_filters.BooleanFilter(method="filter_has_annual_fee")
@@ -142,7 +140,9 @@ class CreditCardAdvancedFilter(django_filters.FilterSet):
         if not value:
             return queryset
 
-        category_slugs = [slug.strip().lower() for slug in value.split(",") if slug.strip()]
+        category_slugs = [
+            slug.strip().lower() for slug in value.split(",") if slug.strip()
+        ]
         if not category_slugs:
             return queryset
 
@@ -311,9 +311,18 @@ FACET_DEFINITIONS = {
         "label": "Lounge Access",
         "type": "boolean",
         "options": [
-            {"key": "international", "label": "International", "field": "lounge_access_international"},
+            {
+                "key": "international",
+                "label": "International",
+                "field": "lounge_access_international",
+            },
             {"key": "domestic", "label": "Domestic", "field": "lounge_access_domestic"},
-            {"key": "any", "label": "Any", "field": "has_lounge_access", "is_property": True},
+            {
+                "key": "any",
+                "label": "Any",
+                "field": "has_lounge_access",
+                "is_property": True,
+            },
         ],
     },
     "fee_waiver": {
@@ -418,14 +427,22 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
                         true_count = queryset.filter(card_lounge_access_q(True)).count()
                         false_count = queryset.filter(card_lounge_access_q(False)).count()
                     elif opt_field in LOUNGE_DIRECTION_FIELDS:
-                        true_count = queryset.filter(lounge_access_q(opt_field, True)).count()
-                        false_count = queryset.filter(lounge_access_q(opt_field, False)).count()
+                        true_count = queryset.filter(
+                            lounge_access_q(opt_field, True)
+                        ).count()
+                        false_count = queryset.filter(
+                            lounge_access_q(opt_field, False)
+                        ).count()
                     elif opt_field == "has_annual_fee" or is_property:
                         true_count = queryset.filter(annual_fee__gt=0).count()
                         false_count = queryset.filter(annual_fee=0).count()
                     else:
-                        true_count = queryset.exclude(**{f"{opt_field}__exact": ""}).count()
-                        false_count = queryset.filter(**{f"{opt_field}__exact": ""}).count()
+                        true_count = queryset.exclude(
+                            **{f"{opt_field}__exact": ""}
+                        ).count()
+                        false_count = queryset.filter(
+                            **{f"{opt_field}__exact": ""}
+                        ).count()
 
                     buckets.append(
                         {
@@ -617,15 +634,59 @@ def get_sort_options():
         Sort options with key, label, and description.
     """
     return [
-        {"key": "relevance", "label": "Relevance", "description": "Best match first (default with search query)"},
-        {"key": "annual_fee", "label": "Annual Fee (Low to High)", "description": "Sort by annual fee ascending"},
-        {"key": "-annual_fee", "label": "Annual Fee (High to Low)", "description": "Sort by annual fee descending"},
-        {"key": "interest_rate_apr", "label": "APR (Low to High)", "description": "Sort by interest rate ascending"},
-        {"key": "-interest_rate_apr", "label": "APR (High to Low)", "description": "Sort by interest rate descending"},
-        {"key": "-lounge_access_international", "label": "Lounge Access (Most First)", "description": "Sort by international lounge access descending"},
-        {"key": "-lounge_access_domestic", "label": "Domestic Lounge (Most First)", "description": "Sort by domestic lounge access descending"},
-        {"key": "name", "label": "Name (A-Z)", "description": "Sort by card name ascending"},
-        {"key": "-name", "label": "Name (Z-A)", "description": "Sort by card name descending"},
-        {"key": "-created", "label": "Newest First", "description": "Sort by creation date descending"},
-        {"key": "created", "label": "Oldest First", "description": "Sort by creation date ascending"},
+        {
+            "key": "relevance",
+            "label": "Relevance",
+            "description": "Best match first (default with search query)",
+        },
+        {
+            "key": "annual_fee",
+            "label": "Annual Fee (Low to High)",
+            "description": "Sort by annual fee ascending",
+        },
+        {
+            "key": "-annual_fee",
+            "label": "Annual Fee (High to Low)",
+            "description": "Sort by annual fee descending",
+        },
+        {
+            "key": "interest_rate_apr",
+            "label": "APR (Low to High)",
+            "description": "Sort by interest rate ascending",
+        },
+        {
+            "key": "-interest_rate_apr",
+            "label": "APR (High to Low)",
+            "description": "Sort by interest rate descending",
+        },
+        {
+            "key": "-lounge_access_international",
+            "label": "Lounge Access (Most First)",
+            "description": "Sort by international lounge access descending",
+        },
+        {
+            "key": "-lounge_access_domestic",
+            "label": "Domestic Lounge (Most First)",
+            "description": "Sort by domestic lounge access descending",
+        },
+        {
+            "key": "name",
+            "label": "Name (A-Z)",
+            "description": "Sort by card name ascending",
+        },
+        {
+            "key": "-name",
+            "label": "Name (Z-A)",
+            "description": "Sort by card name descending",
+        },
+        {
+            "key": "-created",
+            "label": "Newest First",
+            "description": "Sort by creation date descending",
+        },
+        {
+            "key": "created",
+            "label": "Oldest First",
+            "description": "Sort by creation date ascending",
+        },
     ]

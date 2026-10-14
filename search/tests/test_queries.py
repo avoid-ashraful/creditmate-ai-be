@@ -125,7 +125,9 @@ class TestFilters:
     def test_every_filter_field_exists_in_declared_filterable_fields(self):
         declared = set(filterable_fields("cards"))
         # Skip "category" filter which is handled specially and doesn't have a field reference
-        referenced = {definition[1] for definition in CARD_FILTERS.values() if len(definition) > 1}
+        referenced = {
+            definition[1] for definition in CARD_FILTERS.values() if len(definition) > 1
+        }
         missing = referenced - declared
         assert not missing, f"filters reference non-declared fields: {missing}"
 

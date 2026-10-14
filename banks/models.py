@@ -255,7 +255,10 @@ class CrawledContent(Audit):
             The queue item, or ``None`` when the crawl is ineligible or a
             queue item already exists.
         """
-        if not self.needs_manual_review or self.processing_status != ProcessingStatus.COMPLETED:
+        if (
+            not self.needs_manual_review
+            or self.processing_status != ProcessingStatus.COMPLETED
+        ):
             return None
 
         queue_item, _created = ReviewQueue.objects.get_or_create(
@@ -272,7 +275,11 @@ class CrawledContent(Audit):
         return f"{self.data_source.bank.name} - {self.crawled_at}"
 
     def apply_quality_score(
-        self, confidence, missing_critical_fields=None, needs_manual_review=None, extraction_passes=None
+        self,
+        confidence,
+        missing_critical_fields=None,
+        needs_manual_review=None,
+        extraction_passes=None,
     ):
         """Store an extraction quality score on this record.
 

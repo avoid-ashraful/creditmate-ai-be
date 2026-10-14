@@ -43,7 +43,8 @@ be tested without a database. The Django-aware collectors that turn
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field as dataclass_field
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from typing import Any, Dict, List, Optional
 
 from banks.enums import SourceType
@@ -399,9 +400,7 @@ class MultiSourceValidator:
         base = max(item["confidence"] for item in representatives)
         result.base_confidence = base
 
-        distinct_values = sorted(
-            {item["value"] for item in representatives}, key=repr
-        )
+        distinct_values = sorted({item["value"] for item in representatives}, key=repr)
         if len(distinct_values) == 1:
             if len(representatives) == 1:
                 result.status = STATUS_SINGLE_SOURCE
@@ -508,9 +507,7 @@ class MultiSourceValidator:
         result.conflicts = [
             {
                 "value": value,
-                "sources": sorted(
-                    sources, key=lambda source: (source["source_key"],)
-                ),
+                "sources": sorted(sources, key=lambda source: (source["source_key"],)),
             }
             for value, sources in sorted(by_value.items(), key=lambda item: repr(item[0]))
         ]

@@ -5,7 +5,9 @@ from .models import AlertSubscription, NotificationPreference
 
 class AlertSubscriptionSerializer(serializers.ModelSerializer):
     card_name = serializers.CharField(source="card.name", read_only=True, default=None)
-    bank_name = serializers.CharField(source="card.bank.name", read_only=True, default=None)
+    bank_name = serializers.CharField(
+        source="card.bank.name", read_only=True, default=None
+    )
 
     class Meta:
         model = AlertSubscription

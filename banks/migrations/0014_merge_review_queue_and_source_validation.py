@@ -6,9 +6,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('banks', '0012_crawledcontent_multi_source_validation'),
-        ('banks', '0013_alter_reviewqueue_options_reviewqueue_priority_order'),
+        ("banks", "0012_crawledcontent_multi_source_validation"),
+        ("banks", "0013_alter_reviewqueue_options_reviewqueue_priority_order"),
     ]
 
-    operations = [
-    ]
+    operations = []

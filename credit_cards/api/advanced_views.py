@@ -45,6 +45,7 @@ MAX_PAGE_NUMBER = 10000
 
 class ElasticsearchUnavailable(Exception):
     """Raised when Elasticsearch is unavailable and no fallback is configured."""
+
     pass
 
 
@@ -86,9 +87,7 @@ def _try_elasticsearch_search(query_params, request):
         # Build filters from query params (excluding control params)
         reserved = {"search", "page", "page_size", "ordering", "facets", "categories"}
         filters = {
-            key: value
-            for key, value in query_params.items()
-            if key not in reserved
+            key: value for key, value in query_params.items() if key not in reserved
         }
 
         # Handle categories filter - convert to ES filters
@@ -210,7 +209,11 @@ def _normalize_es_response(response, query, page, page_size):
             "label": "Lounge Access",
             "type": "boolean",
             "buckets": [
-                {"key": bucket["key"], "label": "Yes" if bucket["key"] else "No", "count": bucket["doc_count"]}
+                {
+                    "key": bucket["key"],
+                    "label": "Yes" if bucket["key"] else "No",
+                    "count": bucket["doc_count"],
+                }
                 for bucket in aggregations["has_lounge_access"]["buckets"]
             ],
         }
@@ -220,7 +223,11 @@ def _normalize_es_response(response, query, page, page_size):
             "label": "Has Annual Fee",
             "type": "boolean",
             "buckets": [
-                {"key": bucket["key"], "label": "Yes" if bucket["key"] else "No", "count": bucket["doc_count"]}
+                {
+                    "key": bucket["key"],
+                    "label": "Yes" if bucket["key"] else "No",
+                    "count": bucket["doc_count"],
+                }
                 for bucket in aggregations["has_annual_fee"]["buckets"]
             ],
         }
@@ -272,13 +279,20 @@ def _execute_db_search(query_params):
     ordering = query_params.get("ordering")
     if ordering:
         allowed_ordering = {
-            "name", "-name",
-            "annual_fee", "-annual_fee",
-            "interest_rate_apr", "-interest_rate_apr",
-            "lounge_access_international", "-lounge_access_international",
-            "lounge_access_domestic", "-lounge_access_domestic",
-            "created", "-created",
-            "modified", "-modified",
+            "name",
+            "-name",
+            "annual_fee",
+            "-annual_fee",
+            "interest_rate_apr",
+            "-interest_rate_apr",
+            "lounge_access_international",
+            "-lounge_access_international",
+            "lounge_access_domestic",
+            "-lounge_access_domestic",
+            "created",
+            "-created",
+            "modified",
+            "-modified",
         }
         if ordering.lstrip("-") in allowed_ordering:
             queryset = queryset.order_by(ordering)
@@ -339,10 +353,12 @@ def _build_cache_key(prefix, query_params, request):
     origin = request.build_absolute_uri("/").rstrip("/")
     fingerprint = f"{origin}{request.path}:{param_string}"
     import hashlib
+
     digest = hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[:32]
 
     # Get cache version
     from credit_mate_ai.cache import _get_cache_version
+
     version = _get_cache_version(ADVANCED_SEARCH_VERSION_KEY)
 
     return f"{prefix}:v{version}:{digest}"
@@ -449,10 +465,17 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
                 location=OpenApiParameter.QUERY,
                 description="Sort field (relevance, annual_fee, -annual_fee, interest_rate_apr, -interest_rate_apr, -lounge_access_international, -lounge_access_domestic, name, -name, -created, created)",
                 enum=[
-                    "relevance", "annual_fee", "-annual_fee",
-                    "interest_rate_apr", "-interest_rate_apr",
-                    "-lounge_access_international", "-lounge_access_domestic",
-                    "name", "-name", "-created", "created",
+                    "relevance",
+                    "annual_fee",
+                    "-annual_fee",
+                    "interest_rate_apr",
+                    "-interest_rate_apr",
+                    "-lounge_access_international",
+                    "-lounge_access_domestic",
+                    "name",
+                    "-name",
+                    "-created",
+                    "created",
                 ],
             ),
             OpenApiParameter(
@@ -495,7 +518,9 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
             return Response({"detail": str(exc)}, status=400)
 
         # Check cache
-        cache_key = _build_cache_key("credit_cards:advanced_search", normalized_params, request)
+        cache_key = _build_cache_key(
+            "credit_cards:advanced_search", normalized_params, request
+        )
         cached_response = cache.get(cache_key)
         if cached_response is not None:
             cached_response["cached"] = True
@@ -589,11 +614,14 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
         normalized = normalize_query_params(request.query_params)
         # Generate a stable hash for the normalized query
         import hashlib
+
         param_string = urlencode(sorted(normalized.items()))
         query_hash = hashlib.sha256(param_string.encode("utf-8")).hexdigest()[:16]
 
-        return Response({
-            "normalized_query": normalized,
-            "query_hash": query_hash,
-            "canonical_string": param_string,
-        })
+        return Response(
+            {
+                "normalized_query": normalized,
+                "query_hash": query_hash,
+                "canonical_string": param_string,
+            }
+        )

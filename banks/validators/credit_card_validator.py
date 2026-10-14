@@ -271,9 +271,7 @@ class CreditCardDataValidator:
         except (ValueError, TypeError):
             # Not a plain number: accept percentage strings ("20% p.a."),
             # treat an explicit unknown marker as absence and reject the rest.
-            normalized, status = parse_numeric_value(
-                interest_rate, "interest_rate_apr"
-            )
+            normalized, status = parse_numeric_value(interest_rate, "interest_rate_apr")
             if status == STATUS_VALID:
                 rate_value = normalized
             elif status == STATUS_MISSING:

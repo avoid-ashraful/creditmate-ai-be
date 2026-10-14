@@ -15,18 +15,26 @@ def backfill_priority_order(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('banks', '0012_reviewqueue'),
+        ("banks", "0012_reviewqueue"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='reviewqueue',
-            options={'ordering': ['-priority_order', 'created'], 'verbose_name': 'review queue item', 'verbose_name_plural': 'review queue items'},
+            name="reviewqueue",
+            options={
+                "ordering": ["-priority_order", "created"],
+                "verbose_name": "review queue item",
+                "verbose_name_plural": "review queue items",
+            },
         ),
         migrations.AddField(
-            model_name='reviewqueue',
-            name='priority_order',
-            field=models.PositiveSmallIntegerField(db_index=True, default=1, help_text='Numeric order for sorting: 3=HIGH, 2=MEDIUM, 1=LOW'),
+            model_name="reviewqueue",
+            name="priority_order",
+            field=models.PositiveSmallIntegerField(
+                db_index=True,
+                default=1,
+                help_text="Numeric order for sorting: 3=HIGH, 2=MEDIUM, 1=LOW",
+            ),
         ),
         migrations.RunPython(backfill_priority_order, migrations.RunPython.noop),
     ]

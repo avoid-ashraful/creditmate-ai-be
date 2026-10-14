@@ -331,7 +331,9 @@ class TestPasswordResetConfirmView:
         """Test successful password reset confirmation."""
         data = self._get_reset_data(user)
 
-        response = api_client.post("/api/v1/auth/password-reset/confirm/", data, format="json")
+        response = api_client.post(
+            "/api/v1/auth/password-reset/confirm/", data, format="json"
+        )
 
         assert response.status_code == status.HTTP_200_OK
         assert "detail" in response.data
@@ -345,7 +347,9 @@ class TestPasswordResetConfirmView:
         data = self._get_reset_data(user)
         data["new_password_confirm"] = "differentpass123"
 
-        response = api_client.post("/api/v1/auth/password-reset/confirm/", data, format="json")
+        response = api_client.post(
+            "/api/v1/auth/password-reset/confirm/", data, format="json"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "new_password_confirm" in response.data
@@ -359,7 +363,9 @@ class TestPasswordResetConfirmView:
             "new_password_confirm": "newsecurepass123",
         }
 
-        response = api_client.post("/api/v1/auth/password-reset/confirm/", data, format="json")
+        response = api_client.post(
+            "/api/v1/auth/password-reset/confirm/", data, format="json"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "non_field_errors" in response.data
@@ -389,7 +395,9 @@ class TestPasswordResetConfirmView:
             "new_password_confirm": "newsecurepass123",
         }
 
-        response = api_client.post("/api/v1/auth/password-reset/confirm/", data, format="json")
+        response = api_client.post(
+            "/api/v1/auth/password-reset/confirm/", data, format="json"
+        )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "non_field_errors" in response.data
@@ -642,14 +650,20 @@ class TestTokenRefreshReuseDetection:
 @pytest.mark.django_db
 def test_refresh_returns_rotated_token_usable_for_next_refresh(api_client):
     """The rotated refresh token is returned; the old one is blacklisted."""
-    user = User.objects.create_user(username="rotate@example.com", email="rotate@example.com", password="S3cure!passphrase")
+    user = User.objects.create_user(
+        username="rotate@example.com",
+        email="rotate@example.com",
+        password="S3cure!passphrase",
+    )
     first = RefreshToken.for_user(user)
     response = api_client.post("/api/v1/auth/token/refresh/", {"refresh": str(first)})
     assert response.status_code == 200
     assert "access" in response.data and "refresh" in response.data
     assert response.data["refresh"] != str(first)
 
-    again = api_client.post("/api/v1/auth/token/refresh/", {"refresh": response.data["refresh"]})
+    again = api_client.post(
+        "/api/v1/auth/token/refresh/", {"refresh": response.data["refresh"]}
+    )
     assert again.status_code == 200
     reused = api_client.post("/api/v1/auth/token/refresh/", {"refresh": str(first)})
     assert reused.status_code == 400

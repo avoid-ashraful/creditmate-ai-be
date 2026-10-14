@@ -242,7 +242,8 @@ class TestTypeaheadSchemaAccuracyRegression:
         assert "matches" in actual_data
         assert isinstance(actual_data["matches"], dict)
         assert all(
-            key in actual_data["matches"] for key in ["card", "bank", "category", "source"]
+            key in actual_data["matches"]
+            for key in ["card", "bank", "category", "source"]
         )
 
         assert "facets" in actual_data
@@ -255,7 +256,9 @@ class TestTypeaheadSchemaAccuracyRegression:
 
         assert "highlight" in actual_data
         assert isinstance(actual_data["highlight"], dict)
-        assert all(key in actual_data["highlight"] for key in ["terms", "scope", "strategy"])
+        assert all(
+            key in actual_data["highlight"] for key in ["terms", "scope", "strategy"]
+        )
 
         assert "match_policy" in actual_data
         assert isinstance(actual_data["match_policy"], dict)
@@ -346,10 +349,12 @@ class TestTypeaheadSchemaAccuracyRegression:
         assert response.status_code == 200
         schema = response.data
 
-        history_schema_ref = schema["paths"][
-            "/api/v1/credit-cards/{id}/field-history/"
-        ]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
-        history_schema = schema["components"]["schemas"][history_schema_ref.split("/")[-1]]
+        history_schema_ref = schema["paths"]["/api/v1/credit-cards/{id}/field-history/"][
+            "get"
+        ]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
+        history_schema = schema["components"]["schemas"][
+            history_schema_ref.split("/")[-1]
+        ]
 
         assert {"count", "next", "previous", "results"} <= set(
             history_schema["properties"]

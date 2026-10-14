@@ -434,10 +434,9 @@ class BankDataCrawlerService:
             return False
 
         structured_data, raw_comprehensive_data, extraction_context = parsing_result
-        extraction_method = (
-            content_extraction_context.get("method")
-            or self._extraction_method(data_source)
-        )
+        extraction_method = content_extraction_context.get(
+            "method"
+        ) or self._extraction_method(data_source)
 
         # Store crawled content with both parsed data types
         crawled_content = self._create_crawl_record(
@@ -465,7 +464,9 @@ class BankDataCrawlerService:
             )
 
         # Update database
-        success = self._update_database_safely(data_source, structured_data, crawled_content)
+        success = self._update_database_safely(
+            data_source, structured_data, crawled_content
+        )
         if success:
             # Task 2.4: cross-check this record against the bank's other
             # sources and flag real conflicts for manual review.
@@ -495,9 +496,7 @@ class BankDataCrawlerService:
             it did not run (e.g. no other source exists yet).
         """
         try:
-            from banks.services.validation_collectors import (
-                run_multi_source_validation,
-            )
+            from banks.services.validation_collectors import run_multi_source_validation
 
             run_multi_source_validation(crawled_content)
             summary = crawled_content.multi_source_validation or {}
@@ -608,9 +607,7 @@ class BankDataCrawlerService:
 
         try:
             structured_data, raw_comprehensive_data = (
-                self.llm_parser.parse_comprehensive_data(
-                    content, data_source.bank.name
-                )
+                self.llm_parser.parse_comprehensive_data(content, data_source.bank.name)
             )
             return structured_data, raw_comprehensive_data, {}
         except (ConfigurationError, AIParsingError) as e:
@@ -887,7 +884,9 @@ class BankDataCrawlerService:
         data_source.increment_failed_attempts()
         logger.error(f"Database update failed for {data_source.bank.name}: {error}")
 
-    def _create_failed_crawl_record(self, data_source, error_message, extraction_method=""):
+    def _create_failed_crawl_record(
+        self, data_source, error_message, extraction_method=""
+    ):
         """Create a failed crawl record.
 
         Parameters

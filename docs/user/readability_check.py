@@ -161,7 +161,9 @@ def strip_typescript(text: str) -> str:
     for key in ARRAY_KEYS:
         pattern = rf"\b{key}:\s*\[(.*?)\]"
         for match in re.finditer(pattern, text, flags=re.S):
-            for item in re.finditer(r"(?:'(?:[^'\\]|\\.)*')|(?:\"(?:[^\"\\]|\\.)*\")", match.group(1)):
+            for item in re.finditer(
+                r"(?:'(?:[^'\\]|\\.)*')|(?:\"(?:[^\"\\]|\\.)*\")", match.group(1)
+            ):
                 pieces.append(unwrap(item.group(0)))
 
     prose = ". ".join(p for p in pieces if p.strip())
@@ -340,14 +342,34 @@ def main(argv: list[str]) -> int:
     if args.csv:
         buffer = io.StringIO()
         writer = csv.writer(buffer)
-        writer.writerow(["file", "words", "sentences", "syllables", "fk_grade", "flesch_ease", "gunning_fog"])
+        writer.writerow(
+            [
+                "file",
+                "words",
+                "sentences",
+                "syllables",
+                "fk_grade",
+                "flesch_ease",
+                "gunning_fog",
+            ]
+        )
         for row in results:
             writer.writerow(
-                [row.name, row.words, row.sentences, row.syllables, row.grade, row.ease, row.fog]
+                [
+                    row.name,
+                    row.words,
+                    row.sentences,
+                    row.syllables,
+                    row.grade,
+                    row.ease,
+                    row.fog,
+                ]
             )
         sys.stdout.write(buffer.getvalue())
     else:
-        print(f"{'file':<34}{'words':>7}{'sent':>6}{'syl':>6}{'FK':>8}{'FRE':>8}{'Fog':>8}")
+        print(
+            f"{'file':<34}{'words':>7}{'sent':>6}{'syl':>6}{'FK':>8}{'FRE':>8}{'Fog':>8}"
+        )
         print("-" * 77)
         for row in results:
             flag = "OK " if row.grade < args.max_grade else "FAIL"

@@ -183,7 +183,9 @@ def score_file(name: str, prose: str) -> dict[str, object]:
     return row
 
 
-def load_inputs(directory: str, frontend_files: list[str]) -> list[tuple[str, str]] | None:
+def load_inputs(
+    directory: str, frontend_files: list[str]
+) -> list[tuple[str, str]] | None:
     inputs = []
     for filename in gate.GUIDE_FILES:
         path = os.path.join(directory, filename)
@@ -272,7 +274,9 @@ def main(argv: list[str]) -> int:
         for failure in failures:
             print(f"  - {failure}", file=sys.stderr)
         return 1
-    print(f"\nall {len(rows)} file(s) below grade {args.max_grade} under every scorer that ran")
+    print(
+        f"\nall {len(rows)} file(s) below grade {args.max_grade} under every scorer that ran"
+    )
     return 0
 
 

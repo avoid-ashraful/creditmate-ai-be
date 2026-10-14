@@ -53,9 +53,7 @@ if _is_production and (
     or "*" in {host.strip() for host in _configured_allowed_hosts.split(",")}
 ):
     raise RuntimeError("ALLOWED_HOSTS must contain explicit hosts in production")
-ALLOWED_HOSTS = (
-    _configured_allowed_hosts or "testserver,localhost,127.0.0.1"
-).split(",")
+ALLOWED_HOSTS = (_configured_allowed_hosts or "testserver,localhost,127.0.0.1").split(",")
 
 # Cache Configuration
 # Backend is chosen explicitly via CACHE_BACKEND ("redis" default, "locmem"
@@ -95,7 +93,9 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "local").lower()
 SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
 SENTRY_ENVIRONMENT = os.getenv("SENTRY_ENVIRONMENT", ENVIRONMENT).strip()
 SENTRY_RELEASE = os.getenv("SENTRY_RELEASE", "").strip()
-SENTRY_TRACES_SAMPLE_RATE = parse_sample_rate(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
+SENTRY_TRACES_SAMPLE_RATE = parse_sample_rate(
+    os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")
+)
 
 if SENTRY_DSN:
     try:
@@ -296,7 +296,11 @@ SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "y
 SEARCH_URL = os.getenv("SEARCH_URL", "http://127.0.0.1:19200")
 SEARCH_INDEX_PREFIX = os.getenv("SEARCH_INDEX_PREFIX", "")
 SEARCH_REQUEST_TIMEOUT = int(os.getenv("SEARCH_REQUEST_TIMEOUT", "10"))
-SEARCH_VERIFY_CERTS = os.getenv("SEARCH_VERIFY_CERTS", "True").lower() in ("true", "1", "yes")
+SEARCH_VERIFY_CERTS = os.getenv("SEARCH_VERIFY_CERTS", "True").lower() in (
+    "true",
+    "1",
+    "yes",
+)
 # "queue"  -> signal writes to the outbox, a worker drains it (default)
 # "sync"   -> signal writes to the outbox and drains it inline (no worker needed)
 # "off"    -> signals are not connected at all
@@ -316,7 +320,9 @@ SEARCH_QUEUE_MAX_ATTEMPTS = int(os.getenv("SEARCH_QUEUE_MAX_ATTEMPTS", "5"))
 # METRICS_ALLOWED_IPS takes IPs or CIDR ranges and is matched against REMOTE_ADDR only.
 METRICS_TOKEN = os.getenv("METRICS_TOKEN", "").strip()
 METRICS_ALLOWED_IPS = [
-    entry.strip() for entry in os.getenv("METRICS_ALLOWED_IPS", "").split(",") if entry.strip()
+    entry.strip()
+    for entry in os.getenv("METRICS_ALLOWED_IPS", "").split(",")
+    if entry.strip()
 ]
 # Per-dependency timeout for /api/readyz/ checks, in seconds.
 READYZ_TIMEOUT_SECONDS = float(os.getenv("READYZ_TIMEOUT_SECONDS", "1.0"))
@@ -348,7 +354,9 @@ if ENVIRONMENT == "production":
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 else:
     # Console backend keeps development notifications inspectable without SMTP.
-    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+    EMAIL_BACKEND = os.getenv(
+        "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+    )
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "alerts@creditmate.ai")
 ALERTS_PUBLIC_BASE_URL = os.getenv("ALERTS_PUBLIC_BASE_URL", "http://localhost:8000")
