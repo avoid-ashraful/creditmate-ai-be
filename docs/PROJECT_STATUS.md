@@ -72,7 +72,7 @@
 | 5.3 Visual Regression Testing | ✅ DONE | `e2e/visual-regression.spec.ts` with snapshots, `chromatic.config.json`, Storybook stories have visual tests, threshold 0.2% |
 | 5.4 API Contract Tests | 🟡 PARTIAL | `task-8.2-devops/tests/test_task54_api_contracts.py` (schema validation tests), `test_api_contracts.py` - **Pact/Schemathesis consumer-driven contracts not found** |
 | 5.5 Performance Budgets & Monitoring | ✅ DONE | `lighthouse-ci.config.js` (LCP <2.5s mobile, TBT <200ms, CLS <0.1, bundle <200KB), `src/reportWebVitals.ts` (PostHog reporting), `PERFORMANCE_BUDGETS.md`, `bundle:budget` script |
-| 5.6 Load Testing (k6) | 🟡 PARTIAL | `task-8.2-devops/load-tests/smoke.js` exists, CI job `k6-smoke` runs nightly - **full 1000 VU / 10min sustained not verified, no bottleneck report** |
+| 5.6 Load Testing (k6) | 🟡 PARTIAL | `load-tests/` smoke/average/stress/spike scripts target the real routes; smoke ran against a local stub with k6. **Not run against a real stack at 1000 VUs; needs a staging environment.** |
 
 ---
 
@@ -113,7 +113,7 @@
 
 | Task | Status | Evidence |
 |------|--------|----------|
-| 9.1 User Guides & How-Tos | 🟡 PARTIAL | `docs/user/` folder exists, `src/pages/GuidesPage.tsx` with guide content - **guide articles ("How to choose first credit card", "Annual fee waivers", etc.) not fully verified** |
+| 9.1 User Guides & How-Tos | ✅ DONE | 4 required guides plus APR, comparison, accounts, saved, alerts, reviews, search and privacy guides in English and Bengali (`src/content/guides.ts`); readability grade < 8 enforced by a jest scorer (`docs/guides-readability.md`); FAQ JSON-LD and sitemap entries. Evidence-based; no external SEO tool run. |
 | 9.2 Bengali Glossary & Localization Prep | ✅ DONE | `src/locales/` (EN/BN with `useLanguage` hook), `src/data/glossary-bn.ts` (50+ terms), `LOCALIZATION_GUIDE.md`, BDT currency formatting, Bengali calendar option, RTL-ready CSS (logical properties), LanguageSwitcher component |
 | 9.3 API Documentation | ✅ DONE | `credit_mate_ai/settings.py:SPECTACULAR_SETTINGS` (drf-spectacular, auto-generated from DRF), `/api/v1/docs/swagger/` and `/api/v1/docs/redoc/`, examples, auth guide, rate limits, error codes, "Try it" console |
 | 9.4 Developer Documentation | ✅ DONE | `CONTRIBUTING.md`, `docs/development/ARCHITECTURE.md` (component diagram + data model), `ENVIRONMENT.md`, `DEPLOYMENT_RUNBOOKS.md`, `INCIDENT_RESPONSE.md`, `scripts/check_docs_links.py`; local checks and parent DevOps references documented. Remote deployment/rotation remains an operations verification. |
@@ -125,7 +125,7 @@
 | Task | Status | Evidence |
 |------|--------|----------|
 | 10.1 Event Tracking Implementation | ✅ DONE | `src/lib/analytics.ts` (all 12 required events: page_view, search, filter_apply, card_select, compare_start, compare_share, card_detail_view, quiz_start, quiz_complete, calculator_use, signup, login), properties (card_id, bank, filters, utm_*), user properties (tier, saved_comparisons, email_opt_in), GDPR opt-out/delete |
-| 10.2 Conversion Funnel Dashboard | 🟡 PARTIAL | `src/utils/funnel.ts` (funnel computation), `analytics-funnel.md` - **PostHog dashboards/cohorts not verified, weekly Slack report not configured** |
+| 10.2 Conversion Funnel Dashboard | 🟡 PARTIAL | Funnel/cohort config, report script and Slack payload builder in the frontend repo (tested, dry-run by default). **Needs a real PostHog project and SLACK_WEBHOOK_URL to go live.** |
 | 10.3 A/B Testing Framework | ✅ DONE | `src/lib/experiments.ts` (PostHog feature flags, random assignment consistent per user, statistical significance calculator, auto-stop on significance/harm), experiments: hero_cta_text, quiz_vs_browse_default, card_layout |
 | 10.4 SEO & Content Strategy | ✅ DONE | `src/scripts/generate-sitemap.mjs` (dynamic sitemap.xml), `src/utils/structuredData.ts` (Product, FAQPage, BreadcrumbList JSON-LD), meta tags on all pages, `content-strategy.md` (keywords: "best credit card bangladesh", "credit card comparison bd"), blog calendar structure |
 
@@ -179,8 +179,8 @@
 | 6 Search & Discovery | 3 | 3 | 0 | 0 |
 | 7 User Accounts | 4 | 4 | 0 | 0 |
 | 8 DevOps | 5 | 3 | 2 | 0 |
-| 9 Documentation | 4 | 3 | 1 | 0 |
+| 9 Documentation | 4 | 4 | 0 | 0 |
 | 10 Analytics | 4 | 2 | 2 | 0 |
-| **TOTAL** | **47** | **38** | **9** | **0** |
+| **TOTAL** | **47** | **39** | **8** | **0** |
 
-**Overall**: 81% DONE, 19% PARTIAL (all partials are "production/remote verification" gaps, not missing code)
+**Overall**: 83% DONE, 17% PARTIAL (all partials are "production/remote verification" gaps, not missing code)
