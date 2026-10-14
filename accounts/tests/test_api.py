@@ -3,6 +3,7 @@
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -636,3 +637,19 @@ class TestTokenRefreshReuseDetection:
 
         # Should fail because old token is blacklisted
         assert response2.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+def test_refresh_returns_rotated_token_usable_for_next_refresh(api_client):
+    """The rotated refresh token is returned; the old one is blacklisted."""
+    user = User.objects.create_user(username="rotate@example.com", email="rotate@example.com", password="S3cure!passphrase")
+    first = RefreshToken.for_user(user)
+    response = api_client.post("/api/v1/auth/token/refresh/", {"refresh": str(first)})
+    assert response.status_code == 200
+    assert "access" in response.data and "refresh" in response.data
+    assert response.data["refresh"] != str(first)
+
+    again = api_client.post("/api/v1/auth/token/refresh/", {"refresh": response.data["refresh"]})
+    assert again.status_code == 200
+    reused = api_client.post("/api/v1/auth/token/refresh/", {"refresh": str(first)})
+    assert reused.status_code == 400

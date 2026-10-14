@@ -182,10 +182,12 @@ class TokenRefreshView(_AuthBurstThrottleMixin, APIView):
     def post(self, request):
         serializer = TokenRefreshSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(
-            {"access": serializer.validated_data["access"]},
-            status=status.HTTP_200_OK,
-        )
+        # ROTATE_REFRESH_TOKENS blacklists the submitted refresh token, so the
+        # rotated one must be returned or the client's next refresh is rejected.
+        data = {"access": serializer.validated_data["access"]}
+        if "refresh" in serializer.validated_data:
+            data["refresh"] = serializer.validated_data["refresh"]
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class PasswordResetRequestView(_AuthBurstThrottleMixin, APIView):

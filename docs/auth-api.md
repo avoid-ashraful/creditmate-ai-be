@@ -121,8 +121,11 @@ Rotate refresh token and return new access token.
 
 ### Response (200 OK)
 ```json
-{"access": "eyJhbGciOiJIUzI1NiIs..."}
+{"access": "eyJhbGciOiJIUzI1NiIs...", "refresh": "eyJhbGciOiJIUzI1NiIs..."}
 ```
+
+The refresh token is rotated: the submitted one is blacklisted and the response carries
+its replacement. Clients must store the new `refresh` value or the next refresh fails.
 
 ### Errors
 - 400: Invalid/expired/blacklisted refresh token (reuse detection)

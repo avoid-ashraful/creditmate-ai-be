@@ -36,7 +36,7 @@ class AddedAPIContractTests(APITestCase):
         required = {
             ("/api/v1/auth/register/", "post"): {"detail"},
             ("/api/v1/auth/login/", "post"): {"access", "refresh", "user"},
-            ("/api/v1/auth/token/refresh/", "post"): {"access"},
+            ("/api/v1/auth/token/refresh/", "post"): {"access", "refresh"},
             ("/api/v1/auth/logout/", "post"): {"detail"},
             ("/api/v1/auth/me/", "get"): {"id", "username", "email", "first_name", "last_name", "profile"},
             ("/api/v1/auth/password-reset/", "post"): {"detail"},
@@ -109,7 +109,7 @@ class AddedAPIContractTests(APITestCase):
         token = RefreshToken.for_user(self.user)
         response = client.post("/api/v1/auth/token/refresh/", {"refresh": str(token)})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(set(response.data), {"access"})
+        self.assertEqual(set(response.data), {"access", "refresh"})
         response = client.post("/api/v1/auth/password-reset/", {"email": self.user.email})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(set(response.data), {"detail"})
