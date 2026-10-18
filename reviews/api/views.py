@@ -55,6 +55,14 @@ class PublicReviewListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
+        profile = getattr(self.request.user, "profile", None)
+        if not (profile and profile.email_verified):
+            raise PermissionDenied(
+                {
+                    "detail": "Verify your email address before posting a review.",
+                    "code": "email_not_verified",
+                }
+            )
         serializer.save(user=self.request.user, status=CardReview.Status.PENDING)
 
 
