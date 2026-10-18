@@ -318,3 +318,49 @@ class TestMergeCards:
         ]
         merged = MultiPassLLMExtractor.merge_cards(base, [])
         assert len(merged) == 2
+
+
+class TestTruncatedModelOutput:
+    """A response cut off at the token limit keeps its complete cards."""
+
+    def test_complete_cards_of_a_truncated_array_are_kept(self):
+        cards = [
+            {"name": "Gold", "annual_fee": 5000},
+            {"name": "Classic", "annual_fee": 0},
+        ]
+        truncated = json.dumps(cards)[:-12] + ', {"name": "Cut", "annual_fee": 3'
+        payload = MultiPassLLMExtractor._load_json(truncated)
+        assert [card["name"] for card in payload] == ["Gold"]
+
+    def test_truncated_wrapped_object_is_salvaged(self):
+        text = (
+            '{"cards": [{"name": "Gold", "additional_features": ["a", "b"]}, {"name": "Cu'
+        )
+        payload = MultiPassLLMExtractor._load_json(text)
+        assert payload == [{"name": "Gold", "additional_features": ["a", "b"]}]
+
+    def test_text_without_any_complete_card_is_unparseable(self):
+        assert MultiPassLLMExtractor._load_json('[{"name": "Cu') is None
+
+    def test_standard_pass_gets_a_large_output_budget(self):
+        recorded = {}
+
+        class Recording(FakeProvider):
+            def generate_response(self, prompt, **kwargs):
+                recorded.update(kwargs)
+                return super().generate_response(prompt, **kwargs)
+
+        extractor = MultiPassLLMExtractor(
+            provider=Recording(["[]"]), confidence_threshold=0.0
+        )
+        extractor.extract(LONG_DOCUMENT, "Sonali Bank PLC", method="pdf_text")
+        assert recorded["max_tokens"] >= 16000
+
+
+class TestLongDocuments:
+    def test_content_past_twelve_thousand_chars_reaches_the_prompt(self):
+        marker = "CARD TABLE ON LATE PAGE"
+        content = "x" * 40000 + marker
+        extractor, provider = make_extractor(["[]"], confidence_threshold=0.0)
+        extractor.extract(content, "Sonali Bank PLC", method="pdf_text")
+        assert marker in provider.prompts[0]
