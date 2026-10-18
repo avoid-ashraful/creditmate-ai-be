@@ -1,5 +1,10 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiTypes,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -395,6 +400,19 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({"id": item.id, "status": item.status}, status=HTTP_201_CREATED)
 
     @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="q",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Card, bank, or category search query. Matching uses the first "
+                    f"{AUTOCOMPLETE_QUERY_MAX_LENGTH} characters, then trims whitespace; "
+                    f"fewer than {AUTOCOMPLETE_MIN_QUERY_LENGTH} characters returns "
+                    f"no suggestions. Returns at most {AUTOCOMPLETE_MAX_RESULTS} suggestions."
+                ),
+            ),
+        ],
         responses=TypeaheadResponseSerializer,
         description="Return bounded, anonymous-safe card, bank, and category typeahead results.",
     )

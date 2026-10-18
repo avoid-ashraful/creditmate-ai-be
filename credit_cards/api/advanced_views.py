@@ -13,6 +13,7 @@ Provides a unified search endpoint with:
 import logging
 from urllib.parse import urlencode
 
+import django_filters
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -408,6 +409,210 @@ def _build_cache_key(prefix, query_params, request):
     return f"{prefix}:v{version}:{digest}"
 
 
+def _filter_schema_parameters():
+    """Derive query parameter types and range widgets from the advanced filterset.
+
+    Returns
+    -------
+    list of OpenApiParameter
+        Filter parameters, including the suffixed inputs used by range widgets.
+    """
+    filter_types = (
+        (django_filters.BooleanFilter, OpenApiTypes.BOOL),
+        (django_filters.NumberFilter, OpenApiTypes.NUMBER),
+        (django_filters.ModelChoiceFilter, OpenApiTypes.INT),
+        (django_filters.DateTimeFilter, OpenApiTypes.DATETIME),
+    )
+    parameters = []
+    for name, field in CreditCardAdvancedFilter.base_filters.items():
+        parameter_type = next(
+            (
+                kind
+                for filter_class, kind in filter_types
+                if isinstance(field, filter_class)
+            ),
+            OpenApiTypes.STR,
+        )
+        description = (
+            field.extra.get("help_text") or f"Filter by {name.replace('_', ' ')}"
+        )
+        if isinstance(field, django_filters.RangeFilter):
+            description = f"Numeric range; use {name}_min and {name}_max for bounds."
+            parameters.extend(
+                OpenApiParameter(
+                    name=f"{name}_{suffix}",
+                    type=OpenApiTypes.NUMBER,
+                    location=OpenApiParameter.QUERY,
+                    description=f"{bound} {field.field_name.replace('_', ' ')}",
+                )
+                for suffix, bound in (("min", "Minimum"), ("max", "Maximum"))
+            )
+        parameters.append(
+            OpenApiParameter(
+                name=name,
+                type=parameter_type,
+                location=OpenApiParameter.QUERY,
+                description=description,
+            )
+        )
+    return parameters
+
+
+# Keep curated descriptions and search controls while deriving every filter name.
+ADVANCED_SEARCH_PARAMETERS = [
+    OpenApiParameter(
+        name="search",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        description="Full-text search query across card name, bank, rewards, features",
+    ),
+    OpenApiParameter(
+        name="categories",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        description="Comma-separated category slugs for OR filtering (travel,cashback,premium,student,business,no-annual-fee)",
+    ),
+    OpenApiParameter(
+        name="annual_fee_min",
+        type=OpenApiTypes.NUMBER,
+        location=OpenApiParameter.QUERY,
+        description="Minimum annual fee",
+    ),
+    OpenApiParameter(
+        name="annual_fee_max",
+        type=OpenApiTypes.NUMBER,
+        location=OpenApiParameter.QUERY,
+        description="Maximum annual fee",
+    ),
+    OpenApiParameter(
+        name="interest_rate_min",
+        type=OpenApiTypes.NUMBER,
+        location=OpenApiParameter.QUERY,
+        description="Minimum APR",
+    ),
+    OpenApiParameter(
+        name="interest_rate_max",
+        type=OpenApiTypes.NUMBER,
+        location=OpenApiParameter.QUERY,
+        description="Maximum APR",
+    ),
+    OpenApiParameter(
+        name="has_lounge_access",
+        type=OpenApiTypes.BOOL,
+        location=OpenApiParameter.QUERY,
+        description="Filter cards with any lounge access",
+    ),
+    OpenApiParameter(
+        name="has_international_lounge",
+        type=OpenApiTypes.BOOL,
+        location=OpenApiParameter.QUERY,
+        description="Filter cards with international lounge access",
+    ),
+    OpenApiParameter(
+        name="has_domestic_lounge",
+        type=OpenApiTypes.BOOL,
+        location=OpenApiParameter.QUERY,
+        description="Filter cards with domestic lounge access",
+    ),
+    OpenApiParameter(
+        name="no_annual_fee",
+        type=OpenApiTypes.BOOL,
+        location=OpenApiParameter.QUERY,
+        description="Filter cards with no annual fee",
+    ),
+    OpenApiParameter(
+        name="has_fee_waiver",
+        type=OpenApiTypes.BOOL,
+        location=OpenApiParameter.QUERY,
+        description="Filter cards with fee waiver policy",
+    ),
+    OpenApiParameter(
+        name="card_network",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        description="Card network or comma-separated networks (visa,mastercard,amex,unionpay,jcb,diners,other)",
+    ),
+    OpenApiParameter(
+        name="is_islamic",
+        type=OpenApiTypes.BOOL,
+        location=OpenApiParameter.QUERY,
+        description="Only Islamic (true) or only conventional (false) cards",
+    ),
+    OpenApiParameter(
+        name="is_dual_currency",
+        type=OpenApiTypes.BOOL,
+        location=OpenApiParameter.QUERY,
+        description="Only dual-currency (true) or known single-currency (false) cards",
+    ),
+    OpenApiParameter(
+        name="max_min_monthly_income",
+        type=OpenApiTypes.NUMBER,
+        location=OpenApiParameter.QUERY,
+        description="Cards whose minimum monthly income (BDT) is at most this value",
+    ),
+    OpenApiParameter(
+        name="include_unknown_income",
+        type=OpenApiTypes.BOOL,
+        location=OpenApiParameter.QUERY,
+        description="With max_min_monthly_income, also include cards with no stated minimum income",
+    ),
+    OpenApiParameter(
+        name="feature_search",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        description="Search within additional features",
+    ),
+    OpenApiParameter(
+        name="bank_ids",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        description="Comma-separated bank IDs to filter",
+    ),
+    OpenApiParameter(
+        name="ordering",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        description="Sort field (relevance, annual_fee, -annual_fee, interest_rate_apr, -interest_rate_apr, -lounge_access_international, -lounge_access_domestic, name, -name, -created, created)",
+        enum=[
+            "relevance",
+            "annual_fee",
+            "-annual_fee",
+            "interest_rate_apr",
+            "-interest_rate_apr",
+            "-lounge_access_international",
+            "-lounge_access_domestic",
+            "name",
+            "-name",
+            "-created",
+            "created",
+        ],
+    ),
+    OpenApiParameter(
+        name="page",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        description="Page number (1-based)",
+    ),
+    OpenApiParameter(
+        name="page_size",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        description=f"Results per page (1-{MAX_PAGE_SIZE}, default {DEFAULT_PAGE_SIZE})",
+    ),
+    OpenApiParameter(
+        name="facets",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        description="Comma-separated facet names to include (bank,category,annual_fee_range,interest_rate_range,lounge_access,fee_waiver,has_annual_fee,card_network,is_islamic,is_dual_currency)",
+    ),
+]
+ADVANCED_SEARCH_PARAMETERS += [
+    parameter
+    for parameter in _filter_schema_parameters()
+    if parameter.name not in {item.name for item in ADVANCED_SEARCH_PARAMETERS}
+]
+
+
 class AdvancedSearchViewSet(viewsets.ViewSet):
     """Advanced search endpoint for credit cards.
 
@@ -424,153 +629,7 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
 
     @extend_schema(
         description="Advanced search for credit cards with filtering, faceting, and sorting",
-        parameters=[
-            OpenApiParameter(
-                name="search",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Full-text search query across card name, bank, rewards, features",
-            ),
-            OpenApiParameter(
-                name="categories",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Comma-separated category slugs for OR filtering (travel,cashback,premium,student,business,no-annual-fee)",
-            ),
-            OpenApiParameter(
-                name="annual_fee_min",
-                type=OpenApiTypes.NUMBER,
-                location=OpenApiParameter.QUERY,
-                description="Minimum annual fee",
-            ),
-            OpenApiParameter(
-                name="annual_fee_max",
-                type=OpenApiTypes.NUMBER,
-                location=OpenApiParameter.QUERY,
-                description="Maximum annual fee",
-            ),
-            OpenApiParameter(
-                name="interest_rate_min",
-                type=OpenApiTypes.NUMBER,
-                location=OpenApiParameter.QUERY,
-                description="Minimum APR",
-            ),
-            OpenApiParameter(
-                name="interest_rate_max",
-                type=OpenApiTypes.NUMBER,
-                location=OpenApiParameter.QUERY,
-                description="Maximum APR",
-            ),
-            OpenApiParameter(
-                name="has_lounge_access",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Filter cards with any lounge access",
-            ),
-            OpenApiParameter(
-                name="has_international_lounge",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Filter cards with international lounge access",
-            ),
-            OpenApiParameter(
-                name="has_domestic_lounge",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Filter cards with domestic lounge access",
-            ),
-            OpenApiParameter(
-                name="no_annual_fee",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Filter cards with no annual fee",
-            ),
-            OpenApiParameter(
-                name="has_fee_waiver",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Filter cards with fee waiver policy",
-            ),
-            OpenApiParameter(
-                name="card_network",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Card network or comma-separated networks (visa,mastercard,amex,unionpay,jcb,diners,other)",
-            ),
-            OpenApiParameter(
-                name="is_islamic",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Only Islamic (true) or only conventional (false) cards",
-            ),
-            OpenApiParameter(
-                name="is_dual_currency",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="Only dual-currency (true) or known single-currency (false) cards",
-            ),
-            OpenApiParameter(
-                name="max_min_monthly_income",
-                type=OpenApiTypes.NUMBER,
-                location=OpenApiParameter.QUERY,
-                description="Cards whose minimum monthly income (BDT) is at most this value",
-            ),
-            OpenApiParameter(
-                name="include_unknown_income",
-                type=OpenApiTypes.BOOL,
-                location=OpenApiParameter.QUERY,
-                description="With max_min_monthly_income, also include cards with no stated minimum income",
-            ),
-            OpenApiParameter(
-                name="feature_search",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Search within additional features",
-            ),
-            OpenApiParameter(
-                name="bank_ids",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Comma-separated bank IDs to filter",
-            ),
-            OpenApiParameter(
-                name="ordering",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Sort field (relevance, annual_fee, -annual_fee, interest_rate_apr, -interest_rate_apr, -lounge_access_international, -lounge_access_domestic, name, -name, -created, created)",
-                enum=[
-                    "relevance",
-                    "annual_fee",
-                    "-annual_fee",
-                    "interest_rate_apr",
-                    "-interest_rate_apr",
-                    "-lounge_access_international",
-                    "-lounge_access_domestic",
-                    "name",
-                    "-name",
-                    "-created",
-                    "created",
-                ],
-            ),
-            OpenApiParameter(
-                name="page",
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                description="Page number (1-based)",
-            ),
-            OpenApiParameter(
-                name="page_size",
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                description=f"Results per page (1-{MAX_PAGE_SIZE}, default {DEFAULT_PAGE_SIZE})",
-            ),
-            OpenApiParameter(
-                name="facets",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Comma-separated facet names to include (bank,category,annual_fee_range,interest_rate_range,lounge_access,fee_waiver,has_annual_fee,card_network,is_islamic,is_dual_currency)",
-            ),
-        ],
+        parameters=ADVANCED_SEARCH_PARAMETERS,
         responses={
             200: OpenApiTypes.OBJECT,
             400: OpenApiTypes.OBJECT,
@@ -643,38 +702,7 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
 
     @extend_schema(
         description="Normalize query parameters for saved search compatibility",
-        parameters=[
-            OpenApiParameter(
-                name="search",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Full-text search query",
-            ),
-            OpenApiParameter(
-                name="categories",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Comma-separated category slugs",
-            ),
-            OpenApiParameter(
-                name="annual_fee_min",
-                type=OpenApiTypes.NUMBER,
-                location=OpenApiParameter.QUERY,
-                description="Minimum annual fee",
-            ),
-            OpenApiParameter(
-                name="annual_fee_max",
-                type=OpenApiTypes.NUMBER,
-                location=OpenApiParameter.QUERY,
-                description="Maximum annual fee",
-            ),
-            OpenApiParameter(
-                name="ordering",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Sort field",
-            ),
-        ],
+        parameters=ADVANCED_SEARCH_PARAMETERS,
         responses={200: OpenApiTypes.OBJECT},
         tags=["credit-cards"],
     )

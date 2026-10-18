@@ -2353,11 +2353,51 @@
                     },
                     {
                         "in": "query",
+                        "name": "annual_fee_range",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Numeric range; use annual_fee_range_min and annual_fee_range_max for bounds."
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_range_max",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maximum annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_range_min",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimum annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Filter by bank"
+                    },
+                    {
+                        "in": "query",
                         "name": "bank_ids",
                         "schema": {
                             "type": "string"
                         },
                         "description": "Comma-separated bank IDs to filter"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank_name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by bank name"
                     },
                     {
                         "in": "query",
@@ -2377,6 +2417,24 @@
                     },
                     {
                         "in": "query",
+                        "name": "created__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Filter by created  gte"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Filter by created  lte"
+                    },
+                    {
+                        "in": "query",
                         "name": "facets",
                         "schema": {
                             "type": "string"
@@ -2390,6 +2448,22 @@
                             "type": "string"
                         },
                         "description": "Search within additional features"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_additional_features",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter by has additional features"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_annual_fee",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter by has annual fee"
                     },
                     {
                         "in": "query",
@@ -2425,6 +2499,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "ids",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Multiple values may be separated by commas."
+                    },
+                    {
+                        "in": "query",
                         "name": "include_unknown_income",
                         "schema": {
                             "type": "boolean"
@@ -2449,6 +2531,38 @@
                     },
                     {
                         "in": "query",
+                        "name": "interest_rate_range",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Numeric range; use interest_rate_range_min and interest_rate_range_max for bounds."
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range_max",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maximum interest rate apr"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range_min",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimum interest rate apr"
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_active",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter by is active"
+                    },
+                    {
+                        "in": "query",
                         "name": "is_dual_currency",
                         "schema": {
                             "type": "boolean"
@@ -2470,6 +2584,48 @@
                             "type": "number"
                         },
                         "description": "Cards whose minimum monthly income (BDT) is at most this value"
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_domestic_lounge",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Filter by min domestic lounge"
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_international_lounge",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Filter by min international lounge"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Filter by modified  gte"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Filter by modified  lte"
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name"
                     },
                     {
                         "in": "query",
@@ -2623,19 +2779,324 @@
                     },
                     {
                         "in": "query",
+                        "name": "annual_fee_range",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Numeric range; use annual_fee_range_min and annual_fee_range_max for bounds."
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_range_max",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maximum annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_range_min",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimum annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Filter by bank"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank_ids",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Comma-separated bank IDs to filter"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank_name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by bank name"
+                    },
+                    {
+                        "in": "query",
+                        "name": "card_network",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Card network or comma-separated networks (visa,mastercard,amex,unionpay,jcb,diners,other)"
+                    },
+                    {
+                        "in": "query",
                         "name": "categories",
                         "schema": {
                             "type": "string"
                         },
-                        "description": "Comma-separated category slugs"
+                        "description": "Comma-separated category slugs for OR filtering (travel,cashback,premium,student,business,no-annual-fee)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Filter by created  gte"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Filter by created  lte"
+                    },
+                    {
+                        "in": "query",
+                        "name": "facets",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Comma-separated facet names to include (bank,category,annual_fee_range,interest_rate_range,lounge_access,fee_waiver,has_annual_fee,card_network,is_islamic,is_dual_currency)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "feature_search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search within additional features"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_additional_features",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter by has additional features"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_annual_fee",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter by has annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_domestic_lounge",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with domestic lounge access"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_fee_waiver",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with fee waiver policy"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_international_lounge",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with international lounge access"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_lounge_access",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with any lounge access"
+                    },
+                    {
+                        "in": "query",
+                        "name": "ids",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Multiple values may be separated by commas."
+                    },
+                    {
+                        "in": "query",
+                        "name": "include_unknown_income",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "With max_min_monthly_income, also include cards with no stated minimum income"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_max",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maximum APR"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_min",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimum APR"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Numeric range; use interest_rate_range_min and interest_rate_range_max for bounds."
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range_max",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maximum interest rate apr"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_range_min",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimum interest rate apr"
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_active",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter by is active"
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_dual_currency",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only dual-currency (true) or known single-currency (false) cards"
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_islamic",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only Islamic (true) or only conventional (false) cards"
+                    },
+                    {
+                        "in": "query",
+                        "name": "max_min_monthly_income",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Cards whose minimum monthly income (BDT) is at most this value"
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_domestic_lounge",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Filter by min domestic lounge"
+                    },
+                    {
+                        "in": "query",
+                        "name": "min_international_lounge",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Filter by min international lounge"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Filter by modified  gte"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lte",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Filter by modified  lte"
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name"
+                    },
+                    {
+                        "in": "query",
+                        "name": "no_annual_fee",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with no annual fee"
                     },
                     {
                         "in": "query",
                         "name": "ordering",
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "-annual_fee",
+                                "-created",
+                                "-interest_rate_apr",
+                                "-lounge_access_domestic",
+                                "-lounge_access_international",
+                                "-name",
+                                "annual_fee",
+                                "created",
+                                "interest_rate_apr",
+                                "name",
+                                "relevance"
+                            ]
                         },
-                        "description": "Sort field"
+                        "description": "Sort field (relevance, annual_fee, -annual_fee, interest_rate_apr, -interest_rate_apr, -lounge_access_international, -lounge_access_domestic, name, -name, -created, created)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Page number (1-based)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "page_size",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Results per page (1-100, default 20)"
                     },
                     {
                         "in": "query",
@@ -2643,7 +3104,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "description": "Full-text search query"
+                        "description": "Full-text search query across card name, bank, rewards, features"
                     }
                 ],
                 "tags": [
@@ -2747,6 +3208,16 @@
             "get": {
                 "operationId": "v1_credit_cards_typeahead_retrieve",
                 "description": "Return bounded, anonymous-safe card, bank, and category typeahead results.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Card, bank, or category search query. Matching uses the first 100 characters, then trims whitespace; fewer than 2 characters returns no suggestions. Returns at most 8 suggestions."
+                    }
+                ],
                 "tags": [
                     "v1"
                 ],
