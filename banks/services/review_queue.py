@@ -1,14 +1,17 @@
 import logging
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
-from django.db import transaction
+from django.db import models, transaction
 from django.utils import timezone
 
 from banks.enums import ReviewPriority, ReviewStatus
-from banks.services.credit_card_data_service import CreditCardDataService
+from banks.services.credit_card_data_service import EMPTY_VALUES, CreditCardDataService
 from banks.validators.numeric_fields import parse_numeric_value
+from credit_cards.constants import REPORTABLE_FIELDS
+from credit_cards.models import CreditCard
 
 logger = logging.getLogger(__name__)
 
@@ -85,8 +88,20 @@ class ReviewQueueService:
 
     @transaction.atomic
     def approve(self, queue_item, reviewer=None, notes=""):
-        """Mark an extraction approved without changing trusted card data."""
+        """Mark an item approved, applying its proposed card value if it has one.
+
+        Crawl-quality items leave trusted card data unchanged. Crawler
+        proposals and user reports that name a field and carry a proposed
+        value update that field on the card; the card's field history records
+        the change.
+        """
         self._validate_pending(queue_item)
+        if (
+            queue_item.credit_card_id
+            and queue_item.field_name
+            and queue_item.proposed_value is not None
+        ):
+            self._apply_proposal(queue_item)
         return self._record_decision(queue_item, ReviewStatus.APPROVED, reviewer, notes)
 
     @transaction.atomic
@@ -117,7 +132,7 @@ class ReviewQueueService:
         reviewed_values = CreditCardDataService()._prepare_card_defaults(card_data)
         self._validate_card_values(card_data)
         for field, value in reviewed_values.items():
-            if field in {"annual_fee", "interest_rate_apr"} and value is None:
+            if value in EMPTY_VALUES:
                 continue
             setattr(card, field, value)
 
@@ -125,6 +140,27 @@ class ReviewQueueService:
         card.save(update_fields=list(reviewed_values) + ["modified"])
         self._sync_reviewed_card_data(crawled_content, card_data)
         return self._record_decision(queue_item, ReviewStatus.APPROVED, reviewer, notes)
+
+    def _apply_proposal(self, queue_item):
+        """Validate and save the proposed value on the linked card."""
+        card = queue_item.credit_card
+        field = queue_item.field_name
+        value = queue_item.proposed_value
+        if field not in REPORTABLE_FIELDS:
+            raise ValidationError({field: "Unknown card field."})
+        model_field = CreditCard._meta.get_field(field)
+        if isinstance(model_field, models.DecimalField):
+            try:
+                value = Decimal(str(value)).quantize(
+                    Decimal(1).scaleb(-model_field.decimal_places)
+                )
+            except InvalidOperation:
+                raise ValidationError({field: "Enter a valid numeric value."}) from None
+        elif isinstance(model_field, models.JSONField) and isinstance(value, str):
+            raise ValidationError({field: "Edit this structured field on the card."})
+        setattr(card, field, value)
+        card.full_clean()
+        card.save(update_fields=[field, "modified"])
 
     def _validate_pending(self, queue_item):
         if queue_item.status != ReviewStatus.PENDING:

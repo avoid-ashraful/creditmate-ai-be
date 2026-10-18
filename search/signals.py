@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 BANK_FIELDS_IN_CARD_DOCUMENT = ("name",)
 
 #: Card columns that change the active card count stored on bank documents.
-CARD_FIELDS_IN_BANK_DOCUMENT = ("bank_id", "is_active")
+CARD_FIELDS_IN_BANK_DOCUMENT = ("bank_id", "is_active", "verification_status")
 
 
 def _enqueue_after_commit(index_name, instance, action):
@@ -267,7 +267,10 @@ def _banks_affected_by_card(instance):
     if previous["bank_id"] != instance.bank_id:
         # Card moved: both the old and the new bank change.
         affected.update({previous["bank_id"], instance.bank_id})
-    if previous["is_active"] != instance.is_active:
+    if (
+        previous["is_active"] != instance.is_active
+        or previous["verification_status"] != instance.verification_status
+    ):
         affected.add(instance.bank_id)
     return {bank_id for bank_id in affected if bank_id}
 

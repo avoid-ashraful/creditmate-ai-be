@@ -9,6 +9,7 @@ import django  # noqa: E402
 django.setup()
 
 from banks.models import Bank  # noqa: E402
+from credit_cards.constants import VerificationStatus  # noqa: E402
 from credit_cards.models import CreditCard  # noqa: E402
 
 
@@ -28,6 +29,8 @@ def main():
             lounge_access_international=["4 visits per year", "", "Not available"][i % 3],
             lounge_access_domestic=["", "2 visits per year", "Not available"][i % 3],
             additional_features=["smoke", f"tier-{i % 3}"],
+            source_url=f"https://bank{i % 3 + 1}.example.test/cards/{i + 1}",
+            verification_status=VerificationStatus.VERIFIED,
         )
     print("Seeded 3 banks and 12 cards")
 

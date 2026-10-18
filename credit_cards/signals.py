@@ -17,6 +17,15 @@ TRACKED_FIELDS = {
     "reward_points_policy",
     "additional_features",
     "is_active",
+    "source_url",
+    "apply_url",
+    "verification_status",
+    "card_network",
+    "is_islamic",
+    "is_dual_currency",
+    "min_monthly_income",
+    "supplementary_card_fee",
+    "foreign_transaction_fee",
 }
 
 

@@ -2,7 +2,13 @@ from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
 
-from banks.enums import ContentType, ProcessingStatus, ReviewPriority, ReviewStatus
+from banks.enums import (
+    ContentType,
+    ProcessingStatus,
+    ReviewPriority,
+    ReviewSource,
+    ReviewStatus,
+)
 from common.models import Audit
 
 
@@ -34,14 +40,14 @@ class Bank(Audit):
 
     @property
     def credit_card_count(self):
-        """Return the number of active credit cards for this bank.
+        """Return the number of publicly visible credit cards for this bank.
 
         Returns
         -------
         int
-            Number of active credit cards associated with this bank
+            Number of active, verified credit cards associated with this bank
         """
-        return self.credit_cards.filter(is_active=True).count()
+        return self.credit_cards.public().count()
 
 
 class BankDataSource(Audit):
@@ -390,7 +396,31 @@ class ReviewQueue(Audit):
         on_delete=models.CASCADE,
         related_name="review_queue_item",
         verbose_name="crawled content",
+        null=True,
+        blank=True,
     )
+    source = models.CharField(
+        max_length=20,
+        choices=ReviewSource.choices,
+        default=ReviewSource.CRAWL_QUALITY,
+        db_index=True,
+    )
+    credit_card = models.ForeignKey(
+        "credit_cards.CreditCard",
+        on_delete=models.CASCADE,
+        related_name="review_items",
+        null=True,
+        blank=True,
+        help_text="Card a proposal or report refers to.",
+    )
+    field_name = models.CharField(max_length=100, blank=True, default="")
+    proposed_value = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Value to apply to field_name on the card when approved.",
+    )
+    message = models.TextField(blank=True, default="")
+    contact_email = models.EmailField(blank=True, default="")
     bank = models.ForeignKey(
         Bank,
         on_delete=models.CASCADE,

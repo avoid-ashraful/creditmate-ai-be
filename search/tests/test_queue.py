@@ -325,3 +325,35 @@ def test_lease_check_rejects_a_mixed_owner_batch():
 
     assert _holds_lease("token-a", [first]) is True
     assert _holds_lease("token-a", [first, second]) is False
+
+
+@pytest.mark.django_db
+class TestNonPublicCardsAreNotIndexed:
+    """Only active, verified cards may be present in the search index."""
+
+    def test_drain_deletes_instead_of_indexing_a_draft_card(self):
+        from credit_cards.factories import CreditCardFactory
+
+        public = CreditCardFactory(name="Indexed")
+        draft = CreditCardFactory(name="Not Indexed", verification_status="draft")
+        service = RecordingService()
+        for card in (public, draft):
+            SearchIndexUpdate.objects.create(
+                index_name=SearchIndexUpdate.INDEX_CREDIT_CARDS, object_id=card.pk
+            )
+
+        drain(service=service)
+
+        assert list(service.indexed["credit_cards"]) == [public.pk]
+        assert service.deleted["credit_cards"] == [draft.pk]
+
+    def test_rebuild_queryset_and_bank_counts_are_public_only(self):
+        from credit_cards.factories import CreditCardFactory
+        from search.service import _bank_queryset, _card_queryset
+
+        public = CreditCardFactory()
+        CreditCardFactory(bank=public.bank, verification_status="needs_review")
+        CreditCardFactory(bank=public.bank, is_active=False)
+
+        assert list(_card_queryset()) == [public]
+        assert _bank_queryset().get(pk=public.bank_id).active_credit_card_count == 1

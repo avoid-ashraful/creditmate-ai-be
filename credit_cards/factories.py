@@ -5,6 +5,7 @@ import factory
 from django.db.models.signals import post_save
 
 from banks.factories import BankFactory
+from credit_cards.constants import VerificationStatus
 from credit_cards.models import CreditCard
 
 
@@ -53,6 +54,8 @@ class CreditCardFactory(factory.django.DjangoModelFactory):
         [factory.Faker("word"), factory.Faker("word"), factory.Faker("word")]
     )
     is_active = True
+    verification_status = VerificationStatus.VERIFIED
+    source_url = factory.Sequence(lambda n: f"https://bank.example.test/cards/{n}")
 
     class Meta:
         model = CreditCard

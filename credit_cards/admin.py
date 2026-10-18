@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.utils import timezone
 
+from credit_cards.constants import VerificationStatus
 from credit_cards.models import CreditCard
 
 
@@ -15,17 +17,47 @@ class CreditCardAdmin(admin.ModelAdmin):
         "has_lounge_access",
         "has_annual_fee",
         "is_active",
+        "verification_status",
+        "card_network",
         "modified",
     ]
-    list_filter = ["bank", "is_active", "created", "modified"]
+    list_filter = [
+        "verification_status",
+        "card_network",
+        "is_islamic",
+        "bank",
+        "is_active",
+        "created",
+        "modified",
+    ]
     search_fields = ["name", "bank__name", "reward_points_policy"]
-    readonly_fields = ["created", "modified"]
+    readonly_fields = ["verified_at", "verified_by", "created", "modified"]
     ordering = ["bank__name", "name"]
+    actions = ["mark_verified", "mark_needs_review"]
 
     fieldsets = (
         (
             "Basic Information",
             {"fields": ("bank", "name", "annual_fee", "interest_rate_apr", "is_active")},
+        ),
+        (
+            "Verification",
+            {"fields": ("verification_status", "verified_at", "verified_by")},
+        ),
+        (
+            "Card Details",
+            {
+                "fields": (
+                    "source_url",
+                    "apply_url",
+                    "card_network",
+                    "is_islamic",
+                    "is_dual_currency",
+                    "min_monthly_income",
+                    "supplementary_card_fee",
+                    "foreign_transaction_fee",
+                ),
+            },
         ),
         (
             "Lounge Access",
@@ -67,3 +99,28 @@ class CreditCardAdmin(admin.ModelAdmin):
 
     has_annual_fee.boolean = True
     has_annual_fee.short_description = "Has Annual Fee"
+
+    @admin.action(description="Mark selected cards verified (publishes active cards)")
+    def mark_verified(self, request, queryset):
+        """Mark cards verified, recording who verified them and when."""
+        for card in queryset:
+            card.verification_status = VerificationStatus.VERIFIED
+            card.verified_at = timezone.now()
+            card.verified_by = request.user
+            card.save(
+                update_fields=[
+                    "verification_status",
+                    "verified_at",
+                    "verified_by",
+                    "modified",
+                ]
+            )
+        self.message_user(request, f"Marked {queryset.count()} card(s) verified.")
+
+    @admin.action(description="Mark selected cards as needs review (unpublishes)")
+    def mark_needs_review(self, request, queryset):
+        """Take cards out of public view until staff re-verify them."""
+        for card in queryset:
+            card.verification_status = VerificationStatus.NEEDS_REVIEW
+            card.save(update_fields=["verification_status", "modified"])
+        self.message_user(request, f"Marked {queryset.count()} card(s) as needs review.")

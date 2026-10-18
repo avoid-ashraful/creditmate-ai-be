@@ -136,7 +136,9 @@ class ReviewQueueAdmin(admin.ModelAdmin):
 
     list_display = [
         "bank",
-        "crawled_content",
+        "source",
+        "credit_card",
+        "field_name",
         "priority",
         "status",
         "extracted_summary",
@@ -144,11 +146,13 @@ class ReviewQueueAdmin(admin.ModelAdmin):
         "reviewed_at",
         "created",
     ]
-    list_filter = ["bank", "priority", "status", "created", "reviewed_at"]
+    list_filter = ["source", "bank", "priority", "status", "created", "reviewed_at"]
     search_fields = [
         "bank__name",
         "crawled_content__credit_card__name",
         "crawled_content__data_source__url",
+        "credit_card__name",
+        "message",
         "reviewer_notes",
     ]
     readonly_fields = [
@@ -162,9 +166,21 @@ class ReviewQueueAdmin(admin.ModelAdmin):
         "extracted_values",
         "trusted_values",
         "crawled_content",
+        "source",
+        "credit_card",
+        "field_name",
+        "proposed_value",
+        "message",
+        "contact_email",
     ]
     fields = [
+        "source",
         "crawled_content",
+        "credit_card",
+        "field_name",
+        "proposed_value",
+        "message",
+        "contact_email",
         "bank",
         "priority",
         "status",
@@ -190,6 +206,7 @@ class ReviewQueueAdmin(admin.ModelAdmin):
             .select_related(
                 "bank",
                 "reviewed_by",
+                "credit_card",
                 "crawled_content__data_source",
                 "crawled_content__credit_card",
             )
@@ -197,6 +214,8 @@ class ReviewQueueAdmin(admin.ModelAdmin):
 
     def extracted_summary(self, obj):
         """Return a compact extraction summary for the changelist."""
+        if obj.crawled_content is None:
+            return f"{obj.field_name or 'report'}: {obj.proposed_value}"
         card_data = obj.crawled_content.review_card_data or {}
         return f"{card_data.get('name', 'No card')} / fee {card_data.get('annual_fee', 'unknown')}"
 
@@ -204,13 +223,17 @@ class ReviewQueueAdmin(admin.ModelAdmin):
 
     def extracted_values(self, obj):
         """Show extracted values beside trusted values for manual comparison."""
+        if obj.crawled_content is None:
+            return "-"
         return json.dumps(obj.crawled_content.review_card_data, indent=2, sort_keys=True)
 
     extracted_values.short_description = "Extracted values"
 
     def trusted_values(self, obj):
         """Show the currently trusted card record for manual comparison."""
-        card = obj.crawled_content.credit_card
+        card = obj.credit_card or (
+            obj.crawled_content.credit_card if obj.crawled_content else None
+        )
         if card is None:
             return "No linked credit card"
         return json.dumps(
@@ -230,16 +253,16 @@ class ReviewQueueAdmin(admin.ModelAdmin):
     trusted_values.short_description = "Trusted values"
 
     def approve_items(self, request, queryset):
-        """Approve selected pending items without changing trusted card data."""
+        """Approve selected pending items, applying proposed card values."""
         service = ReviewQueueService()
         approved = 0
         for item in queryset:
             try:
                 service.approve(item, reviewer=request.user)
-            except ValidationError:
+            except ValidationError as exc:
                 self.message_user(
                     request,
-                    f"{item} could not be approved because it is not pending.",
+                    f"{item} could not be approved: {'; '.join(exc.messages)}",
                     messages.ERROR,
                 )
             else:
