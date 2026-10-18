@@ -363,6 +363,8 @@ class BankSpecificPrompts:
             '5. Strip currency symbols and commas: "TK 5,000" -> 5000, '
             '"20% p.a." -> 20.0\n'
             "6. If the document has no card information at all, return "
-            '{"cards": []}\n\n'
+            '{"cards": []}\n'
+            "7. annual_fee is the recurring primary-card fee (2nd year onwards / "
+            "renewal), not the first-year fee.\n\n"
             f"Document content:\n{content if content is not None else ''}"
         )
