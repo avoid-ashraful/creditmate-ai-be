@@ -8,6 +8,7 @@ import django_filters
 
 from django.db import models
 
+from credit_cards.api.filters import CardDetailFilterSet
 from credit_cards.lounge import (
     card_lounge_access_q,
     filter_lounge_count_min,
@@ -32,7 +33,7 @@ CATEGORY_SLUGS = [cat["slug"] for cat in CANONICAL_CATEGORIES]
 LOUNGE_DIRECTION_FIELDS = ("lounge_access_international", "lounge_access_domestic")
 
 
-class CreditCardAdvancedFilter(django_filters.FilterSet):
+class CreditCardAdvancedFilter(CardDetailFilterSet):
     """Advanced filter set for credit cards with multi-category OR logic and faceted search."""
 
     # Basic filters
@@ -336,6 +337,22 @@ FACET_DEFINITIONS = {
         "field": "has_annual_fee",
         "is_property": True,
     },
+    "card_network": {
+        "label": "Card Network",
+        "type": "terms",
+        "field": "card_network",
+        "size": 10,
+    },
+    "is_islamic": {
+        "label": "Islamic",
+        "type": "boolean",
+        "field": "is_islamic",
+    },
+    "is_dual_currency": {
+        "label": "Dual Currency",
+        "type": "boolean",
+        "field": "is_dual_currency",
+    },
 }
 
 
@@ -567,6 +584,7 @@ def normalize_query_params(query_params):  # noqa: C901
         "interest_rate_max",
         "min_international_lounge",
         "min_domestic_lounge",
+        "max_min_monthly_income",
         "feature_search",
         "ordering",
         "page",
@@ -582,9 +600,14 @@ def normalize_query_params(query_params):  # noqa: C901
         "no_annual_fee",
         "has_additional_features",
         "has_fee_waiver",
+        "include_unknown_income",
     }
 
+    # Tri-state: an explicit false is a real filter, so it is kept.
+    tristate_params = {"is_islamic", "is_dual_currency"}
+
     multi_value_params = {
+        "card_network",
         "categories",
         "ids",
         "bank_ids",
@@ -606,6 +629,13 @@ def normalize_query_params(query_params):  # noqa: C901
                     normalized[key] = "true"
             elif isinstance(value, bool) and value:
                 normalized[key] = "true"
+
+    for key in tristate_params:
+        value = query_params.get(key)
+        if isinstance(value, str) and value.lower().strip() in ("true", "1", "yes"):
+            normalized[key] = "true"
+        elif isinstance(value, str) and value.lower().strip() in ("false", "0", "no"):
+            normalized[key] = "false"
 
     # Process multi-value parameters - sort for consistency
     for key in multi_value_params:

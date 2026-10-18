@@ -65,6 +65,13 @@ CARD_FILTERS = {
     "interest_rate_max": ("range", "interest_rate_apr", "lte"),
     "min_lounge_visits_international": ("range", "lounge_visits_international", "gte"),
     "min_lounge_visits_domestic": ("range", "lounge_visits_domestic", "gte"),
+    # Comma-separated networks (``visa,mastercard``) match any listed network.
+    "card_network": ("terms_csv", "card_network"),
+    "is_islamic": ("term", "is_islamic"),
+    "is_dual_currency": ("term", "is_dual_currency"),
+    # Cards with an unknown minimum income only match with
+    # ``include_unknown_income=true`` (see ``build_filters``).
+    "max_min_monthly_income": ("range", "min_monthly_income", "lte"),
     # Category filters map to multi-field queries (OR logic across fields).
     # These are handled specially in _build_category_filter.
     "category": ("category",),
@@ -85,6 +92,9 @@ CARD_AGGREGATIONS = {
     "has_annual_fee": {"terms": {"field": "has_annual_fee"}},
     "annual_fee_known": {"terms": {"field": "annual_fee_known"}},
     "has_lounge_access": {"terms": {"field": "has_lounge_access"}},
+    "card_network": {"terms": {"field": "card_network"}},
+    "is_islamic": {"terms": {"field": "is_islamic"}},
+    "is_dual_currency": {"terms": {"field": "is_dual_currency"}},
     "additional_features": {"terms": {"field": "additional_features", "size": 30}},
     "annual_fee_ranges": {
         "range": {
@@ -355,6 +365,8 @@ def _build_defined_filter(definition, value):
             "has_lounge_access",
             "has_international_lounge",
             "has_domestic_lounge",
+            "is_islamic",
+            "is_dual_currency",
         ):
             boolean = _coerce_bool(value)
             return _term_clause(field, boolean) if boolean is not None else None
@@ -363,6 +375,9 @@ def _build_defined_filter(definition, value):
             return {"term": {field: numeric}}
         return _term_clause(field, value)
 
+    if filter_kind == "terms_csv":
+        values = [item.strip().lower() for item in str(value).split(",") if item.strip()]
+        return {"terms": {field: values}} if values else None
     if filter_kind == "range":
         numeric = _coerce_float(value)
         return (
@@ -511,6 +526,21 @@ def build_filters(kind, filters):
         if name not in filters or value is None or value == "" or value == []:
             continue
         clause = _build_defined_filter(definition, value)
+        if clause and name == "max_min_monthly_income":
+            if _coerce_bool(filters.get("include_unknown_income")) is True:
+                clause = {
+                    "bool": {
+                        "should": [
+                            clause,
+                            {
+                                "bool": {
+                                    "must_not": [{"exists": {"field": definition[1]}}]
+                                }
+                            },
+                        ],
+                        "minimum_should_match": 1,
+                    }
+                }
         if clause:
             clauses.append(clause)
     return clauses + _build_multi_value_filters(filters)

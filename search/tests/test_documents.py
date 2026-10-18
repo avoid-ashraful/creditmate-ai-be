@@ -259,3 +259,18 @@ class _StubCard:
 
 def _card(**overrides):
     return _StubCard(**overrides)
+
+
+def test_card_detail_fields_have_explicit_mappings():
+    properties = CREDIT_CARD_MAPPING["properties"]
+    expected = {
+        "source_url": "keyword",
+        "apply_url": "keyword",
+        "card_network": "keyword",
+        "is_islamic": "boolean",
+        "is_dual_currency": "boolean",
+        "min_monthly_income": "float",
+        "supplementary_card_fee": "text",
+        "foreign_transaction_fee": "text",
+    }
+    assert {name: properties[name]["type"] for name in expected} == expected

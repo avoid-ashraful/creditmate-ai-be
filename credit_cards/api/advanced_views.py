@@ -232,6 +232,31 @@ def _normalize_es_response(response, query, page, page_size):
             ],
         }
 
+    if "card_network" in aggregations:
+        facets["card_network"] = {
+            "label": "Card Network",
+            "type": "terms",
+            "buckets": [
+                {"key": bucket["key"], "count": bucket["doc_count"]}
+                for bucket in aggregations["card_network"]["buckets"]
+            ],
+        }
+
+    for name, label in (("is_islamic", "Islamic"), ("is_dual_currency", "Dual Currency")):
+        if name in aggregations:
+            facets[name] = {
+                "label": label,
+                "type": "boolean",
+                "buckets": [
+                    {
+                        "key": bucket["key"],
+                        "label": "Yes" if bucket["key"] else "No",
+                        "count": bucket["doc_count"],
+                    }
+                    for bucket in aggregations[name]["buckets"]
+                ],
+            }
+
     return {
         "query": query,
         "total": total_value,
@@ -448,6 +473,36 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
                 description="Filter cards with fee waiver policy",
             ),
             OpenApiParameter(
+                name="card_network",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Card network or comma-separated networks (visa,mastercard,amex,unionpay,jcb,diners,other)",
+            ),
+            OpenApiParameter(
+                name="is_islamic",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Only Islamic (true) or only conventional (false) cards",
+            ),
+            OpenApiParameter(
+                name="is_dual_currency",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Only dual-currency (true) or known single-currency (false) cards",
+            ),
+            OpenApiParameter(
+                name="max_min_monthly_income",
+                type=OpenApiTypes.NUMBER,
+                location=OpenApiParameter.QUERY,
+                description="Cards whose minimum monthly income (BDT) is at most this value",
+            ),
+            OpenApiParameter(
+                name="include_unknown_income",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="With max_min_monthly_income, also include cards with no stated minimum income",
+            ),
+            OpenApiParameter(
                 name="feature_search",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
@@ -494,7 +549,7 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
                 name="facets",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="Comma-separated facet names to include (bank,category,annual_fee_range,interest_rate_range,lounge_access,fee_waiver,has_annual_fee)",
+                description="Comma-separated facet names to include (bank,category,annual_fee_range,interest_rate_range,lounge_access,fee_waiver,has_annual_fee,card_network,is_islamic,is_dual_currency)",
             ),
         ],
         responses={
