@@ -9,11 +9,13 @@ response contracts, with specific focus on:
 """
 
 import pytest
+from drf_spectacular.generators import SchemaGenerator
 from rest_framework.test import APIClient
 
 from django.test import TestCase, override_settings
 
 from banks.factories import BankFactory
+from credit_cards.api.advanced_filters import CreditCardAdvancedFilter
 from credit_cards.factories import CreditCardFactory
 
 SCHEMA_URL = "/api/v1/schema/"
@@ -481,3 +483,41 @@ class TestSchemaGeneration(TestCase):
 
         # Check for search-suggestions endpoint
         assert "/api/v1/credit-cards/search-suggestions/" in paths
+
+
+@pytest.fixture(scope="module")
+def generated_search_schema():
+    """Generate the live OpenAPI contract for search parameter assertions."""
+    return SchemaGenerator().get_schema(request=None, public=True)
+
+
+@pytest.mark.parametrize("endpoint", ["advanced-search/", "advanced-search/normalize/"])
+def test_advanced_search_documents_every_filter(generated_search_schema, endpoint):
+    """Every accepted filter and range input must appear in both search contracts."""
+    operation = generated_search_schema["paths"][f"/api/v1/credit-cards/{endpoint}"][
+        "get"
+    ]
+    parameters = {item["name"]: item for item in operation["parameters"]}
+    assert set(CreditCardAdvancedFilter.base_filters) <= parameters.keys()
+    for name in ("annual_fee_range", "interest_rate_range"):
+        for suffix in ("min", "max"):
+            assert parameters[f"{name}_{suffix}"]["schema"]["type"] == "number"
+    assert parameters["has_annual_fee"]["schema"]["type"] == "boolean"
+
+
+def test_normalize_and_search_share_parameters(generated_search_schema):
+    """Normalization must document the complete search contract without drift."""
+    paths = generated_search_schema["paths"]
+    assert (
+        paths["/api/v1/credit-cards/advanced-search/"]["get"]["parameters"]
+        == paths["/api/v1/credit-cards/advanced-search/normalize/"]["get"]["parameters"]
+    )
+
+
+def test_typeahead_documents_query(generated_search_schema):
+    """Typeahead must document its string query and matching behavior."""
+    operation = generated_search_schema["paths"]["/api/v1/credit-cards/typeahead/"]["get"]
+    parameters = {item["name"]: item for item in operation["parameters"]}
+    assert parameters["q"]["in"] == "query"
+    assert parameters["q"]["schema"]["type"] == "string"
+    assert parameters["q"]["description"]
