@@ -1212,11 +1212,11 @@
                     },
                     "lounge_access_international": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 1000
                     },
                     "lounge_access_domestic": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 1000
                     },
                     "cash_advance_fee": {
                         "type": "string",
@@ -1348,11 +1348,11 @@
                     },
                     "lounge_access_international": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 1000
                     },
                     "lounge_access_domestic": {
                         "type": "string",
-                        "maxLength": 255
+                        "maxLength": 1000
                     },
                     "cash_advance_fee": {
                         "type": "string",
