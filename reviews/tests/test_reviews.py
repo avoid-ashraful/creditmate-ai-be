@@ -11,6 +11,14 @@ from reviews.models import CardReview
 User = get_user_model()
 
 
+def verified_user(username, **kwargs):
+    """Create a user whose email is verified (required to write reviews)."""
+    user = User.objects.create_user(username=username, **kwargs)
+    user.profile.email_verified = True
+    user.profile.save()
+    return user
+
+
 def card_setup(bank_name="Review Bank"):
     bank = Bank.objects.create(name=bank_name, website="https://example.com")
     return CreditCard.objects.create(bank=bank, name="Review Card")
@@ -43,7 +51,7 @@ def test_create_review_requires_auth_and_is_pending(db):
     url = reverse("review-list")
     payload = {"card": card.pk, "rating": 4, "title": "Great", "body": "Good rewards"}
     assert client.post(url, payload).status_code == 401
-    user = User.objects.create_user(username="member")
+    user = verified_user("member")
     client.force_authenticate(user)
     response = client.post(url, payload)
     assert response.status_code == 201
@@ -69,7 +77,7 @@ def test_summary_aggregates_approved_only_and_invalidates(db):
 
 def test_review_html_and_spam_are_rejected_or_stripped(db):
     card = card_setup()
-    user = User.objects.create_user(username="clean")
+    user = verified_user("clean")
     client = APIClient()
     client.force_authenticate(user)
     response = client.post(
@@ -220,7 +228,7 @@ def test_review_detail_auth_ownership_and_staff_moderation(db):
 
 def test_review_html_is_escaped_from_public_api(db):
     card = card_setup()
-    user = User.objects.create_user(username="markup")
+    user = verified_user("markup")
     client = APIClient()
     client.force_authenticate(user)
     created = client.post(
@@ -270,7 +278,7 @@ def test_review_throttle_and_public_list_query_count(db, django_assert_num_queri
     assert response.data["count"] == 3
     cache.clear()
     client = APIClient()
-    client.force_authenticate(User.objects.create_user(username="throttled"))
+    client.force_authenticate(verified_user("throttled"))
     url = reverse("review-list")
     payload = {"card": card.pk, "rating": 3, "title": "T", "body": "B"}
     assert client.post(url, payload).status_code == 201
@@ -281,3 +289,16 @@ def test_review_throttle_and_public_list_query_count(db, django_assert_num_queri
     last_card = card_setup("Review Bank 6")
     payload["card"] = last_card.pk
     assert client.post(url, payload).status_code == 429
+
+
+def test_unverified_email_cannot_create_review(db):
+    card = card_setup()
+    client = APIClient()
+    client.force_authenticate(User.objects.create_user(username="unverified"))
+    response = client.post(
+        reverse("review-list"),
+        {"card": card.pk, "rating": 4, "title": "Great", "body": "Good rewards"},
+    )
+    assert response.status_code == 403
+    assert response.data["code"] == "email_not_verified"
+    assert not CardReview.objects.exists()

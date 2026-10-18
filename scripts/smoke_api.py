@@ -100,6 +100,7 @@ def auth_suite():
             "email": email,
             "password": "Smoke-test-pass-482!",
             "password_confirm": "Smoke-test-pass-482!",
+            "accept_terms": True,
             "first_name": "Smoke",
             "last_name": "Runner",
         },

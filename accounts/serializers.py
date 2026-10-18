@@ -7,10 +7,12 @@ from rest_framework_simplejwt.serializers import (
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import UserProfile
@@ -23,8 +25,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["email_verified", "email_opt_in", "preferences"]
-        read_only_fields = ["email_verified"]
+        fields = [
+            "email_verified",
+            "email_opt_in",
+            "marketing_opt_in",
+            "terms_accepted_at",
+            "terms_version",
+            "preferences",
+        ]
+        read_only_fields = ["email_verified", "terms_accepted_at", "terms_version"]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -59,6 +68,16 @@ class RegisterSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     email_opt_in = serializers.BooleanField(default=False, required=False)
+    accept_terms = serializers.BooleanField(required=True)
+    marketing_opt_in = serializers.BooleanField(default=False, required=False)
+
+    def validate_accept_terms(self, value):
+        """Require explicit acceptance of the terms and privacy notice."""
+        if value is not True:
+            raise serializers.ValidationError(
+                _("You must accept the terms and privacy notice to register.")
+            )
+        return value
 
     def validate_email(self, value):
         """Normalize email to lowercase and check uniqueness."""
@@ -81,6 +100,8 @@ class RegisterSerializer(serializers.Serializer):
         password = validated_data.pop("password")
         validated_data.pop("password_confirm")
         email_opt_in = validated_data.pop("email_opt_in", False)
+        validated_data.pop("accept_terms")
+        marketing_opt_in = validated_data.pop("marketing_opt_in", False)
 
         user = User.objects.create_user(
             username=email,
@@ -89,9 +110,11 @@ class RegisterSerializer(serializers.Serializer):
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", ""),
         )
-        # Update profile with email_opt_in
         profile = user.profile
         profile.email_opt_in = email_opt_in
+        profile.marketing_opt_in = marketing_opt_in
+        profile.terms_accepted_at = timezone.now()
+        profile.terms_version = settings.TERMS_VERSION
         profile.save()
 
         return user
@@ -221,6 +244,28 @@ class EmailVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError(_("Email is already verified."))
 
         self.context["user"] = user
+        return value
+
+
+class ResendVerificationSerializer(serializers.Serializer):
+    """Serializer for requesting a new verification email."""
+
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        """Normalize only; never reveal whether the account exists."""
+        return value.lower().strip()
+
+
+class DeleteAccountSerializer(serializers.Serializer):
+    """Serializer confirming account deletion with the current password."""
+
+    password = serializers.CharField(write_only=True)
+
+    def validate_password(self, value):
+        """Require the current password."""
+        if not self.context["request"].user.check_password(value):
+            raise serializers.ValidationError(_("Current password is incorrect."))
         return value
 
 
