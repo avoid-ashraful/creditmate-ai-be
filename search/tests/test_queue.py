@@ -224,13 +224,13 @@ class TestAutomaticQueueScheduling:
     """The default queue mode must have a registered periodic worker task."""
 
     def test_beat_schedule_registers_drain_task(self, settings):
-        from credit_mate_ai.celery import app
+        from credit_mate_ai.celery import app, search_queue_drain_entry
 
-        if "search-index-queue-drain" not in app.conf.beat_schedule:
-            # The entry is registered at import time only when search is enabled.
-            pytest.skip("search disabled in this environment (SEARCH_ENABLED=False)")
-
-        entry = app.conf.beat_schedule["search-index-queue-drain"]
+        # SEARCH_ENABLED defaults to False, so enable it explicitly instead of
+        # depending on how the beat schedule was built at import time.
+        settings.SEARCH_ENABLED = True
+        settings.SEARCH_SYNC_MODE = "queue"
+        entry = search_queue_drain_entry()
         assert entry["task"] == "search.process_index_queue"
         interval = float(entry["schedule"])
         assert interval > 0
@@ -239,6 +239,9 @@ class TestAutomaticQueueScheduling:
         # worker startup and proves beat's task name is actually registered.
         app.loader.import_default_modules()
         assert entry["task"] in app.tasks
+
+        settings.SEARCH_ENABLED = False
+        assert search_queue_drain_entry() is None
 
     def test_beat_task_drains_pending_rows(
         self, django_capture_on_commit_callbacks, monkeypatch

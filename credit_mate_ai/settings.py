@@ -183,6 +183,7 @@ WSGI_APPLICATION = "credit_mate_ai.wsgi.application"
 # Database configuration - use DATABASE_URL if available, otherwise fallback to individual env vars
 if os.getenv("DATABASE_URL"):
     DATABASES = {"default": dj_database_url.parse(os.getenv("DATABASE_URL"))}
+    DATABASES["default"]["CONN_MAX_AGE"] = int(os.getenv("CONN_MAX_AGE", "60"))
 else:
     DATABASES = {
         "default": {
@@ -192,6 +193,7 @@ else:
             "PASSWORD": os.getenv("DB_PASSWORD", ""),
             "HOST": os.getenv("DB_HOST", "localhost"),
             "PORT": os.getenv("DB_PORT", "5432"),
+            "CONN_MAX_AGE": int(os.getenv("CONN_MAX_AGE", "60")),
         }
     }
 
@@ -233,8 +235,18 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise configuration (compression disabled for Railway compatibility)
-STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
+# Hashed, compressed static files in production; plain storage in DEBUG so
+# runserver/tests need no collectstatic manifest.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "whitenoise.storage.StaticFilesStorage"
+            if DEBUG
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
+    },
+}
 
 # Media files
 MEDIA_URL = "media/"
@@ -258,11 +270,13 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+# The alert task's lookback windows are derived from this interval.
+ALERTS_BEAT_INTERVAL_SECONDS = 3600
 CELERY_BEAT_SCHEDULE = {
     "send-alert-digests-hourly": {
         "task": "alerts.tasks.send_alert_digests",
-        "schedule": 3600.0,
-        "options": {"expires": 60 * 60},
+        "schedule": float(ALERTS_BEAT_INTERVAL_SECONDS),
+        "options": {"expires": ALERTS_BEAT_INTERVAL_SECONDS},
     },
     "crawl-bank-data-weekly": {
         "task": "banks.tasks.crawl_all_bank_data",
@@ -294,7 +308,7 @@ CELERY_BEAT_SCHEDULE = {
 # Search (Elasticsearch) Configuration
 # SEARCH_URL points at the local single node container published on 127.0.0.1:19200
 # by creditmate-ai-be/docker-compose.search.yml.
-SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "True").lower() in ("true", "1", "yes")
+SEARCH_ENABLED = os.getenv("SEARCH_ENABLED", "False").lower() in ("true", "1", "yes")
 SEARCH_URL = os.getenv("SEARCH_URL", "http://127.0.0.1:19200")
 SEARCH_INDEX_PREFIX = os.getenv("SEARCH_INDEX_PREFIX", "")
 SEARCH_REQUEST_TIMEOUT = int(os.getenv("SEARCH_REQUEST_TIMEOUT", "10"))
@@ -360,11 +374,10 @@ else:
         "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
     )
 
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "alerts@creditmate.ai")
-ALERTS_PUBLIC_BASE_URL = os.getenv("ALERTS_PUBLIC_BASE_URL", "http://localhost:8000")
-
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@creditmate.ai")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# Version of the terms/privacy text a user accepts at registration.
+TERMS_VERSION = os.getenv("TERMS_VERSION", "2026-10-draft")
 
 # Django REST Framework
 REST_FRAMEWORK = {
@@ -530,6 +543,27 @@ CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() in (
     "yes",
     "on",
 )
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"}
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "standard"},
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.getenv("LOG_LEVEL", "INFO").upper(),
+    },
+}
 
 # Content Security
 SECURE_CONTENT_TYPE_NOSNIFF = os.getenv(
