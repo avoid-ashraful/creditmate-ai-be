@@ -23,7 +23,28 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "other",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 80,
+        "text": "Double reward points monthly for every BDT 80 spent, up to 1,000 bonus reward points on cumulative transactions at Apex, Artisan, Astorion, Bata, and Le Reve"
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "dining",
+        "percent": 5,
+        "cap_text": "up to BDT 300 monthly",
+        "text": "5% cashback up to BDT 300 monthly at Coopers, Herfy, and Gloria Jeans"
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/dci-emerald-credit-card",
+    "reward_points_policy": "Double reward points monthly for every BDT 80 spent, up to 1,000 bonus reward points on cumulative transactions at Apex, Artisan, Astorion, Bata, and Le Reve 5% cashback up to BDT 300 monthly at Coopers, Herfy, and Gloria Jeans"
   },
   {
     "bank": "BRAC Bank PLC",
@@ -49,7 +70,33 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "dining",
+        "points_per_unit": 5,
+        "spend_unit_bdt": 80,
+        "text": "5X reward points for every BDT 80 spent every month on Foodpanda, KFC, Pathao Food, or Pizza Hut (up to 1,000 points)"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 80,
+        "text": "Double reward points for every BDT 80 spent on selected grocery purchases every Fridays & Saturdays"
+      },
+      {
+        "category": "dining",
+        "points_per_unit": 1000,
+        "spend_unit_bdt": 5000,
+        "text": "1,000 reward points every month by spending BDT 5,000 monthly at Cooper's Bakery, Crimson Cup, Domino's, Gloria Jean's, North End Coffee"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/millennial-mastercard-titanium",
+    "reward_points_policy": "5X reward points for every BDT 80 spent every month on Foodpanda, KFC, Pathao Food, or Pizza Hut (up to 1,000 points) Double reward points for every BDT 80 spent on selected grocery purchases every Fridays & Saturdays 1,000 reward points every month by spending BDT 5,000 monthly at Cooper's Bakery, Crimson Cup, Domino's, Gloria Jean's, North End Coffee"
   },
   {
     "bank": "BRAC Bank PLC",
@@ -75,7 +122,27 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "groceries",
+        "points_per_unit": 6,
+        "spend_unit_bdt": 80,
+        "text": "6 times reward points for every BDT 80 spent on grocery shopping every Saturday"
+      },
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 80,
+        "text": "Double Reward Points for every BDT 80 spent on retail purchases made on every Tuesday"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/mastercard-tara-world",
+    "reward_points_policy": "6 times reward points for every BDT 80 spent on grocery shopping every Saturday Double Reward Points for every BDT 80 spent on retail purchases made on every Tuesday"
   },
   {
     "bank": "BRAC Bank PLC",
@@ -101,7 +168,21 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "other",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 80,
+        "text": "Double reward points for every BDT 80 spent up to 1,000 bonus reward points by spending a minimum of BDT 5,000 monthly at top lifestyle and health merchants: Arogga, Bata, Bengal Meat, Fabrilife, Greens & Seeds, Khaas Food, Lazz Pharma, Praava Health."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/mastercard-world-credit-card",
+    "reward_points_policy": "Double reward points for every BDT 80 spent up to 1,000 bonus reward points by spending a minimum of BDT 5,000 monthly at top lifestyle and health merchants: Arogga, Bata, Bengal Meat, Fabrilife, Greens & Seeds, Khaas Food, Lazz Pharma, Praava Health."
   },
   {
     "bank": "BRAC Bank PLC",
@@ -127,7 +208,21 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [
+      {
+        "category": "all",
+        "percent": 1,
+        "cap_text": "up to BDT 300 per month; within the first 3 months of card issuance (newly issued primary credit card only); minimum spending BDT 500 per transaction",
+        "text": "1% monthly cashback (up to BDT 300 per month) on retail spend for POS, QR, and E-com, except MFS and pass-through, within the first 3 months of card issuance (For newly issued primary credit card only). (Minimum spending is BDT 500 per transaction.)"
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/visa-cashback-credit-card-1770109861",
+    "reward_points_policy": "1% monthly cashback (up to BDT 300 per month) on retail spend for POS, QR, and E-com, except MFS and pass-through, within the first 3 months of card issuance (For newly issued primary credit card only). (Minimum spending is BDT 500 per transaction.)"
   },
   {
     "bank": "BRAC Bank PLC",
@@ -153,7 +248,14 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/infinite-card",
+    "reward_points_policy": ""
   },
   {
     "bank": "BRAC Bank PLC",
@@ -179,7 +281,33 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 80,
+        "text": "Shop on Fridays and earn Double Reward Points on all local and international POS and E-commerce transactions."
+      },
+      {
+        "category": "online",
+        "points_per_unit": 200,
+        "spend_unit_bdt": 10000,
+        "text": "200 Bonus Reward Points every month by spending a minimum of BDT 10,000 on AliExpress, Amazon, and Google in a month."
+      },
+      {
+        "category": "other",
+        "points_per_unit": 200,
+        "spend_unit_bdt": 10000,
+        "text": "200 Bonus Reward Points by spending a minimum of BDT 10,000 monthly, using contactless payments."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/platinum-flexi",
+    "reward_points_policy": "Shop on Fridays and earn Double Reward Points on all local and international POS and E-commerce transactions. 200 Bonus Reward Points every month by spending a minimum of BDT 10,000 on AliExpress, Amazon, and Google in a month. 200 Bonus Reward Points by spending a minimum of BDT 10,000 monthly, using contactless payments."
   },
   {
     "bank": "BRAC Bank PLC",
@@ -205,7 +333,33 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "groceries",
+        "points_per_unit": 4,
+        "spend_unit_bdt": 80,
+        "text": "4X Reward Points on Grocery shopping at Agora, Khulshi Mart, Meena Bazar, Prince Bazar, Shwapno, and Unimart. Up to 1,000 Bonus Reward Points monthly. (BDT 80 spend will earn 4 Reward Points)"
+      },
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 80,
+        "text": "Double Reward Point for every BDT 80 spent on retail purchases"
+      },
+      {
+        "category": "fuel",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 80,
+        "text": "Double reward points for every BDT 80 spent on domestic fuel purchases each month, up to 1,000 Bonus Reward Points"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/signature-card",
+    "reward_points_policy": "4X Reward Points on Grocery shopping at Agora, Khulshi Mart, Meena Bazar, Prince Bazar, Shwapno, and Unimart. Up to 1,000 Bonus Reward Points monthly. (BDT 80 spend will earn 4 Reward Points) Double Reward Point for every BDT 80 spent on retail purchases Double reward points for every BDT 80 spent on domestic fuel purchases each month, up to 1,000 Bonus Reward Points"
   },
   {
     "bank": "BRAC Bank PLC",
@@ -231,7 +385,21 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 80,
+        "text": "Double Reward Points for every BDT 80 spent on retail purchases made on every Tuesday"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/tara-platinum-credit-card",
+    "reward_points_policy": "Double Reward Points for every BDT 80 spent on retail purchases made on every Tuesday"
   },
   {
     "bank": "BRAC Bank PLC",
@@ -282,7 +450,21 @@
     "source_url": "https://brackweb.s3.ap-southeast-1.amazonaws.com/uploads/all/Updated_SOC_in_accordance_to_approval_Aug_20266a4cb2b5d81f9.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 80,
+        "text": "Get 1 Reward Point for every BDT 80 spent"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.bracbank.com/en/retail/card/goldgold-flexi-card",
+    "reward_points_policy": "Get 1 Reward Point for every BDT 80 spent"
   },
   {
     "bank": "City Bank PLC",
@@ -306,7 +488,27 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "Aponjon Reward Points",
+    "reward_earn_rules": [
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 100,
+        "text": "Earn 10 Aponjon Reward points when you spend Tk. 100 at any Agora outlet across Bangladesh"
+      },
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 100,
+        "text": "Also earn 1 Aponjon reward point when you spend Tk. 100 or USD 2 through POS/ecommerce transactions anywhere else locally or overseas."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": "1",
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/agora-amex-credit-card",
+    "reward_points_policy": "Earn 10 Aponjon Reward points when you spend Tk. 100 at any Agora outlet across Bangladesh Also earn 1 Aponjon reward point when you spend Tk. 100 or USD 2 through POS/ecommerce transactions anywhere else locally or overseas."
   },
   {
     "bank": "City Bank PLC",
@@ -332,7 +534,28 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "Membership Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 3,
+        "spend_unit_bdt": 100,
+        "text": "Earn 3 Membership Rewards®️ Points for every BDT 100 or USD 1 spent"
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "all",
+        "percent": 5,
+        "cap_text": "up to BDT 10,000; during the first 3 months; minimum eligible spend of BDT 25,000 within 3 months",
+        "text": "Get 5% cashback on eligible spending during your first 3 months, up to BDT 10,000, or enjoy a BDT 5,000 travel luggage voucher."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p-ca/american-express-ultramarine-credit-card",
+    "reward_points_policy": "Earn 3 Membership Rewards®️ Points for every BDT 100 or USD 1 spent Get 5% cashback on eligible spending during your first 3 months, up to BDT 10,000, or enjoy a BDT 5,000 travel luggage voucher."
   },
   {
     "bank": "City Bank PLC",
@@ -356,7 +579,27 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MyRewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 MyRewards point for every Tk. 50/USD 1 spent on all purchase transactions"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10 MyRewards points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/biman-bangladesh-amex-credit-card",
+    "reward_points_policy": "Earn 1 MyRewards point for every Tk. 50/USD 1 spent on all purchase transactions and 10 MyRewards points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
   },
   {
     "bank": "City Bank PLC",
@@ -380,7 +623,40 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MyRewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "Earn 2 MyRewards Points for every Tk. 50/USD 1 spent on all applicable transactions"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10 points for every Tk. 50 spent at leading merchants for every first & last week of the month across the country."
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "groceries",
+        "percent": 10,
+        "cap_text": "up to BDT Tk. 1,000 per month",
+        "text": "Get 10% cashback up to BDT Tk. 1,000 per month at selected grocery stores across Bangladesh."
+      },
+      {
+        "category": "dining",
+        "percent": 10,
+        "cap_text": "up to BDT Tk. 500 per month",
+        "text": "Get 10% cashback up to BDT Tk. 500 per month at selected restaurants & personal care across Bangladesh."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/city-alo-amex-credit-card",
+    "reward_points_policy": "Earn 2 MyRewards Points for every Tk. 50/USD 1 spent on all applicable transactions and 10 points for every Tk. 50 spent at leading merchants for every first & last week of the month across the country. Get 10% cashback up to BDT Tk. 1,000 per month at selected grocery stores across Bangladesh. Get 10% cashback up to BDT Tk. 500 per month at selected restaurants & personal care across Bangladesh."
   },
   {
     "bank": "City Bank PLC",
@@ -404,7 +680,34 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "Membership Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 Membership Rewards point for every Tk. 50/USD 1 spent on all purchase transactions"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10 MR points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "other",
+        "percent": 10,
+        "cap_text": "up to BDT 200 per transaction",
+        "text": "Enjoy 10% Cashback up to BDT 200 per transaction on Green Line Bus Service."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/amex-blue-credit-card",
+    "reward_points_policy": "Earn 1 Membership Rewards point for every Tk. 50/USD 1 spent on all purchase transactions and 10 MR points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month. Enjoy 10% Cashback up to BDT 200 per transaction on Green Line Bus Service."
   },
   {
     "bank": "City Bank PLC",
@@ -428,7 +731,27 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "Membership Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 Membership Rewards point for every Tk. 50/USD 1 spent on all purchase transactions"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10 MR points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p-ca/amex-gold-credit-card",
+    "reward_points_policy": "Earn 1 Membership Rewards point for every Tk. 50/USD 1 spent on all purchase transactions and 10 MR points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
   },
   {
     "bank": "City Bank PLC",
@@ -452,7 +775,14 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/df/fees-and-charges",
+    "reward_points_policy": ""
   },
   {
     "bank": "City Bank PLC",
@@ -476,7 +806,27 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "Membership Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "Earn 2 Membership Rewards point for every Tk. 50/USD 1 spent on all purchase transactions"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10 MR points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p-ca/amex-platinum-credit-card",
+    "reward_points_policy": "Earn 2 Membership Rewards point for every Tk. 50/USD 1 spent on all purchase transactions and 10 MR points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
   },
   {
     "bank": "City Bank PLC",
@@ -500,7 +850,14 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/df/fees-and-charges",
+    "reward_points_policy": ""
   },
   {
     "bank": "City Bank PLC",
@@ -524,7 +881,33 @@
     "source_url": "https://www.citybankplc.com/p-ca/amex-platinum-reserve-credit-card",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "Membership Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 3,
+        "spend_unit_bdt": 50,
+        "text": "Earn 3 Membership Reward points for every Tk. 50/USD 1 spent on all purchase transactions"
+      },
+      {
+        "category": "travel",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10X MR points for every Tk. 50 spent at airlines merchants and leading grocery merchants for every first & last week of the month across the country."
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10X MR points for every Tk. 50 spent at airlines merchants and leading grocery merchants for every first & last week of the month across the country."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p-ca/amex-platinum-reserve-credit-card",
+    "reward_points_policy": "Earn 3 Membership Reward points for every Tk. 50/USD 1 spent on all purchase transactions and 10X MR points for every Tk. 50 spent at airlines merchants and leading grocery merchants for every first & last week of the month across the country. and 10X MR points for every Tk. 50 spent at airlines merchants and leading grocery merchants for every first & last week of the month across the country."
   },
   {
     "bank": "City Bank PLC",
@@ -548,7 +931,34 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20Mastercard%20World%20Elite%20Credit%20Card~17814379754382721.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MyRewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "Earn 2 points per BDT 50 spends"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "Earn 10X Reward Points on first and last weekends of each month at: Apon Family Mart, CSD Bangladesh, DSS Adi New, Khulshi Mart, Lavender, Prince Bazar, Unimart"
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "other",
+        "percent": 10,
+        "cap_text": "monthly eligible cashback amount is BDT 500; Minimum transaction should be BDT 500",
+        "text": "Get 10% cashback on movie tickets at Star Cineplex locations across Bangladesh."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/mastercard-world-elite-credit-card",
+    "reward_points_policy": "Earn 2 points per BDT 50 spends Earn 10X Reward Points on first and last weekends of each month at: Apon Family Mart, CSD Bangladesh, DSS Adi New, Khulshi Mart, Lavender, Prince Bazar, Unimart Get 10% cashback on movie tickets at Star Cineplex locations across Bangladesh."
   },
   {
     "bank": "City Bank PLC",
@@ -573,7 +983,34 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20Charges%20of%20City%20Bank%20Islamic%20Credit%20Cards~17851531881890921.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MyRewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Islamic Blue - Earn 1 MyRewards point for every Tk. 50/USD 1 spent on all purchase transactions"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10 MyRewards points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "other",
+        "percent": 10,
+        "cap_text": "up to BDT 200 per transaction",
+        "text": "Enjoy 10% Cashback up to BDT 200 per transaction on Green Line Bus Service."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/city-islamic-blue-amex-card",
+    "reward_points_policy": "Islamic Blue - Earn 1 MyRewards point for every Tk. 50/USD 1 spent on all purchase transactions and 10 MyRewards points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month. Enjoy 10% Cashback up to BDT 200 per transaction on Green Line Bus Service."
   },
   {
     "bank": "City Bank PLC",
@@ -598,7 +1035,27 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20Charges%20of%20City%20Bank%20Islamic%20Credit%20Cards~17851531881890921.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "Membership Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 Membership Rewards (MR) point for every Tk. 50/USD 1 spent on all purchase transactions"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10 MR points for every Tk. 50 spent at leading supermarkets across the country."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/city-islamic-gold-amex-card",
+    "reward_points_policy": "Earn 1 Membership Rewards (MR) point for every Tk. 50/USD 1 spent on all purchase transactions and 10 MR points for every Tk. 50 spent at leading supermarkets across the country."
   },
   {
     "bank": "City Bank PLC",
@@ -623,7 +1080,21 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20Charges%20of%20City%20Islamic%20VISA%20Infinite%20Credit%20Card~17905908124182721.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MyRewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 3,
+        "spend_unit_bdt": 100,
+        "text": "Earn 3 MyRewards Points upon spending BDT 100 or USD1"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p-ca/visa-infinite",
+    "reward_points_policy": "Earn 3 MyRewards Points upon spending BDT 100 or USD1"
   },
   {
     "bank": "City Bank PLC",
@@ -647,7 +1118,14 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20VISA%20Credit%20Cards~17835752307858821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/df/fees-and-charges",
+    "reward_points_policy": ""
   },
   {
     "bank": "City Bank PLC",
@@ -673,7 +1151,27 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20City%20Bank%20American%20Express%20Credit%20Card~17851530955959821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MyRewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 MyRewards point for every Tk. 50/USD 1 spent on all purchase transactions"
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 10,
+        "spend_unit_bdt": 50,
+        "text": "and 10 MyRewards points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/university-of-dhaka-amex-credit-card",
+    "reward_points_policy": "Earn 1 MyRewards point for every Tk. 50/USD 1 spent on all purchase transactions and 10 MyRewards points for every BDT 50 spends at leading supermarkets across the country applicable on the first and last weekend (Friday, Saturday) of every month."
   },
   {
     "bank": "City Bank PLC",
@@ -697,7 +1195,21 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20VISA%20Credit%20Cards~17835752307858821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [
+      {
+        "category": "all",
+        "percent": 1,
+        "cap_text": "up to BDT 12,000/year, after an initial BDT 1,000 cashback monthly for 3 months on BDT 25,000 spend",
+        "text": "Enjoy BDT 1,000 cashback monthly for 3 months on BDT 25,000 spend. Afterwards, City Visa Infinite conventional Cardmembers earn 1% cashback up to BDT 12,000/year; City Islamic Cardmembers earn 3 MyRewards points per BDT 100/USD 1 spends."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p-ca/visa-infinite",
+    "reward_points_policy": "Enjoy BDT 1,000 cashback monthly for 3 months on BDT 25,000 spend. Afterwards, City Visa Infinite conventional Cardmembers earn 1% cashback up to BDT 12,000/year; City Islamic Cardmembers earn 3 MyRewards points per BDT 100/USD 1 spends."
   },
   {
     "bank": "City Bank PLC",
@@ -723,7 +1235,21 @@
     "source_url": "https://citybankplc.com/admin/uploads/files/reports/fees-and-charges/~Click%20to%20see%20Fees%20and%20%20Charges%20of%20VISA%20Credit%20Cards~17835752307858821.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MyRewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 MyRewards Point for every BDT 50 spent"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.citybankplc.com/p/visa-platinum",
+    "reward_points_policy": "Earn 1 MyRewards Point for every BDT 50 spent"
   },
   {
     "bank": "Dutch-Bangla Bank PLC",
@@ -749,7 +1275,21 @@
     "source_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
     "apply_url": "https://www.dutchbanglabank.com/forms/cards/credit_card_application.pdf",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "You can earn 2 reward points for spending every BDT 50 and 3 Points for spending every USD 1 for local/international purchase transactions [Example: PoS purchase, E-Commerce purchase, QR Purchase etc.]."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.dutchbanglabank.com/electronic-banking/mastercardworld.html",
+    "reward_points_policy": "You can earn 2 reward points for spending every BDT 50 and 3 Points for spending every USD 1 for local/international purchase transactions [Example: PoS purchase, E-Commerce purchase, QR Purchase etc.]."
   },
   {
     "bank": "Dutch-Bangla Bank PLC",
@@ -775,7 +1315,21 @@
     "source_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
     "apply_url": "https://www.dutchbanglabank.com/forms/cards/credit_card_application.pdf",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "You can earn 2 reward points for spending every BDT 50 and 3 reward points for spending every USD 1 for local/international purchase transactions [Example: PoS purchase, E-Commerce purchase, QR Purchase etc.]."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.dutchbanglabank.com/electronic-banking/visasignature.html",
+    "reward_points_policy": "You can earn 2 reward points for spending every BDT 50 and 3 reward points for spending every USD 1 for local/international purchase transactions [Example: PoS purchase, E-Commerce purchase, QR Purchase etc.]."
   },
   {
     "bank": "Dutch-Bangla Bank PLC",
@@ -801,7 +1355,21 @@
     "source_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
     "apply_url": "https://www.dutchbanglabank.com/forms/cards/credit_card_application.pdf",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "VISA/Mastercard Gold Credit Card - Cardholder can earn 1 Reward Point for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": "0.3333",
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.dutchbanglabank.com/electronic-banking/PDF/DBBL-Credit-Card-Features.pdf",
+    "reward_points_policy": "VISA/Mastercard Gold Credit Card - Cardholder can earn 1 Reward Point for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
   },
   {
     "bank": "Dutch-Bangla Bank PLC",
@@ -827,7 +1395,21 @@
     "source_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
     "apply_url": "https://www.dutchbanglabank.com/forms/cards/credit_card_application.pdf",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "VISA/Mastercard Gold Credit Card - Cardholder can earn 1 Reward Point for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": "0.3333",
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.dutchbanglabank.com/electronic-banking/PDF/DBBL-Credit-Card-Features.pdf",
+    "reward_points_policy": "VISA/Mastercard Gold Credit Card - Cardholder can earn 1 Reward Point for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
   },
   {
     "bank": "Dutch-Bangla Bank PLC",
@@ -853,7 +1435,21 @@
     "source_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
     "apply_url": "https://www.dutchbanglabank.com/forms/cards/credit_card_application.pdf",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1.5,
+        "spend_unit_bdt": 50,
+        "text": "VISA Platinum/ Mastercard Titanium Credit Card - Cardholder can earn 1.5 Reward Points for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": "0.3333",
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.dutchbanglabank.com/electronic-banking/PDF/DBBL-Credit-Card-Features.pdf",
+    "reward_points_policy": "VISA Platinum/ Mastercard Titanium Credit Card - Cardholder can earn 1.5 Reward Points for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
   },
   {
     "bank": "Dutch-Bangla Bank PLC",
@@ -879,7 +1475,21 @@
     "source_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
     "apply_url": "https://www.dutchbanglabank.com/forms/cards/credit_card_application.pdf",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "VISA/Mastercard Gold Credit Card - Cardholder can earn 1 Reward Point for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": "0.3333",
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.dutchbanglabank.com/electronic-banking/PDF/DBBL-Credit-Card-Features.pdf",
+    "reward_points_policy": "VISA/Mastercard Gold Credit Card - Cardholder can earn 1 Reward Point for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
   },
   {
     "bank": "Dutch-Bangla Bank PLC",
@@ -905,7 +1515,21 @@
     "source_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
     "apply_url": "https://www.dutchbanglabank.com/forms/cards/credit_card_application.pdf",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "VISA/Mastercard Gold Credit Card - Cardholder can earn 1 Reward Point for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": "0.3333",
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.dutchbanglabank.com/electronic-banking/PDF/DBBL-Credit-Card-Features.pdf",
+    "reward_points_policy": "VISA/Mastercard Gold Credit Card - Cardholder can earn 1 Reward Point for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
   },
   {
     "bank": "Dutch-Bangla Bank PLC",
@@ -931,7 +1555,21 @@
     "source_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
     "apply_url": "https://www.dutchbanglabank.com/forms/cards/credit_card_application.pdf",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1.5,
+        "spend_unit_bdt": 50,
+        "text": "VISA Platinum/ Mastercard Titanium Credit Card - Cardholder can earn 1.5 Reward Points for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": "0.3333",
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.dutchbanglabank.com/electronic-banking/PDF/DBBL-Credit-Card-Features.pdf",
+    "reward_points_policy": "VISA Platinum/ Mastercard Titanium Credit Card - Cardholder can earn 1.5 Reward Points for spending (PoS purchase/ E-Commerce purchase/ QR Purchase) every BDT 50/ USD 1"
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1049,7 +1687,27 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [
+      {
+        "category": "groceries",
+        "percent": 5,
+        "cap_text": "Up to BDT 1000 cash-back per month; only transactions conducted on EBL POS considered for monthly cashback; cashback available till 30 September 2026",
+        "text": "5% cashback on every EBL POS purchase at Agora, Meena Bazar & Shwapno using your DCI Credit card. Up to BDT 1000 cash-back per month*."
+      },
+      {
+        "category": "other",
+        "percent": 10,
+        "cap_text": "Up to BDT 1000 cash-back per month; only transactions conducted on EBL POS considered for monthly cashback; cashback available till 30 September 2026",
+        "text": "10% cashback on every EBL POS purchase at Aarong using your DCI Credit Card. Up to BDT 1000 cash-back per month*."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/Diners-Club-Credit-Card",
+    "reward_points_policy": "5% cashback on every EBL POS purchase at Agora, Meena Bazar & Shwapno using your DCI Credit card. Up to BDT 1000 cash-back per month*. 10% cashback on every EBL POS purchase at Aarong using your DCI Credit Card. Up to BDT 1000 cash-back per month*."
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1121,7 +1779,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/EBL-World-Credit-Mastercard",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1325,7 +1990,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/EBL-VISA-Air-Force-Platinum-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1351,7 +2023,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/EBL-VISA-Army-Platinum-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1377,7 +2056,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/EBL-Visa-Classic-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1403,7 +2089,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/EBL-VISA-Gold-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1429,7 +2122,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/EBL-VISA-Navy-Platinum-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1455,7 +2155,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/EBL-VISA-Platinum-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1481,7 +2188,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/EBL-visa-women-platinum-credit-card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1507,7 +2221,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/ebl-wander-woman-co-brand-credit-mastercard",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1533,7 +2254,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/Mastercard-Titanium-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1559,7 +2287,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/unionpay-contactless-platinum-credit-card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1585,7 +2320,21 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [
+      {
+        "category": "all",
+        "percent": 10,
+        "cap_text": "Maximum cashback of BDT 500 per month (listed under 'Welcome Vouchers')",
+        "text": "10% Cashback on any retail purchase transactions. Maximum cashback of BDT 500 per month."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/visa-infinite-credit-card",
+    "reward_points_policy": "10% Cashback on any retail purchase transactions. Maximum cashback of BDT 500 per month."
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1609,7 +2358,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/VISA-Signature-Acci-shield-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1635,7 +2391,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/Visa-Signature-Lite-Credit-Card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Eastern Bank PLC",
@@ -1661,7 +2424,14 @@
     "source_url": "https://www.ebl.com.bd/assets/home/schedule/SOC-Cards_Effective_from_25May2026.pdf",
     "apply_url": "https://www.ebl.com.bd/onlineapply",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "EBL SKYCOINS",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ebl.com.bd/retail/eblcard/visa-women-signature-credit-card",
+    "reward_points_policy": ""
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1688,7 +2458,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1715,7 +2499,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1742,7 +2540,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1769,7 +2581,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1822,7 +2648,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1849,7 +2689,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1876,7 +2730,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1903,7 +2771,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1930,7 +2812,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1957,7 +2853,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "LankaBangla Finance PLC",
@@ -1984,7 +2894,21 @@
     "source_url": "https://www.lankabangla.com/fees-charge/",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "In every 36 months interval, existing reward point will be expired.",
+    "reward_source_url": "https://www.lankabangla.com/credit-card/",
+    "reward_points_policy": "1 (one) point for every BDT 50 on POS & e-Commerce transaction only (except add money to mobile wallet and transaction at fuel stations)"
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2094,7 +3018,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/cards/credit-card/mtb-classic-credit-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2139,7 +3070,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2165,7 +3103,21 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 100,
+        "text": "MRewardz is a comprehensive loyalty program designed to reward the Cardholders for their spending with their Credit Card. Customer will earn 2 MRewardz Point per BDT 100 or USD 1 for POS, QR & Online transactions."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/cards/credit-card/mtb-gold-credit-card/",
+    "reward_points_policy": "MRewardz is a comprehensive loyalty program designed to reward the Cardholders for their spending with their Credit Card. Customer will earn 2 MRewardz Point per BDT 100 or USD 1 for POS, QR & Online transactions."
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2234,7 +3186,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-Islamic-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/mtb-yaqeen/products/cards/mtb-yaqeen-ujrah-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2261,7 +3220,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-Islamic-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/mtb-yaqeen/products/cards/mtb-yaqeen-ujrah-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2288,7 +3254,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-Islamic-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/mtb-yaqeen/products/cards/mtb-yaqeen-ujrah-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2314,7 +3287,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/cards/credit-card/mtb-mastercard-titanium-credit-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2340,7 +3320,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/cards/credit-card/mtb-mastercard-world-credit-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2429,7 +3416,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/cards/credit-card/mtb-unionpay-diamond-credit-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2455,7 +3449,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/cards/credit-card/mtb-unionpay-platinum-credit-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2502,7 +3503,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/cards/credit-card/mtb-visa-platinum-credit-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2528,7 +3536,14 @@
     "source_url": "https://www.mutualtrustbank.com/wp-content/uploads/2026/10/SOC-2026-Effective-October-15th.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "MRewardz",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.mutualtrustbank.com/cards/credit-card/mtb-visa-signature-credit-card/",
+    "reward_points_policy": ""
   },
   {
     "bank": "Mutual Trust Bank PLC",
@@ -2598,7 +3613,14 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://primebank.com.bd/news/prime-bank-launches-co-branded-credit-card-with-cpa-to-enhance-financial-convenience-in-port",
+    "reward_points_policy": ""
   },
   {
     "bank": "Prime Bank PLC",
@@ -2624,7 +3646,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/conventional/cards/credit-card/jcb-gold-card",
+    "reward_points_policy": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
   },
   {
     "bank": "Prime Bank PLC",
@@ -2650,7 +3686,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/conventional/cards/credit-card/jcb-platinum",
+    "reward_points_policy": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
   },
   {
     "bank": "Prime Bank PLC",
@@ -2676,7 +3726,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/conventional/cards/credit-card/mastercard-platinum",
+    "reward_points_policy": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
   },
   {
     "bank": "Prime Bank PLC",
@@ -2702,7 +3766,14 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/conventional/cards/credit-card/visa-classic-card",
+    "reward_points_policy": ""
   },
   {
     "bank": "Prime Bank PLC",
@@ -2728,7 +3799,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218"
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/conventional/cards/credit-card/visa-gold",
+    "reward_points_policy": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218"
   },
   {
     "bank": "Prime Bank PLC",
@@ -2755,7 +3840,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/islamic-card/credit-card/visa-hasanah-gold",
+    "reward_points_policy": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
   },
   {
     "bank": "Prime Bank PLC",
@@ -2782,7 +3881,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "https://www.primebank.com.bd/apply-for-islamic/sub-islamic/visa-hasanah-platinum-card",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/islamic-card/credit-card/visa-hasanah-platinum-card",
+    "reward_points_policy": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
   },
   {
     "bank": "Prime Bank PLC",
@@ -2808,7 +3921,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/conventional/cards/credit-card/visa-platinum",
+    "reward_points_policy": "Earn 1 reward point for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
   },
   {
     "bank": "Prime Bank PLC",
@@ -2834,7 +3961,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "https://www.primebank.com.bd/apply-for-conventional/sub-sub-conventional/world-mastercard",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "Earn 2 reward points for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.primebank.com.bd/conventional/cards/credit-card/world-mastercard",
+    "reward_points_policy": "Earn 2 reward points for every BDT 50 spent on POS or E-commerce transactions. You can redeem reward points by simply contacting us at 16218."
   },
   {
     "bank": "Prime Bank PLC",
@@ -2858,7 +3999,21 @@
     "source_url": "https://www.primebank.com.bd/assets/schedule-charge/sub/files/1782727740_Credit-Card-SoC-01-08-2026-to-31-12-2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 Reward Point for every BDT 50 spent and turn your daily expenses into valuable rewards."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://zerobyprime.com",
+    "reward_points_policy": "Earn 1 Reward Point for every BDT 50 spent and turn your daily expenses into valuable rewards."
   },
   {
     "bank": "Standard Chartered Bank",
@@ -2884,7 +4039,21 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
     "apply_url": "https://www.sc.com/bd/credit-cards/generic/apply/",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "360 Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "Earn 1 reward point for every BDT 50 worth of retail transaction."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.sc.com/bd/credit-cards/assurance-credit-card/",
+    "reward_points_policy": "Earn 1 reward point for every BDT 50 worth of retail transaction."
   },
   {
     "bank": "Standard Chartered Bank",
@@ -2908,7 +4077,21 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
     "apply_url": "https://www.sc.com/bd/credit-cards/generic/apply/",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "With Every BDT 50 of retail spent on your Platinum Credit Card, you earn 1 Reward Points and enjoy FREE Gifts by redeeming the Gift Vouchers from our numerous partner outlets across the country."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.sc.com/bd/credit-cards/platinum-visa-mastercard/",
+    "reward_points_policy": "With Every BDT 50 of retail spent on your Platinum Credit Card, you earn 1 Reward Points and enjoy FREE Gifts by redeeming the Gift Vouchers from our numerous partner outlets across the country."
   },
   {
     "bank": "Standard Chartered Bank",
@@ -2932,7 +4115,28 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
     "apply_url": "https://www.sc.com/bd/credit-cards/generic/apply/",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "Earn 2 Reward Points for every BDT 50 retail transaction with your Visa Signature Credit Card where other cardholders can earn only 1. The accumulated points can be redeemed for a host of privileges."
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "dining",
+        "percent": 10,
+        "cap_text": "within the first 3 months of card generation",
+        "text": "As an esteemed Visa Signature Credit Cardholder, you are eligible to get 10% Cashback on dining within the first 3 months of card generation date of your credit card"
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.sc.com/bd/credit-cards/visa-signature/",
+    "reward_points_policy": "Earn 2 Reward Points for every BDT 50 retail transaction with your Visa Signature Credit Card where other cardholders can earn only 1. The accumulated points can be redeemed for a host of privileges. As an esteemed Visa Signature Credit Cardholder, you are eligible to get 10% Cashback on dining within the first 3 months of card generation date of your credit card"
   },
   {
     "bank": "Standard Chartered Bank",
@@ -2957,7 +4161,14 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-soc-saadiq-credit-card-january.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://av.sc.com/bd/content/docs/bd-soc-saadiq-credit-card-january.pdf",
+    "reward_points_policy": ""
   },
   {
     "bank": "Standard Chartered Bank",
@@ -2982,7 +4193,21 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-soc-saadiq-credit-card-january.pdf",
     "apply_url": "https://www.sc.com/bd/credit-cards/generic/apply/",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "360 Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 100,
+        "text": "Every BDT 100 spent on your Gold Card earns you 1 Reward Point."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.sc.com/bd/islamic-banking/saadiq-gold-creditcards/",
+    "reward_points_policy": "Every BDT 100 spent on your Gold Card earns you 1 Reward Point."
   },
   {
     "bank": "Standard Chartered Bank",
@@ -3007,7 +4232,21 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-soc-saadiq-credit-card-january.pdf",
     "apply_url": "https://www.sc.com/bd/credit-cards/generic/apply/",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "360º Reward",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "With Every BDT 50 of retail spend on your Saadiq Platinum credit card, earns 1 Reward Point."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.sc.com/bd/islamic-banking/saadiq-platinum-creditcards/",
+    "reward_points_policy": "With Every BDT 50 of retail spend on your Saadiq Platinum credit card, earns 1 Reward Point."
   },
   {
     "bank": "Standard Chartered Bank",
@@ -3031,7 +4270,21 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
     "apply_url": "https://www.sc.com/bd/credit-cards/generic/apply/",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 100,
+        "text": "Be rewarded in every way. Every BDT 100 spent on your Gold Card earns you 1 Reward Point."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.sc.com/bd/credit-cards/silver-visa-mastercard/",
+    "reward_points_policy": "Be rewarded in every way. Every BDT 100 spent on your Gold Card earns you 1 Reward Point."
   },
   {
     "bank": "Standard Chartered Bank",
@@ -3055,7 +4308,39 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
     "apply_url": "https://www.sc.com/bd/credit-cards/generic/apply/",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [
+      {
+        "category": "groceries",
+        "percent": 8,
+        "cap_text": "maximum BDT 1,200 cash back per month (overall)",
+        "text": "cash back ... 8% on grocery spend"
+      },
+      {
+        "category": "dining",
+        "percent": 5,
+        "cap_text": "maximum BDT 1,200 cash back per month (overall)",
+        "text": "5% on dining & hotel"
+      },
+      {
+        "category": "fuel",
+        "percent": 2,
+        "cap_text": "maximum BDT 1,200 cash back per month (overall)",
+        "text": "2% on fuel"
+      },
+      {
+        "category": "all",
+        "percent": 1,
+        "cap_text": "maximum BDT 1,200 cash back per month (overall)",
+        "text": "1% on all other transactions (except mobile wallet/mobile financial services)"
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.sc.com/bd/credit-cards/super-value-titanium/",
+    "reward_points_policy": "cash back ... 8% on grocery spend 5% on dining & hotel 2% on fuel 1% on all other transactions (except mobile wallet/mobile financial services)"
   },
   {
     "bank": "Standard Chartered Bank",
@@ -3081,7 +4366,46 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
     "apply_url": "https://www.sc.com/bd/credit-cards/generic/apply/",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "360 Rewards",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 100,
+        "text": "Earn 1 reward point for every BDT 100 worth of retail transaction."
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "online",
+        "percent": 15,
+        "cap_text": "Maximum BDT 250 per transaction and BDT 500 per month (Daraz)",
+        "text": "Daraz: 15% earn-back on each order (Maximum BDT 250 per transaction and BDT 500 per month)"
+      },
+      {
+        "category": "online",
+        "percent": 15,
+        "cap_text": "Maximum BDT 100 per transaction and BDT 300 per month (Foodpanda and Panda Mart)",
+        "text": "Foodpanda and Panda Mart: 15% earn-back on each order (Maximum BDT 100 per transaction and BDT 300 per month)"
+      },
+      {
+        "category": "online",
+        "percent": 10,
+        "cap_text": "up to BDT 500 on any purchase of educational courses via online platform",
+        "text": "Educational Coursed online: 10% earn-back up to BDT 500 on any purchase of educational courses via online platform"
+      },
+      {
+        "category": "dining",
+        "percent": 25,
+        "cap_text": "up to BDT 500 per month at North End Coffee Roasters, Gloria Jean's Coffees Bangladesh and Indulge",
+        "text": "Café Hangout: 25% earn-back up to BDT 500 per month at North End Coffee Roasters, Gloria Jean's Coffees Bangladesh and Indulge"
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.sc.com/bd/credit-cards/visa-smart-platinum/",
+    "reward_points_policy": "Earn 1 reward point for every BDT 100 worth of retail transaction. Daraz: 15% earn-back on each order (Maximum BDT 250 per transaction and BDT 500 per month) Foodpanda and Panda Mart: 15% earn-back on each order (Maximum BDT 100 per transaction and BDT 300 per month) Educational Coursed online: 10% earn-back up to BDT 500 on any purchase of educational courses via online platform Café Hangout: 25% earn-back up to BDT 500 per month at North End Coffee Roasters, Gloria Jean's Coffees Bangladesh and Indulge"
   },
   {
     "bank": "Standard Chartered Bank",
@@ -3105,7 +4429,14 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
+    "reward_points_policy": ""
   },
   {
     "bank": "Standard Chartered Bank",
@@ -3129,7 +4460,14 @@
     "source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://av.sc.com/bd/content/docs/bd-scb-credit-card-consolidated-soc-latest.pdf",
+    "reward_points_policy": ""
   },
   {
     "bank": "United Commercial Bank PLC",
@@ -3180,7 +4518,21 @@
     "source_url": "https://www.ucb.com.bd/reports/schedule-of-charges/ucb-plc-conventional-soc-may2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ucb.com.bd/cards/choose-your-card/master-classic-card/",
+    "reward_points_policy": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
   },
   {
     "bank": "United Commercial Bank PLC",
@@ -3206,7 +4558,21 @@
     "source_url": "https://www.ucb.com.bd/reports/schedule-of-charges/ucb-plc-conventional-soc-may2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ucb.com.bd/cards/choose-your-card/master-gold-card/",
+    "reward_points_policy": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
   },
   {
     "bank": "United Commercial Bank PLC",
@@ -3232,7 +4598,21 @@
     "source_url": "https://www.ucb.com.bd/reports/schedule-of-charges/ucb-plc-conventional-soc-may2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ucb.com.bd/cards/choose-your-card/master-platinum-card/",
+    "reward_points_policy": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
   },
   {
     "bank": "United Commercial Bank PLC",
@@ -3258,7 +4638,40 @@
     "source_url": "https://www.ucb.com.bd/reports/schedule-of-charges/ucb-plc-conventional-soc-may2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "One reward point on regular shopping ... for each BDT 50/$1.00 value transaction. Cardholder can waive annual fees or buy products at selected merchants by redeeming reward points."
+      },
+      {
+        "category": "groceries",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "double reward points on grocery shopping for each BDT 50/$1.00 value transaction."
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "international",
+        "percent": 1,
+        "cap_text": "Yearly Maximum 50$ per card (transactions at Hotel and Dining)",
+        "text": "1% cash back on international transactions at Hotel and Dining. Yearly Maximum 50$ per card."
+      },
+      {
+        "category": "dining",
+        "percent": 10,
+        "cap_text": "welcome benefit; Yearly maximum BDT 1000 per Card",
+        "text": "10% Cash Back as welcome benefit at reputed dining partners. Yearly maximum BDT 1000 per Card."
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ucb.com.bd/cards/choose-your-card/master-world-card/",
+    "reward_points_policy": "One reward point on regular shopping ... for each BDT 50/$1.00 value transaction. Cardholder can waive annual fees or buy products at selected merchants by redeeming reward points. double reward points on grocery shopping for each BDT 50/$1.00 value transaction. 1% cash back on international transactions at Hotel and Dining. Yearly Maximum 50$ per card. 10% Cash Back as welcome benefit at reputed dining partners. Yearly maximum BDT 1000 per Card."
   },
   {
     "bank": "United Commercial Bank PLC",
@@ -3284,7 +4697,21 @@
     "source_url": "https://www.ucb.com.bd/reports/schedule-of-charges/ucb-plc-conventional-soc-may2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ucb.com.bd/cards/choose-your-card/visa-classic-card/",
+    "reward_points_policy": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
   },
   {
     "bank": "United Commercial Bank PLC",
@@ -3310,7 +4737,21 @@
     "source_url": "https://www.ucb.com.bd/reports/schedule-of-charges/ucb-plc-conventional-soc-may2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "One Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ucb.com.bd/cards/choose-your-card/visa-gold-card/",
+    "reward_points_policy": "One Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
   },
   {
     "bank": "United Commercial Bank PLC",
@@ -3336,7 +4777,21 @@
     "source_url": "https://www.ucb.com.bd/reports/schedule-of-charges/ucb-plc-conventional-soc-may2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 1,
+        "spend_unit_bdt": 50,
+        "text": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
+      }
+    ],
+    "cashback_rules": [],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ucb.com.bd/cards/choose-your-card/visa-platinum-card/",
+    "reward_points_policy": "1 Reward Point for each BDT 50/$1 value transaction. Customer will be able to waive Annual Fees or Buy products at selected merchants by redeeming Reward Points."
   },
   {
     "bank": "United Commercial Bank PLC",
@@ -3362,6 +4817,33 @@
     "source_url": "https://www.ucb.com.bd/reports/schedule-of-charges/ucb-plc-conventional-soc-may2026.pdf",
     "apply_url": "",
     "verification_status": "verified",
-    "verified_at": "2026-10-18T00:00:00+00:00"
+    "verified_at": "2026-10-18T00:00:00+00:00",
+    "reward_program_name": "",
+    "reward_earn_rules": [
+      {
+        "category": "all",
+        "points_per_unit": 2,
+        "spend_unit_bdt": 50,
+        "text": "2X reward points for each BDT50/ $1.00 value transaction"
+      }
+    ],
+    "cashback_rules": [
+      {
+        "category": "groceries",
+        "percent": 10,
+        "cap_text": "Maximum cash back amount BDT 3000 during the period (superstores and dining combined); for 3 months from issuance",
+        "text": "10% Cash Back on superstores and dining (transactions within Bangladesh) for 3 months from issuance. Maximum cash back amount BDT 3000 during the period"
+      },
+      {
+        "category": "dining",
+        "percent": 10,
+        "cap_text": "Maximum cash back amount BDT 3000 during the period (superstores and dining combined); for 3 months from issuance",
+        "text": "10% Cash Back on superstores and dining (transactions within Bangladesh) for 3 months from issuance. Maximum cash back amount BDT 3000 during the period"
+      }
+    ],
+    "reward_point_value_bdt": null,
+    "points_expiry_text": "",
+    "reward_source_url": "https://www.ucb.com.bd/cards/choose-your-card/visa-signature-card/",
+    "reward_points_policy": "2X reward points for each BDT50/ $1.00 value transaction 10% Cash Back on superstores and dining (transactions within Bangladesh) for 3 months from issuance. Maximum cash back amount BDT 3000 during the period 10% Cash Back on superstores and dining (transactions within Bangladesh) for 3 months from issuance. Maximum cash back amount BDT 3000 during the period"
   }
 ]

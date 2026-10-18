@@ -5398,6 +5398,27 @@
                     "reward_points_policy": {
                         "type": "string"
                     },
+                    "reward_program_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "reward_earn_rules": {},
+                    "cashback_rules": {},
+                    "reward_point_value_bdt": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,6}(?:\\.\\d{0,4})?$",
+                        "nullable": true,
+                        "description": "Redemption value of one point in BDT, only when stated"
+                    },
+                    "points_expiry_text": {
+                        "type": "string"
+                    },
+                    "reward_source_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 500
+                    },
                     "additional_features": {},
                     "is_active": {
                         "type": "boolean"
@@ -5584,6 +5605,27 @@
                     "reward_points_policy": {
                         "type": "string"
                     },
+                    "reward_program_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "reward_earn_rules": {},
+                    "cashback_rules": {},
+                    "reward_point_value_bdt": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,6}(?:\\.\\d{0,4})?$",
+                        "nullable": true,
+                        "description": "Redemption value of one point in BDT, only when stated"
+                    },
+                    "points_expiry_text": {
+                        "type": "string"
+                    },
+                    "reward_source_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 500
+                    },
                     "additional_features": {},
                     "has_lounge_access": {
                         "type": "boolean",
@@ -5713,6 +5755,27 @@
                     "reward_points_policy": {
                         "type": "string"
                     },
+                    "reward_program_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "reward_earn_rules": {},
+                    "cashback_rules": {},
+                    "reward_point_value_bdt": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,6}(?:\\.\\d{0,4})?$",
+                        "nullable": true,
+                        "description": "Redemption value of one point in BDT, only when stated"
+                    },
+                    "points_expiry_text": {
+                        "type": "string"
+                    },
+                    "reward_source_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 500
+                    },
                     "additional_features": {},
                     "is_active": {
                         "type": "boolean"
@@ -5797,6 +5860,12 @@
                     "late_payment_fee",
                     "annual_fee_waiver_policy",
                     "reward_points_policy",
+                    "reward_program_name",
+                    "reward_earn_rules",
+                    "cashback_rules",
+                    "reward_point_value_bdt",
+                    "points_expiry_text",
+                    "reward_source_url",
                     "additional_features",
                     "source_url",
                     "apply_url",
@@ -5808,7 +5877,7 @@
                     "foreign_transaction_fee"
                 ],
                 "type": "string",
-                "description": "* `name` - name\n* `lounge_access_condition` - lounge_access_condition\n* `annual_fee` - annual_fee\n* `interest_rate_apr` - interest_rate_apr\n* `lounge_access_international` - lounge_access_international\n* `lounge_access_domestic` - lounge_access_domestic\n* `cash_advance_fee` - cash_advance_fee\n* `late_payment_fee` - late_payment_fee\n* `annual_fee_waiver_policy` - annual_fee_waiver_policy\n* `reward_points_policy` - reward_points_policy\n* `additional_features` - additional_features\n* `source_url` - source_url\n* `apply_url` - apply_url\n* `card_network` - card_network\n* `is_islamic` - is_islamic\n* `is_dual_currency` - is_dual_currency\n* `min_monthly_income` - min_monthly_income\n* `supplementary_card_fee` - supplementary_card_fee\n* `foreign_transaction_fee` - foreign_transaction_fee"
+                "description": "* `name` - name\n* `lounge_access_condition` - lounge_access_condition\n* `annual_fee` - annual_fee\n* `interest_rate_apr` - interest_rate_apr\n* `lounge_access_international` - lounge_access_international\n* `lounge_access_domestic` - lounge_access_domestic\n* `cash_advance_fee` - cash_advance_fee\n* `late_payment_fee` - late_payment_fee\n* `annual_fee_waiver_policy` - annual_fee_waiver_policy\n* `reward_points_policy` - reward_points_policy\n* `reward_program_name` - reward_program_name\n* `reward_earn_rules` - reward_earn_rules\n* `cashback_rules` - cashback_rules\n* `reward_point_value_bdt` - reward_point_value_bdt\n* `points_expiry_text` - points_expiry_text\n* `reward_source_url` - reward_source_url\n* `additional_features` - additional_features\n* `source_url` - source_url\n* `apply_url` - apply_url\n* `card_network` - card_network\n* `is_islamic` - is_islamic\n* `is_dual_currency` - is_dual_currency\n* `min_monthly_income` - min_monthly_income\n* `supplementary_card_fee` - supplementary_card_fee\n* `foreign_transaction_fee` - foreign_transaction_fee"
             },
             "FrequencyEnum": {
                 "enum": [
@@ -6373,7 +6442,7 @@
                 "description": "Input for reporting incorrect data on a credit card.",
                 "properties": {
                     "field": {
-                        "description": "Card field the report is about, when it concerns one field.\n\n* `name` - name\n* `lounge_access_condition` - lounge_access_condition\n* `annual_fee` - annual_fee\n* `interest_rate_apr` - interest_rate_apr\n* `lounge_access_international` - lounge_access_international\n* `lounge_access_domestic` - lounge_access_domestic\n* `cash_advance_fee` - cash_advance_fee\n* `late_payment_fee` - late_payment_fee\n* `annual_fee_waiver_policy` - annual_fee_waiver_policy\n* `reward_points_policy` - reward_points_policy\n* `additional_features` - additional_features\n* `source_url` - source_url\n* `apply_url` - apply_url\n* `card_network` - card_network\n* `is_islamic` - is_islamic\n* `is_dual_currency` - is_dual_currency\n* `min_monthly_income` - min_monthly_income\n* `supplementary_card_fee` - supplementary_card_fee\n* `foreign_transaction_fee` - foreign_transaction_fee",
+                        "description": "Card field the report is about, when it concerns one field.\n\n* `name` - name\n* `lounge_access_condition` - lounge_access_condition\n* `annual_fee` - annual_fee\n* `interest_rate_apr` - interest_rate_apr\n* `lounge_access_international` - lounge_access_international\n* `lounge_access_domestic` - lounge_access_domestic\n* `cash_advance_fee` - cash_advance_fee\n* `late_payment_fee` - late_payment_fee\n* `annual_fee_waiver_policy` - annual_fee_waiver_policy\n* `reward_points_policy` - reward_points_policy\n* `reward_program_name` - reward_program_name\n* `reward_earn_rules` - reward_earn_rules\n* `cashback_rules` - cashback_rules\n* `reward_point_value_bdt` - reward_point_value_bdt\n* `points_expiry_text` - points_expiry_text\n* `reward_source_url` - reward_source_url\n* `additional_features` - additional_features\n* `source_url` - source_url\n* `apply_url` - apply_url\n* `card_network` - card_network\n* `is_islamic` - is_islamic\n* `is_dual_currency` - is_dual_currency\n* `min_monthly_income` - min_monthly_income\n* `supplementary_card_fee` - supplementary_card_fee\n* `foreign_transaction_fee` - foreign_transaction_fee",
                         "oneOf": [
                             {
                                 "$ref": "#/components/schemas/FieldEnum"

@@ -57,6 +57,46 @@ not in this repo. Bank names follow the existing seed (`all_banks.json`), e.g. "
   Signature, UnionPay Diamond, Islamic Gold/Platinum Ujrah; SCB Silver, Platinum, Smart, Rewards,
   Saadiq Visa Platinum. To publish only independently confirmed cards, set these to `draft`.
 
+## Rewards
+
+Structured reward data was merged from the coordinator's verified per-bank files
+(`/home/ubuntu/credit-agent-control/r2/rewards/<bank_slug>.json`, kept outside this repo). Each
+entry was matched by card name within the same bank; the reward file's "The City Bank PLC" maps to
+the fixture's "City Bank PLC". All 105 published (verified) cards matched, with no unmatched reward
+entries. Per-card provenance is in the new `reward_source_url` field (the bank's own product page or
+SoC used for the reward terms); it can differ from the fee-focused `source_url`.
+
+| Reward field | Meaning | Cards populated |
+|---|---|---:|
+| `reward_program_name` | Named program as written by the bank (e.g. MyRewards), blank when unnamed | 38 |
+| `reward_earn_rules` | `{category, points_per_unit, spend_unit_bdt, text}` list | 66 |
+| `cashback_rules` | `{category, percent, cap_text, text}` list | 15 |
+| `reward_point_value_bdt` | BDT redemption value of one point, only when the bank states it | 7 |
+| `points_expiry_text` | Verbatim point-expiry wording | 11 |
+| `reward_source_url` | Reward terms source | 105 |
+
+Counts cover the 105 published cards. The other 34 published cards have a reward record with empty
+rule lists (their pages publish no earn/cashback rate). `reward_points_policy` remains the existing
+narrative field; it was filled with the verbatim earn/cashback rule texts joined by a space for the
+71 cards where it was empty, and was otherwise left unchanged.
+
+### Reward conventions
+
+- **No assumed point value.** `reward_point_value_bdt` is `NULL` unless the bank itself states a
+  redemption value. Only DBBL states BDT 1 per 3 points (`0.3333`) on six Gold/Platinum/Titanium
+  cards, and City's Agora Amex states 1 Aponjon point = BDT 1.
+- Rule categories are limited to `all`, `dining`, `travel`, `groceries`, `fuel`, `online`,
+  `international` and `other`; every rate (`points_per_unit`, `spend_unit_bdt`, `percent`) must be
+  greater than zero. `text`/`cap_text` are verbatim source wording.
+- Fixed-amount (non-percentage) cashbacks, welcome/one-time bonuses, USD-denominated offers and
+  non-cash benefits (lounge access, insurance, BOGO offers, fee waivers) are kept in
+  `other_benefits_text` in the reward input and are not converted into numeric rules. Nothing is
+  invented where the bank publishes only unquantified wording.
+- Points expiry is published only by LankaBangla (36 months, all 11 cards).
+- Re-run the deterministic merge with:
+  `python scripts/merge_reward_data.py --rewards-dir <rewards dir> --fixture credit_cards/fixtures/verified_cards_2026-10-18.json`.
+  The script only adds reward fields, fills an empty `reward_points_policy`, and is idempotent.
+
 ## Held as `draft` (30 cards, not public)
 
 | Bank | Held | Why |
