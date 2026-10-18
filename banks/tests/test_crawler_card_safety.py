@@ -54,6 +54,35 @@ class TestNewCards:
         crawl(service, bank, name="Edge", annual_fee=100000, interest_rate_apr=25)
         assert CreditCard.objects.get(name="Edge").verification_status == "draft"
 
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "Nexus Debit Card",
+            "Visa/ Mastercard (International) Debit Card",
+            "Prepaid Card",
+        ],
+    )
+    def test_debit_and_prepaid_cards_are_not_added(self, service, bank, name):
+        assert crawl(service, bank, name=name, annual_fee=500) == 0
+        assert not CreditCard.objects.filter(bank=bank).exists()
+
+    def test_text_fields_are_cut_to_each_model_field_length(self, service, bank):
+        long_text = "x" * 1500
+        crawl(
+            service,
+            bank,
+            name="Long",
+            cash_advance_fee=long_text,
+            late_payment_fee=long_text,
+            lounge_access_international=long_text,
+            supplementary_card_fee=long_text,
+        )
+        card = CreditCard.objects.get(bank=bank, name="Long")
+        assert len(card.cash_advance_fee) == 255
+        assert len(card.late_payment_fee) == 255
+        assert len(card.supplementary_card_fee) == 255
+        assert len(card.lounge_access_international) == 1000
+
     @pytest.mark.parametrize("name", ["", "   ", None, "TK. 5,000", "5,000"])
     def test_missing_or_fee_like_name_is_skipped(self, service, bank, name):
         assert crawl(service, bank, name=name, annual_fee=500) == 0
@@ -126,6 +155,39 @@ class TestVerifiedCardsAreNeverOverwritten:
         card.refresh_from_db()
         assert card.is_active is False
         assert card.verification_status == "verified"
+
+
+@pytest.mark.django_db()
+class TestNameVariantsDoNotDuplicate:
+    def test_variant_of_a_verified_name_proposes_instead_of_duplicating(self, service):
+        bank = BankFactory(name="City Bank PLC")
+        card = CreditCardFactory(
+            bank=bank,
+            name="City Bank American Express Blue Credit Card",
+            annual_fee=2500,
+            verification_status="verified",
+        )
+        crawl(service, bank, name="Blue American Express Credit Card", annual_fee=1250)
+        assert CreditCard.objects.filter(bank=bank).count() == 1
+        card.refresh_from_db()
+        assert card.annual_fee == 2500
+        assert ReviewQueue.objects.get(credit_card=card).field_name == "annual_fee"
+
+    def test_variant_of_a_draft_name_updates_it(self, service):
+        bank = BankFactory(name="Prime Bank PLC")
+        CreditCardFactory(
+            bank=bank, name="Visa Platinum Credit Card", verification_status="draft"
+        )
+        crawl(service, bank, name="PRIME BANK VISA PLATINUM", annual_fee=4000)
+        assert CreditCard.objects.filter(bank=bank).count() == 1
+        assert CreditCard.objects.get(bank=bank).annual_fee == 4000
+
+    def test_ambiguous_variant_creates_a_separate_draft(self, service):
+        bank = BankFactory(name="UCB PLC")
+        for name in ("Visa Gold Card", "Gold Visa Credit Card"):
+            CreditCardFactory(bank=bank, name=name, verification_status="draft")
+        crawl(service, bank, name="Gold Visa", annual_fee=1000)
+        assert CreditCard.objects.filter(bank=bank).count() == 3
 
 
 @pytest.mark.django_db()

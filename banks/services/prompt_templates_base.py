@@ -17,7 +17,9 @@ CRITICAL OUTPUT CONTRACT:
 
 Required fields for every card object:
 - name: card tier/name as written in the document (e.g. "Platinum Card")
-- annual_fee: number, or null when the document never states an annual fee
+- annual_fee: number, or null when the document never states an annual fee.
+  Use the recurring primary-card fee (2nd year onwards / renewal fee), not the
+  first-year or joining fee; keep supplementary-card fees out of it.
 - interest_rate_apr: number, or null when the document never states an APR
 
 Optional fields (null or "" when absent):

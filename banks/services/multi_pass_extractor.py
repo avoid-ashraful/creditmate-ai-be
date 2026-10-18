@@ -51,6 +51,10 @@ FOCUSED_PASS = "focused"
 VALIDATION_PASS = "validation"
 
 DEFAULT_CONFIDENCE_THRESHOLD = 0.8
+# Output budgets include a thinking model's reasoning tokens; 4000 cut the JSON
+# of a 16-card schedule of charges off mid-string (finish_reason=MAX_TOKENS).
+STANDARD_MAX_TOKENS = 32000
+FOCUSED_MAX_TOKENS = 8000
 
 
 @dataclass
@@ -97,7 +101,7 @@ class MultiPassLLMExtractor:
         prompt_templates=None,
         validator=None,
         confidence_threshold=DEFAULT_CONFIDENCE_THRESHOLD,
-        max_content_chars=12000,
+        max_content_chars=60000,
         focused_content_chars=3000,
     ):
         """Initialize the extractor.
@@ -272,7 +276,9 @@ class MultiPassLLMExtractor:
         prompt = self.prompt_templates.get_prompt_for_bank(
             bank_name, content[: self.max_content_chars]
         )
-        response, provider_used, error = self._call_provider(prompt, "standard")
+        response, provider_used, error = self._call_provider(
+            prompt, "standard", STANDARD_MAX_TOKENS
+        )
 
         if error is not None:
             issues.append(f"standard_pass_error: {error}")
@@ -324,7 +330,9 @@ class MultiPassLLMExtractor:
         prompt = self.prompt_templates.get_focused_prompt(
             bank_name, content[: self.focused_content_chars]
         )
-        response, provider_used, error = self._call_provider(prompt, "focused")
+        response, provider_used, error = self._call_provider(
+            prompt, "focused", FOCUSED_MAX_TOKENS
+        )
 
         if error is not None:
             issues.append(f"focused_pass_error: {error}")
@@ -387,7 +395,7 @@ class MultiPassLLMExtractor:
     # ------------------------------------------------------------------
     # Provider interaction
     # ------------------------------------------------------------------
-    def _call_provider(self, prompt, pass_name):
+    def _call_provider(self, prompt, pass_name, max_tokens=STANDARD_MAX_TOKENS):
         """Call the LLM provider for one pass.
 
         Parameters
@@ -396,6 +404,8 @@ class MultiPassLLMExtractor:
             Prompt for this pass.
         pass_name : str
             Pass name for logging.
+        max_tokens : int, optional
+            Output token budget for this pass.
 
         Returns
         -------
@@ -408,7 +418,7 @@ class MultiPassLLMExtractor:
                 prompt=prompt,
                 max_retries=1,
                 temperature=0.1,
-                max_tokens=4000,
+                max_tokens=max_tokens,
             )
         except (
             Exception
@@ -579,8 +589,40 @@ class MultiPassLLMExtractor:
                 try:
                     return json.loads(match.group(1))
                 except json.JSONDecodeError:
-                    return None
+                    pass
+            return MultiPassLLMExtractor._salvage_truncated_array(cleaned)
+
+    @staticmethod
+    def _salvage_truncated_array(text):
+        """Return the complete objects of a JSON array cut off mid-element.
+
+        Parameters
+        ----------
+        text : str
+            Model output that starts a JSON array (or an object wrapping one)
+            but ends before it is closed, e.g. after hitting the token limit.
+
+        Returns
+        -------
+        list of dict or None
+            Objects that were fully written, ``None`` when there are none.
+        """
+        decoder = json.JSONDecoder()
+        position = text.find("[")
+        if position < 0:
             return None
+        position += 1
+        items = []
+        while True:
+            start = text.find("{", position)
+            if start < 0:
+                break
+            try:
+                item, position = decoder.raw_decode(text, start)
+            except json.JSONDecodeError:
+                break
+            items.append(item)
+        return items or None
 
     @staticmethod
     def _coerce_to_cards(payload):

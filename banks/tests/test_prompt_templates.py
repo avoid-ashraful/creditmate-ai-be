@@ -111,6 +111,12 @@ class TestPromptConstruction:
         brac = prompts.get_prompt_for_bank("BRAC Bank PLC", "same content")
         assert sonali != brac
 
+    def test_prompts_ask_for_the_recurring_annual_fee(self, prompts):
+        standard = prompts.get_prompt_for_bank("City Bank PLC", "content")
+        focused = prompts.get_focused_prompt("City Bank PLC", "content")
+        assert "2nd year onwards" in standard
+        assert "2nd year onwards" in focused
+
     def test_generic_fallback_prompt_still_contains_contract(self, prompts):
         prompt = prompts.get_prompt_for_bank("Unknown Bank Ltd", "content")
         assert "ONLY valid JSON" in prompt

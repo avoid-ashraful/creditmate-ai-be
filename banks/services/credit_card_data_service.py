@@ -1,11 +1,12 @@
 import logging
+import re
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
 from banks.enums import ReviewPriority, ReviewSource, ReviewStatus
-from banks.models import ReviewQueue
+from banks.models import Bank, ReviewQueue
 from banks.validators.numeric_fields import (
     REASON_OUT_OF_RANGE,
     parse_numeric_value,
@@ -18,6 +19,13 @@ logger = logging.getLogger(__name__)
 
 #: Proposed values that mean "not stated" and must never replace a known value.
 EMPTY_VALUES = (None, "", [], {})
+
+#: Product words that mean the "card" is not a credit card (shared fee schedules
+#: list debit and prepaid cards next to the credit cards).
+NON_CREDIT_WORDS = {"debit", "prepaid"}
+
+#: Words that carry no card identity when comparing card names.
+NAME_NOISE_WORDS = {"credit", "card", "cards", "the", "plc", "ltd", "limited"}
 
 
 class CreditCardDataService:
@@ -117,7 +125,11 @@ class CreditCardDataService:
             was skipped (no usable name)
         """
         card_name = (card_data.get("name") or "").strip()
-        if not card_name or self._looks_like_fee(card_name):
+        if (
+            not card_name
+            or self._looks_like_fee(card_name)
+            or NON_CREDIT_WORDS & set(re.findall(r"[a-z]+", card_name.lower()))
+        ):
             logger.warning(
                 f"Skipping credit card without a usable name for bank {bank_id}: {card_data}"
             )
@@ -132,7 +144,7 @@ class CreditCardDataService:
         if problems:
             logger.warning(f"Card '{card_name}' failed sanity checks: {problems}")
 
-        card = CreditCard.objects.filter(bank_id=bank_id, name=card_name).first()
+        card = self._find_card(bank_id, card_name)
         if card is None:
             status = (
                 VerificationStatus.NEEDS_REVIEW if problems else VerificationStatus.DRAFT
@@ -158,6 +170,45 @@ class CreditCardDataService:
                 card.save(update_fields=changed + ["modified"])
             logger.info(f"Updated credit card {card.name} (ID: {card.id}): {changed}")
         return 1
+
+    @staticmethod
+    def _name_key(name, bank_name):
+        """Return the identity of a card name: lowercase words minus noise and bank name."""
+        ignored = NAME_NOISE_WORDS | set(re.findall(r"[a-z0-9]+", bank_name.lower()))
+        return frozenset(re.findall(r"[a-z0-9]+", name.lower())) - ignored
+
+    def _find_card(self, bank_id, card_name):
+        """Find the bank's card for a crawled name, tolerating naming variants.
+
+        An exact name wins. Otherwise a card whose name only differs by case,
+        word order, the bank's own name or "Credit Card" matches, but only when
+        exactly one card does; an ambiguous name stays a new draft.
+
+        Parameters
+        ----------
+        bank_id : int
+            ID of the bank the crawl belongs to
+        card_name : str
+            Card name as extracted
+
+        Returns
+        -------
+        CreditCard or None
+            The matching card, ``None`` when there is no unambiguous match
+        """
+        exact = CreditCard.objects.filter(bank_id=bank_id, name=card_name).first()
+        if exact is not None:
+            return exact
+        bank_name = Bank.objects.values_list("name", flat=True).get(pk=bank_id)
+        key = self._name_key(card_name, bank_name)
+        if not key:
+            return None
+        matches = [
+            card
+            for card in CreditCard.objects.filter(bank_id=bank_id)
+            if self._name_key(card.name, bank_name) == key
+        ]
+        return matches[0] if len(matches) == 1 else None
 
     @staticmethod
     def _looks_like_fee(name):
@@ -278,14 +329,20 @@ class CreditCardDataService:
             "min_monthly_income": self._parse_decimal(
                 card_data.get("min_monthly_income"), field="min_monthly_income"
             ),
-            "supplementary_card_fee": text(card_data, "supplementary_card_fee")[:255],
-            "foreign_transaction_fee": text(card_data, "foreign_transaction_fee")[:255],
+            "supplementary_card_fee": text(card_data, "supplementary_card_fee"),
+            "foreign_transaction_fee": text(card_data, "foreign_transaction_fee"),
         }
 
     @staticmethod
     def _text(card_data, key):
-        """Return a stripped string value, ``""`` when null or missing."""
-        return str(card_data.get(key) or "").strip()
+        """Return a stripped string value, ``""`` when null or missing.
+
+        The value is cut to the model field's ``max_length`` so an over-long
+        extraction cannot make the database reject (and drop) the whole card.
+        """
+        value = str(card_data.get(key) or "").strip()
+        max_length = CreditCard._meta.get_field(key).max_length
+        return value[:max_length] if max_length else value
 
     @staticmethod
     def _parse_bool(value):
