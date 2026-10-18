@@ -55,6 +55,12 @@ def crawl_bank_data_source(self, data_source_id):
                 "data_source_id": data_source_id,
                 "timestamp": timezone.now().isoformat(),
             }
+        elif crawler.source_deferred is True:
+            return {
+                "status": "deferred",
+                "data_source_id": data_source_id,
+                "timestamp": timezone.now().isoformat(),
+            }
         else:
             logger.error(f"Failed to crawl data source {data_source_id}")
             return {
@@ -171,11 +177,13 @@ def crawl_bank_data_sources_by_bank(bank_id):
 
         with llm_call_budget():
             for data_source in data_sources:
-                if llm_budget_exhausted():
+                if llm_budget_exhausted() or crawler.providers_rate_limited is True:
                     # Left for the next run: not counted as failed.
                     results["skipped"] += 1
                 elif crawler.crawl_bank_data_source(data_source.id):
                     results["successful"] += 1
+                elif crawler.source_deferred is True:
+                    results["skipped"] += 1
                 else:
                     results["failed"] += 1
 
@@ -286,7 +294,7 @@ def _crawl_bank_for_daily_schedule(bank, crawler, summary):
 
     bank_result = {"bank": bank.name, "status": "completed", "sources": 0}
     for data_source in data_sources:
-        if llm_budget_exhausted():
+        if llm_budget_exhausted() or crawler.providers_rate_limited is True:
             # Left for the next run: not counted as crawled or failed.
             logger.warning("LLM call budget exhausted; skipping rest of %s", bank.name)
             bank_result["status"] = "partial"
@@ -296,6 +304,9 @@ def _crawl_bank_for_daily_schedule(bank, crawler, summary):
         if crawler.crawl_bank_data_source(data_source.id):
             summary["sources_successful"] += 1
             bank_result["successful"] = bank_result.get("successful", 0) + 1
+        elif crawler.source_deferred is True:
+            bank_result["status"] = "partial"
+            bank_result["deferred"] = bank_result.get("deferred", 0) + 1
         else:
             summary["sources_failed"] += 1
             bank_result["failed"] = bank_result.get("failed", 0) + 1

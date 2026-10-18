@@ -510,7 +510,9 @@ class TestBankDataCrawlerServiceUpdated:
             assert result is True
             # Should use the data despite validation errors
             mock_update.assert_called_once_with(
-                self.bank.id, [{"name": "Test Card", "annual_fee": 95}]
+                self.bank.id,
+                [{"name": "Test Card", "annual_fee": 95}],
+                source_url=self.data_source.url,
             )
 
     def test_crawl_bank_data_source_database_update_error(self):
