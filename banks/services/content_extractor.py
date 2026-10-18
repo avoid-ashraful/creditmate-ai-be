@@ -1,4 +1,5 @@
 import logging
+import re
 from io import BytesIO
 
 import magic
@@ -41,6 +42,7 @@ class ContentExtractor:
         ------
         None
         """
+        self.last_extraction_method = ""
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -71,6 +73,7 @@ class ContentExtractor:
         FileFormatError
             For unsupported or undetectable file formats
         """
+        self.last_extraction_method = self._method_for_content_type(content_type)
         raw_content = self._fetch_content(url)
         extracted_content = self._process_content(raw_content, content_type, url)
 
@@ -110,6 +113,7 @@ class ContentExtractor:
         NetworkError
             When the document could not be fetched.
         """
+        self.last_extraction_method = self._method_for_content_type(content_type)
         raw_content = self._fetch_content(url)
 
         attempts = []
@@ -117,6 +121,7 @@ class ContentExtractor:
 
         try:
             primary_content = self._process_content(raw_content, content_type, url)
+            primary_method = self.last_extraction_method or primary_method
             attempts.append(self._build_attempt(primary_method, primary_content, None))
         except Exception as exc:  # noqa: BLE001 - recorded as a failed attempt
             logger.warning(f"Primary extraction failed for {url}: {exc}")
@@ -143,6 +148,7 @@ class ContentExtractor:
             )
 
         best = max(successful, key=lambda attempt: attempt["confidence"])
+        self.last_extraction_method = best["method"]
         logger.info(
             "Extraction for %s selected method=%s confidence=%.3f (attempts=%d)",
             url,
@@ -249,6 +255,47 @@ class ContentExtractor:
             return f"<BINARY_CONTENT_{content_type.upper()}_SIZE_{len(raw_content)}>"
         return raw_content.decode("utf-8", errors="ignore")
 
+    @staticmethod
+    def has_usable_fee_text(content):
+        """Check OCR for readable financial evidence before spending LLM calls.
+
+        Parameters
+        ----------
+        content : str
+            OCR output from an image or scanned schedule.
+
+        Returns
+        -------
+        bool
+            True for readable fee/table fragments, False for OCR noise.
+        """
+        text = content.strip()
+        if not text:
+            return False
+        alphanumeric = sum(character.isalnum() for character in text) / len(text)
+        words = re.findall(r"[a-z]+", text.lower())
+        keywords = {
+            "fee",
+            "fees",
+            "annual",
+            "credit",
+            "card",
+            "charges",
+            "interest",
+            "bdt",
+            "tk",
+            "usd",
+            "advance",
+            "payment",
+        }
+        financial_words = sum(word in keywords for word in words)
+        return (
+            alphanumeric >= 0.4
+            and financial_words >= 2
+            and financial_words / max(len(words), 1) >= 0.01
+            and bool(re.search(r"\d", text))
+        )
+
     def _fetch_content(self, url):
         """Fetch raw content from URL.
 
@@ -325,6 +372,7 @@ class ContentExtractor:
         ContentExtractionError
             For processing errors during content extraction
         """
+        self.last_extraction_method = self._method_for_content_type(content_type)
         try:
             if content_type == ContentType.PDF:
                 return self._extract_pdf_content(raw_content)
@@ -367,9 +415,11 @@ class ContentExtractor:
         str
             Extracted text from PDF, using OCR fallback for image-based PDFs
         """
+        self.last_extraction_method = "pdf_text"
         if PdfReader is None:
-            logger.warning("pypdf not installed, cannot extract PDF content")
-            return ""
+            logger.warning("pypdf not installed, attempting PDF OCR")
+            self.last_extraction_method = "ocr"
+            return self._extract_pdf_with_ocr(raw_content)
 
         try:
             pdf_file = BytesIO(raw_content)
@@ -385,14 +435,16 @@ class ContentExtractor:
             if len(text_content) < 50:  # Threshold for minimal text
                 logger.info("Minimal text extracted from PDF, attempting OCR...")
                 ocr_text = self._extract_pdf_with_ocr(raw_content)
-                if ocr_text and len(ocr_text) > len(text_content):
-                    return ocr_text
+                if not text_content or (ocr_text and len(ocr_text) > len(text_content)):
+                    self.last_extraction_method = "ocr"
+                    return ocr_text or ""
 
             return text_content
         except Exception as e:
             logger.error(f"Error extracting PDF content: {str(e)}")
             # Try OCR as fallback for corrupted or complex PDFs
             logger.info("Attempting OCR fallback for PDF...")
+            self.last_extraction_method = "ocr"
             return self._extract_pdf_with_ocr(raw_content)
 
     def _extract_pdf_with_ocr(self, raw_content):

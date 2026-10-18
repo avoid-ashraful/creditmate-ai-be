@@ -3,6 +3,7 @@ import logging
 
 from django.utils import timezone
 
+from banks.enums import ReviewPriority
 from banks.exceptions import (
     AIParsingError,
     ConfigurationError,
@@ -10,9 +11,10 @@ from banks.exceptions import (
     FileFormatError,
     NetworkError,
 )
-from banks.models import BankDataSource, CrawledContent
+from banks.models import BankDataSource, CrawledContent, ReviewQueue
 from banks.services.content_extractor import ContentExtractor
 from banks.services.credit_card_data_service import CreditCardDataService
+from banks.services.llm_failures import rate_limit_state
 from banks.services.llm_parser import LLMContentParser
 from banks.services.multi_pass_extractor import MultiPassLLMExtractor
 from banks.services.quality_scoring import coalesce_cards
@@ -63,6 +65,8 @@ class BankDataCrawlerService:
         -------
         None
         """
+        self.providers_rate_limited = False
+        self.source_deferred = False
         self.content_extractor = content_extractor or ContentExtractor()
         self.llm_parser = llm_parser or LLMContentParser()
         self.data_service = data_service or CreditCardDataService()
@@ -81,8 +85,12 @@ class BankDataCrawlerService:
         bool
             True if crawling was successful, False if any step failed
         """
+        self.source_deferred = False
         try:
             data_source = self._get_data_source(data_source_id)
+            if self.providers_rate_limited:
+                self._record_deferred(data_source, "LLM providers rate limited")
+                return False
             logger.info(f"Starting crawl for {data_source.bank.name} - {data_source.url}")
 
             # Update crawl timestamp
@@ -93,7 +101,11 @@ class BankDataCrawlerService:
             if not extraction_result:
                 return False
             raw_content, extracted_content, extraction_context = extraction_result
-            if not extracted_content:
+            if not extracted_content and extraction_context.get("method") not in {
+                "ocr",
+                "image_ocr",
+                "image",
+            }:
                 return False
 
             # Check for content changes
@@ -157,6 +169,7 @@ class BankDataCrawlerService:
             Sources skipped because the budget ran out are left untouched and
             are picked up by the next run.
         """
+        self.providers_rate_limited = False
         data_sources = list(data_sources)
         results = {
             "total": len(data_sources),
@@ -166,16 +179,18 @@ class BankDataCrawlerService:
         }
 
         for position, data_source in enumerate(data_sources):
-            if llm_budget_exhausted():
-                results["skipped"] = results["total"] - position
+            if llm_budget_exhausted() or self.providers_rate_limited:
+                results["skipped"] += results["total"] - position
                 logger.warning(
-                    "LLM call budget exhausted; leaving %s of %s sources for the next run",
+                    "LLM call budget exhausted or providers rate limited; leaving %s of %s sources for the next run",
                     results["skipped"],
                     results["total"],
                 )
                 break
             if self.crawl_bank_data_source(data_source.id):
                 results["successful"] += 1
+            elif self.source_deferred:
+                results["skipped"] += 1
             else:
                 results["failed"] += 1
 
@@ -249,8 +264,19 @@ class BankDataCrawlerService:
             raw_content, extracted_content = self.content_extractor.extract_content(
                 url, content_type
             )
-            if extracted_content:
-                return raw_content, extracted_content, {"method": fallback_method}
+            method = getattr(self.content_extractor, "last_extraction_method", None)
+            if extracted_content or method in {"ocr", "image_ocr", "image"}:
+                return (
+                    raw_content,
+                    extracted_content,
+                    {
+                        "method": (
+                            method
+                            if isinstance(method, str) and method
+                            else fallback_method
+                        )
+                    },
+                )
             logger.info(
                 "Primary extraction produced no text for %s - trying multi-source "
                 "extraction",
@@ -466,8 +492,34 @@ class BankDataCrawlerService:
         )
         content_extraction_context = content_extraction_context or {}
 
+        method = content_extraction_context.get("method") or self._extraction_method(
+            data_source
+        )
+        if method in {
+            "ocr",
+            "image_ocr",
+            "image",
+        } and not ContentExtractor.has_usable_fee_text(extracted_content):
+            message = "Image-only schedule; extract manually or with a vision model"
+            record = self._record_deferred(data_source, message, "needs_multimodal")
+            record.raw_content = raw_content
+            record.extracted_content = extracted_content
+            record.content_hash = content_hash
+            record.extraction_method = method
+            record.needs_manual_review = True
+            record.save()
+            ReviewQueue.objects.create(
+                bank=data_source.bank,
+                crawled_content=record,
+                priority=ReviewPriority.HIGH,
+                message=message,
+            )
+            return False
+
         # Parse content with AI (multi-pass first, legacy single-pass fallback)
-        parsing_result = self._parse_content_safely(data_source, extracted_content)
+        parsing_result = self._parse_content_safely(
+            data_source, extracted_content, method=method
+        )
         if not parsing_result:
             return False
 
@@ -619,7 +671,7 @@ class BankDataCrawlerService:
             )
         return quality
 
-    def _parse_content_safely(self, data_source, content):
+    def _parse_content_safely(self, data_source, content, method=None):
         """Safely parse content with AI, handling errors.
 
         Runs the multi-pass pipeline first when an LLM provider is configured
@@ -632,6 +684,8 @@ class BankDataCrawlerService:
             Data source being processed for context
         content : str
             Extracted text content to parse with LLM
+        method : str, optional
+            Actual content extraction method, including OCR fallbacks.
 
         Returns
         -------
@@ -639,16 +693,24 @@ class BankDataCrawlerService:
             ``(structured_data, raw_comprehensive_data, extraction_context)``
             on success, ``None`` on parsing failure.
         """
-        multi_pass_result = self._extract_multi_pass(data_source, content)
-        if multi_pass_result is not None:
-            return multi_pass_result
-
         try:
+            multi_pass_result = self._extract_multi_pass(
+                data_source, content, method=method
+            )
+            if multi_pass_result is not None:
+                return multi_pass_result
             structured_data, raw_comprehensive_data = (
                 self.llm_parser.parse_comprehensive_data(content, data_source.bank.name)
             )
             return structured_data, raw_comprehensive_data, {}
-        except (ConfigurationError, AIParsingError) as e:
+        except Exception as e:
+            limited, all_limited = rate_limit_state(e)
+            if limited:
+                self.providers_rate_limited = all_limited
+                self._record_deferred(data_source, "LLM rate limit/quota; retry next run")
+                return None
+            if not isinstance(e, (ConfigurationError, AIParsingError)):
+                raise
             logger.error(f"AI parsing failed for {data_source.bank.name}: {e.message}")
 
             # Configuration errors and a spent call budget are not the source's fault
@@ -657,7 +719,7 @@ class BankDataCrawlerService:
 
             return None
 
-    def _extract_multi_pass(self, data_source, content):
+    def _extract_multi_pass(self, data_source, content, method=None):
         """Run multi-pass extraction for one document.
 
         Parameters
@@ -666,6 +728,8 @@ class BankDataCrawlerService:
             Data source being crawled.
         content : str
             Extracted text content to parse.
+        method : str, optional
+            Actual content extraction method, including OCR fallbacks.
 
         Returns
         -------
@@ -677,7 +741,7 @@ class BankDataCrawlerService:
         if not self.multi_pass_extractor.is_provider_available():
             return None
 
-        method = self._extraction_method(data_source)
+        method = method or self._extraction_method(data_source)
         bank_name = data_source.bank.name
 
         try:
@@ -685,6 +749,8 @@ class BankDataCrawlerService:
                 content, bank_name, method=method
             )
         except (ConfigurationError, AIParsingError) as exc:
+            if rate_limit_state(exc)[0]:
+                raise
             logger.warning(
                 "Multi-pass extraction unavailable for %s: %s - falling back "
                 "to single-pass parsing",
@@ -693,6 +759,8 @@ class BankDataCrawlerService:
             )
             return None
         except Exception as exc:  # noqa: BLE001 - never let extraction kill the crawl
+            if rate_limit_state(exc)[0]:
+                raise
             logger.warning(
                 "Multi-pass extraction failed for %s: %s - falling back to "
                 "single-pass parsing",
@@ -736,6 +804,31 @@ class BankDataCrawlerService:
             "invalid_reasons": dict(getattr(result, "invalid_reasons", None) or {}),
         }
         return structured_data, raw_comprehensive_data, extraction_context
+
+    def _record_deferred(self, data_source, message, reason="rate_limited"):
+        """Keep a retryable pending record without penalizing the source.
+
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Healthy source whose extraction cannot finish yet.
+        message : str
+            Human readable reason for deferral.
+        reason : str, optional
+            Machine readable pending reason.
+
+        Returns
+        -------
+        CrawledContent
+            Pending record, excluded from completed-content caching.
+        """
+        self.source_deferred = True
+        return CrawledContent.objects.create(
+            data_source=data_source,
+            processing_status="pending",
+            parsed_json={"status": "deferred", "reason": reason},
+            error_message=message,
+        )
 
     def _create_crawl_record(
         self,
@@ -809,7 +902,7 @@ class BankDataCrawlerService:
 
         try:
             updated_count = self.data_service.update_credit_card_data(
-                data_source.bank.id, actual_data
+                data_source.bank.id, actual_data, source_url=data_source.url
             )
 
             self._record_successful_update(crawled_content, data_source, updated_count)

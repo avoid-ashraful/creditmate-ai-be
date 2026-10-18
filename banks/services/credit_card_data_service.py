@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import re
 from decimal import Decimal
@@ -7,6 +8,7 @@ from django.core.validators import URLValidator
 
 from banks.enums import ReviewPriority, ReviewSource, ReviewStatus
 from banks.models import Bank, ReviewQueue
+from banks.services.card_normalization import preserve_annual_fee_details
 from banks.validators.numeric_fields import (
     REASON_OUT_OF_RANGE,
     parse_numeric_value,
@@ -36,7 +38,7 @@ class CreditCardDataService:
     validation, and creation/update operations.
     """
 
-    def update_credit_card_data(self, bank_id, parsed_data):
+    def update_credit_card_data(self, bank_id, parsed_data, source_url=""):
         """Update credit card data in the database.
 
         Parameters
@@ -46,6 +48,8 @@ class CreditCardDataService:
         parsed_data : dict or list
             Parsed credit card data from LLM processing, can be single
             card dict or list of card dicts
+        source_url : str, optional
+            Authoritative crawl URL, used to distinguish draft product sources.
 
         Returns
         -------
@@ -58,9 +62,20 @@ class CreditCardDataService:
         updated_count = 0
 
         logger.info(f"Processing {len(normalized_data)} credit cards for bank {bank_id}")
+        normalized_data = [
+            variant
+            for card in normalized_data
+            if isinstance(card, dict)
+            for variant in self._expand_network_families(card)
+        ]
         for i, card_data in enumerate(normalized_data):
             try:
                 logger.info(f"Processing card {i+1}: {card_data}")
+                if source_url:
+                    card_data = {
+                        **card_data,
+                        "source_url": source_url,
+                    }
                 updated_count += self._update_single_card(bank_id, card_data)
             except Exception as e:
                 logger.error(f"Error updating credit card data: {str(e)}")
@@ -124,6 +139,7 @@ class CreditCardDataService:
             1 if the card was created, updated or proposed against, 0 if it
             was skipped (no usable name)
         """
+        card_data = preserve_annual_fee_details(card_data)
         card_name = (card_data.get("name") or "").strip()
         if (
             not card_name
@@ -135,6 +151,10 @@ class CreditCardDataService:
             )
             return 0
 
+        if self._parse_bool(card_data.get("is_islamic")) is None and re.search(
+            r"islamic|shariah", card_name, re.I
+        ):
+            card_data["is_islamic"] = True
         proposed = {
             field: value
             for field, value in self._prepare_card_defaults(card_data).items()
@@ -144,16 +164,19 @@ class CreditCardDataService:
         if problems:
             logger.warning(f"Card '{card_name}' failed sanity checks: {problems}")
 
-        card = self._find_card(bank_id, card_name)
+        card = self._find_card(bank_id, card_name, card_data)
         if card is None:
             status = (
                 VerificationStatus.NEEDS_REVIEW if problems else VerificationStatus.DRAFT
             )
+            card_name = self._distinct_draft_name(bank_id, card_name, card_data)
             card = CreditCard.objects.create(
                 bank_id=bank_id, name=card_name, verification_status=status, **proposed
             )
             logger.info(f"Created draft credit card: {card.name} (ID: {card.id})")
         elif card.verification_status == VerificationStatus.VERIFIED:
+            if card_data.get("_network_inferred"):
+                proposed.pop("card_network", None)
             self._propose_changes(card, proposed, problems)
         else:
             changed = [
@@ -177,38 +200,216 @@ class CreditCardDataService:
         ignored = NAME_NOISE_WORDS | set(re.findall(r"[a-z0-9]+", bank_name.lower()))
         return frozenset(re.findall(r"[a-z0-9]+", name.lower())) - ignored
 
-    def _find_card(self, bank_id, card_name):
-        """Find the bank's card for a crawled name, tolerating naming variants.
+    @staticmethod
+    def _expand_network_families(card):
+        """Split explicitly merged Visa/Mastercard families, sharing their fees.
 
-        An exact name wins. Otherwise a card whose name only differs by case,
-        word order, the bank's own name or "Credit Card" matches, but only when
-        exactly one card does; an ambiguous name stays a new draft.
+        Parameters
+        ----------
+        card : dict
+            One extracted product or combined family.
+
+        Returns
+        -------
+        list of dict
+            One card per stated network; unrelated tiers retain their names.
+        """
+        name = str(card.get("name") or "")
+        pattern = r"\b(?:visa|master\s*card|amex|american express|unionpay|jcb|diners(?: club)?)\b"
+        matches = list(re.finditer(pattern, name, re.I))
+        if len(matches) < 2:
+            result = dict(card)
+            if len(matches) == 1 and not result.get("card_network"):
+                result["card_network"] = CreditCardDataService._network_alias(
+                    matches[0].group()
+                )
+                result["_network_inferred"] = True
+            return [result]
+        networks = {
+            CreditCardDataService._network_alias(match.group()) for match in matches
+        }
+        if len(networks) < 2:
+            return [card]
+        segments = re.split(r"/|\band\b|&", name, flags=re.I)
+        independent = len(segments) == len(matches) and all(
+            set(
+                re.findall(r"[a-z0-9]+", re.sub(pattern, "", segment, flags=re.I).lower())
+            )
+            - NAME_NOISE_WORDS
+            for segment in segments
+        )
+        shared = re.sub(pattern, "", name, flags=re.I)
+        shared = re.sub(r"/|\band\b|&", " ", shared, flags=re.I)
+        shared = " ".join(shared.split())
+        variants = []
+        for index, match in enumerate(matches):
+            network = CreditCardDataService._network_alias(match.group())
+            variant_name = (
+                segments[index].strip() if independent else f"{match.group()} {shared}"
+            )
+            variants.append({**card, "name": variant_name, "card_network": network})
+        return variants
+
+    @staticmethod
+    def _network_alias(value):
+        """Return the database network code for a network written in a name."""
+        normalized = re.sub(r"\s+", "", value.lower())
+        return {"americanexpress": "amex", "dinersclub": "diners"}.get(
+            normalized, normalized
+        )
+
+    def _find_card(self, bank_id, card_name, card_data=None):
+        """Match a name plus Islamic/network/product context, preferring verified cards.
 
         Parameters
         ----------
         bank_id : int
-            ID of the bank the crawl belongs to
+            Bank owning the extracted product.
         card_name : str
-            Card name as extracted
+            Extracted product name.
+        card_data : dict, optional
+            Product flags and source provenance.
 
         Returns
         -------
         CreditCard or None
-            The matching card, ``None`` when there is no unambiguous match
+            Unique compatible match; ambiguous identities require a new draft.
         """
-        exact = CreditCard.objects.filter(bank_id=bank_id, name=card_name).first()
-        if exact is not None:
-            return exact
+        card_data = card_data or {}
+        islamic = self._parse_bool(card_data.get("is_islamic"))
+        if islamic is None and re.search(r"islamic|shariah", card_name, re.I):
+            islamic = True
+        network = self._parse_network(card_data.get("card_network"))
         bank_name = Bank.objects.values_list("name", flat=True).get(pk=bank_id)
-        key = self._name_key(card_name, bank_name)
-        if not key:
-            return None
-        matches = [
+        ignored = {"islamic", "shariah", "conventional"} if islamic is not None else set()
+        if network and network != "other":
+            ignored |= {
+                "visa",
+                "mastercard",
+                "amex",
+                "american",
+                "express",
+                "unionpay",
+                "jcb",
+                "diners",
+                "club",
+            }
+        key = self._name_key(card_name, bank_name) - ignored
+        matches = []
+        for card in CreditCard.objects.filter(bank_id=bank_id):
+            if not self._compatible_context(card, card_data, islamic, network):
+                continue
+            candidate_name = re.sub(r"\s*\[[a-f0-9]{10}(?:-\d+)?\]$", "", card.name)
+            line = str(card_data.get("product_line") or "")
+            line_words = set(re.findall(r"[a-z0-9]+", line.lower()))
+            candidate_key = (
+                self._name_key(candidate_name, bank_name) - ignored - line_words
+            )
+            comparison_key = key - line_words
+            if candidate_key != comparison_key or not comparison_key:
+                continue
+            matches.append(card)
+        verified = [
             card
-            for card in CreditCard.objects.filter(bank_id=bank_id)
-            if self._name_key(card.name, bank_name) == key
+            for card in matches
+            if card.verification_status == VerificationStatus.VERIFIED
         ]
-        return matches[0] if len(matches) == 1 else None
+        if len(verified) == 1:
+            return verified[0]
+        drafts = [
+            card
+            for card in matches
+            if card.verification_status != VerificationStatus.VERIFIED
+        ]
+        if len(drafts) == 1:
+            return drafts[0]
+        return None
+
+    def _compatible_context(self, card, card_data, islamic, network):
+        """Reject conflicting product flags or distinct draft source/product lines.
+
+        Parameters
+        ----------
+        card : CreditCard
+            Candidate stored card.
+        card_data : dict
+            Extracted product and source context.
+        islamic : bool or None
+            Explicit Islamic flag, or unknown.
+        network : str
+            Extracted network code, or empty when unknown.
+
+        Returns
+        -------
+        bool
+            Whether the candidate is compatible with the extracted context.
+        """
+        if islamic is not None and card.is_islamic != islamic:
+            return False
+        stored_network = card.card_network
+        if not stored_network:
+            variants = self._expand_network_families({"name": card.name})
+            stored_network = (
+                variants[0].get("card_network", "") if len(variants) == 1 else ""
+            )
+        if (
+            network
+            and network != "other"
+            and stored_network
+            and stored_network != network
+        ):
+            return False
+        line = str(card_data.get("product_line") or "").lower()
+        if line and line not in card.name.lower():
+            return False
+        if card.verification_status != VerificationStatus.VERIFIED:
+            source = card_data.get("source_url")
+            if source and card.source_url and source != card.source_url:
+                return False
+        return True
+
+    def _distinct_draft_name(self, bank_id, name, card_data):
+        """Disambiguate names within the existing bank/name uniqueness constraint.
+
+        Parameters
+        ----------
+        bank_id : int
+            Bank owning the product.
+        name : str
+            Extracted product name.
+        card_data : dict
+            Islamic, network, product-line and source context.
+
+        Returns
+        -------
+        str
+            Available name with readable context or a stable source suffix.
+        """
+        islamic = self._parse_bool(card_data.get("is_islamic"))
+        line = str(card_data.get("product_line") or "").strip()
+        if line and line.lower() not in name.lower():
+            name = f"{name} {line}"
+        name = name[:255]
+        if not CreditCard.objects.filter(bank_id=bank_id, name=name).exists():
+            return name
+        if islamic is not None:
+            label = "Islamic" if islamic else "Conventional"
+            if label.lower() not in name.lower():
+                name = f"{name[:240]} {label}"
+            if not CreditCard.objects.filter(bank_id=bank_id, name=name).exists():
+                return name
+        context = "|".join(
+            str(card_data.get(key) or "")
+            for key in ("source_url", "product_line", "is_islamic", "card_network")
+        )
+        suffix = hashlib.sha256(context.encode()).hexdigest()[:10]
+        base = name[:230]
+        candidate = f"{base} [{suffix}]"
+        index = 2
+        while CreditCard.objects.filter(bank_id=bank_id, name=candidate).exists():
+            candidate = f"{base} [{suffix}-{index}]"
+            index += 1
+        return candidate
 
     @staticmethod
     def _looks_like_fee(name):
@@ -225,6 +426,64 @@ class CreditCardDataService:
         if isinstance(current, Decimal):
             return current != Decimal(str(proposed))
         return current != proposed
+
+    @staticmethod
+    def _figures(value):
+        """Return normalized numeric, percentage and currency evidence in text.
+
+        Parameters
+        ----------
+        value : object
+            Fee or benefit text, including structured text fields.
+
+        Returns
+        -------
+        frozenset
+            Currency, decimal and percentage tuples with wording removed.
+        """
+        text = str(value).lower()
+        text = re.sub(r"(?<=\d),(?=\d)", "", text)
+        text = re.sub(r"us\$|\$|dollars?", "usd ", text)
+        text = re.sub(r"\b(?:tk|taka|bdt)\b\.?|৳", "bdt ", text)
+        text = re.sub(r"€", "eur ", text)
+        text = re.sub(r"£", "gbp ", text)
+        text = re.sub(r"\bper\s*cent\b", "percent", text)
+        text = re.sub(r"\b(bdt|usd|eur|gbp)[\s:./-]*", r"\1 ", text)
+        text = re.sub(r"(\d+(?:\.\d+)?)\s+(bdt|usd|eur|gbp)\b", r"\2 \1", text)
+        pattern = r"(?:(bdt|usd|eur|gbp)\s*)?(-?\d+(?:\.\d+)?)\s*(%|percent\b)?"
+        return frozenset(
+            (currency or "", str(Decimal(number).normalize()), "%" if percent else "")
+            for currency, number, percent in re.findall(pattern, text)
+        )
+
+    def _materially_differs(self, field, current, proposed):
+        """Compare text by its figures while retaining numeric/identity semantics.
+
+        Parameters
+        ----------
+        field : str
+            Model field being proposed.
+        current : object
+            Stored verified value.
+        proposed : object
+            Extracted replacement value.
+
+        Returns
+        -------
+        bool
+            Whether staff should review a material change.
+        """
+        if field in {
+            "card_network",
+            "source_url",
+            "apply_url",
+            "is_islamic",
+            "is_dual_currency",
+        }:
+            return self._differs(current, proposed)
+        if field in {"annual_fee", "interest_rate_apr", "min_monthly_income"}:
+            return self._differs(current, proposed)
+        return self._figures(current or "") != self._figures(proposed or "")
 
     def _propose_changes(self, card, proposed, problems):
         """Queue each differing proposed value for staff review.
@@ -244,7 +503,7 @@ class CreditCardDataService:
         """
         for field, value in proposed.items():
             current = getattr(card, field)
-            if not self._differs(current, value):
+            if not self._materially_differs(field, current, value):
                 continue
             if ReviewQueue.objects.filter(
                 credit_card=card,

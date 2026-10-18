@@ -384,7 +384,10 @@ class TestSystemScalabilityAndPerformance:
     def test_crawling_performance_with_many_sources(self, mock_parse, mock_extract):
         """Test crawling performance with many data sources."""
         # Mock successful responses
-        mock_extract.return_value = ("Raw content", "Sample content")
+        mock_extract.return_value = (
+            "Raw content",
+            "Credit card annual fee BDT 95; interest rate 25%",
+        )
         mock_parse.return_value = (
             [{"name": "Test Card", "annual_fee": "95.00"}],  # structured data
             [
