@@ -30,6 +30,13 @@ only accepted when it already means what the target field means:
 * a percentage in the fee field (``"18.99%"``) is rejected: a rate is not an
   amount.
 
+``min_monthly_income`` is the one *monthly* BDT field: an explicit monthly figure
+(``"BDT 50,000 per month"``, ``"Tk. 40,000/month"``, ``"Monthly income 30000"``)
+is accepted as is. An explicit annual figure (``"per annum"``, ``"yearly"``) is
+divided by 12 because that conversion is exact; a value that mixes monthly and
+annual wording, or covers a week/day/quarter, is rejected. Foreign currency is
+rejected for this field too.
+
 Every rejection carries an explicit machine-readable reason (see the
 ``REASON_*`` constants) so a reviewer can tell *why* a value became ``NULL``.
 
@@ -49,6 +56,25 @@ CRITICAL_FIELDS = ("annual_fee", "interest_rate_apr")
 FIELD_BOUNDS = {
     "annual_fee": (0.0, 100000.0),
     "interest_rate_apr": (0.0, 100.0),
+    "min_monthly_income": (0.0, 10000000.0),
+}
+
+# Fields whose natural period is a month (everything else is annual).
+MONTHLY_FIELDS = {"min_monthly_income"}
+
+# Words that may surround the number in a monthly income cell.
+MONTHLY_NOISE_WORDS = {
+    "income",
+    "minimum",
+    "min",
+    "salary",
+    "gross",
+    "monthly",
+    "month",
+    "of",
+    "at",
+    "least",
+    "per",
 }
 
 # Strings that explicitly mean "no data available".
@@ -157,6 +183,7 @@ REASON_FOREIGN_CURRENCY = "foreign_currency"
 REASON_NON_ANNUAL_PERIOD = "non_annual_period"
 REASON_CONDITIONAL_WAIVER = "conditional_waiver"
 REASON_PERCENTAGE_FOR_FEE = "percentage_not_a_fee_amount"
+REASON_AMBIGUOUS_PERIOD = "ambiguous_period"
 
 # Amounts denominated in a currency other than BDT. Fees are stored/displayed as
 # BDT, so these are rejected rather than relabeled (no conversion is invented).
@@ -180,6 +207,20 @@ _NON_ANNUAL_PERIOD_PATTERN = re.compile(
     # "/month" and friends are unambiguous anywhere ("500/month"): the slash
     # itself is not a word character, so no boundary guard is needed.
     r"|/(month|week|day)"
+)
+
+# Period wording for monthly fields. Weekly/daily/quarterly cannot be converted
+# exactly to a month without inventing a factor, so they reject the value.
+_MONTHLY_PERIOD_PATTERN = re.compile(
+    r"(?<![\w])(per\s+month|monthly|p\.m\.?)(?![\w])|/(month|mo)(?![\w])"
+)
+_ANNUAL_PERIOD_PATTERN = re.compile(
+    r"(?<![\w])(per\s+annum|per\s+year|yearly|annually|annual|p\.a\.?)(?![\w])"
+    r"|/(year|yr|annum)(?![\w])"
+)
+_OTHER_PERIOD_PATTERN = re.compile(
+    r"(?<![\w])(per\s+week|per\s+day|per\s+quarter|weekly|daily|quarterly|"
+    r"bi-?monthly)(?![\w])|/(week|day)(?![\w])"
 )
 
 # Waiver wording: "waived"/"exempted" may be conditional ("waived if annual
@@ -232,7 +273,7 @@ def _normalize_text(text):
     return " ".join(cleaned.split()).strip()
 
 
-def _parse_string_number(raw):
+def _parse_string_number(raw, extra_noise=()):
     """Parse a fee/rate string into a number, or None when unparseable.
 
     The fast path removes currency/percentage noise and parses the remainder.
@@ -245,6 +286,8 @@ def _parse_string_number(raw):
     ----------
     raw : str
         Raw string value.
+    extra_noise : iterable of str, optional
+        Field-specific words that may surround the number.
 
     Returns
     -------
@@ -269,7 +312,7 @@ def _parse_string_number(raw):
         except (TypeError, ValueError):
             pass
         word = bare.rstrip(".").replace(".", "")
-        if word in NOISE_WORDS or bare.rstrip(".") in NOISE_WORDS:
+        if word in NOISE_WORDS or bare.rstrip(".") in NOISE_WORDS or word in extra_noise:
             continue
         return None
 
@@ -305,15 +348,51 @@ def detect_unit_issue(value, field):
         return None
     if field == "annual_fee" and _WAIVER_PATTERN.search(text):
         return REASON_CONDITIONAL_WAIVER
-    if _NON_ANNUAL_PERIOD_PATTERN.search(text):
+    if field in MONTHLY_FIELDS:
+        if _OTHER_PERIOD_PATTERN.search(text):
+            return REASON_NON_ANNUAL_PERIOD
+    elif _NON_ANNUAL_PERIOD_PATTERN.search(text):
         return REASON_NON_ANNUAL_PERIOD
     if _FOREIGN_CURRENCY_WORD_PATTERN.search(text) or (
         _FOREIGN_CURRENCY_SYMBOL_PATTERN.search(text)
     ):
         return REASON_FOREIGN_CURRENCY
-    if field == "annual_fee" and _PERCENT_PATTERN.search(text):
+    if (field == "annual_fee" or field in MONTHLY_FIELDS) and _PERCENT_PATTERN.search(
+        text
+    ):
         return REASON_PERCENTAGE_FOR_FEE
     return None
+
+
+def _coerce_monthly_string(raw, unit_issue):
+    """Coerce a monthly BDT string (explicit monthly or annual figure).
+
+    Parameters
+    ----------
+    raw : str
+        Raw, non-empty string.
+    unit_issue : str or None
+        Result of :func:`detect_unit_issue` for the same string.
+
+    Returns
+    -------
+    tuple of (float or None, str, str or None)
+        ``(monthly number, status, reason)`` before bounds are applied.
+    """
+    text = raw.lower()
+    monthly = bool(_MONTHLY_PERIOD_PATTERN.search(text))
+    annual = bool(_ANNUAL_PERIOD_PATTERN.search(text))
+    if unit_issue is not None:
+        return None, STATUS_INVALID, unit_issue
+    if monthly and annual:
+        return None, STATUS_INVALID, REASON_AMBIGUOUS_PERIOD
+    stripped = _ANNUAL_PERIOD_PATTERN.sub(" ", _MONTHLY_PERIOD_PATTERN.sub(" ", text))
+    number = _parse_string_number(stripped, MONTHLY_NOISE_WORDS)
+    if number is None or not math.isfinite(number):
+        return None, STATUS_INVALID, REASON_NOT_A_NUMBER
+    if annual:
+        number = round(number / 12, 2)
+    return number, STATUS_VALID, None
 
 
 def _coerce_string_number(raw_value, field):
@@ -340,6 +419,8 @@ def _coerce_string_number(raw_value, field):
         return None, STATUS_MISSING, None
 
     unit_issue = detect_unit_issue(raw, field)
+    if field in MONTHLY_FIELDS:
+        return _coerce_monthly_string(raw, unit_issue)
     number = _parse_string_number(raw)
     if number is None or not math.isfinite(number):
         # A value that is already suspicious (e.g. a monthly amount) reports
