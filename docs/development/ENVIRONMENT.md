@@ -7,6 +7,7 @@ This inventory follows literal `os.getenv()` calls in `credit_mate_ai/settings.p
 | `SECRET_KEY` | Django signing key; required and non-empty when `ENVIRONMENT=production`. |
 | `DEBUG`, `ENVIRONMENT`, `ALLOWED_HOSTS` | Debug mode, environment name, and accepted hostnames; production disallows wildcard/empty hosts. |
 | `DATABASE_URL` | Optional full PostgreSQL URL; takes precedence over split DB settings. |
+| `CONN_MAX_AGE`, `LOG_LEVEL`, `CSRF_TRUSTED_ORIGINS`, `TERMS_VERSION` | Database connection reuse seconds (default 60), root log level (default INFO), comma-separated trusted CSRF origins, and the terms version stored when a user accepts at registration (default `2026-10-draft`). |
 | `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | PostgreSQL connection components when `DATABASE_URL` is unset. |
 | `CACHE_BACKEND`, `REDIS_CACHE_URL` | Cache implementation (`redis` default, `locmem` option) and Redis cache URL. |
 | `CACHE_TTL_CARD_LIST`, `CACHE_TTL_FILTER_RESULTS`, `CACHE_TTL_SEARCH_SUGGESTIONS` | Cache lifetimes in seconds. |
@@ -20,7 +21,7 @@ This inventory follows literal `os.getenv()` calls in `credit_mate_ai/settings.p
 | `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`, `SENTRY_TRACES_SAMPLE_RATE` | Optional error reporting DSN, environment/release labels, and trace sampling fraction. |
 | `REVIEW_QUEUE_NOTIFY_EMAILS` | Comma-separated recipients for opted-in high-priority review notifications. |
 | `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | Mail transport. Non-production defaults to console backend; production defaults to SMTP. Password is secret. |
-| `DEFAULT_FROM_EMAIL`, `ALERTS_PUBLIC_BASE_URL`, `FRONTEND_URL` | Outgoing sender and public links used for alert/frontend flows. |
+| `DEFAULT_FROM_EMAIL`, `FRONTEND_URL` | Outgoing sender and public links used for alert/frontend flows. |
 | `THROTTLE_RATE_ANON`, `THROTTLE_RATE_USER`, `THROTTLE_RATE_BURST`, `THROTTLE_RATE_REVIEW_WRITE`, `THROTTLE_RATE_AUTH_BURST`, `THROTTLE_RATE_AUTH_ANON`, `THROTTLE_RATE_AUTH_USER` | DRF throttle rates by client/action. Use DRF rate syntax such as `100/min`. |
 | `CORS_ALLOWED_ORIGINS`, `CORS_ALLOW_CREDENTIALS`, `CORS_ALLOW_ALL_ORIGINS` | CORS origins and credential behavior. Allow-all is honored only when DEBUG is true. |
 | `SECURE_SSL_REDIRECT`, `SECURE_HSTS_SECONDS`, `SECURE_HSTS_INCLUDE_SUBDOMAINS`, `SECURE_HSTS_PRELOAD`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` | HTTPS, HSTS, and secure-cookie controls; non-debug settings force production security defaults. |

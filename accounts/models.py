@@ -18,6 +18,9 @@ class UserProfile(models.Model):
     )
     email_verified = models.BooleanField(default=False)
     email_opt_in = models.BooleanField(default=False)
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    terms_version = models.CharField(max_length=32, blank=True, default="")
+    marketing_opt_in = models.BooleanField(default=False)
     preferences = models.JSONField(default=dict, blank=True)
     # Denormalized email for case-insensitive unique constraint
     email = models.EmailField(max_length=254, db_index=True)

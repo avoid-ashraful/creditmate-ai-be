@@ -172,6 +172,7 @@ class TestRegisterSerializer:
             "email": "newuser@example.com",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
             "first_name": "John",
             "last_name": "Doe",
             "email_opt_in": True,
@@ -195,6 +196,7 @@ class TestRegisterSerializer:
             "email": "NEWUSER@EXAMPLE.COM",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
         }
 
         serializer = RegisterSerializer(data=data)
@@ -216,6 +218,7 @@ class TestRegisterSerializer:
             "email": "existing@example.com",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
         }
 
         serializer = RegisterSerializer(data=data)
@@ -228,6 +231,7 @@ class TestRegisterSerializer:
             "email": "newuser@example.com",
             "password": "securepass123",
             "password_confirm": "differentpass123",
+            "accept_terms": True,
         }
 
         serializer = RegisterSerializer(data=data)
@@ -240,6 +244,7 @@ class TestRegisterSerializer:
             "email": "newuser@example.com",
             "password": "short",
             "password_confirm": "short",
+            "accept_terms": True,
         }
 
         serializer = RegisterSerializer(data=data)
@@ -258,6 +263,7 @@ class TestRegisterSerializer:
             "email": "EXISTING@EXAMPLE.COM",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
         }
 
         serializer = RegisterSerializer(data=data)

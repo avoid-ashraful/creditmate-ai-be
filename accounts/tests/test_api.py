@@ -48,6 +48,7 @@ class TestRegisterView:
             "email": "newuser@example.com",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
             "first_name": "John",
             "last_name": "Doe",
             "email_opt_in": True,
@@ -74,6 +75,7 @@ class TestRegisterView:
             "email": "test@example.com",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
         }
 
         response = api_client.post("/api/v1/auth/register/", data, format="json")
@@ -87,6 +89,7 @@ class TestRegisterView:
             "email": "newuser@example.com",
             "password": "securepass123",
             "password_confirm": "differentpass123",
+            "accept_terms": True,
         }
 
         response = api_client.post("/api/v1/auth/register/", data, format="json")
@@ -100,6 +103,7 @@ class TestRegisterView:
             "email": "newuser@example.com",
             "password": "short",
             "password_confirm": "short",
+            "accept_terms": True,
         }
 
         response = api_client.post("/api/v1/auth/register/", data, format="json")
@@ -113,6 +117,7 @@ class TestRegisterView:
             "email": "NEWUSER@EXAMPLE.COM",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
         }
 
         response = api_client.post("/api/v1/auth/register/", data, format="json")
@@ -128,6 +133,7 @@ class TestRegisterView:
             "email": "TEST@EXAMPLE.COM",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
         }
 
         response = api_client.post("/api/v1/auth/register/", data, format="json")
@@ -144,6 +150,7 @@ class TestRegisterView:
             "email": "newuser@example.com",
             "password": "securepass123",
             "password_confirm": "securepass123",
+            "accept_terms": True,
         }
 
         response = api_client.post("/api/v1/auth/register/", data, format="json")
@@ -667,3 +674,258 @@ def test_refresh_returns_rotated_token_usable_for_next_refresh(api_client):
     assert again.status_code == 200
     reused = api_client.post("/api/v1/auth/token/refresh/", {"refresh": str(first)})
     assert reused.status_code == 400
+
+
+REGISTER_PAYLOAD = {
+    "email": "consent@example.com",
+    "password": "securepass123",
+    "password_confirm": "securepass123",
+}
+
+
+@pytest.mark.django_db
+class TestConsent:
+    """Registration consent (terms) and marketing opt-in."""
+
+    @pytest.mark.parametrize("extra", [{}, {"accept_terms": False}])
+    def test_register_requires_accept_terms(self, api_client, extra):
+        response = api_client.post(
+            "/api/v1/auth/register/", {**REGISTER_PAYLOAD, **extra}, format="json"
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "accept_terms" in response.data
+        assert not User.objects.filter(username="consent@example.com").exists()
+
+    def test_register_records_consent(self, api_client, settings):
+        settings.TERMS_VERSION = "v-test"
+        payload = {**REGISTER_PAYLOAD, "accept_terms": True, "marketing_opt_in": True}
+
+        response = api_client.post("/api/v1/auth/register/", payload, format="json")
+
+        assert response.status_code == status.HTTP_201_CREATED
+        profile = User.objects.get(username="consent@example.com").profile
+        assert profile.terms_accepted_at is not None
+        assert profile.terms_version == "v-test"
+        assert profile.marketing_opt_in is True
+
+    def test_marketing_opt_in_defaults_false_and_default_terms_version(self, api_client):
+        api_client.post(
+            "/api/v1/auth/register/",
+            {**REGISTER_PAYLOAD, "accept_terms": True},
+            format="json",
+        )
+
+        profile = User.objects.get(username="consent@example.com").profile
+        assert profile.marketing_opt_in is False
+        assert profile.terms_version == "2026-10-draft"
+
+    def test_me_exposes_consent_and_allows_marketing_update_only(
+        self, authenticated_client, user
+    ):
+        body = authenticated_client.get("/api/v1/auth/me/").data["profile"]
+        assert body["marketing_opt_in"] is False
+        assert body["terms_version"] == ""
+
+        response = authenticated_client.patch(
+            "/api/v1/auth/me/",
+            {"profile": {"marketing_opt_in": True, "terms_version": "forged"}},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        user.profile.refresh_from_db()
+        assert user.profile.marketing_opt_in is True
+        assert user.profile.terms_version == ""
+
+
+@pytest.mark.django_db
+class TestEmailReliability:
+    """SMTP failures are logged, never raised, and never change the response."""
+
+    @pytest.fixture
+    def failing_mail(self, monkeypatch):
+        def boom(*args, **kwargs):
+            assert kwargs["fail_silently"] is False
+            raise OSError("smtp down")
+
+        monkeypatch.setattr("accounts.views.send_mail", boom)
+
+    def test_register_survives_send_failure_and_logs(
+        self, api_client, failing_mail, caplog
+    ):
+        payload = {**REGISTER_PAYLOAD, "accept_terms": True}
+
+        response = api_client.post("/api/v1/auth/register/", payload, format="json")
+
+        assert response.status_code == status.HTTP_201_CREATED
+        user = User.objects.get(username="consent@example.com")
+        record = next(r for r in caplog.records if "Failed to send" in r.message)
+        assert str(user.pk) in record.message
+        assert "consent@example.com" not in caplog.text.split("Traceback")[0]
+
+    def test_password_reset_response_identical_on_failure(
+        self, api_client, user, failing_mail, caplog
+    ):
+        known = api_client.post(
+            "/api/v1/auth/password-reset/", {"email": user.email}, format="json"
+        )
+        unknown = api_client.post(
+            "/api/v1/auth/password-reset/", {"email": "nobody@example.com"}, format="json"
+        )
+
+        assert known.status_code == unknown.status_code == status.HTTP_200_OK
+        assert known.data == unknown.data
+        assert "Failed to send" in caplog.text
+
+
+@pytest.mark.django_db
+class TestResendVerification:
+    """POST /auth/resend-verification/."""
+
+    URL = "/api/v1/auth/resend-verification/"
+
+    def test_sends_for_unverified_user(self, api_client, user):
+        response = api_client.post(self.URL, {"email": "TEST@example.com"}, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(mail.outbox) == 1
+        assert "verify-email?token=" in mail.outbox[0].body
+
+    def test_same_response_and_no_email_for_verified_or_unknown(self, api_client, user):
+        sent = api_client.post(self.URL, {"email": user.email}, format="json").data
+        mail.outbox.clear()
+        user.profile.email_verified = True
+        user.profile.save()
+
+        verified = api_client.post(self.URL, {"email": user.email}, format="json")
+        unknown = api_client.post(self.URL, {"email": "no@example.com"}, format="json")
+
+        assert verified.status_code == unknown.status_code == status.HTTP_200_OK
+        assert verified.data == unknown.data == sent
+        assert mail.outbox == []
+
+    def test_send_failure_still_returns_200(self, api_client, user, monkeypatch):
+        def boom(*args, **kwargs):
+            raise OSError("smtp down")
+
+        monkeypatch.setattr("accounts.views.send_mail", boom)
+
+        response = api_client.post(self.URL, {"email": user.email}, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_is_throttled(self, api_client, settings, monkeypatch):
+        from accounts.throttling import AuthBurstThrottle
+
+        monkeypatch.setattr(AuthBurstThrottle, "get_rate", lambda self: "2/min")
+        codes = [
+            api_client.post(
+                self.URL, {"email": "a@example.com"}, format="json"
+            ).status_code
+            for _ in range(3)
+        ]
+
+        assert codes == [200, 200, status.HTTP_429_TOO_MANY_REQUESTS]
+
+
+@pytest.mark.django_db
+class TestAccountDeletionAndExport:
+    """DELETE /auth/me/ and GET /auth/me/export/."""
+
+    def _populate(self, user):
+        from alerts.models import AlertSubscription, NotificationPreference
+        from banks.models import Bank
+        from credit_cards.models import CreditCard
+        from reviews.models import CardReview, ReviewVote
+        from saved.models import (
+            Collection,
+            CollectionItem,
+            SavedComparison,
+            SavedComparisonItem,
+        )
+
+        card = CreditCard.objects.create(
+            bank=Bank.objects.create(name="Export Bank"), name="Export Card"
+        )
+        comparison = SavedComparison.objects.create(user=user, name="My compare")
+        SavedComparisonItem.objects.create(comparison=comparison, card=card, position=0)
+        collection = Collection.objects.create(user=user, name="My collection")
+        CollectionItem.objects.create(collection=collection, card=card, notes="nice")
+        AlertSubscription.objects.create(user=user, card=card, kind="fee_change")
+        NotificationPreference.objects.create(user=user, frequency="daily")
+        review = CardReview.objects.create(
+            user=user, card=card, rating=5, title="Mine", body="Body", status="approved"
+        )
+        return card, review, ReviewVote
+
+    def test_export_requires_auth(self, api_client):
+        assert api_client.get("/api/v1/auth/me/export/").status_code == 401
+
+    def test_export_contains_all_personal_data_and_nothing_of_others(
+        self, authenticated_client, user
+    ):
+        self._populate(user)
+        User.objects.create_user(username="o@example.com", email="o@example.com")
+
+        response = authenticated_client.get("/api/v1/auth/me/export/")
+
+        assert response.status_code == 200
+        data = response.data
+        assert data["profile"]["email"] == user.email
+        assert data["saved_comparisons"][0]["name"] == "My compare"
+        assert data["saved_comparisons"][0]["cards"] == ["Export Card"]
+        assert data["collections"][0]["items"] == [
+            {"card": "Export Card", "notes": "nice"}
+        ]
+        assert data["alert_subscriptions"][0]["kind"] == "fee_change"
+        assert data["notification_preference"] == {"frequency": "daily"}
+        assert data["reviews"][0]["title"] == "Mine"
+
+    def test_delete_requires_auth(self, api_client):
+        response = api_client.delete("/api/v1/auth/me/", {"password": "x"}, format="json")
+        assert response.status_code == 401
+
+    @pytest.mark.parametrize("body", [{}, {"password": "wrong-password"}])
+    def test_delete_requires_current_password(self, authenticated_client, user, body):
+        response = authenticated_client.delete("/api/v1/auth/me/", body, format="json")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert User.objects.filter(pk=user.pk).exists()
+
+    def test_delete_removes_user_data_and_review_aggregates_stay_consistent(
+        self, authenticated_client, user
+    ):
+        from django.core.cache import cache
+
+        from alerts.models import AlertSubscription, NotificationPreference
+        from reviews.models import CardReview
+        from saved.models import Collection, SavedComparison
+
+        card, review, ReviewVote = self._populate(user)
+        stayer = User.objects.create_user(username="s@example.com", email="s@example.com")
+        CardReview.objects.create(
+            user=stayer, card=card, rating=1, title="T", body="B", status="approved"
+        )
+        voter_review = CardReview.objects.get(user=stayer)
+        ReviewVote.objects.create(review=voter_review, user=user)
+        CardReview.objects.filter(pk=voter_review.pk).update(helpful_count=1)
+        summary_url = f"/api/v1/reviews/cards/{card.pk}/summary/"
+        assert APIClient().get(summary_url).data["average_rating"] == 3  # caches summary
+
+        response = authenticated_client.delete(
+            "/api/v1/auth/me/", {"password": "securepass123"}, format="json"
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not User.objects.filter(pk=user.pk).exists()
+        assert not SavedComparison.objects.exists()
+        assert not Collection.objects.exists()
+        assert not AlertSubscription.objects.exists()
+        assert not NotificationPreference.objects.exists()
+        assert not CardReview.objects.filter(pk=review.pk).exists()
+        voter_review.refresh_from_db()
+        assert voter_review.helpful_count == 0
+        summary = APIClient().get(summary_url).data
+        assert summary["review_count"] == 1 and summary["average_rating"] == 1
+        cache.clear()
