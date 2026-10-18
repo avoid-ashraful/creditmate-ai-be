@@ -119,6 +119,48 @@ def _try_elasticsearch_search(query_params, request):
         return None
 
 
+def _card_detail_facets(aggregations):
+    """Convert the network / Islamic / dual currency aggregations to facets.
+
+    Parameters
+    ----------
+    aggregations : dict
+        Raw Elasticsearch ``aggregations`` section.
+
+    Returns
+    -------
+    dict
+        Facets keyed by name for the aggregations that are present.
+    """
+    facets = {}
+    if "card_network" in aggregations:
+        facets["card_network"] = {
+            "label": "Card Network",
+            "type": "terms",
+            "buckets": [
+                {"key": bucket["key"], "count": bucket["doc_count"]}
+                for bucket in aggregations["card_network"]["buckets"]
+            ],
+        }
+
+    for name, label in (("is_islamic", "Islamic"), ("is_dual_currency", "Dual Currency")):
+        if name in aggregations:
+            facets[name] = {
+                "label": label,
+                "type": "boolean",
+                "buckets": [
+                    {
+                        "key": bucket["key"],
+                        "label": "Yes" if bucket["key"] else "No",
+                        "count": bucket["doc_count"],
+                    }
+                    for bucket in aggregations[name]["buckets"]
+                ],
+            }
+
+    return facets
+
+
 def _normalize_es_response(response, query, page, page_size):
     """Normalize Elasticsearch response to match our API contract.
 
@@ -232,30 +274,7 @@ def _normalize_es_response(response, query, page, page_size):
             ],
         }
 
-    if "card_network" in aggregations:
-        facets["card_network"] = {
-            "label": "Card Network",
-            "type": "terms",
-            "buckets": [
-                {"key": bucket["key"], "count": bucket["doc_count"]}
-                for bucket in aggregations["card_network"]["buckets"]
-            ],
-        }
-
-    for name, label in (("is_islamic", "Islamic"), ("is_dual_currency", "Dual Currency")):
-        if name in aggregations:
-            facets[name] = {
-                "label": label,
-                "type": "boolean",
-                "buckets": [
-                    {
-                        "key": bucket["key"],
-                        "label": "Yes" if bucket["key"] else "No",
-                        "count": bucket["doc_count"],
-                    }
-                    for bucket in aggregations[name]["buckets"]
-                ],
-            }
+    facets.update(_card_detail_facets(aggregations))
 
     return {
         "query": query,

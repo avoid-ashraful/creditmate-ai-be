@@ -103,3 +103,19 @@ class TestAdvancedDetailSupport:
         assert islamic["true"] == 1
         dual = {b["key"]: b["count"] for b in facets["is_dual_currency"]["buckets"]}
         assert dual == {"true": 1, "false": 1}
+
+
+def test_es_response_normalizes_new_facets():
+    from credit_cards.api.advanced_views import _normalize_es_response
+
+    response = {
+        "hits": {"total": {"value": 0}, "hits": []},
+        "aggregations": {
+            "card_network": {"buckets": [{"key": "visa", "doc_count": 3}]},
+            "is_islamic": {"buckets": [{"key": True, "doc_count": 1}]},
+        },
+    }
+    facets = _normalize_es_response(response, "", 1, 20)["facets"]
+    assert facets["card_network"]["buckets"] == [{"key": "visa", "count": 3}]
+    assert facets["is_islamic"]["buckets"][0] == {"key": True, "label": "Yes", "count": 1}
+    assert "is_dual_currency" not in facets
