@@ -115,6 +115,10 @@ class TestFilters:
             "interest_rate_max": 30,
             "min_lounge_visits_international": 2,
             "min_lounge_visits_domestic": 1,
+            "card_network": "visa,mastercard",
+            "is_islamic": True,
+            "is_dual_currency": "false",
+            "max_min_monthly_income": 50000,
         }
         # Note: "category" filter is handled specially in _build_multi_value_filters
         expected = set(CARD_FILTERS.keys()) - {"category"}
@@ -229,3 +233,38 @@ class TestSuggest:
 
     def test_empty_query_returns_none(self):
         assert build_suggest_body("cards", "   ") is None
+
+
+class TestCardDetailFilters:
+    def test_card_network_is_a_lowercase_terms_clause(self):
+        assert build_filters("cards", {"card_network": "Visa, MasterCard"}) == [
+            {"terms": {"card_network": ["visa", "mastercard"]}}
+        ]
+
+    def test_boolean_filters_are_coerced(self):
+        clauses = build_filters(
+            "cards", {"is_islamic": "false", "is_dual_currency": "true"}
+        )
+        assert {"term": {"is_islamic": False}} in clauses
+        assert {"term": {"is_dual_currency": True}} in clauses
+
+    def test_income_cap_excludes_unknown_by_default(self):
+        assert build_filters("cards", {"max_min_monthly_income": "40000"}) == [
+            {"range": {"min_monthly_income": {"lte": 40000.0}}}
+        ]
+
+    def test_income_cap_includes_unknown_only_when_explicit(self):
+        (clause,) = build_filters(
+            "cards", {"max_min_monthly_income": "40000", "include_unknown_income": "true"}
+        )
+        assert clause["bool"]["minimum_should_match"] == 1
+        assert {"range": {"min_monthly_income": {"lte": 40000.0}}} in clause["bool"][
+            "should"
+        ]
+        assert {
+            "bool": {"must_not": [{"exists": {"field": "min_monthly_income"}}]}
+        } in clause["bool"]["should"]
+        assert build_filters(
+            "cards",
+            {"max_min_monthly_income": "40000", "include_unknown_income": "false"},
+        ) == [{"range": {"min_monthly_income": {"lte": 40000.0}}}]

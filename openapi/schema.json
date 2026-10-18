@@ -11,14 +11,67 @@
     "paths": {
         "/api/search/": {
             "get": {
-                "operationId": "search_retrieve",
+                "operationId": "search_results",
                 "description": "Full text search over banks and credit cards",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "ordering",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Supported result ordering"
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Page number"
+                    },
+                    {
+                        "in": "query",
+                        "name": "page_size",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Results per page (1–100)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search terms"
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "banks",
+                                "cards"
+                            ]
+                        },
+                        "description": "Result type"
+                    }
+                ],
                 "tags": [
                     "search"
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     }
                 ],
                 "responses": {
@@ -28,6 +81,18 @@
                                 "schema": {
                                     "type": "object",
                                     "additionalProperties": {}
+                                },
+                                "examples": {
+                                    "CardSearch": {
+                                        "value": {
+                                            "query": "travel",
+                                            "type": "cards",
+                                            "page": 1,
+                                            "page_size": 20,
+                                            "results": {}
+                                        },
+                                        "summary": "Card search"
+                                    }
                                 }
                             }
                         },
@@ -38,14 +103,20 @@
         },
         "/api/search/status/": {
             "get": {
-                "operationId": "search_status_retrieve",
+                "operationId": "search_service_status",
                 "description": "Get search service status including engine, indexes, and queue metrics",
                 "tags": [
                     "search"
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     }
                 ],
                 "responses": {
@@ -65,15 +136,1229 @@
         },
         "/api/search/suggest/": {
             "get": {
-                "operationId": "search_suggest_retrieve",
+                "operationId": "search_suggestions",
                 "description": "Get type-ahead suggestions for search queries",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Maximum suggestions"
+                    },
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Partial search terms"
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "banks",
+                                "cards"
+                            ]
+                        },
+                        "description": "Suggestion type"
+                    }
+                ],
                 "tags": [
                     "search"
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                },
+                                "examples": {
+                                    "Suggestions": {
+                                        "value": {
+                                            "suggestions": []
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/alerts/preferences/": {
+            "get": {
+                "operationId": "alerts_preferences_retrieve",
+                "tags": [
+                    "alerts"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotificationPreference"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "alerts_preferences_replace",
+                "tags": [
+                    "alerts"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotificationPreferenceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotificationPreferenceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotificationPreferenceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotificationPreference"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "alerts_preferences_update",
+                "tags": [
+                    "alerts"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedNotificationPreferenceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedNotificationPreferenceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedNotificationPreferenceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotificationPreference"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/alerts/subscriptions/": {
+            "get": {
+                "operationId": "v1_alerts_subscriptions_list",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedAlertSubscriptionList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_alerts_subscriptions_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlertSubscriptionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlertSubscriptionRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlertSubscriptionRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertSubscription"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/alerts/subscriptions/{id}/": {
+            "get": {
+                "operationId": "v1_alerts_subscriptions_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertSubscription"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_alerts_subscriptions_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlertSubscriptionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlertSubscriptionRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlertSubscriptionRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertSubscription"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_alerts_subscriptions_partial_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAlertSubscriptionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAlertSubscriptionRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAlertSubscriptionRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertSubscription"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_alerts_subscriptions_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/alerts/unsubscribe/{token}/": {
+            "get": {
+                "operationId": "alerts_unsubscribe_get",
+                "description": "Read-only: returns the subscription; POST performs the unsubscribe.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "token",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "alerts"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "alerts_unsubscribe_post",
+                "description": "Cancel every active alert subscription of the token's owner.\n\nOne alert email covers all of a user's subscriptions, so its single\nunsubscribe link must stop them all.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "token",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "alerts"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/change-password/": {
+            "post": {
+                "operationId": "auth_change_password",
+                "description": "Change user's password.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login/": {
+            "post": {
+                "operationId": "auth_login",
+                "description": "Login user and return JWT tokens.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            },
+                            "examples": {
+                                "Login": {
+                                    "value": {
+                                        "email": "sam@example.com",
+                                        "password": "StrongPassword123!"
+                                    }
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout/": {
+            "post": {
+                "operationId": "auth_logout",
+                "description": "Logout user by blacklisting the refresh token.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogoutRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogoutRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogoutRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me/": {
+            "get": {
+                "operationId": "auth_me_retrieve",
+                "description": "Get or update current user's profile.",
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "auth_me_update",
+                "description": "Get or update current user's profile.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "auth_me_delete",
+                "description": "Permanently delete the account and its personal data.\n\nSaved comparisons, collections, alert subscriptions, notification\npreferences and the profile are removed by cascade. Reviews are deleted\ntoo (not anonymised): review text can carry personal data, and deleting\nkeeps public averages equal to the remaining visible reviews because the\nsummary cache is invalidated per deleted review. Helpful votes the user\ncast on other reviews are removed and those counters decremented.",
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me/export/": {
+            "get": {
+                "operationId": "auth_me_export",
+                "description": "Download all personal data held for the current user as JSON.",
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/password-reset/": {
+            "post": {
+                "operationId": "auth_password_reset_request",
+                "description": "Request a password reset email.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PasswordResetRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PasswordResetRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PasswordResetRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/password-reset/confirm/": {
+            "post": {
+                "operationId": "auth_password_reset_confirm",
+                "description": "Confirm password reset with token.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PasswordResetConfirmRequest"
+                            },
+                            "examples": {
+                                "PasswordResetConfirm": {
+                                    "value": {
+                                        "uid": "MQ",
+                                        "token": "abc123-token",
+                                        "new_password": "NewStrongPassword123!",
+                                        "new_password_confirm": "NewStrongPassword123!"
+                                    },
+                                    "summary": "Password Reset Confirm"
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PasswordResetConfirmRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PasswordResetConfirmRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register/": {
+            "post": {
+                "operationId": "auth_register",
+                "description": "Register a new user.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            },
+                            "examples": {
+                                "Registration": {
+                                    "value": {
+                                        "email": "sam@example.com",
+                                        "password": "StrongPassword123!",
+                                        "password_confirm": "StrongPassword123!",
+                                        "first_name": "Sam",
+                                        "last_name": "User",
+                                        "email_opt_in": false
+                                    }
+                                }
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/resend-verification/": {
+            "post": {
+                "operationId": "auth_resend_verification",
+                "description": "Resend the verification email to an unverified account.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResendVerificationRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResendVerificationRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResendVerificationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/token/refresh/": {
+            "post": {
+                "operationId": "auth_token_refresh",
+                "description": "Refresh access token using refresh token.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRefreshRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRefreshRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRefreshRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/verify-email/": {
+            "post": {
+                "operationId": "auth_verify_email",
+                "description": "Verify user's email address.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailVerificationRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailVerificationRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailVerificationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
                 ],
                 "responses": {
                     "200": {
@@ -190,7 +1475,13 @@
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     },
                     {}
                 ],
@@ -228,7 +1519,13 @@
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     },
                     {}
                 ],
@@ -314,6 +1611,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "card_network",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Card network, or comma-separated networks (e.g. visa,mastercard)"
+                    },
+                    {
+                        "in": "query",
                         "name": "created__gte",
                         "schema": {
                             "type": "string",
@@ -392,6 +1697,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "include_unknown_income",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "With max_min_monthly_income, also include cards with no stated minimum income"
+                    },
+                    {
+                        "in": "query",
                         "name": "interest_rate_max",
                         "schema": {
                             "type": "number"
@@ -430,6 +1743,30 @@
                         "schema": {
                             "type": "boolean"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_dual_currency",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only dual-currency (true) or known single-currency (false) cards"
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_islamic",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only Islamic (true) or only conventional (false) cards"
+                    },
+                    {
+                        "in": "query",
+                        "name": "max_min_monthly_income",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Cards whose minimum monthly income (BDT) is at most this value"
                     },
                     {
                         "in": "query",
@@ -517,7 +1854,13 @@
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     },
                     {}
                 ],
@@ -555,7 +1898,13 @@
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     },
                     {}
                 ],
@@ -641,6 +1990,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "card_network",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Card network, or comma-separated networks (e.g. visa,mastercard)"
+                    },
+                    {
+                        "in": "query",
                         "name": "created__gte",
                         "schema": {
                             "type": "string",
@@ -728,6 +2085,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "include_unknown_income",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "With max_min_monthly_income, also include cards with no stated minimum income"
+                    },
+                    {
+                        "in": "query",
                         "name": "interest_rate_max",
                         "schema": {
                             "type": "number"
@@ -766,6 +2131,30 @@
                         "schema": {
                             "type": "boolean"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_dual_currency",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only dual-currency (true) or known single-currency (false) cards"
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_islamic",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only Islamic (true) or only conventional (false) cards"
+                    },
+                    {
+                        "in": "query",
+                        "name": "max_min_monthly_income",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Cards whose minimum monthly income (BDT) is at most this value"
                     },
                     {
                         "in": "query",
@@ -853,7 +2242,13 @@
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     },
                     {}
                 ],
@@ -871,6 +2266,450 @@
                 }
             }
         },
+        "/api/v1/credit-cards/{id}/report-issue/": {
+            "post": {
+                "operationId": "v1_credit_cards_report_issue_create",
+                "description": "Report incorrect data on a public card. Anonymous users may submit; the report is queued for staff review (limited to 5 per hour per IP).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this credit card.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "credit-cards"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReportIssueRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReportIssueRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReportIssueRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReportIssueResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/credit-cards/advanced-search/": {
+            "get": {
+                "operationId": "v1_credit_cards_advanced_search_retrieve",
+                "description": "Advanced search for credit cards with filtering, faceting, and sorting",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "annual_fee_max",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maximum annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_min",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimum annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "bank_ids",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Comma-separated bank IDs to filter"
+                    },
+                    {
+                        "in": "query",
+                        "name": "card_network",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Card network or comma-separated networks (visa,mastercard,amex,unionpay,jcb,diners,other)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "categories",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Comma-separated category slugs for OR filtering (travel,cashback,premium,student,business,no-annual-fee)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "facets",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Comma-separated facet names to include (bank,category,annual_fee_range,interest_rate_range,lounge_access,fee_waiver,has_annual_fee,card_network,is_islamic,is_dual_currency)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "feature_search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Search within additional features"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_domestic_lounge",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with domestic lounge access"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_fee_waiver",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with fee waiver policy"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_international_lounge",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with international lounge access"
+                    },
+                    {
+                        "in": "query",
+                        "name": "has_lounge_access",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with any lounge access"
+                    },
+                    {
+                        "in": "query",
+                        "name": "include_unknown_income",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "With max_min_monthly_income, also include cards with no stated minimum income"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_max",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maximum APR"
+                    },
+                    {
+                        "in": "query",
+                        "name": "interest_rate_min",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimum APR"
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_dual_currency",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only dual-currency (true) or known single-currency (false) cards"
+                    },
+                    {
+                        "in": "query",
+                        "name": "is_islamic",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only Islamic (true) or only conventional (false) cards"
+                    },
+                    {
+                        "in": "query",
+                        "name": "max_min_monthly_income",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Cards whose minimum monthly income (BDT) is at most this value"
+                    },
+                    {
+                        "in": "query",
+                        "name": "no_annual_fee",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Filter cards with no annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "ordering",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "-annual_fee",
+                                "-created",
+                                "-interest_rate_apr",
+                                "-lounge_access_domestic",
+                                "-lounge_access_international",
+                                "-name",
+                                "annual_fee",
+                                "created",
+                                "interest_rate_apr",
+                                "name",
+                                "relevance"
+                            ]
+                        },
+                        "description": "Sort field (relevance, annual_fee, -annual_fee, interest_rate_apr, -interest_rate_apr, -lounge_access_international, -lounge_access_domestic, name, -name, -created, created)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Page number (1-based)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "page_size",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Results per page (1-100, default 20)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Full-text search query across card name, bank, rewards, features"
+                    }
+                ],
+                "tags": [
+                    "credit-cards"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/credit-cards/advanced-search/categories/": {
+            "get": {
+                "operationId": "v1_credit_cards_advanced_search_categories_retrieve",
+                "description": "Get available categories for multi-category filtering",
+                "tags": [
+                    "credit-cards"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/credit-cards/advanced-search/normalize/": {
+            "get": {
+                "operationId": "v1_credit_cards_advanced_search_normalize_retrieve",
+                "description": "Normalize query parameters for saved search compatibility",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "annual_fee_max",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Maximum annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "annual_fee_min",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Minimum annual fee"
+                    },
+                    {
+                        "in": "query",
+                        "name": "categories",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Comma-separated category slugs"
+                    },
+                    {
+                        "in": "query",
+                        "name": "ordering",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Sort field"
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Full-text search query"
+                    }
+                ],
+                "tags": [
+                    "credit-cards"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/credit-cards/advanced-search/sort-options/": {
+            "get": {
+                "operationId": "v1_credit_cards_advanced_search_sort_options_retrieve",
+                "description": "Get available sort options for advanced search",
+                "tags": [
+                    "credit-cards"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/credit-cards/search-suggestions/": {
             "get": {
                 "operationId": "v1_credit_cards_search_suggestions_retrieve",
@@ -880,7 +2719,13 @@
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     },
                     {}
                 ],
@@ -907,7 +2752,13 @@
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     },
                     {}
                 ],
@@ -917,6 +2768,1507 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/TypeaheadResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/": {
+            "get": {
+                "operationId": "reviews_list",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "card",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedCardReviewList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "reviews_create",
+                "tags": [
+                    "reviews"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CardReviewRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CardReviewRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CardReviewRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CardReview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/{review_id}/helpful/": {
+            "post": {
+                "operationId": "reviews_helpful_vote",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "review_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/cards/{card_id}/summary/": {
+            "get": {
+                "operationId": "reviews_card_summary",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "card_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/mine/{id}/": {
+            "get": {
+                "operationId": "reviews_mine_retrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CardReview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "reviews_mine_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CardReviewRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CardReviewRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CardReviewRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CardReview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "reviews_mine_partial_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCardReviewRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCardReviewRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCardReviewRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CardReview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "reviews_mine_delete",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/moderation/": {
+            "get": {
+                "operationId": "reviews_moderation_list",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedCardReviewList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/moderation/{id}/": {
+            "get": {
+                "operationId": "reviews_moderation_detail",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedCardReviewList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "reviews_moderation_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "reviews"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {}
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {}
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CardReview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/collections/": {
+            "get": {
+                "operationId": "v1_saved_collections_list",
+                "description": "CRUD for the requesting user's collections, plus card add and remove.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "List my collections",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedCollectionList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_saved_collections_create",
+                "description": "CRUD for the requesting user's collections, plus card add and remove.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Create a collection",
+                "tags": [
+                    "saved"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Collection"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/collections/{id}/": {
+            "get": {
+                "operationId": "v1_saved_collections_retrieve",
+                "description": "CRUD for the requesting user's collections, plus card add and remove.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Get one of my collections",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this collection.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Collection"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_saved_collections_update",
+                "description": "CRUD for the requesting user's collections, plus card add and remove.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Replace a collection",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this collection.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Collection"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_saved_collections_partial_update",
+                "description": "CRUD for the requesting user's collections, plus card add and remove.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Edit a collection",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this collection.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCollectionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCollectionRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCollectionRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Collection"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_saved_collections_destroy",
+                "description": "CRUD for the requesting user's collections, plus card add and remove.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Delete a collection",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this collection.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/collections/{id}/cards/": {
+            "post": {
+                "operationId": "v1_saved_collections_cards_create",
+                "description": "Add a card, with optional notes, to one of my collections.\n\nParameters\n----------\nrequest : Request\n    Body with card_id and optional notes\npk : str\n    Primary key of the collection\n\nReturns\n-------\nResponse\n    201 with the updated collection",
+                "summary": "Add a card to a collection",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this collection.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionCardAddRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionCardAddRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectionCardAddRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Collection"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/collections/{id}/cards/{card_id}/": {
+            "delete": {
+                "operationId": "v1_saved_collections_cards_destroy",
+                "description": "Remove a card from one of my collections.\n\nParameters\n----------\nrequest : Request\n    The authenticated request\npk : str\n    Primary key of the collection\ncard_id : str\n    Primary key of the card to remove\n\nReturns\n-------\nResponse\n    204 when removed; 404 when the card is not in the collection",
+                "summary": "Remove a card from a collection",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "card_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this collection.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/comparisons/": {
+            "get": {
+                "operationId": "v1_saved_comparisons_list",
+                "description": "CRUD for the requesting user's saved comparisons.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "List my saved comparisons",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedSavedComparisonList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_saved_comparisons_create",
+                "description": "CRUD for the requesting user's saved comparisons.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Save a comparison",
+                "tags": [
+                    "saved"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SavedComparisonRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SavedComparisonRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SavedComparisonRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SavedComparison"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/comparisons/{id}/": {
+            "get": {
+                "operationId": "v1_saved_comparisons_retrieve",
+                "description": "CRUD for the requesting user's saved comparisons.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Get one of my saved comparisons",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this saved comparison.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SavedComparison"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_saved_comparisons_update",
+                "description": "CRUD for the requesting user's saved comparisons.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Replace a saved comparison",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this saved comparison.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SavedComparisonRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SavedComparisonRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SavedComparisonRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SavedComparison"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1_saved_comparisons_partial_update",
+                "description": "CRUD for the requesting user's saved comparisons.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Edit a saved comparison",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this saved comparison.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSavedComparisonRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSavedComparisonRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSavedComparisonRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SavedComparison"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_saved_comparisons_destroy",
+                "description": "CRUD for the requesting user's saved comparisons.\n\nObjects owned by other users are not visible here and return 404.",
+                "summary": "Delete a saved comparison",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this saved comparison.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/comparisons/{id}/duplicate/": {
+            "post": {
+                "operationId": "v1_saved_comparisons_duplicate_create",
+                "description": "Copy one of my comparisons into a new private comparison.\n\nParameters\n----------\nrequest : Request\n    The authenticated request\npk : str\n    Primary key of the source comparison\n\nReturns\n-------\nResponse\n    201 with the new comparison",
+                "summary": "Duplicate a saved comparison",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this saved comparison.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SavedComparison"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/shared/{token}/": {
+            "get": {
+                "operationId": "v1_saved_shared_retrieve",
+                "description": "Return a public comparison by its share token.\n\nParameters\n----------\nrequest : Request\n    The anonymous request\ntoken : str\n    The comparison's share_token\n\nReturns\n-------\nResponse\n    200 with the comparison content, without owner identity",
+                "summary": "Read a shared comparison (public, no auth)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "token",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PublicSavedComparison"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/saved/shared/collections/{slug}/": {
+            "get": {
+                "operationId": "v1_saved_shared_collections_retrieve",
+                "description": "Return a public collection by its slug.\n\nParameters\n----------\nrequest : Request\n    The anonymous request\nslug : str\n    The collection's slug\n\nReturns\n-------\nResponse\n    200 with the collection content, without owner identity",
+                "summary": "Read a public collection by slug (public, no auth)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "slug",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "saved"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PublicCollection"
                                 }
                             }
                         },
@@ -1055,7 +4407,13 @@
                 ],
                 "security": [
                     {
+                        "jwtAuth": []
+                    },
+                    {
                         "cookieAuth": []
+                    },
+                    {
+                        "Bearer": []
                     },
                     {}
                 ],
@@ -1095,6 +4453,59 @@
     },
     "components": {
         "schemas": {
+            "AlertSubscription": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "card": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "card_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "bank_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/KindEnum"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "bank_name",
+                    "card_name",
+                    "created",
+                    "id"
+                ]
+            },
+            "AlertSubscriptionRequest": {
+                "type": "object",
+                "properties": {
+                    "card": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/KindEnum"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                }
+            },
             "Bank": {
                 "type": "object",
                 "description": "Serializer for Bank model.",
@@ -1121,7 +4532,7 @@
                         "type": "boolean"
                     },
                     "credit_card_count": {
-                        "type": "string",
+                        "type": "integer",
                         "readOnly": true
                     },
                     "created": {
@@ -1161,7 +4572,7 @@
                         "maxLength": 512
                     },
                     "credit_card_count": {
-                        "type": "string",
+                        "type": "integer",
                         "readOnly": true
                     },
                     "is_active": {
@@ -1171,6 +4582,294 @@
                 "required": [
                     "credit_card_count",
                     "id",
+                    "name"
+                ]
+            },
+            "BankListRequest": {
+                "type": "object",
+                "description": "Lightweight serializer for Bank list views.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "logo": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 512
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "BlankEnum": {
+                "enum": [
+                    ""
+                ]
+            },
+            "CardNetworkEnum": {
+                "enum": [
+                    "visa",
+                    "mastercard",
+                    "amex",
+                    "unionpay",
+                    "jcb",
+                    "diners",
+                    "other"
+                ],
+                "type": "string",
+                "description": "* `visa` - Visa\n* `mastercard` - Mastercard\n* `amex` - American Express\n* `unionpay` - UnionPay\n* `jcb` - JCB\n* `diners` - Diners Club\n* `other` - Other"
+            },
+            "CardReview": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "card": {
+                        "type": "integer"
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "body": {
+                        "type": "string",
+                        "maxLength": 5000
+                    },
+                    "pros": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "cons": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "reviewer_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "helpful_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "body",
+                    "card",
+                    "created",
+                    "helpful_count",
+                    "id",
+                    "modified",
+                    "rating",
+                    "reviewer_name",
+                    "title"
+                ]
+            },
+            "CardReviewRequest": {
+                "type": "object",
+                "properties": {
+                    "card": {
+                        "type": "integer"
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "body": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 5000
+                    },
+                    "pros": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "cons": {
+                        "type": "string",
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "body",
+                    "card",
+                    "rating",
+                    "title"
+                ]
+            },
+            "ChangePasswordRequest": {
+                "type": "object",
+                "description": "Serializer for changing password.",
+                "properties": {
+                    "old_password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 1
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 8
+                    },
+                    "new_password_confirm": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "new_password",
+                    "new_password_confirm",
+                    "old_password"
+                ]
+            },
+            "Collection": {
+                "type": "object",
+                "description": "Owner-facing representation and writes for a collection.\n\nCards are added and removed through the collection's ``cards`` actions,\nnot through this serializer.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "is_public": {
+                        "type": "boolean"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "readOnly": true,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "cards": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CollectionItem"
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "cards",
+                    "created",
+                    "id",
+                    "modified",
+                    "name",
+                    "slug"
+                ]
+            },
+            "CollectionCardAddRequest": {
+                "type": "object",
+                "description": "Input for adding one card to a collection.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "card_id": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "notes": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "card_id"
+                ]
+            },
+            "CollectionItem": {
+                "type": "object",
+                "description": "A card inside a collection with the owner's notes.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "card": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/CreditCardList"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "card",
+                    "created"
+                ]
+            },
+            "CollectionItemRequest": {
+                "type": "object",
+                "description": "A card inside a collection with the owner's notes.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "notes": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CollectionRequest": {
+                "type": "object",
+                "description": "Owner-facing representation and writes for a collection.\n\nCards are added and removed through the collection's ``cards`` actions,\nnot through this serializer.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "is_public": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
                     "name"
                 ]
             },
@@ -1189,10 +4888,6 @@
                             }
                         ],
                         "readOnly": true
-                    },
-                    "bank_id": {
-                        "type": "integer",
-                        "writeOnly": true
                     },
                     "name": {
                         "type": "string",
@@ -1236,16 +4931,67 @@
                     "is_active": {
                         "type": "boolean"
                     },
-                    "has_lounge_access": {
+                    "source_url": {
                         "type": "string",
-                        "readOnly": true
+                        "format": "uri",
+                        "maxLength": 500
+                    },
+                    "apply_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 500
+                    },
+                    "verification_status": {
+                        "$ref": "#/components/schemas/VerificationStatusEnum"
+                    },
+                    "verified_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "card_network": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CardNetworkEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "is_islamic": {
+                        "type": "boolean"
+                    },
+                    "is_dual_currency": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "min_monthly_income": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+                        "nullable": true,
+                        "description": "Minimum monthly income in BDT"
+                    },
+                    "supplementary_card_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "foreign_transaction_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "has_lounge_access": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "nullable": true
                     },
                     "total_lounge_access": {
-                        "type": "string",
+                        "type": "integer",
                         "readOnly": true
                     },
                     "has_annual_fee": {
-                        "type": "string",
+                        "type": "boolean",
                         "readOnly": true
                     },
                     "created": {
@@ -1261,7 +5007,6 @@
                 },
                 "required": [
                     "bank",
-                    "bank_id",
                     "created",
                     "has_annual_fee",
                     "has_lounge_access",
@@ -1370,15 +5115,66 @@
                     },
                     "additional_features": {},
                     "has_lounge_access": {
-                        "type": "string",
-                        "readOnly": true
+                        "type": "boolean",
+                        "readOnly": true,
+                        "nullable": true
                     },
                     "has_annual_fee": {
-                        "type": "string",
+                        "type": "boolean",
                         "readOnly": true
                     },
                     "is_active": {
                         "type": "boolean"
+                    },
+                    "source_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 500
+                    },
+                    "apply_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 500
+                    },
+                    "verification_status": {
+                        "$ref": "#/components/schemas/VerificationStatusEnum"
+                    },
+                    "verified_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "card_network": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CardNetworkEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "is_islamic": {
+                        "type": "boolean"
+                    },
+                    "is_dual_currency": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "min_monthly_income": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+                        "nullable": true,
+                        "description": "Minimum monthly income in BDT"
+                    },
+                    "supplementary_card_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "foreign_transaction_fee": {
+                        "type": "string",
+                        "maxLength": 255
                     },
                     "created": {
                         "type": "string",
@@ -1402,6 +5198,245 @@
                     "modified",
                     "name"
                 ]
+            },
+            "CreditCardListRequest": {
+                "type": "object",
+                "description": "Serializer for CreditCard list views.\n\nIncludes the bank identity and the detail fields the frontend transforms\nand renders (reward policy, additional features, waiver policy and fee\nstrings), while preserving the existing bank_name field.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "annual_fee": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "interest_rate_apr": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+                        "nullable": true
+                    },
+                    "lounge_access_international": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "lounge_access_domestic": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "cash_advance_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "late_payment_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "annual_fee_waiver_policy": {
+                        "nullable": true
+                    },
+                    "reward_points_policy": {
+                        "type": "string"
+                    },
+                    "additional_features": {},
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "source_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 500
+                    },
+                    "apply_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 500
+                    },
+                    "verification_status": {
+                        "$ref": "#/components/schemas/VerificationStatusEnum"
+                    },
+                    "verified_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "card_network": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CardNetworkEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "is_islamic": {
+                        "type": "boolean"
+                    },
+                    "is_dual_currency": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "min_monthly_income": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+                        "nullable": true,
+                        "description": "Minimum monthly income in BDT"
+                    },
+                    "supplementary_card_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "foreign_transaction_fee": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "EmailVerificationRequest": {
+                "type": "object",
+                "description": "Serializer for email verification.",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "token"
+                ]
+            },
+            "FieldEnum": {
+                "enum": [
+                    "name",
+                    "lounge_access_condition",
+                    "annual_fee",
+                    "interest_rate_apr",
+                    "lounge_access_international",
+                    "lounge_access_domestic",
+                    "cash_advance_fee",
+                    "late_payment_fee",
+                    "annual_fee_waiver_policy",
+                    "reward_points_policy",
+                    "additional_features",
+                    "source_url",
+                    "apply_url",
+                    "card_network",
+                    "is_islamic",
+                    "is_dual_currency",
+                    "min_monthly_income",
+                    "supplementary_card_fee",
+                    "foreign_transaction_fee"
+                ],
+                "type": "string",
+                "description": "* `name` - name\n* `lounge_access_condition` - lounge_access_condition\n* `annual_fee` - annual_fee\n* `interest_rate_apr` - interest_rate_apr\n* `lounge_access_international` - lounge_access_international\n* `lounge_access_domestic` - lounge_access_domestic\n* `cash_advance_fee` - cash_advance_fee\n* `late_payment_fee` - late_payment_fee\n* `annual_fee_waiver_policy` - annual_fee_waiver_policy\n* `reward_points_policy` - reward_points_policy\n* `additional_features` - additional_features\n* `source_url` - source_url\n* `apply_url` - apply_url\n* `card_network` - card_network\n* `is_islamic` - is_islamic\n* `is_dual_currency` - is_dual_currency\n* `min_monthly_income` - min_monthly_income\n* `supplementary_card_fee` - supplementary_card_fee\n* `foreign_transaction_fee` - foreign_transaction_fee"
+            },
+            "FrequencyEnum": {
+                "enum": [
+                    "immediate",
+                    "daily",
+                    "weekly"
+                ],
+                "type": "string",
+                "description": "* `immediate` - Immediate\n* `daily` - Daily\n* `weekly` - Weekly"
+            },
+            "KindEnum": {
+                "enum": [
+                    "fee_change",
+                    "apr_change",
+                    "new_card",
+                    "any_change"
+                ],
+                "type": "string",
+                "description": "* `fee_change` - Fee change\n* `apr_change` - APR change\n* `new_card` - New card\n* `any_change` - Any change"
+            },
+            "LoginRequest": {
+                "type": "object",
+                "description": "Serializer for user login.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "LogoutRequest": {
+                "type": "object",
+                "description": "Serializer for user logout (blacklist refresh token).",
+                "properties": {
+                    "refresh": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "refresh"
+                ]
+            },
+            "NotificationPreference": {
+                "type": "object",
+                "properties": {
+                    "frequency": {
+                        "$ref": "#/components/schemas/FrequencyEnum"
+                    }
+                }
+            },
+            "NotificationPreferenceRequest": {
+                "type": "object",
+                "properties": {
+                    "frequency": {
+                        "$ref": "#/components/schemas/FrequencyEnum"
+                    }
+                }
+            },
+            "PaginatedAlertSubscriptionList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AlertSubscription"
+                        }
+                    }
+                }
             },
             "PaginatedBankListList": {
                 "type": "object",
@@ -1430,6 +5465,68 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/BankList"
+                        }
+                    }
+                }
+            },
+            "PaginatedCardReviewList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CardReview"
+                        }
+                    }
+                }
+            },
+            "PaginatedCollectionList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Collection"
                         }
                     }
                 }
@@ -1495,6 +5592,467 @@
                         }
                     }
                 }
+            },
+            "PaginatedSavedComparisonList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SavedComparison"
+                        }
+                    }
+                }
+            },
+            "PasswordResetConfirmRequest": {
+                "type": "object",
+                "description": "Serializer for confirming password reset with token.",
+                "properties": {
+                    "uid": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "token": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 8
+                    },
+                    "new_password_confirm": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "new_password",
+                    "new_password_confirm",
+                    "token",
+                    "uid"
+                ]
+            },
+            "PasswordResetRequestRequest": {
+                "type": "object",
+                "description": "Serializer for requesting a password reset.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "PatchedAlertSubscriptionRequest": {
+                "type": "object",
+                "properties": {
+                    "card": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/KindEnum"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PatchedCardReviewRequest": {
+                "type": "object",
+                "properties": {
+                    "card": {
+                        "type": "integer"
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "body": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 5000
+                    },
+                    "pros": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "cons": {
+                        "type": "string",
+                        "maxLength": 1000
+                    }
+                }
+            },
+            "PatchedCollectionRequest": {
+                "type": "object",
+                "description": "Owner-facing representation and writes for a collection.\n\nCards are added and removed through the collection's ``cards`` actions,\nnot through this serializer.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "is_public": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PatchedNotificationPreferenceRequest": {
+                "type": "object",
+                "properties": {
+                    "frequency": {
+                        "$ref": "#/components/schemas/FrequencyEnum"
+                    }
+                }
+            },
+            "PatchedSavedComparisonRequest": {
+                "type": "object",
+                "description": "Owner-facing representation and writes for a saved comparison.\n\nWrites take ``card_ids`` (ordered, 1 to MAX_CARDS_PER_COMPARISON unique\nexisting cards). Reads return ``cards`` in the same order, plus the share\ntoken so the owner can build a public link.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "is_public": {
+                        "type": "boolean"
+                    },
+                    "card_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "writeOnly": true,
+                        "description": "Ordered card ids. Replaces the comparison's cards when sent.",
+                        "maxItems": 4,
+                        "minItems": 1
+                    }
+                }
+            },
+            "PatchedUserRequest": {
+                "type": "object",
+                "description": "Serializer for the User model with profile data.",
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "profile": {
+                        "$ref": "#/components/schemas/UserProfileRequest"
+                    }
+                }
+            },
+            "PublicCollection": {
+                "type": "object",
+                "description": "Read-only public view of a public collection.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "readOnly": true,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "cards": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CollectionItem"
+                        },
+                        "readOnly": true
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "cards",
+                    "modified",
+                    "name",
+                    "slug"
+                ]
+            },
+            "PublicSavedComparison": {
+                "type": "object",
+                "description": "Read-only public view of a shared comparison.\n\nExposes only the comparison content. The owner, identifiers and token\nare deliberately absent.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "cards": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CreditCardList"
+                        },
+                        "readOnly": true
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "cards",
+                    "modified",
+                    "name"
+                ]
+            },
+            "RegisterRequest": {
+                "type": "object",
+                "description": "Serializer for user registration.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1,
+                        "maxLength": 254
+                    },
+                    "password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 8
+                    },
+                    "password_confirm": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 1
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "email_opt_in": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "accept_terms": {
+                        "type": "boolean"
+                    },
+                    "marketing_opt_in": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "required": [
+                    "accept_terms",
+                    "email",
+                    "password",
+                    "password_confirm"
+                ]
+            },
+            "ReportIssueRequest": {
+                "type": "object",
+                "description": "Input for reporting incorrect data on a credit card.",
+                "properties": {
+                    "field": {
+                        "description": "Card field the report is about, when it concerns one field.\n\n* `name` - name\n* `lounge_access_condition` - lounge_access_condition\n* `annual_fee` - annual_fee\n* `interest_rate_apr` - interest_rate_apr\n* `lounge_access_international` - lounge_access_international\n* `lounge_access_domestic` - lounge_access_domestic\n* `cash_advance_fee` - cash_advance_fee\n* `late_payment_fee` - late_payment_fee\n* `annual_fee_waiver_policy` - annual_fee_waiver_policy\n* `reward_points_policy` - reward_points_policy\n* `additional_features` - additional_features\n* `source_url` - source_url\n* `apply_url` - apply_url\n* `card_network` - card_network\n* `is_islamic` - is_islamic\n* `is_dual_currency` - is_dual_currency\n* `min_monthly_income` - min_monthly_income\n* `supplementary_card_fee` - supplementary_card_fee\n* `foreign_transaction_fee` - foreign_transaction_fee",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/FieldEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/BlankEnum"
+                            }
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000
+                    },
+                    "suggested_value": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "contact_email": {
+                        "type": "string",
+                        "format": "email"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "ReportIssueResponse": {
+                "type": "object",
+                "description": "Acknowledgement returned after a report is queued.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Review queue item id"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "status"
+                ]
+            },
+            "ResendVerificationRequest": {
+                "type": "object",
+                "description": "Serializer for requesting a new verification email.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "SavedComparison": {
+                "type": "object",
+                "description": "Owner-facing representation and writes for a saved comparison.\n\nWrites take ``card_ids`` (ordered, 1 to MAX_CARDS_PER_COMPARISON unique\nexisting cards). Reads return ``cards`` in the same order, plus the share\ntoken so the owner can build a public link.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "is_public": {
+                        "type": "boolean"
+                    },
+                    "share_token": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "cards": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CreditCardList"
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "cards",
+                    "created",
+                    "id",
+                    "modified",
+                    "name",
+                    "share_token"
+                ]
+            },
+            "SavedComparisonRequest": {
+                "type": "object",
+                "description": "Owner-facing representation and writes for a saved comparison.\n\nWrites take ``card_ids`` (ordered, 1 to MAX_CARDS_PER_COMPARISON unique\nexisting cards). Reads return ``cards`` in the same order, plus the share\ntoken so the owner can build a public link.\n\nParameters\n----------\nNone\n\nReturns\n-------\nNone",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "is_public": {
+                        "type": "boolean"
+                    },
+                    "card_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "writeOnly": true,
+                        "description": "Ordered card ids. Replaces the comparison's cards when sent.",
+                        "maxItems": 4,
+                        "minItems": 1
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "TokenRefreshRequest": {
+                "type": "object",
+                "description": "Serializer for refreshing access token with rotation and reuse detection.",
+                "properties": {
+                    "refresh": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "refresh"
+                ]
             },
             "TypeaheadFacet": {
                 "type": "object",
@@ -1724,6 +6282,97 @@
                     "query",
                     "suggestions"
                 ]
+            },
+            "User": {
+                "type": "object",
+                "description": "Serializer for the User model with profile data.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "username": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "readOnly": true,
+                        "title": "Email address"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "profile": {
+                        "$ref": "#/components/schemas/UserProfile"
+                    }
+                },
+                "required": [
+                    "email",
+                    "id",
+                    "username"
+                ]
+            },
+            "UserProfile": {
+                "type": "object",
+                "description": "Serializer for the UserProfile model.",
+                "properties": {
+                    "email_verified": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "email_opt_in": {
+                        "type": "boolean"
+                    },
+                    "marketing_opt_in": {
+                        "type": "boolean"
+                    },
+                    "terms_accepted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "terms_version": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "preferences": {}
+                },
+                "required": [
+                    "email_verified",
+                    "terms_accepted_at",
+                    "terms_version"
+                ]
+            },
+            "UserProfileRequest": {
+                "type": "object",
+                "description": "Serializer for the UserProfile model.",
+                "properties": {
+                    "email_opt_in": {
+                        "type": "boolean"
+                    },
+                    "marketing_opt_in": {
+                        "type": "boolean"
+                    },
+                    "preferences": {}
+                }
+            },
+            "VerificationStatusEnum": {
+                "enum": [
+                    "draft",
+                    "verified",
+                    "needs_review"
+                ],
+                "type": "string",
+                "description": "* `draft` - Draft\n* `verified` - Verified\n* `needs_review` - Needs review"
             }
         },
         "securitySchemes": {
@@ -1731,10 +6380,19 @@
                 "type": "apiKey",
                 "in": "cookie",
                 "name": "sessionid"
+            },
+            "jwtAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
             }
         }
     },
     "tags": [
+        {
+            "name": "auth",
+            "description": "Authentication and user management"
+        },
         {
             "name": "banks",
             "description": "Bank-related operations"
@@ -1750,6 +6408,18 @@
         {
             "name": "admin",
             "description": "Staff-only administrative operations"
+        },
+        {
+            "name": "saved",
+            "description": "Saved comparisons and collections"
+        },
+        {
+            "name": "reviews",
+            "description": "Card reviews and moderation"
+        },
+        {
+            "name": "alerts",
+            "description": "Card alert subscriptions and preferences"
         }
     ]
 }

@@ -27,7 +27,8 @@ class BankDataSourceFactory(factory.django.DjangoModelFactory):
     """Factory for creating BankDataSource instances."""
 
     bank = factory.SubFactory(BankFactory)
-    url = factory.Faker("url")
+    # Sequence, not Faker: (bank, url) is unique and random URLs can collide.
+    url = factory.Sequence(lambda n: f"https://bank-{n}.example.com/charges")
     content_type = factory.Iterator(
         [
             ContentType.PDF,

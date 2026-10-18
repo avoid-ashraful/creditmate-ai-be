@@ -11,6 +11,7 @@ import pytest
 from banks.validators.numeric_fields import (
     CRITICAL_FIELDS,
     FIELD_BOUNDS,
+    REASON_AMBIGUOUS_PERIOD,
     REASON_BOOLEAN,
     REASON_CONDITIONAL_WAIVER,
     REASON_FOREIGN_CURRENCY,
@@ -336,3 +337,53 @@ class TestCardLevelHelpers:
         )
         assert normalized["annual_fee"] is None
         assert normalized["interest_rate_apr"] is None
+
+
+class TestMinMonthlyIncome:
+    """``min_monthly_income`` accepts explicit monthly (and exact annual) BDT."""
+
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("BDT 50,000 per month", 50000.0),
+            ("Tk. 40,000/month", 40000.0),
+            ("Monthly income 30000", 30000.0),
+            ("BDT 50,000", 50000.0),
+            ("Minimum monthly income of Tk 25,000", 25000.0),
+            (45000, 45000.0),
+            ("BDT 600,000 per annum", 50000.0),
+            ("Tk 480,000 yearly", 40000.0),
+            ("Annual income 1,000,000", 83333.33),
+        ],
+    )
+    def test_explicit_figures_are_accepted(self, raw, expected):
+        assert parse_numeric_value(raw, "min_monthly_income") == (expected, STATUS_VALID)
+
+    @pytest.mark.parametrize(
+        "raw, reason",
+        [
+            ("USD 1,000 per month", REASON_FOREIGN_CURRENCY),
+            ("$500 monthly", REASON_FOREIGN_CURRENCY),
+            ("Rs. 40,000/month", REASON_FOREIGN_CURRENCY),
+            ("Tk 10,000 per week", REASON_NON_ANNUAL_PERIOD),
+            ("Tk 150,000 quarterly", REASON_NON_ANNUAL_PERIOD),
+            ("Tk 50,000 monthly (Tk 600,000 annually)", REASON_AMBIGUOUS_PERIOD),
+            ("2% of salary", REASON_PERCENTAGE_FOR_FEE),
+            ("30,000 to 50,000 per month", REASON_NOT_A_NUMBER),
+            ("ask your RM", REASON_NOT_A_NUMBER),
+            (-5, REASON_OUT_OF_RANGE),
+        ],
+    )
+    def test_unsafe_values_become_null_with_reason(self, raw, reason):
+        value, status, why = parse_numeric_value_detailed(raw, "min_monthly_income")
+        assert (value, status, why) == (None, STATUS_INVALID, reason)
+
+    def test_missing_markers_stay_missing(self):
+        assert parse_numeric_value("N/A", "min_monthly_income") == (None, STATUS_MISSING)
+
+    def test_fee_rules_are_unchanged(self):
+        # A monthly amount in the annual fee field is still rejected.
+        assert parse_numeric_value("BDT 500 per month", "annual_fee") == (
+            None,
+            STATUS_INVALID,
+        )

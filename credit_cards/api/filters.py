@@ -1,5 +1,8 @@
 import django_filters
 
+from django.db.models import Q
+
+from credit_cards.constants import CardNetwork
 from credit_cards.lounge import (
     card_lounge_access_q,
     filter_lounge_count_min,
@@ -8,7 +11,54 @@ from credit_cards.lounge import (
 from credit_cards.models import CreditCard
 
 
-class CreditCardFilter(django_filters.FilterSet):
+class CardDetailFilterSet(django_filters.FilterSet):
+    """Card detail filters shared by the list and advanced-search endpoints."""
+
+    card_network = django_filters.CharFilter(
+        method="filter_card_network",
+        help_text="Card network, or comma-separated networks (e.g. visa,mastercard)",
+    )
+    is_islamic = django_filters.BooleanFilter(
+        help_text="Only Islamic (true) or only conventional (false) cards"
+    )
+    is_dual_currency = django_filters.BooleanFilter(
+        help_text="Only dual-currency (true) or known single-currency (false) cards"
+    )
+    max_min_monthly_income = django_filters.NumberFilter(
+        method="filter_max_min_monthly_income",
+        help_text="Cards whose minimum monthly income (BDT) is at most this value",
+    )
+    include_unknown_income = django_filters.BooleanFilter(
+        method="filter_include_unknown_income",
+        help_text=(
+            "With max_min_monthly_income, also include cards with no stated "
+            "minimum income"
+        ),
+    )
+
+    def filter_card_network(self, queryset, name, value):
+        """Filter by one or several comma-separated card networks."""
+        networks = {item.strip().lower() for item in value.split(",") if item.strip()}
+        valid = networks & set(CardNetwork.values)
+        return queryset.filter(card_network__in=valid) if valid else queryset.none()
+
+    def filter_max_min_monthly_income(self, queryset, name, value):
+        """Filter cards whose minimum monthly income is at most ``value``.
+
+        Cards with an unknown minimum income are kept only when
+        ``include_unknown_income`` is true.
+        """
+        condition = Q(min_monthly_income__lte=value)
+        if self.form.cleaned_data.get("include_unknown_income") is True:
+            condition |= Q(min_monthly_income__isnull=True)
+        return queryset.filter(condition)
+
+    def filter_include_unknown_income(self, queryset, name, value):
+        """No-op: consumed by ``filter_max_min_monthly_income``."""
+        return queryset
+
+
+class CreditCardFilter(CardDetailFilterSet):
     """Filter class for CreditCard model."""
 
     # Basic filters

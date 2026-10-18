@@ -2,12 +2,14 @@
 Gemini LLM provider implementation.
 
 This module provides direct access to Google's Gemini AI models through
-the Google Generative AI API.
+the Google Gen AI SDK (``google-genai``).
 """
 
 import logging
 
-import google.generativeai as genai
+import httpx
+from google import genai
+from google.genai import errors as genai_errors
 
 from django.conf import settings
 
@@ -33,7 +35,7 @@ class GeminiProvider(BaseLLMProvider):
     def __init__(self):
         """Initialize Gemini provider."""
         super().__init__("gemini")
-        self.model = None
+        self.client = None
         self.default_model_name = getattr(settings, "GEMINI_MODEL", "gemini-flash-latest")
         self.configure()
 
@@ -53,8 +55,7 @@ class GeminiProvider(BaseLLMProvider):
                 self._is_configured = False
                 return False
 
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel(self.default_model_name)
+            self.client = genai.Client(api_key=api_key)
             self._is_configured = True
             logger.info("Gemini provider configured successfully")
             return True
@@ -70,9 +71,9 @@ class GeminiProvider(BaseLLMProvider):
         Returns
         -------
         bool
-            True if provider is configured and model is ready
+            True if provider is configured and the client is ready
         """
-        return self._is_configured and self.model is not None
+        return self._is_configured and self.client is not None
 
     def generate_response(
         self, prompt, system_prompt=None, temperature=None, max_tokens=None, **kwargs
@@ -196,9 +197,10 @@ class GeminiProvider(BaseLLMProvider):
         object
             Gemini API response
         """
-        return self.model.generate_content(
-            prompt,
-            generation_config=config if config else None,
+        return self.client.models.generate_content(
+            model=self.default_model_name,
+            contents=prompt,
+            config=config if config else None,
         )
 
     def _process_response(self, response):
@@ -242,20 +244,21 @@ class GeminiProvider(BaseLLMProvider):
         Various LLM exceptions based on error type
         """
         error_message = str(error).lower()
+        code = error.code if isinstance(error, genai_errors.APIError) else None
 
-        if self._is_auth_error(error_message):
+        if code in (401, 403) or self._is_auth_error(error_message):
             raise LLMAuthenticationError(
                 f"Gemini authentication failed: {error}",
                 provider=self.provider_name,
                 original_error=error,
             )
-        elif self._is_rate_limit_error(error_message):
+        elif code == 429 or self._is_rate_limit_error(error_message):
             raise LLMRateLimitError(
                 f"Gemini rate limit exceeded: {error}",
                 provider=self.provider_name,
                 original_error=error,
             )
-        elif self._is_network_error(error_message):
+        elif self._is_network_error(error, error_message):
             raise LLMNetworkError(
                 f"Gemini network error: {error}",
                 provider=self.provider_name,
@@ -276,14 +279,26 @@ class GeminiProvider(BaseLLMProvider):
 
     def _is_auth_error(self, error_message):
         """Check if error is authentication related."""
-        return "api_key" in error_message or "authentication" in error_message
+        return (
+            "api_key" in error_message
+            or "api key" in error_message
+            or "authentication" in error_message
+        )
 
     def _is_rate_limit_error(self, error_message):
         """Check if error is rate limit related."""
-        return "quota" in error_message or "rate limit" in error_message
+        return (
+            "quota" in error_message
+            or "rate limit" in error_message
+            or "resource_exhausted" in error_message
+        )
 
-    def _is_network_error(self, error_message):
-        """Check if error is network related."""
+    def _is_network_error(self, error, error_message):
+        """Check if error is network related (transport failure or 5xx)."""
+        if isinstance(error, httpx.TransportError):
+            return True
+        if isinstance(error, genai_errors.ServerError):
+            return True
         return "timeout" in error_message or "connection" in error_message
 
     def _is_safety_error(self, error_message):

@@ -7,8 +7,10 @@ automatic fallback, retry logic, and comprehensive error handling.
 
 import logging
 
+from common.llm.budget import current_budget
 from common.llm.exceptions import (
     AllLLMProvidersFailedError,
+    LLMBudgetExhaustedError,
     LLMConfigurationError,
     LLMError,
     LLMRateLimitError,
@@ -205,6 +207,13 @@ class LLMOrchestrator:
         for attempt in range(max_retries + 1):
             attempt_key = f"{provider_name}_attempt_{attempt + 1}"
             attempts.append(attempt_key)
+
+            budget = current_budget()
+            if budget is not None and not budget.consume():
+                raise LLMBudgetExhaustedError(
+                    f"LLM call budget of {budget.limit} calls is spent",
+                    provider=provider_name,
+                )
 
             try:
                 response = provider.generate_response(

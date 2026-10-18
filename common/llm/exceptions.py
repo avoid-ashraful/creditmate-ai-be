@@ -68,6 +68,12 @@ class LLMContentError(LLMError):
     pass
 
 
+class LLMBudgetExhaustedError(LLMError):
+    """Raised when the per-run LLM call budget has been spent."""
+
+    pass
+
+
 class AllLLMProvidersFailedError(LLMError):
     """Raised when all configured LLM providers have failed."""
 

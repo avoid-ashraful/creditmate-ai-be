@@ -15,7 +15,6 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
-from celery.schedules import crontab
 
 from credit_mate_ai.sentry import parse_sample_rate, sanitize_sentry_event
 
@@ -262,6 +261,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 # "-latest" alias always resolves to Google's newest fast Flash model
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+# Max LLM provider calls (retries/fallbacks included) in one crawl run; sources
+# left over are picked up by the next run. 0 disables the cap.
+LLM_MAX_CALLS_PER_RUN = int(os.getenv("LLM_MAX_CALLS_PER_RUN", "200"))
 
 # Celery Configuration (Redis broker)
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -283,11 +285,6 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 604800.0,
         "options": {"expires": 24 * 60 * 60},
     },
-    "daily-crawl-all-active-banks": {
-        "task": "banks.tasks.daily_crawl_all_active_banks",
-        "schedule": crontab(hour=2, minute=0),
-        "options": {"expires": 6 * 60 * 60},
-    },
     "monthly-data-quality-check": {
         "task": "banks.tasks.monthly_data_quality_check",
         "schedule": 30 * 24 * 60 * 60,
@@ -295,11 +292,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "monthly-schedule-charge-discovery": {
         "task": "banks.tasks.monthly_schedule_charge_url_discovery",
-        "schedule": 30 * 24 * 60 * 60,
-        "options": {"expires": 24 * 60 * 60},
-    },
-    "monthly-comprehensive-crawl": {
-        "task": "banks.tasks.monthly_comprehensive_crawl",
         "schedule": 30 * 24 * 60 * 60,
         "options": {"expires": 24 * 60 * 60},
     },
