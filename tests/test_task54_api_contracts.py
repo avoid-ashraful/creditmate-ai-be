@@ -157,6 +157,7 @@ class AddedAPIContractTests(APITestCase):
                 "email": "new@example.com",
                 "password": "A-strong-password-123",
                 "password_confirm": "A-strong-password-123",
+                "accept_terms": True,
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -174,7 +175,14 @@ class AddedAPIContractTests(APITestCase):
         )
         self.assertEqual(
             set(response.data["user"]["profile"]),
-            {"email_verified", "email_opt_in", "preferences"},
+            {
+                "email_verified",
+                "email_opt_in",
+                "marketing_opt_in",
+                "terms_accepted_at",
+                "terms_version",
+                "preferences",
+            },
         )
 
         token = RefreshToken.for_user(self.user)
@@ -353,6 +361,8 @@ class AddedAPIContractTests(APITestCase):
             email="reviewer@example.com",
             password="S3cure!passphrase",
         )
+        submitter.profile.email_verified = True
+        submitter.profile.save()
         self.client.force_authenticate(user=submitter)
         review_card = CreditCardFactory()
         response = self.client.post(
@@ -401,9 +411,13 @@ class AddedAPIContractTests(APITestCase):
                 {"id", "card", "card_name", "bank_name", "kind", "is_active", "created"},
             )
             subscription = AlertSubscription.objects.get(pk=response.data["id"])
-            response = self.client.get(
-                f"/api/v1/alerts/unsubscribe/{subscription.unsubscribe_token}/"
+            url = f"/api/v1/alerts/unsubscribe/{subscription.unsubscribe_token}/"
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                set(response.data), {"confirm_required", "is_active", "kind", "card_name"}
             )
+            response = self.client.post(url)
             self.assertEqual(response.status_code, 200)
             self.assertEqual(set(response.data), {"detail"})
         else:
