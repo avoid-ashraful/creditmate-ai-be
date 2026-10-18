@@ -195,24 +195,26 @@ class TestDataServiceStoresNullNotZero:
         assert broken.annual_fee is None  # NULL, not 0.00
         assert free.annual_fee == 0  # genuine zero preserved
 
-    def test_fallback_name_does_not_invent_a_fee(self):
+    def test_nameless_card_is_skipped_not_given_a_synthetic_name(self):
         bank = BankFactory()
         service = CreditCardDataService()
-        service.update_credit_card_data(bank.id, [{"name": "", "annual_fee": "bogus"}])
-        card = CreditCard.objects.get(bank=bank)
-        assert "Credit Card (Annual Fee:" in card.name
-        assert "bogus" not in card.name
-        assert card.annual_fee is None
+        count = service.update_credit_card_data(
+            bank.id, [{"name": "", "annual_fee": "bogus"}]
+        )
+        assert count == 0
+        assert not CreditCard.objects.filter(bank=bank).exists()
 
-    def test_existing_card_keeps_null_when_new_value_is_invalid(self):
+    def test_existing_card_keeps_known_value_when_new_value_is_invalid(self):
         bank = BankFactory()
-        card = CreditCardFactory(bank=bank, name="Platinum", annual_fee=5000)
+        card = CreditCardFactory(
+            bank=bank, name="Platinum", annual_fee=5000, verification_status="draft"
+        )
         service = CreditCardDataService()
         service.update_credit_card_data(
             bank.id, [{"name": "Platinum", "annual_fee": "not-a-number"}]
         )
         card.refresh_from_db()
-        assert card.annual_fee is None
+        assert card.annual_fee == 5000
 
     def test_parse_decimal_rules_match_sanitize_rules(self):
         service = CreditCardDataService()

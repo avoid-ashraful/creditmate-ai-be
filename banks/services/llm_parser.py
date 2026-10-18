@@ -14,6 +14,11 @@ from banks.services.extraction_provider import OrchestratorExtractionProvider
 from banks.services.multi_pass_extractor import MultiPassLLMExtractor
 from banks.services.prompt_templates import BankSpecificPrompts
 from banks.validators import CreditCardDataValidator
+from banks.validators.numeric_fields import (
+    CRITICAL_FIELDS,
+    REASON_OUT_OF_RANGE,
+    parse_numeric_value_detailed,
+)
 from common.llm import LLMOrchestrator
 from common.llm.exceptions import AllLLMProvidersFailedError
 
@@ -130,6 +135,16 @@ class LLMContentParser:
             # validator does not know about, while overriding the normalized
             # values for the schema fields.
             sanitized = {**card, **sanitized}
+            # The sanitizer nulls out-of-range values; remember them so the
+            # data service can force review instead of publishing a gap.
+            flags = [
+                f"{field} out of range"
+                for field in CRITICAL_FIELDS
+                if parse_numeric_value_detailed(card.get(field), field)[2]
+                == REASON_OUT_OF_RANGE
+            ]
+            if flags:
+                sanitized["sanity_flags"] = flags
             is_valid, errors = self.validator.validate_credit_card_data(sanitized)
             validated_cards.append(sanitized)
             if not is_valid:

@@ -229,9 +229,14 @@ class TestCreditCardDataService:
         assert CreditCard.objects.filter(bank=self.bank, name="Platinum Card").exists()
 
     def test_update_credit_card_data_update_existing(self):
-        """Test updating existing credit card."""
-        # Create existing card
-        card = CreditCardFactory(bank=self.bank, name="Platinum Card", annual_fee=50)
+        """Test updating existing (unverified) credit card."""
+        # Create existing card; only unverified cards are updated by the crawler
+        card = CreditCardFactory(
+            bank=self.bank,
+            name="Platinum Card",
+            annual_fee=50,
+            verification_status="draft",
+        )
 
         parsed_data = [
             {
