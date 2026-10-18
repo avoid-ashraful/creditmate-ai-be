@@ -149,7 +149,8 @@ def _load_object(index_name, object_id):
     Returns
     -------
     Model | None
-        Instance or ``None`` when it no longer exists.
+        Instance or ``None`` when it no longer exists or, for a credit card,
+        is not public (so the drain removes its document).
     """
     if index_name == SearchIndexUpdate.INDEX_BANKS:
         from banks.models import Bank
@@ -157,7 +158,7 @@ def _load_object(index_name, object_id):
         return Bank.objects.filter(pk=object_id).first()
     from credit_cards.models import CreditCard
 
-    return CreditCard.objects.select_related("bank").filter(pk=object_id).first()
+    return CreditCard.objects.select_related("bank").public().filter(pk=object_id).first()
 
 
 def _document_for(index_name, obj):

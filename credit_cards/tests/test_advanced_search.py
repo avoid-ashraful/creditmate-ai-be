@@ -20,6 +20,15 @@ from credit_cards.models import CreditCard
 
 ADVANCED_SEARCH_URL = "/api/v1/credit-cards/advanced-search/"
 
+# The factory fills these with random Faker text, which can contain category or
+# search words ("travel", "visa") and make category/search assertions flaky.
+NEUTRAL_TEXT = {"reward_points_policy": "Standard rewards", "additional_features": []}
+
+
+def neutral_card(**kwargs):
+    """Create a card whose free-text fields cannot match a category or search."""
+    return CreditCardFactory(**{**NEUTRAL_TEXT, **kwargs})
+
 
 @pytest.mark.django_db()
 class TestAdvancedFilters:
@@ -27,8 +36,8 @@ class TestAdvancedFilters:
 
     def test_categories_filter_travel(self, api_client):
         """Filter by travel category."""
-        CreditCardFactory(name="Travel Card", reward_points_policy="2x travel rewards")
-        CreditCardFactory(name="Cashback Card", reward_points_policy="2% cashback")
+        neutral_card(name="Travel Card", reward_points_policy="2x travel rewards")
+        neutral_card(name="Cashback Card", reward_points_policy="2% cashback")
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"categories": "travel"})
         assert response.status_code == 200
@@ -37,9 +46,9 @@ class TestAdvancedFilters:
 
     def test_categories_filter_multiple_or_logic(self, api_client):
         """Multiple categories should use OR logic."""
-        CreditCardFactory(name="Travel Card", reward_points_policy="2x travel rewards")
-        CreditCardFactory(name="Cashback Card", reward_points_policy="2% cashback")
-        CreditCardFactory(name="Premium Card", annual_fee=3000)
+        neutral_card(name="Travel Card", reward_points_policy="2x travel rewards")
+        neutral_card(name="Cashback Card", reward_points_policy="2% cashback")
+        neutral_card(name="Premium Card", annual_fee=3000)
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"categories": "travel,cashback"})
         assert response.status_code == 200
@@ -47,7 +56,7 @@ class TestAdvancedFilters:
 
     def test_categories_invalid_slug_returns_empty(self, api_client):
         """Invalid category slug should return empty results."""
-        CreditCardFactory(name="Travel Card", reward_points_policy="2x travel")
+        neutral_card(name="Travel Card", reward_points_policy="2x travel")
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"categories": "invalid-category"})
         assert response.status_code == 200
@@ -55,9 +64,9 @@ class TestAdvancedFilters:
 
     def test_annual_fee_range_filter(self, api_client):
         """Filter by annual fee range."""
-        CreditCardFactory(name="Free Card", annual_fee=0)
-        CreditCardFactory(name="Low Fee", annual_fee=500)
-        CreditCardFactory(name="High Fee", annual_fee=2000)
+        neutral_card(name="Free Card", annual_fee=0)
+        neutral_card(name="Low Fee", annual_fee=500)
+        neutral_card(name="High Fee", annual_fee=2000)
 
         response = api_client.get(
             ADVANCED_SEARCH_URL, {"annual_fee_min": "100", "annual_fee_max": "1000"}
@@ -68,8 +77,8 @@ class TestAdvancedFilters:
 
     def test_interest_rate_filter(self, api_client):
         """Filter by interest rate range."""
-        CreditCardFactory(name="Low APR", interest_rate_apr=Decimal("15.00"))
-        CreditCardFactory(name="High APR", interest_rate_apr=Decimal("30.00"))
+        neutral_card(name="Low APR", interest_rate_apr=Decimal("15.00"))
+        neutral_card(name="High APR", interest_rate_apr=Decimal("30.00"))
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"interest_rate_max": "20"})
         assert response.status_code == 200
@@ -78,8 +87,8 @@ class TestAdvancedFilters:
 
     def test_no_annual_fee_filter(self, api_client):
         """Filter cards with no annual fee."""
-        CreditCardFactory(name="Free Card", annual_fee=0)
-        CreditCardFactory(name="Paid Card", annual_fee=1000)
+        neutral_card(name="Free Card", annual_fee=0)
+        neutral_card(name="Paid Card", annual_fee=1000)
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"no_annual_fee": "true"})
         assert response.status_code == 200
@@ -88,12 +97,12 @@ class TestAdvancedFilters:
 
     def test_has_lounge_access_filter(self, api_client):
         """Filter cards with lounge access."""
-        CreditCardFactory(
+        neutral_card(
             name="Lounge Card",
             lounge_access_international="2 visits",
             lounge_access_domestic="1 visit",
         )
-        CreditCardFactory(
+        neutral_card(
             name="No Lounge Card",
             lounge_access_international="",
             lounge_access_domestic="",
@@ -106,8 +115,8 @@ class TestAdvancedFilters:
 
     def test_search_query_full_text(self, api_client):
         """Full-text search across multiple fields."""
-        CreditCardFactory(name="Visa Platinum", reward_points_policy="travel rewards")
-        CreditCardFactory(name="Mastercard Gold", reward_points_policy="cashback")
+        neutral_card(name="Visa Platinum", reward_points_policy="travel rewards")
+        neutral_card(name="Mastercard Gold", reward_points_policy="cashback")
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"search": "visa"})
         assert response.status_code == 200
@@ -121,7 +130,7 @@ class TestAdvancedSearchFacets:
 
     def test_facets_included_by_default(self, api_client):
         """Facets should be included in response by default."""
-        CreditCardFactory(name="Test Card", annual_fee=0)
+        neutral_card(name="Test Card", annual_fee=0)
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"search": "test"})
         assert response.status_code == 200
@@ -130,9 +139,9 @@ class TestAdvancedSearchFacets:
 
     def test_category_facets(self, api_client):
         """Category facets should show counts per category."""
-        CreditCardFactory(name="Travel Card", reward_points_policy="travel rewards")
-        CreditCardFactory(name="Cashback Card", reward_points_policy="cashback")
-        CreditCardFactory(name="Free Card", annual_fee=0)
+        neutral_card(name="Travel Card", reward_points_policy="travel rewards")
+        neutral_card(name="Cashback Card", reward_points_policy="cashback")
+        neutral_card(name="Free Card", annual_fee=0)
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"search": "card"})
         assert response.status_code == 200
@@ -146,9 +155,9 @@ class TestAdvancedSearchFacets:
 
     def test_annual_fee_range_facets(self, api_client):
         """Annual fee range facets should show counts per range."""
-        CreditCardFactory(name="Free Card", annual_fee=0)
-        CreditCardFactory(name="Low Card", annual_fee=500)
-        CreditCardFactory(name="High Card", annual_fee=3000)
+        neutral_card(name="Free Card", annual_fee=0)
+        neutral_card(name="Low Card", annual_fee=500)
+        neutral_card(name="High Card", annual_fee=3000)
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"search": "card"})
         assert response.status_code == 200
@@ -174,7 +183,7 @@ class TestAdvancedSearchFacets:
 
     def test_selected_facets_only(self, api_client):
         """Request specific facets only."""
-        CreditCardFactory(name="Test Card")
+        neutral_card(name="Test Card")
 
         response = api_client.get(
             ADVANCED_SEARCH_URL, {"search": "test", "facets": "category,annual_fee_range"}
@@ -192,9 +201,9 @@ class TestAdvancedSearchSorting:
 
     def test_sort_by_annual_fee_asc(self, api_client):
         """Sort by annual fee ascending."""
-        CreditCardFactory(name="High Fee Card", annual_fee=2000)
-        CreditCardFactory(name="Low Fee Card", annual_fee=500)
-        CreditCardFactory(name="Free Card", annual_fee=0)
+        neutral_card(name="High Fee Card", annual_fee=2000)
+        neutral_card(name="Low Fee Card", annual_fee=500)
+        neutral_card(name="Free Card", annual_fee=0)
 
         response = api_client.get(
             ADVANCED_SEARCH_URL, {"search": "card", "ordering": "annual_fee"}
@@ -205,9 +214,9 @@ class TestAdvancedSearchSorting:
 
     def test_sort_by_annual_fee_desc(self, api_client):
         """Sort by annual fee descending."""
-        CreditCardFactory(name="High Fee Card", annual_fee=2000)
-        CreditCardFactory(name="Low Fee Card", annual_fee=500)
-        CreditCardFactory(name="Free Card", annual_fee=0)
+        neutral_card(name="High Fee Card", annual_fee=2000)
+        neutral_card(name="Low Fee Card", annual_fee=500)
+        neutral_card(name="Free Card", annual_fee=0)
 
         response = api_client.get(
             ADVANCED_SEARCH_URL, {"search": "card", "ordering": "-annual_fee"}
@@ -218,8 +227,8 @@ class TestAdvancedSearchSorting:
 
     def test_sort_by_apr_asc(self, api_client):
         """Sort by APR ascending."""
-        CreditCardFactory(name="High APR Card", interest_rate_apr=Decimal("30.00"))
-        CreditCardFactory(name="Low APR Card", interest_rate_apr=Decimal("15.00"))
+        neutral_card(name="High APR Card", interest_rate_apr=Decimal("30.00"))
+        neutral_card(name="Low APR Card", interest_rate_apr=Decimal("15.00"))
 
         response = api_client.get(
             ADVANCED_SEARCH_URL, {"search": "card", "ordering": "interest_rate_apr"}
@@ -230,12 +239,12 @@ class TestAdvancedSearchSorting:
 
     def test_sort_by_lounge_access_desc(self, api_client):
         """Sort by lounge access descending."""
-        CreditCardFactory(
+        neutral_card(
             name="Lounge Card",
             lounge_access_international="5 visits",
             lounge_access_domestic="1 visit",
         )
-        CreditCardFactory(
+        neutral_card(
             name="No Lounge Card",
             lounge_access_international="",
             lounge_access_domestic="",
@@ -250,8 +259,8 @@ class TestAdvancedSearchSorting:
 
     def test_sort_by_name(self, api_client):
         """Sort by card name."""
-        CreditCardFactory(name="Zebra Card")
-        CreditCardFactory(name="Alpha Card")
+        neutral_card(name="Zebra Card")
+        neutral_card(name="Alpha Card")
 
         response = api_client.get(
             ADVANCED_SEARCH_URL, {"search": "card", "ordering": "name"}
@@ -262,8 +271,8 @@ class TestAdvancedSearchSorting:
 
     def test_default_sort_with_search(self, api_client):
         """Default sort should be by relevance when search query present."""
-        CreditCardFactory(name="Visa Card")
-        CreditCardFactory(name="Mastercard")
+        neutral_card(name="Visa Card")
+        neutral_card(name="Mastercard")
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"search": "visa"})
         assert response.status_code == 200
@@ -439,13 +448,9 @@ class TestAdvancedFilterClass:
     def test_categories_filter_method(self):
         """Test the filter_categories method directly."""
         # Create cards and filter with explicit pks to avoid pollution
-        travel = CreditCardFactory(
-            name="Travel Card", reward_points_policy="travel rewards"
-        )
-        cashback = CreditCardFactory(
-            name="Cashback Card", reward_points_policy="cashback"
-        )
-        free = CreditCardFactory(name="Free Card", annual_fee=0)
+        travel = neutral_card(name="Travel Card", reward_points_policy="travel rewards")
+        cashback = neutral_card(name="Cashback Card", reward_points_policy="cashback")
+        free = neutral_card(name="Free Card", annual_fee=0)
 
         queryset = CreditCard.objects.filter(pk__in=[travel.pk, cashback.pk, free.pk])
         filter_set = CreditCardAdvancedFilter(
@@ -457,8 +462,8 @@ class TestAdvancedFilterClass:
     def test_search_filter_method(self):
         """Test the filter_search method directly."""
         queryset = CreditCard.objects.filter(is_active=True)
-        CreditCardFactory(name="Visa Platinum", reward_points_policy="travel")
-        CreditCardFactory(name="Mastercard Gold", reward_points_policy="cashback")
+        neutral_card(name="Visa Platinum", reward_points_policy="travel")
+        neutral_card(name="Mastercard Gold", reward_points_policy="cashback")
 
         filter_set = CreditCardAdvancedFilter({"search": "visa"}, queryset=queryset)
         results = list(filter_set.qs)
@@ -472,8 +477,8 @@ class TestComputeFacets:
 
     def test_compute_category_facets(self):
         """Test category facet computation."""
-        CreditCardFactory(name="Travel", reward_points_policy="travel")
-        CreditCardFactory(name="Cashback", reward_points_policy="cashback")
+        neutral_card(name="Travel", reward_points_policy="travel")
+        neutral_card(name="Cashback", reward_points_policy="cashback")
 
         queryset = CreditCard.objects.filter(is_active=True)
         facets = compute_facets(queryset, facet_names=["category"])
@@ -483,8 +488,8 @@ class TestComputeFacets:
 
     def test_compute_annual_fee_range_facets(self):
         """Test annual fee range facet computation."""
-        free_card = CreditCardFactory(name="Free Card Facet", annual_fee=0)
-        low_card = CreditCardFactory(name="Low Card Facet", annual_fee=500)
+        free_card = neutral_card(name="Free Card Facet", annual_fee=0)
+        low_card = neutral_card(name="Low Card Facet", annual_fee=500)
 
         queryset = CreditCard.objects.filter(id__in=[free_card.id, low_card.id])
         facets = compute_facets(queryset, facet_names=["annual_fee_range"])
@@ -507,7 +512,7 @@ class TestDBFallback:
 
         monkeypatch.setattr(client_module, "is_enabled", lambda: False)
 
-        CreditCardFactory(name="Test Card", annual_fee=0)
+        neutral_card(name="Test Card", annual_fee=0)
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"search": "test"})
         assert response.status_code == 200
@@ -520,8 +525,8 @@ class TestDBFallback:
 
         monkeypatch.setattr(client_module, "is_enabled", lambda: False)
 
-        CreditCardFactory(name="Travel Card", reward_points_policy="travel")
-        CreditCardFactory(name="Free Card", annual_fee=0)
+        neutral_card(name="Travel Card", reward_points_policy="travel")
+        neutral_card(name="Free Card", annual_fee=0)
 
         response = api_client.get(ADVANCED_SEARCH_URL, {"search": "card"})
         assert response.status_code == 200

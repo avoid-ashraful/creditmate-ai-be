@@ -257,7 +257,7 @@ def _execute_db_search(query_params):
     dict
         Search results with hits, facets, pagination.
     """
-    queryset = CreditCard.objects.select_related("bank").filter(is_active=True)
+    queryset = CreditCard.objects.select_related("bank").public()
 
     # Apply search query
     search_query = query_params.get("search", "").strip()

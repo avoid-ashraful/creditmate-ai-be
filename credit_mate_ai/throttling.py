@@ -74,3 +74,14 @@ class BurstThrottle(CeilingRetryAfterThrottle):
 
     def get_cache_key(self, request, view):
         return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
+
+
+class ReportIssueThrottle(CeilingRetryAfterThrottle):
+    """Limit "report incorrect data" submissions per client IP."""
+
+    scope = "report_issue"
+    rate = "5/hour"
+
+    def get_cache_key(self, request, view):
+        ident = request.META.get("REMOTE_ADDR", "unknown")
+        return self.cache_format % {"scope": self.scope, "ident": ident}

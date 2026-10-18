@@ -53,3 +53,11 @@ class ReviewStatus(models.TextChoices):
     PENDING = "pending", "Pending"
     APPROVED = "approved", "Approved"
     REJECTED = "rejected", "Rejected"
+
+
+class ReviewSource(models.TextChoices):
+    """Origin of a manual review queue item."""
+
+    CRAWL_QUALITY = "crawl_quality", "Low-confidence crawl"
+    CRAWLER_PROPOSAL = "crawler_proposal", "Crawler proposal"
+    USER_REPORT = "user_report", "User report"

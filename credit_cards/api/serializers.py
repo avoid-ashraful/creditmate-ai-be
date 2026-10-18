@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from banks.api.serializers import BankListSerializer
+from credit_cards.constants import REPORTABLE_FIELDS
 from credit_cards.models import CreditCard, CreditCardFieldHistory
 
 
@@ -251,6 +252,16 @@ class CreditCardSerializer(serializers.ModelSerializer):
             "reward_points_policy",
             "additional_features",
             "is_active",
+            "source_url",
+            "apply_url",
+            "verification_status",
+            "verified_at",
+            "card_network",
+            "is_islamic",
+            "is_dual_currency",
+            "min_monthly_income",
+            "supplementary_card_fee",
+            "foreign_transaction_fee",
             "has_lounge_access",
             "total_lounge_access",
             "has_annual_fee",
@@ -312,6 +323,16 @@ class CreditCardListSerializer(serializers.ModelSerializer):
             "has_lounge_access",
             "has_annual_fee",
             "is_active",
+            "source_url",
+            "apply_url",
+            "verification_status",
+            "verified_at",
+            "card_network",
+            "is_islamic",
+            "is_dual_currency",
+            "min_monthly_income",
+            "supplementary_card_fee",
+            "foreign_transaction_fee",
             "created",
             "modified",
         ]
@@ -342,7 +363,40 @@ class CreditCardComparisonSerializer(serializers.ModelSerializer):
             "annual_fee_waiver_policy",
             "reward_points_policy",
             "additional_features",
+            "source_url",
+            "apply_url",
+            "verification_status",
+            "verified_at",
+            "card_network",
+            "is_islamic",
+            "is_dual_currency",
+            "min_monthly_income",
+            "supplementary_card_fee",
+            "foreign_transaction_fee",
             "has_lounge_access",
             "total_lounge_access",
             "has_annual_fee",
         ]
+
+
+class ReportIssueSerializer(serializers.Serializer):
+    """Input for reporting incorrect data on a credit card."""
+
+    field = serializers.ChoiceField(
+        choices=REPORTABLE_FIELDS,
+        required=False,
+        allow_blank=True,
+        help_text="Card field the report is about, when it concerns one field.",
+    )
+    message = serializers.CharField(max_length=1000)
+    suggested_value = serializers.CharField(
+        max_length=1000, required=False, allow_blank=True
+    )
+    contact_email = serializers.EmailField(required=False, allow_blank=True)
+
+
+class ReportIssueResponseSerializer(serializers.Serializer):
+    """Acknowledgement returned after a report is queued."""
+
+    id = serializers.IntegerField(help_text="Review queue item id")
+    status = serializers.CharField()

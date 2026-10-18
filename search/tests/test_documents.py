@@ -237,6 +237,14 @@ class _StubCard:
         self.additional_features = ["cashback"]
         self.annual_fee_waiver_policy = {"minimum_spend": 100000}
         self.is_active = True
+        self.source_url = ""
+        self.apply_url = ""
+        self.card_network = ""
+        self.is_islamic = False
+        self.is_dual_currency = None
+        self.min_monthly_income = None
+        self.supplementary_card_fee = ""
+        self.foreign_transaction_fee = ""
         self.created = "2026-01-01T00:00:00Z"
         self.modified = "2026-01-02T00:00:00Z"
         for key, value in overrides.items():

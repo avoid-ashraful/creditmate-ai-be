@@ -1,13 +1,23 @@
 import logging
+from decimal import Decimal
 
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
+
+from banks.enums import ReviewPriority, ReviewSource, ReviewStatus
+from banks.models import ReviewQueue
 from banks.validators.numeric_fields import (
-    STATUS_MISSING,
-    STATUS_VALID,
+    REASON_OUT_OF_RANGE,
     parse_numeric_value,
+    parse_numeric_value_detailed,
 )
+from credit_cards.constants import MAX_INTEREST_RATE_APR, CardNetwork, VerificationStatus
 from credit_cards.models import CreditCard
 
 logger = logging.getLogger(__name__)
+
+#: Proposed values that mean "not stated" and must never replace a known value.
+EMPTY_VALUES = (None, "", [], {})
 
 
 class CreditCardDataService:
@@ -86,7 +96,12 @@ class CreditCardDataService:
             return []
 
     def _update_single_card(self, bank_id, card_data):
-        """Update or create a single credit card record.
+        """Create or safely update a single credit card record.
+
+        New cards are created as drafts (not public). A verified card is never
+        modified: every differing proposed value becomes a review queue item
+        for staff. Draft/needs-review cards are updated, but a known value is
+        never replaced with an empty one and ``is_active`` is never changed.
 
         Parameters
         ----------
@@ -98,46 +113,111 @@ class CreditCardDataService:
         Returns
         -------
         int
-            1 if card was successfully updated or created, 0 otherwise
+            1 if the card was created, updated or proposed against, 0 if it
+            was skipped (no usable name)
         """
-        card_name = card_data.get("name", "").strip()
-        if not card_name:
-            # Create fallback name from annual fee (never invent a fee value:
-            # unknown/missing fees are displayed as "unknown")
-            card_name = self._fallback_card_name(card_data)
-            logger.warning(f"Credit card name is missing, using fallback: {card_name}")
-        # Clean up card name if it's just the annual fee
-        elif (
-            card_name.startswith("TK.")
-            or card_name.startswith("US$")
-            or card_name.replace(",", "").replace(".", "").isdigit()
-        ):
-            card_name = self._fallback_card_name(card_data)
-            logger.info(f"Cleaned up card name from fee to: {card_name}")
-
-        try:
-            defaults = self._prepare_card_defaults(card_data)
-            logger.info(
-                f"Creating/updating card '{card_name}' for bank {bank_id} with defaults: {defaults}"
+        card_name = (card_data.get("name") or "").strip()
+        if not card_name or self._looks_like_fee(card_name):
+            logger.warning(
+                f"Skipping credit card without a usable name for bank {bank_id}: {card_data}"
             )
+            return 0
 
-            card, created = CreditCard.objects.update_or_create(
-                bank_id=bank_id,
-                name=card_name,
-                defaults=defaults,
-            )
+        proposed = {
+            field: value
+            for field, value in self._prepare_card_defaults(card_data).items()
+            if value not in EMPTY_VALUES
+        }
+        problems = self._sanity_problems(card_data)
+        if problems:
+            logger.warning(f"Card '{card_name}' failed sanity checks: {problems}")
 
-            logger.info(
-                f"{'Created' if created else 'Updated'} credit card: {card.name} (ID: {card.id})"
+        card = CreditCard.objects.filter(bank_id=bank_id, name=card_name).first()
+        if card is None:
+            status = (
+                VerificationStatus.NEEDS_REVIEW if problems else VerificationStatus.DRAFT
             )
-            return 1
-        except Exception as e:
-            logger.error(f"Failed to create/update credit card '{card_name}': {str(e)}")
-            raise
+            card = CreditCard.objects.create(
+                bank_id=bank_id, name=card_name, verification_status=status, **proposed
+            )
+            logger.info(f"Created draft credit card: {card.name} (ID: {card.id})")
+        elif card.verification_status == VerificationStatus.VERIFIED:
+            self._propose_changes(card, proposed, problems)
+        else:
+            changed = [
+                field
+                for field, value in proposed.items()
+                if self._differs(getattr(card, field), value)
+            ]
+            for field in changed:
+                setattr(card, field, proposed[field])
+            if problems and card.verification_status != VerificationStatus.NEEDS_REVIEW:
+                card.verification_status = VerificationStatus.NEEDS_REVIEW
+                changed.append("verification_status")
+            if changed:
+                card.save(update_fields=changed + ["modified"])
+            logger.info(f"Updated credit card {card.name} (ID: {card.id}): {changed}")
+        return 1
 
     @staticmethod
-    def _fallback_card_name(card_data):
-        """Build a fallback card name without inventing a fee value.
+    def _looks_like_fee(name):
+        """Return True when a "name" is really an annual fee value."""
+        return (
+            name.startswith("TK.")
+            or name.startswith("US$")
+            or name.replace(",", "").replace(".", "").isdigit()
+        )
+
+    @staticmethod
+    def _differs(current, proposed):
+        """Compare a stored value with a proposed one, treating Decimals numerically."""
+        if isinstance(current, Decimal):
+            return current != Decimal(str(proposed))
+        return current != proposed
+
+    def _propose_changes(self, card, proposed, problems):
+        """Queue each differing proposed value for staff review.
+
+        Parameters
+        ----------
+        card : CreditCard
+            Verified card that must not be modified by the crawler
+        proposed : dict
+            Non-empty proposed field values
+        problems : list of str
+            Sanity problems found in the extraction (added to the message)
+
+        Returns
+        -------
+        None
+        """
+        for field, value in proposed.items():
+            current = getattr(card, field)
+            if not self._differs(current, value):
+                continue
+            if ReviewQueue.objects.filter(
+                credit_card=card,
+                source=ReviewSource.CRAWLER_PROPOSAL,
+                status=ReviewStatus.PENDING,
+                field_name=field,
+                proposed_value=value,
+            ).exists():
+                continue
+            message = f"Crawler proposes {field}: {str(current)!r} -> {value!r}"
+            if problems:
+                message += f" (sanity: {'; '.join(problems)})"
+            ReviewQueue.objects.create(
+                bank_id=card.bank_id,
+                credit_card=card,
+                source=ReviewSource.CRAWLER_PROPOSAL,
+                priority=ReviewPriority.MEDIUM,
+                field_name=field,
+                proposed_value=value,
+                message=message,
+            )
+
+    def _sanity_problems(self, card_data):
+        """Return reasons an extraction must not be published without review.
 
         Parameters
         ----------
@@ -146,24 +226,26 @@ class CreditCardDataService:
 
         Returns
         -------
-        str
-            ``"Credit Card (Annual Fee: <value>)"`` where ``<value>`` is the
-            normalized fee, ``0.0`` for a genuinely free card, or ``unknown``
-            when the fee was not extracted.
+        list of str
+            Human readable problems; empty when the values look sane
         """
-        fee_value, fee_status = parse_numeric_value(
-            card_data.get("annual_fee"), "annual_fee"
-        )
-        if fee_status == STATUS_VALID:
-            display = fee_value
-        elif fee_status == STATUS_MISSING:
-            display = "unknown"
-        else:
-            display = "invalid"
-        return f"Credit Card (Annual Fee: {display})"
+        problems = list(card_data.get("sanity_flags") or [])
+        for field in ("annual_fee", "interest_rate_apr"):
+            value, _, reason = parse_numeric_value_detailed(card_data.get(field), field)
+            too_high = field == "interest_rate_apr" and (
+                value is not None and value > MAX_INTEREST_RATE_APR
+            )
+            message = f"{field} out of range"
+            if (reason == REASON_OUT_OF_RANGE or too_high) and message not in problems:
+                problems.append(message)
+        return problems
 
     def _prepare_card_defaults(self, card_data):
-        """Prepare default values for credit card creation/update.
+        """Prepare normalized field values for credit card creation/update.
+
+        Unknown values come back empty (``None``, ``""`` or ``[]``) so callers
+        can avoid overwriting known data; nothing is invented. ``is_active``
+        and the verification fields are deliberately not part of the result.
 
         Parameters
         ----------
@@ -173,24 +255,69 @@ class CreditCardDataService:
         Returns
         -------
         dict
-            Prepared defaults dictionary for database operations
+            Normalized values keyed by CreditCard field name
         """
+        text = self._text
         return {
             "annual_fee": self._parse_decimal(card_data.get("annual_fee")),
             "interest_rate_apr": self._parse_decimal(
                 card_data.get("interest_rate_apr"), field="interest_rate_apr"
             ),
-            "lounge_access_international": card_data.get(
-                "lounge_access_international", ""
-            ),
-            "lounge_access_domestic": card_data.get("lounge_access_domestic", ""),
-            "cash_advance_fee": card_data.get("cash_advance_fee", ""),
-            "late_payment_fee": card_data.get("late_payment_fee", ""),
+            "lounge_access_international": text(card_data, "lounge_access_international"),
+            "lounge_access_domestic": text(card_data, "lounge_access_domestic"),
+            "cash_advance_fee": text(card_data, "cash_advance_fee"),
+            "late_payment_fee": text(card_data, "late_payment_fee"),
             "annual_fee_waiver_policy": card_data.get("annual_fee_waiver_policy"),
-            "reward_points_policy": card_data.get("reward_points_policy", ""),
-            "additional_features": card_data.get("additional_features", []),
-            "is_active": True,
+            "reward_points_policy": text(card_data, "reward_points_policy"),
+            "additional_features": card_data.get("additional_features") or [],
+            "source_url": self._parse_url(card_data.get("source_url")),
+            "apply_url": self._parse_url(card_data.get("apply_url")),
+            "card_network": self._parse_network(card_data.get("card_network")),
+            "is_islamic": self._parse_bool(card_data.get("is_islamic")),
+            "is_dual_currency": self._parse_bool(card_data.get("is_dual_currency")),
+            "min_monthly_income": self._parse_decimal(
+                card_data.get("min_monthly_income"), field="min_monthly_income"
+            ),
+            "supplementary_card_fee": text(card_data, "supplementary_card_fee")[:255],
+            "foreign_transaction_fee": text(card_data, "foreign_transaction_fee")[:255],
         }
+
+    @staticmethod
+    def _text(card_data, key):
+        """Return a stripped string value, ``""`` when null or missing."""
+        return str(card_data.get(key) or "").strip()
+
+    @staticmethod
+    def _parse_bool(value):
+        """Return True/False for explicit yes/no values, else None (unknown)."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in {"true", "yes", "y", "1"}:
+                return True
+            if lowered in {"false", "no", "n", "0"}:
+                return False
+        return None
+
+    @staticmethod
+    def _parse_url(value):
+        """Return a valid http(s) URL of at most 500 characters, else ``""``."""
+        url = str(value or "").strip()
+        try:
+            URLValidator(schemes=["http", "https"])(url)
+        except ValidationError:
+            return ""
+        return url if len(url) <= 500 else ""
+
+    @staticmethod
+    def _parse_network(value):
+        """Map a network name to a CardNetwork value, else ``""`` (unknown)."""
+        lowered = str(value or "").strip().lower()
+        for network in CardNetwork:
+            if lowered in {network.value, network.label.lower()}:
+                return network.value
+        return ""
 
     def _parse_decimal(self, value, field="annual_fee"):
         """Parse a critical numeric value, preserving zero and NULL semantics.

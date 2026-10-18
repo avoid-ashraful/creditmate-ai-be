@@ -4,19 +4,24 @@ from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.status import HTTP_201_CREATED
 
 from django.core.cache import cache
 from django.db import models
 from django.db.models import Count
 
-from banks.models import Bank
+from banks.enums import ReviewPriority, ReviewSource
+from banks.models import Bank, ReviewQueue
 from credit_cards.api.filters import CreditCardFilter
 from credit_cards.api.serializers import (
     CreditCardFieldHistorySerializer,
     CreditCardListSerializer,
     CreditCardSerializer,
+    ReportIssueResponseSerializer,
+    ReportIssueSerializer,
     TypeaheadResponseSerializer,
 )
+from credit_cards.constants import PUBLIC_BANK_CARD_Q
 from credit_cards.lounge import card_lounge_access_q
 from credit_cards.models import CreditCard
 from credit_mate_ai.cache import (
@@ -29,6 +34,7 @@ from credit_mate_ai.cache import (
     build_query_cache_key,
 )
 from credit_mate_ai.metrics import increment_search
+from credit_mate_ai.throttling import ReportIssueThrottle, TrustedClientRateThrottle
 
 AUTOCOMPLETE_MIN_QUERY_LENGTH = 2
 AUTOCOMPLETE_MAX_RESULTS = 8
@@ -200,7 +206,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
     Optimized with select_related for efficient database queries.
     """
 
-    queryset = CreditCard.objects.select_related("bank").filter(is_active=True)
+    queryset = CreditCard.objects.select_related("bank").public()
     serializer_class = CreditCardSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -356,6 +362,39 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(
+        request=ReportIssueSerializer,
+        responses={201: ReportIssueResponseSerializer},
+        description=(
+            "Report incorrect data on a public card. Anonymous users may submit; "
+            "the report is queued for staff review (limited to 5 per hour per IP)."
+        ),
+        tags=["credit-cards"],
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="report-issue",
+        throttle_classes=[TrustedClientRateThrottle, ReportIssueThrottle],
+    )
+    def report_issue(self, request, *args, **kwargs):
+        """Queue a user report about incorrect card data for staff review."""
+        card = self.get_object()
+        serializer = ReportIssueSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        item = ReviewQueue.objects.create(
+            bank=card.bank,
+            credit_card=card,
+            source=ReviewSource.USER_REPORT,
+            priority=ReviewPriority.MEDIUM,
+            field_name=data.get("field", ""),
+            proposed_value=data.get("suggested_value") or None,
+            message=data["message"],
+            contact_email=data.get("contact_email", ""),
+        )
+        return Response({"id": item.id, "status": item.status}, status=HTTP_201_CREATED)
+
+    @extend_schema(
         responses=TypeaheadResponseSerializer,
         description="Return bounded, anonymous-safe card, bank, and category typeahead results.",
     )
@@ -407,11 +446,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
 
         prefix_banks = list(
             Bank.objects.filter(is_active=True, name__istartswith=query)
-            .annotate(
-                active_card_count=Count(
-                    "credit_cards", filter=models.Q(credit_cards__is_active=True)
-                )
-            )
+            .annotate(active_card_count=Count("credit_cards", filter=PUBLIC_BANK_CARD_Q))
             .order_by("name")[:AUTOCOMPLETE_MAX_RESULTS]
         )
         contains_banks = []
@@ -421,9 +456,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
                 Bank.objects.filter(is_active=True, name__icontains=query)
                 .exclude(id__in=prefix_ids)
                 .annotate(
-                    active_card_count=Count(
-                        "credit_cards", filter=models.Q(credit_cards__is_active=True)
-                    )
+                    active_card_count=Count("credit_cards", filter=PUBLIC_BANK_CARD_Q)
                 )
                 .order_by("name")[: AUTOCOMPLETE_MAX_RESULTS - len(prefix_banks)]
             )
@@ -478,9 +511,7 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             candidate_banks = list(
                 Bank.objects.filter(is_active=True)
                 .annotate(
-                    active_card_count=Count(
-                        "credit_cards", filter=models.Q(credit_cards__is_active=True)
-                    )
+                    active_card_count=Count("credit_cards", filter=PUBLIC_BANK_CARD_Q)
                 )
                 .order_by("name")[: AUTOCOMPLETE_MAX_RESULTS * 2]
             )

@@ -28,11 +28,10 @@ def _bank_queryset():
     from django.db import models
 
     from banks.models import Bank
+    from credit_cards.constants import PUBLIC_BANK_CARD_Q
 
     return Bank.objects.annotate(
-        active_credit_card_count=models.Count(
-            "credit_cards", filter=models.Q(credit_cards__is_active=True)
-        )
+        active_credit_card_count=models.Count("credit_cards", filter=PUBLIC_BANK_CARD_Q)
     ).order_by("pk")
 
 
@@ -42,11 +41,11 @@ def _card_queryset():
     Returns
     -------
     QuerySet
-        Cards with the related bank pre-selected.
+        Public cards with the related bank pre-selected.
     """
     from credit_cards.models import CreditCard
 
-    return CreditCard.objects.select_related("bank").order_by("pk")
+    return CreditCard.objects.select_related("bank").public().order_by("pk")
 
 
 #: Logical kind -> index definition.  Index names are resolved at runtime so
@@ -264,15 +263,18 @@ class SearchService:
         kind : str
             ``banks`` or ``credit_cards``.
         obj : Model
-            Instance to index.
+            Instance to index. A non-public card is removed from the index
+            instead.
         refresh : bool
             Refresh the index so the document is immediately searchable.
 
         Returns
         -------
         dict
-            Engine response for the index request.
+            Engine response for the index (or delete) request.
         """
+        if kind == "credit_cards" and not obj.is_public:
+            return self.delete_document(kind, obj.pk, refresh=refresh)
         document = self._spec(kind)["serializer"](obj)
         return self.client.index(
             index=self.resolve_name(kind), id=obj.pk, document=document, refresh=refresh

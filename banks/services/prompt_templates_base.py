@@ -24,6 +24,19 @@ Optional fields (null or "" when absent):
 - lounge_access_international, lounge_access_domestic, lounge_access_condition
 - cash_advance_fee, late_payment_fee, annual_fee_waiver_policy
 - reward_points_policy, additional_features
+- card_network: one of "visa", "mastercard", "amex", "unionpay", "jcb",
+  "diners", "other"; null when the network is not stated
+- is_islamic: true only when the card is explicitly Islamic/Shariah-based,
+  false when explicitly conventional, null when not stated
+- is_dual_currency: true/false only when the document says the card works in
+  both BDT and USD (or not), null when not stated
+- min_monthly_income: number in BDT per month (strip text and commas), null
+  when no minimum income is stated
+- supplementary_card_fee, foreign_transaction_fee: the fee text as written
+  (e.g. "Free for first 2 cards", "3.5% of transaction"), null when not stated
+- source_url: the page or document URL this card was read from, only if it
+  appears in the document; apply_url: the card's own "Apply" / product page
+  URL, only if the document states it. Never construct or guess a URL.
 
 Zero vs missing (very important):
 - "Free", "No annual fee", "Nil", "NIL", "Exempted" mean a genuine 0 fee:
@@ -35,6 +48,8 @@ Number formatting:
 - Remove currency symbols and text (TK., BDT, Tk., USD, $) and commas.
 - Percentages become plain numbers: "20% p.a." -> 20.0
 - Monthly rates stay monthly unless the document states an annual equivalent.
+- Never invent a value for any field: when the document does not state it,
+  return null (not false, not 0, not "").
 - Any extra document fields are returned using their original column header
   as the key (for example "CIB Fee": "BDT 100").
 """

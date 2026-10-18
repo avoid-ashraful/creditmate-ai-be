@@ -1,9 +1,27 @@
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from banks.models import Bank
 from common.models import Audit
+from credit_cards.constants import CardNetwork, VerificationStatus
 from credit_cards.lounge import card_has_lounge_access, direction_has_access
+
+
+class CreditCardQuerySet(models.QuerySet):
+    """Queryset helpers for credit cards."""
+
+    def public(self):
+        """Return only cards visible to anonymous users.
+
+        Returns
+        -------
+        CreditCardQuerySet
+            Active cards whose data has been verified by staff.
+        """
+        return self.filter(
+            is_active=True, verification_status=VerificationStatus.VERIFIED
+        )
 
 
 class CreditCard(Audit):
@@ -39,6 +57,39 @@ class CreditCard(Audit):
     reward_points_policy = models.TextField(blank=True, default="")
     additional_features = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)
+    source_url = models.URLField(max_length=500, blank=True, default="")
+    apply_url = models.URLField(max_length=500, blank=True, default="")
+    verification_status = models.CharField(
+        max_length=20,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.DRAFT,
+        db_index=True,
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="verified_credit_cards",
+    )
+    card_network = models.CharField(
+        max_length=20, choices=CardNetwork.choices, blank=True, default=""
+    )
+    is_islamic = models.BooleanField(default=False)
+    is_dual_currency = models.BooleanField(null=True, blank=True)
+    min_monthly_income = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        help_text="Minimum monthly income in BDT",
+    )
+    supplementary_card_fee = models.CharField(max_length=255, blank=True, default="")
+    foreign_transaction_fee = models.CharField(max_length=255, blank=True, default="")
+
+    objects = CreditCardQuerySet.as_manager()
 
     class Meta:
         ordering = ["bank__name", "name"]
@@ -47,6 +98,11 @@ class CreditCard(Audit):
 
     def __str__(self):
         return f"{self.bank.name} - {self.name}"
+
+    @property
+    def is_public(self):
+        """Return True when anonymous users may see this card."""
+        return self.is_active and self.verification_status == VerificationStatus.VERIFIED
 
     @property
     def has_lounge_access(self):
