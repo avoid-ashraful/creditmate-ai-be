@@ -17,6 +17,7 @@ from banks.services.llm_parser import LLMContentParser
 from banks.services.multi_pass_extractor import MultiPassLLMExtractor
 from banks.services.quality_scoring import coalesce_cards
 from banks.services.quality_validator import ExtractionQualityValidator
+from common.llm.budget import llm_budget_exhausted, llm_call_budget
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +121,10 @@ class BankDataCrawlerService:
             return False
 
     def crawl_all_active_sources(self):
-        """Crawl all active bank data sources.
+        """Crawl all active data sources of active banks.
+
+        Unchanged content is skipped without calling the LLM, and the run is
+        capped by ``settings.LLM_MAX_CALLS_PER_RUN`` (see :meth:`crawl_sources`).
 
         Parameters
         ----------
@@ -129,13 +133,47 @@ class BankDataCrawlerService:
         Returns
         -------
         dict
-            Summary dictionary with keys 'total', 'successful', 'failed'
-            containing counts of crawling results
+            Summary dictionary with keys 'total', 'successful', 'failed' and
+            'skipped' containing counts of crawling results
         """
-        active_sources = BankDataSource.objects.filter(is_active=True)
-        results = {"total": active_sources.count(), "successful": 0, "failed": 0}
+        active_sources = BankDataSource.objects.filter(
+            is_active=True, bank__is_active=True
+        )
+        with llm_call_budget():
+            return self.crawl_sources(active_sources)
 
-        for data_source in active_sources:
+    def crawl_sources(self, data_sources):
+        """Crawl data sources in order until the LLM call budget is spent.
+
+        Parameters
+        ----------
+        data_sources : iterable of BankDataSource
+            Sources to crawl.
+
+        Returns
+        -------
+        dict
+            Counts with keys 'total', 'successful', 'failed' and 'skipped'.
+            Sources skipped because the budget ran out are left untouched and
+            are picked up by the next run.
+        """
+        data_sources = list(data_sources)
+        results = {
+            "total": len(data_sources),
+            "successful": 0,
+            "failed": 0,
+            "skipped": 0,
+        }
+
+        for position, data_source in enumerate(data_sources):
+            if llm_budget_exhausted():
+                results["skipped"] = results["total"] - position
+                logger.warning(
+                    "LLM call budget exhausted; leaving %s of %s sources for the next run",
+                    results["skipped"],
+                    results["total"],
+                )
+                break
             if self.crawl_bank_data_source(data_source.id):
                 results["successful"] += 1
             else:
@@ -613,8 +651,8 @@ class BankDataCrawlerService:
         except (ConfigurationError, AIParsingError) as e:
             logger.error(f"AI parsing failed for {data_source.bank.name}: {e.message}")
 
-            # For configuration errors, don't increment failed attempts
-            if not isinstance(e, ConfigurationError):
+            # Configuration errors and a spent call budget are not the source's fault
+            if not isinstance(e, ConfigurationError) and not llm_budget_exhausted():
                 data_source.increment_failed_attempts()
 
             return None

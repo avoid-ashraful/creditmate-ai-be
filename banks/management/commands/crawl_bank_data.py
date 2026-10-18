@@ -1,7 +1,9 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import Q
 
 from banks.models import Bank, BankDataSource
 from banks.services import BankDataCrawlerService
+from common.llm.budget import llm_call_budget
 
 
 class Command(BaseCommand):
@@ -16,6 +18,21 @@ class Command(BaseCommand):
             help="ID of specific bank to crawl (crawls all if not specified)",
         )
         parser.add_argument(
+            "--bank-names",
+            help=(
+                "Comma-separated bank names to crawl (case-insensitive contains "
+                "match, e.g. 'brac,city')"
+            ),
+        )
+        parser.add_argument(
+            "--max-llm-calls",
+            type=int,
+            help=(
+                "Stop extracting once this many LLM calls were made in this run "
+                "(default: LLM_MAX_CALLS_PER_RUN, 0 = unlimited)"
+            ),
+        )
+        parser.add_argument(
             "--source-id",
             type=int,
             help="ID of specific data source to crawl",
@@ -26,14 +43,57 @@ class Command(BaseCommand):
             help="Show what would be crawled without actually crawling",
         )
 
-    def handle(self, *args, **options):  # noqa: C901
+    def handle(self, *args, **options):
+        with llm_call_budget(options.get("max_llm_calls")) as budget:
+            self._crawl(budget, **options)
+        self.stdout.write(f"LLM calls used: {budget.used}")
+
+    def _crawl_banks_by_name(self, names, dry_run):
+        """Crawl the active sources of every bank matching one of ``names``."""
+        wanted = [name.strip() for name in names.split(",") if name.strip()]
+        if not wanted:
+            raise CommandError("--bank-names needs at least one name")
+        match = Q()
+        for name in wanted:
+            match |= Q(name__icontains=name)
+        banks = list(Bank.objects.filter(match).order_by("name"))
+        if not banks:
+            raise CommandError(f"No bank matches {', '.join(wanted)}")
+
+        sources = list(
+            BankDataSource.objects.filter(bank__in=banks, is_active=True).order_by(
+                "bank__name", "id"
+            )
+        )
+        self.stdout.write(
+            f"Matched {len(banks)} banks ({', '.join(b.name for b in banks)}) "
+            f"with {len(sources)} active data sources"
+        )
+        if dry_run:
+            for source in sources:
+                self.stdout.write(f"  - {source.bank.name}: {source.url}")
+            return
+
+        results = BankDataCrawlerService().crawl_sources(sources)
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Completed crawling: {results['successful']} successful, "
+                f"{results['failed']} failed, {results['skipped']} left for the "
+                f"next run out of {results['total']} total"
+            )
+        )
+
+    def _crawl(self, budget, **options):  # noqa: C901
         bank_id = options.get("bank_id")
         source_id = options.get("source_id")
         dry_run = options.get("dry_run")
 
         crawler = BankDataCrawlerService()
 
-        if source_id:
+        if options.get("bank_names"):
+            self._crawl_banks_by_name(options["bank_names"], dry_run)
+
+        elif source_id:
             # Crawl specific data source
             try:
                 data_source = BankDataSource.objects.get(id=source_id)
@@ -84,6 +144,14 @@ class Command(BaseCommand):
                 failed = 0
 
                 for data_source in data_sources:
+                    if budget.exhausted:
+                        self.stdout.write(
+                            self.style.WARNING(
+                                "  LLM call budget exhausted; remaining sources "
+                                "are left for the next run"
+                            )
+                        )
+                        break
                     self.stdout.write(f"  Crawling: {data_source.url}")
                     if crawler.crawl_bank_data_source(data_source.id):
                         successful += 1
@@ -122,7 +190,8 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS(
                     f"Completed crawling: {results['successful']} successful, "
-                    f"{results['failed']} failed out of {results['total']} total"
+                    f"{results['failed']} failed, {results['skipped']} left for the "
+                    f"next run out of {results['total']} total"
                 )
             )
 

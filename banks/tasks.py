@@ -19,6 +19,7 @@ except ImportError:
 from banks.enums import ContentType
 from banks.models import Bank, BankDataSource
 from banks.services import BankDataCrawlerService, ScheduleChargeURLFinder
+from common.llm.budget import llm_budget_exhausted, llm_call_budget
 
 logger = logging.getLogger(__name__)
 
@@ -159,15 +160,24 @@ def crawl_bank_data_sources_by_bank(bank_id):
             f"Starting crawl for bank {bank_id} with {data_sources.count()} data sources"
         )
 
-        results = {"total": data_sources.count(), "successful": 0, "failed": 0}
+        results = {
+            "total": data_sources.count(),
+            "successful": 0,
+            "failed": 0,
+            "skipped": 0,
+        }
 
         crawler = BankDataCrawlerService()
 
-        for data_source in data_sources:
-            if crawler.crawl_bank_data_source(data_source.id):
-                results["successful"] += 1
-            else:
-                results["failed"] += 1
+        with llm_call_budget():
+            for data_source in data_sources:
+                if llm_budget_exhausted():
+                    # Left for the next run: not counted as failed.
+                    results["skipped"] += 1
+                elif crawler.crawl_bank_data_source(data_source.id):
+                    results["successful"] += 1
+                else:
+                    results["failed"] += 1
 
         logger.info(f"Bank {bank_id} crawl completed: {results}")
 
@@ -190,11 +200,10 @@ def crawl_bank_data_sources_by_bank(bank_id):
 
 @shared_task
 def daily_crawl_all_active_banks():
-    """Daily crawl of every active bank's active data sources.
+    """Crawl every active bank's active data sources (manual run, not scheduled).
 
-    Scheduled once per day by Celery beat
-    (``daily-crawl-all-active-banks`` in ``credit_mate_ai/celery.py``). The task
-    only touches ``Bank`` rows with ``is_active=True`` and only their active
+    The weekly ``crawl-bank-data-weekly`` beat entry is the only scheduled
+    crawl; this task stays callable by hand. It only touches ``Bank`` rows with ``is_active=True`` and only their active
     data sources, and it uses the same crawler pipeline as manual crawls, so
     every produced ``CrawledContent`` row carries its extraction quality score.
 
@@ -231,9 +240,10 @@ def daily_crawl_all_active_banks():
 
         crawler = BankDataCrawlerService()
 
-        for bank in active_banks:
-            bank_detail = _crawl_bank_for_daily_schedule(bank, crawler, summary)
-            summary["banks"].append(bank_detail)
+        with llm_call_budget():
+            for bank in active_banks:
+                bank_detail = _crawl_bank_for_daily_schedule(bank, crawler, summary)
+                summary["banks"].append(bank_detail)
 
         logger.info(
             "Daily active-bank crawl completed: %s/%s banks crawled",
@@ -276,6 +286,11 @@ def _crawl_bank_for_daily_schedule(bank, crawler, summary):
 
     bank_result = {"bank": bank.name, "status": "completed", "sources": 0}
     for data_source in data_sources:
+        if llm_budget_exhausted():
+            # Left for the next run: not counted as crawled or failed.
+            logger.warning("LLM call budget exhausted; skipping rest of %s", bank.name)
+            bank_result["status"] = "partial"
+            break
         summary["sources_total"] += 1
         bank_result["sources"] += 1
         if crawler.crawl_bank_data_source(data_source.id):
@@ -946,8 +961,8 @@ def monthly_schedule_charge_url_discovery(self):
 @shared_task(bind=True, max_retries=2, default_retry_delay=600)
 def monthly_comprehensive_crawl(self):
     """
-    Monthly comprehensive crawl of all bank data sources.
-    Runs on the 1st day of each month.
+    Comprehensive crawl of all bank data sources (manual run, not scheduled).
+    Same pipeline and LLM call budget as the weekly ``crawl_all_bank_data``.
 
     Returns:
         Dict containing task results

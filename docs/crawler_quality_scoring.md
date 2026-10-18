@@ -155,16 +155,21 @@ first; when it **fails or yields no text**, the multi-source path is used as a
 rescue and its method/confidence are recorded on the crawl record. Connectivity
 failures skip the rescue (it would fail the same way).
 
-## 7. Daily schedule
+## 7. Schedule and LLM budget
 
 - Task: `banks.tasks.daily_crawl_all_active_banks` - iterates every **active**
   bank, skips banks with no active data source, reports per-bank counts, and
-  returns `{"status": "completed"|"error", ...}`.
-- Beat entry: `daily-crawl-all-active-banks` in `credit_mate_ai/celery.py`,
-  `crontab(hour=2, minute=0)` with `expires=21600` (6 * 60 * 60 seconds: a run
-  older than 6 hours is dropped instead of firing late).
-- The beat entry only takes effect when a Celery beat worker is actually
-  running with this app's settings (see §9).
+  returns `{"status": "completed"|"error", ...}`. It is **not scheduled**; run
+  it by hand. The only scheduled crawl is `crawl-bank-data-weekly`
+  (`banks.tasks.crawl_all_bank_data`, active banks' active sources, unchanged
+  content skipped without an LLM call).
+- Every crawl run is capped by `LLM_MAX_CALLS_PER_RUN` (env, default 200; 0
+  disables). The orchestrator counts each provider call (retries and fallbacks
+  included); once spent, the crawler logs a warning and leaves the remaining
+  sources for the next run. `crawl_bank_data` accepts `--max-llm-calls` and
+  `--bank-names brac,city` (case-insensitive contains match).
+- Beat entries only take effect when a Celery beat worker is actually running
+  with this app's settings (see §9).
 
 ## 8. Storage rules (zero vs missing)
 

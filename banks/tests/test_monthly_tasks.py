@@ -334,14 +334,14 @@ class TestMonthlyTasksIntegration:
         # Verify all monthly tasks are scheduled
         assert "monthly-data-quality-check" in beat_schedule
         assert "monthly-schedule-charge-discovery" in beat_schedule
-        assert "monthly-comprehensive-crawl" in beat_schedule
+        # The comprehensive crawl is manual only; the weekly crawl covers it.
+        assert "monthly-comprehensive-crawl" not in beat_schedule
 
         # Verify they run monthly (approximately 30 days)
         monthly_seconds = 30 * 24 * 60 * 60
         for task_name in [
             "monthly-data-quality-check",
             "monthly-schedule-charge-discovery",
-            "monthly-comprehensive-crawl",
         ]:
             assert beat_schedule[task_name]["schedule"] == monthly_seconds
             assert "expires" in beat_schedule[task_name]["options"]

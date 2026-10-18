@@ -71,6 +71,9 @@ uv run python manage.py crawl_bank_data --bank-id 1
 
 # Dry run
 uv run python manage.py crawl_bank_data --dry-run
+
+# Crawl banks by name (case-insensitive contains) with an LLM call cap
+uv run python manage.py crawl_bank_data --bank-names "brac,city" --max-llm-calls 50
 ```
 
 ## Architecture Overview
