@@ -76,6 +76,14 @@ uv run python manage.py crawl_bank_data --dry-run
 uv run python manage.py crawl_bank_data --bank-names "brac,city" --max-llm-calls 50
 ```
 
+LLM providers (`common/llm`) are tried in `LLM_PROVIDER_ORDER` (default `gemini,claude_code,openrouter`);
+quota/rate-limit/auth failures fall through to the next one. `claude_code` runs the local Claude Code CLI
+(Haiku, subscription login) - see `docs/development/LLM_PROVIDERS.md`.
+```bash
+# List providers / order; --ping makes one tiny call to each available provider
+uv run python manage.py llm_status [--ping]
+```
+
 ## Architecture Overview
 
 The application follows a Django REST API architecture with three main apps:

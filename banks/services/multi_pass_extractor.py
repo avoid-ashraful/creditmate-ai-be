@@ -28,7 +28,9 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from banks.exceptions import AIParsingError
+from banks.services.card_normalization import preserve_annual_fee_details
 from banks.services.extraction_provider import OrchestratorExtractionProvider
+from banks.services.llm_failures import rate_limit_state
 from banks.services.prompt_templates import BankSpecificPrompts
 from banks.services.quality_scoring import (
     STATUS_VALID,
@@ -423,6 +425,8 @@ class MultiPassLLMExtractor:
         except (
             Exception
         ) as exc:  # noqa: BLE001 - provider failures are recorded, not raised per pass
+            if rate_limit_state(exc)[0]:
+                raise AIParsingError("LLM quota exhausted; defer extraction") from exc
             logger.warning("%s pass failed: %s", pass_name, exc)
             return None, None, str(exc)
 
@@ -499,11 +503,7 @@ class MultiPassLLMExtractor:
         for card in self._coerce_to_cards(payload):
             if not isinstance(card, dict):
                 continue
-            partial = {
-                "name": card.get("name", ""),
-                "annual_fee": card.get("annual_fee"),
-                "interest_rate_apr": card.get("interest_rate_apr"),
-            }
+            partial = preserve_annual_fee_details(card)
             self._record_invalid_fields(partial, issues, invalid_reasons)
             normalized, _ = normalize_critical_fields(partial)
             focused_cards.append(normalized)
@@ -559,6 +559,7 @@ class MultiPassLLMExtractor:
             if not isinstance(card, dict):
                 continue
             MultiPassLLMExtractor._record_invalid_fields(card, issues, invalid_reasons)
+            card = preserve_annual_fee_details(card)
             normalized, _ = normalize_critical_fields(card)
             normalized_cards.append(normalized)
         return normalized_cards

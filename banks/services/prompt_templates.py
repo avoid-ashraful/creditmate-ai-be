@@ -365,6 +365,9 @@ class BankSpecificPrompts:
             "6. If the document has no card information at all, return "
             '{"cards": []}\n'
             "7. annual_fee is the recurring primary-card fee (2nd year onwards / "
-            "renewal), not the first-year fee.\n\n"
+            "renewal), not the first-year fee. BDT only: USD/US$/$ or other foreign "
+            "fees MUST stay null; preserve their text in additional_features as "
+            "Annual fee details: <original fee>. Split merged networks into one "
+            "card per network and preserve Islamic/product-line context.\n\n"
             f"Document content:\n{content if content is not None else ''}"
         )

@@ -264,6 +264,31 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 # Max LLM provider calls (retries/fallbacks included) in one crawl run; sources
 # left over are picked up by the next run. 0 disables the cap.
 LLM_MAX_CALLS_PER_RUN = int(os.getenv("LLM_MAX_CALLS_PER_RUN", "200"))
+# Providers tried in this order; unavailable ones are skipped and quota/rate-limit
+# /auth failures fall through immediately to the next one.
+LLM_PROVIDER_ORDER = [
+    name.strip()
+    for name in os.getenv("LLM_PROVIDER_ORDER", "gemini,claude_code,openrouter").split(
+        ","
+    )
+    if name.strip()
+]
+# Claude Code CLI (print mode, Haiku) provider: uses the OS user's Claude login.
+CLAUDE_CODE_ENABLED = os.getenv("CLAUDE_CODE_ENABLED", "True").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+CLAUDE_CODE_BIN = os.getenv("CLAUDE_CODE_BIN", "claude")
+CLAUDE_CODE_MODEL = os.getenv("CLAUDE_CODE_MODEL", "haiku")
+CLAUDE_CODE_TIMEOUT_SECONDS = int(os.getenv("CLAUDE_CODE_TIMEOUT_SECONDS", "180"))
+CLAUDE_CODE_MAX_CONCURRENCY = int(os.getenv("CLAUDE_CODE_MAX_CONCURRENCY", "1"))
+# False strips ANTHROPIC_API_KEY from the CLI env so the subscription login is used.
+CLAUDE_CODE_USE_API_KEY = os.getenv("CLAUDE_CODE_USE_API_KEY", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+)
 
 # Celery Configuration (Redis broker)
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
