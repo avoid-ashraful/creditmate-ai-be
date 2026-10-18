@@ -113,7 +113,7 @@ app.conf.beat_schedule = {
 ### Available Tasks
 
 1. **crawl_bank_data_source(data_source_id)**: Crawl a single data source
-2. **crawl_all_bank_data()**: Crawl all active data sources (scheduled weekly)
+2. **crawl_all_bank_data()**: Crawl active banks' active data sources (the only scheduled crawl, weekly; capped by `LLM_MAX_CALLS_PER_RUN`)
 3. **crawl_bank_data_sources_by_bank(bank_id)**: Crawl all sources for a bank
 4. **cleanup_old_crawled_content(days_to_keep=30)**: Clean up old crawled content
 

@@ -15,7 +15,7 @@ No Celery-wide `acks_late`, task time limit, soft time limit, or worker-loss red
 | `banks.tasks.find_schedule_charge_url_for_bank` | On demand | Mostly. Existing source rows are updated and `(bank, url)` is unique; lookup then create can race. | None; catches and returns errors. | None |
 | `banks.tasks.monthly_data_quality_check` | Monthly beat | Yes; read-only checks and result construction. | 3 retries, exponential countdown 60s, 120s, 240s. | Beat expiry 24h; no runtime limit |
 | `banks.tasks.monthly_schedule_charge_url_discovery` | Monthly beat | Mostly; delegates to the URL-discovery logic, which updates existing rows and has a unique `(bank, url)` constraint. | 2 task retries at 600s exponential countdown; inner task has its own maximum of 3 but retries only when an exception escapes. | Beat expiry 24h; no runtime limit |
-| `banks.tasks.monthly_comprehensive_crawl` | Monthly beat | Mostly, with the crawler's content-hash and card-upsert protection; crawl records can repeat under concurrency. | 2 retries at 600s exponential countdown. | Beat expiry 24h; no runtime limit |
+| `banks.tasks.monthly_comprehensive_crawl` | On demand (not scheduled) | Mostly, with the crawler's content-hash and card-upsert protection; crawl records can repeat under concurrency. | 2 retries at 600s exponential countdown. | Beat expiry 24h; no runtime limit |
 | `search.process_search_index_queue` (`search.tasks.process_search_index_queue`) | Conditional beat (`SEARCH_ENABLED`, mode not `off`, positive interval); optionally dispatched after commit | Yes for DB queue ownership; drainers claim disjoint rows with row locks and lease tokens. Engine writes are replay-safe upserts/deletes. Queue rows carry their own bounded attempt count (default 5), backoff, and lease recovery. | Celery task declares max 3 / 60s but does not call retry. Engine failures are persisted by the queue for bounded retries, then marked failed. | Beat expiry is `max(60, interval * 4)`; no runtime limit |
 | `search.rebuild_index` (`search.tasks.rebuild_search_index`) | On demand | No guarantee for concurrent runs: each rebuild can drop/recreate the same indexes, and there is no lock. A completed rebuild is repeatable; interrupted rebuilds can leave partial external state. | 1 retry declared; no custom backoff or catch. | None |
 | `alerts.tasks.send_alert_digests` | Hourly beat | Sequential duplicate deliveries are suppressed by unique `SentAlert.event_key` records. Concurrent deliveries can race between existence check and insert; the unique constraint prevents both from claiming the key. A worker crash after SMTP accepts an email but before the task completes has the usual external-send ambiguity. | 3 retries, bounded exponential delay (300s, 600s, 1200s); failures are logged with traceback. | Beat expiry 1h; no runtime limit |
@@ -25,11 +25,9 @@ No Celery-wide `acks_late`, task time limit, soft time limit, or worker-loss red
 | Entry | Schedule | Expiry |
 | --- | --- | --- |
 | `send-alert-digests-hourly` | 3600s | 3600s |
-| `crawl-bank-data-weekly` | 604800s | 86400s |
-| `daily-crawl-all-active-banks` | Daily at 02:00 UTC | 21600s |
+| `crawl-bank-data-weekly` (the only scheduled crawl: active banks' active sources, unchanged content skipped, capped by `LLM_MAX_CALLS_PER_RUN`) | 604800s | 86400s |
 | `monthly-data-quality-check` | 30 days | 86400s |
 | `monthly-schedule-charge-discovery` | 30 days | 86400s |
-| `monthly-comprehensive-crawl` | 30 days | 86400s |
 | `search-index-queue-drain` | `SEARCH_QUEUE_DRAIN_INTERVAL` seconds, when enabled | `max(60, 4 * interval)` |
 
 ## Transactions, acknowledgements, and failure reporting

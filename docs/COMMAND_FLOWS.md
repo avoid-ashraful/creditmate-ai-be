@@ -406,7 +406,7 @@ requests
 
 # AI services
 openai
-google-generativeai
+google-genai
 ```
 
 ---

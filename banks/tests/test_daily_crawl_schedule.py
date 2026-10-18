@@ -1,6 +1,6 @@
-"""Daily crawl scheduling tests (acceptance: daily cron for all active banks).
+"""Crawl scheduling tests: one weekly beat entry, daily task callable by hand.
 
-The Celery beat entry and the task are verified offline: the schedule is read
+The Celery beat entries and the task are verified offline: the schedule is read
 from the app configuration and the task runs with a mocked crawler, so no live
 crawl or external service is touched.
 """
@@ -8,7 +8,6 @@ crawl or external service is touched.
 from unittest.mock import MagicMock, patch
 
 import pytest
-from celery.schedules import crontab
 
 from banks.factories import BankDataSourceFactory, BankFactory
 from banks.models import Bank
@@ -19,38 +18,32 @@ BEAT_ENTRY_NAME = "daily-crawl-all-active-banks"
 
 
 class TestBeatSchedule:
-    """The beat configuration must schedule the task once per day."""
+    """Exactly one crawl is scheduled: weekly. The daily task stays manual."""
 
     @pytest.fixture(scope="class")
-    def beat_entry(self):
+    def schedule(self):
         from credit_mate_ai.celery import app
 
-        schedule = app.conf.beat_schedule
-        assert BEAT_ENTRY_NAME in schedule, "daily beat entry missing"
-        return schedule[BEAT_ENTRY_NAME]
+        return app.conf.beat_schedule
 
-    def test_entry_targets_the_daily_task(self, beat_entry):
-        assert beat_entry["task"] == DAILY_TASK_NAME
+    def test_daily_and_monthly_crawls_are_not_scheduled(self, schedule):
+        assert BEAT_ENTRY_NAME not in schedule
+        assert "monthly-comprehensive-crawl" not in schedule
 
-    def test_entry_uses_a_daily_crontab(self, beat_entry):
-        schedule = beat_entry["schedule"]
-        assert isinstance(schedule, crontab)
-        # Daily at 02:00 UTC
-        assert 2 in schedule.hour
-        assert 0 in schedule.minute
-
-    def test_entry_has_expiry_window(self, beat_entry):
-        options = beat_entry.get("options") or {}
-        assert options.get("expires", 0) > 0
+    def test_exactly_one_crawl_entry_runs_weekly(self, schedule):
+        crawl_tasks = {
+            name: entry
+            for name, entry in schedule.items()
+            if "crawl" in entry["task"] and "quality" not in entry["task"]
+        }
+        assert list(crawl_tasks) == ["crawl-bank-data-weekly"]
+        entry = crawl_tasks["crawl-bank-data-weekly"]
+        assert entry["task"] == "banks.tasks.crawl_all_bank_data"
+        assert entry["schedule"] == 604800.0
+        assert entry["options"]["expires"] > 0
 
     def test_task_is_registered_under_the_expected_name(self):
         assert daily_crawl_all_active_banks.name == DAILY_TASK_NAME
-
-    def test_weekly_entry_still_present(self):
-        from credit_mate_ai.celery import app
-
-        assert "crawl-bank-data-weekly" in app.conf.beat_schedule
-        assert app.conf.beat_schedule["crawl-bank-data-weekly"]["options"]["expires"] > 0
 
 
 @pytest.mark.django_db
