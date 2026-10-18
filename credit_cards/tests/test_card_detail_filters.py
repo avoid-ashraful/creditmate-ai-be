@@ -59,7 +59,9 @@ class TestCardDetailFilters:
 
     def test_is_dual_currency_excludes_unknown(self, api_client, cards, url):
         assert names(api_client.get(url, {"is_dual_currency": "true"})) == {"Visa Card"}
-        assert names(api_client.get(url, {"is_dual_currency": "false"})) == {"Master Card"}
+        assert names(api_client.get(url, {"is_dual_currency": "false"})) == {
+            "Master Card"
+        }
 
     def test_income_cap_excludes_unknown_by_default(self, api_client, cards, url):
         assert names(api_client.get(url, {"max_min_monthly_income": 30000})) == {

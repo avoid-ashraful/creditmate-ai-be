@@ -242,7 +242,9 @@ class TestCardDetailFilters:
         ]
 
     def test_boolean_filters_are_coerced(self):
-        clauses = build_filters("cards", {"is_islamic": "false", "is_dual_currency": "true"})
+        clauses = build_filters(
+            "cards", {"is_islamic": "false", "is_dual_currency": "true"}
+        )
         assert {"term": {"is_islamic": False}} in clauses
         assert {"term": {"is_dual_currency": True}} in clauses
 
@@ -263,5 +265,6 @@ class TestCardDetailFilters:
             "bool": {"must_not": [{"exists": {"field": "min_monthly_income"}}]}
         } in clause["bool"]["should"]
         assert build_filters(
-            "cards", {"max_min_monthly_income": "40000", "include_unknown_income": "false"}
+            "cards",
+            {"max_min_monthly_income": "40000", "include_unknown_income": "false"},
         ) == [{"range": {"min_monthly_income": {"lte": 40000.0}}}]

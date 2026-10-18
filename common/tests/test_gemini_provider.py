@@ -85,13 +85,24 @@ def test_empty_response_is_an_error(client, text):
 @pytest.mark.parametrize(
     "error, expected",
     [
-        (api_error(genai_errors.ClientError, 401, "UNAUTHENTICATED"), LLMAuthenticationError),
-        (api_error(genai_errors.ClientError, 403, "PERMISSION_DENIED"), LLMAuthenticationError),
         (
-            api_error(genai_errors.ClientError, 400, "INVALID_ARGUMENT", "API key not valid"),
+            api_error(genai_errors.ClientError, 401, "UNAUTHENTICATED"),
             LLMAuthenticationError,
         ),
-        (api_error(genai_errors.ClientError, 429, "RESOURCE_EXHAUSTED"), LLMRateLimitError),
+        (
+            api_error(genai_errors.ClientError, 403, "PERMISSION_DENIED"),
+            LLMAuthenticationError,
+        ),
+        (
+            api_error(
+                genai_errors.ClientError, 400, "INVALID_ARGUMENT", "API key not valid"
+            ),
+            LLMAuthenticationError,
+        ),
+        (
+            api_error(genai_errors.ClientError, 429, "RESOURCE_EXHAUSTED"),
+            LLMRateLimitError,
+        ),
         (api_error(genai_errors.ServerError, 503, "UNAVAILABLE"), LLMNetworkError),
         (httpx.ConnectTimeout("timed out"), LLMNetworkError),
         (RuntimeError("response blocked by safety"), LLMResponseError),
