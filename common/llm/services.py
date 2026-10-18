@@ -7,15 +7,18 @@ automatic fallback, retry logic, and comprehensive error handling.
 
 import logging
 
+from django.conf import settings
+
 from common.llm.budget import current_budget
 from common.llm.exceptions import (
     AllLLMProvidersFailedError,
+    LLMAuthenticationError,
     LLMBudgetExhaustedError,
     LLMConfigurationError,
     LLMError,
     LLMRateLimitError,
 )
-from common.llm.providers import GeminiProvider, OpenRouterProvider
+from common.llm.providers import ClaudeCodeCLIProvider, GeminiProvider, OpenRouterProvider
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +39,14 @@ class LLMOrchestrator:
         ----------
         providers : list of str, optional
             List of provider names to use in order of preference.
-            Defaults to ["openrouter", "gemini"]
+            Defaults to ``settings.LLM_PROVIDER_ORDER``
+            (``gemini,claude_code,openrouter``)
         """
-        self.provider_order = providers or ["openrouter", "gemini"]
+        self.provider_order = providers or list(
+            getattr(
+                settings, "LLM_PROVIDER_ORDER", ["gemini", "claude_code", "openrouter"]
+            )
+        )
         self.providers = {}
         self._initialize_providers()
 
@@ -47,6 +55,7 @@ class LLMOrchestrator:
         provider_classes = {
             "openrouter": OpenRouterProvider,
             "gemini": GeminiProvider,
+            "claude_code": ClaudeCodeCLIProvider,
         }
 
         for provider_name in self.provider_order:
@@ -233,10 +242,12 @@ class LLMOrchestrator:
                 else:
                     raise LLMError(f"Invalid response from {provider_name}")
 
-            except LLMRateLimitError as e:
-                logger.warning(f"Rate limit exceeded for {provider_name}: {e}")
+            except (LLMRateLimitError, LLMAuthenticationError) as e:
+                logger.warning(
+                    f"{provider_name} quota/rate-limit/auth failure, falling through: {e}"
+                )
                 errors[attempt_key] = str(e)
-                break  # Don't retry rate limit errors
+                break  # Retrying cannot help; move to the next provider
 
             except LLMError as e:
                 errors[attempt_key] = str(e)

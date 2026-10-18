@@ -38,6 +38,12 @@ def assert_dedicated_redis_database(cache_config):
 
 
 @pytest.fixture(autouse=True)
+def no_real_claude_cli(settings):
+    """Never let a test shell out to a locally installed Claude Code CLI."""
+    settings.CLAUDE_CODE_ENABLED = False
+
+
+@pytest.fixture(autouse=True)
 def isolated_cache(settings, socket_enabled, request):
     """Give each test module a private, safely clearable cache namespace."""
     cache_configs = {
