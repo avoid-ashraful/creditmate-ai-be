@@ -49,8 +49,10 @@ class CreditCard(Audit):
         blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
-    lounge_access_international = models.CharField(max_length=255, blank=True, default="")
-    lounge_access_domestic = models.CharField(max_length=255, blank=True, default="")
+    lounge_access_international = models.CharField(
+        max_length=1000, blank=True, default=""
+    )
+    lounge_access_domestic = models.CharField(max_length=1000, blank=True, default="")
     lounge_access_condition = models.CharField(max_length=500, blank=True, default="")
     cash_advance_fee = models.CharField(max_length=255, blank=True, default="")
     late_payment_fee = models.CharField(max_length=255, blank=True, default="")

@@ -265,6 +265,19 @@ class TestExportImportCommands:
         assert card.annual_fee == 999
         assert card.verification_status == VerificationStatus.DRAFT
 
+    def test_import_keeps_verified_at_from_file(self, tmp_path):
+        path = tmp_path / "dated.json"
+        row = {
+            "bank": "Dated Bank",
+            "name": "Dated Card",
+            "verification_status": "verified",
+            "verified_at": "2026-10-18T00:00:00+00:00",
+        }
+        path.write_text(json.dumps([row]))
+        call_command("import_cards", str(path))
+        card = CreditCard.objects.get(name="Dated Card")
+        assert card.verified_at.date().isoformat() == "2026-10-18"
+
     def test_import_rejects_unknown_fields(self, tmp_path):
         from django.core.management.base import CommandError
 

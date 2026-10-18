@@ -9,7 +9,11 @@ from banks.models import Bank
 from credit_cards.constants import REPORTABLE_FIELDS, VerificationStatus
 from credit_cards.models import CreditCard
 
-IMPORT_FIELDS = set(REPORTABLE_FIELDS) | {"is_active", "verification_status"}
+IMPORT_FIELDS = set(REPORTABLE_FIELDS) | {
+    "is_active",
+    "verification_status",
+    "verified_at",
+}
 
 
 class Command(BaseCommand):
@@ -40,7 +44,8 @@ class Command(BaseCommand):
                 )
             defaults = {k: v for k, v in row.items() if k not in {"bank", "name"}}
             if defaults.get("verification_status") == VerificationStatus.VERIFIED:
-                defaults["verified_at"] = timezone.now()
+                # a file may carry the editorial verification date; default to now
+                defaults.setdefault("verified_at", timezone.now())
             bank, _ = Bank.objects.get_or_create(name=bank_name)
             try:
                 card, _ = CreditCard.objects.update_or_create(

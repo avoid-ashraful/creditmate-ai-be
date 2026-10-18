@@ -164,7 +164,7 @@
       "name": "BRAC Bank PLC",
       "logo": "https://www.bracbank.com/assets/images/logo.png",
       "website": "https://www.bracbank.com/",
-      "schedule_charge_url": "https://www.bracbank.com/schedule_of_charges/SCHEDULE-OF-CHARGES.PDF",
+      "schedule_charge_url": "https://www.bracbank.com/en/page/schedule-of-charges-for-credit-cards",
       "is_active": true
     }
   },
@@ -177,7 +177,7 @@
       "name": "City Bank PLC",
       "logo": "https://www.citybankplc.com/assets/images/logo.png",
       "website": "https://www.citybankplc.com/home",
-      "schedule_charge_url": "https://www.citybankplc.com/SoC",
+      "schedule_charge_url": "https://www.citybankplc.com/df/fees-and-charges",
       "is_active": true
     }
   },
@@ -242,7 +242,7 @@
       "name": "Dutch-Bangla Bank PLC",
       "logo": "https://www.dutchbanglabank.com/img/logos/logo-1.png",
       "website": "https://www.dutchbanglabank.com/",
-      "schedule_charge_url": "https://www.dutchbanglabank.com/schedule_charge/schedule-of-charges.pdf",
+      "schedule_charge_url": "https://www.dutchbanglabank.com/schedule_charge/credit-cards-charges.pdf",
       "is_active": true
     }
   },
@@ -502,7 +502,7 @@
       "name": "United Commercial Bank PLC",
       "logo": "https://www.ucb.com.bd/assets/images/logo.png",
       "website": "https://www.ucb.com.bd/",
-      "schedule_charge_url": "https://www.ucb.com.bd/schedule-of-charges",
+      "schedule_charge_url": "https://ucb.com.bd/cards/reports/schedule-of-charges",
       "is_active": true
     }
   },
@@ -711,7 +711,7 @@
       "logo": "https://www.hsbc.com.bd/assets/images/logo.png",
       "website": "https://www.hsbc.com.bd/",
       "schedule_charge_url": "https://www.hsbc.com.bd/1/2/retail-banking/fees-and-charges",
-      "is_active": true
+      "is_active": false
     }
   },
   {
@@ -828,6 +828,19 @@
       "logo": "https://pallisanchaybank.gov.bd/assets/images/logo.png",
       "website": "https://pallisanchaybank.gov.bd/",
       "schedule_charge_url": "https://pallisanchaybank.gov.bd/schedule-of-charges",
+      "is_active": true
+    }
+  },
+  {
+    "model": "banks.bank",
+    "pk": 65,
+    "fields": {
+      "created": "2026-10-18T00:00:00.000Z",
+      "modified": "2026-10-18T00:00:00.000Z",
+      "name": "LankaBangla Finance PLC",
+      "logo": "",
+      "website": "https://www.lankabangla.com/",
+      "schedule_charge_url": "https://www.lankabangla.com/fees-charge/",
       "is_active": true
     }
   }
