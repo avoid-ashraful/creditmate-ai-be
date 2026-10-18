@@ -366,6 +366,9 @@ class CreditCardDataValidator:
         dict
             Sanitized credit card data with normalized field values
         """
+        from banks.services.card_normalization import preserve_annual_fee_details
+
+        card_data = preserve_annual_fee_details(card_data)
         sanitized = {}
 
         # Clean string fields
