@@ -45,6 +45,19 @@ Optional fields (null or "" when absent):
   appears in the document; apply_url: the card's own "Apply" / product page
   URL, only if the document states it. Never construct or guess a URL.
 
+Customer-facing text (all benefit, fee, waiver and reward text fields):
+- These fields are displayed verbatim to customers, including additional_features,
+  annual_fee_waiver_policy, reward_points_policy and reward rule text/cap_text.
+- Preserve every amount, currency, percentage, count, limit, eligibility condition,
+  timing requirement and exclusion. Include the actual terms from footnotes,
+  without their note numbers or citations.
+- Do not include document names, PDF/page/column references, source labels,
+  analyst/verifier remarks, OCR/image details, confidence or inference commentary.
+  Keep provenance URLs only in source_url, never in customer-facing text.
+- If published terms conflict, retain the competing customer-relevant terms and
+  add "Check with the bank: published sources differ." Do not describe the
+  documents or extraction process. If a term is missing, do not invent it.
+
 Zero vs missing (very important):
 - "Free", "No annual fee", "Nil", "NIL", "Exempted" mean a genuine 0 fee:
   return 0, never null.

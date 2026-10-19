@@ -1,0 +1,2990 @@
+[
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Diners Club Emerald Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 5,000 reward points; 50% through 2,500 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 5,000 reward points; 50% through 2,500 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Diners Club Emerald Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Mastercard Millennial Titanium Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 2,500 reward points; 50% through 1,250 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 2,500 reward points; 50% through 1,250 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Mastercard Millennial Titanium Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Mastercard TARA World Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 3,500 reward points; 50% through 1,750 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 3,500 reward points; 50% through 1,750 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Mastercard TARA World Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Mastercard World Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 5,000 reward points; 50% through 2,500 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 5,000 reward points; 50% through 2,500 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Mastercard World Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "VISA Cashback Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 1,500 reward points; 50% through 750 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 1,500 reward points; 50% through 750 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "VISA Cashback Credit Card",
+    "field": "lounge_access_international",
+    "before": "None (SoC shows '-' for international lounge visits)",
+    "after": "None",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "VISA Cashback Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "None (Product page FAQ: complimentary Balaka Lounge access 'Not Applicable')",
+    "after": "None (complimentary Balaka Lounge access not applicable)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "VISA Cashback Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 9,000 reward points; 50% through 4,500 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 9,000 reward points; 50% through 4,500 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "lounge_access_international",
+    "before": "Unlimited complimentary access to International Lounges for Primary cardholder + 3 companions (per visit) in a year (LoungeKey, 1,500+ lounges per product page); US$ 35 per visit fee applies per SoC row for non-covered visits",
+    "after": "Unlimited complimentary access to International Lounges for Primary cardholder + 3 companions (per visit) in a year (LoungeKey, 1,500+ lounges); US$ 35 per visit fee applies for non-covered visits",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa Platinum Flexi Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 2,500 reward points; 50% through 1,250 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 2,500 reward points; 50% through 1,250 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa Platinum Flexi Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa Signature Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 8,000 reward points; 50% through 4,000 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 8,000 reward points; 50% through 4,000 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa Signature Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa TARA Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 2,000 reward points; 50% through 1,000 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 2,000 reward points; 50% through 1,000 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa TARA Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa/Mastercard Gold Flexi Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. Product page: 100% annual fee waived through 1,500 reward points; 50% through 750 reward points.",
+    "after": "For all cards, annual fee can be waived through required Reward Points redemption through BRAC Bank Astha App or by calling 16221 or +880 2 55668055-6. 100% annual fee waived through 1,500 reward points; 50% through 750 reward points.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa/Mastercard Gold Flexi Credit Card",
+    "field": "lounge_access_international",
+    "before": "None (SoC shows '-' for international lounge visits)",
+    "after": "None",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa/Mastercard Gold Flexi Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "None (SoC shows '-' for Balaka lounge)",
+    "after": "None (Balaka lounge access not applicable)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "BRAC Bank PLC",
+    "card": "Visa/Mastercard Gold Flexi Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 6: All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "after": "All overseas transactions converted using VISA/Mastercard/Diners Club exchange rates. A foreign currency factor of 3% will be applied in case of overseas transactions when the transaction currency is non USD.",
+    "dropped_numbers": [
+      "6"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Agora American Express Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass Lounge Visit Bill: N/A (no Priority Pass on the Agora card in the SoC); International Lounge Access Fee (guests, per person): BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "after": "Priority Pass Lounge Visit Bill: N/A (no Priority Pass on the Agora card); International Lounge Access Fee (guests, per person): BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Agora American Express Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic Lounge Access Fee (guests, per person): BDT 850 (Adult) / BDT 425 (Child) (SoC cell also shows a stray 'N/A' after the child fee)",
+    "after": "Domestic Lounge Access Fee (guests, per person): BDT 850 (Adult) / BDT 425 (Child). Check with the bank: guest fee applicability needs confirmation.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "American Express Ultramarine Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Membership Rewards points can be redeemed for annual fee waiver (product page)",
+    "after": "Membership Rewards points can be redeemed for annual fee waiver",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "American Express Ultramarine Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass: 12 complimentary visits along with a companion for Ultramarine primary cardmember (SoC note 11); USD 32 per visit per person otherwise",
+    "after": "Priority Pass: 12 complimentary visits along with a companion for Ultramarine primary cardmember; USD 32 per visit per person otherwise",
+    "dropped_numbers": [
+      "11"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "American Express Ultramarine Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "City Bank American Express lounges (HSIA): primary + 2 companions, unlimited visits (SoC notes 13-14). Guest fee BDT 2500/1250 international, BDT 850/425 domestic",
+    "after": "City Bank American Express lounges (HSIA): primary + 2 companions, unlimited visits. Guest fee BDT 2500/1250 international, BDT 850/425 domestic",
+    "dropped_numbers": [
+      "13",
+      "14"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Biman Bangladesh American Express Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass Lounge Visit Bill USD 32 per visit per person (no complimentary visits stated); Priority Pass Replacement Fee BDT 1,000; International Lounge Access Fee (guests, per person): BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "after": "Priority Pass Lounge Visit Bill USD 32 per visit per person (complimentary visits not specified; check with the bank); Priority Pass Replacement Fee BDT 1,000; International Lounge Access Fee (guests, per person): BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Biman Bangladesh American Express Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Up to 6 visits a year with one companion and up to 2 children below 12 (3 max in each lounge) (SoC notes 13-14). Domestic Lounge Access Fee (guests, per person): BDT 850 (Adult) / BDT 425 (Child)",
+    "after": "Up to 6 visits a year with one companion and up to 2 children below 12 (3 max in each lounge). Domestic Lounge Access Fee (guests, per person): BDT 850 (Adult) / BDT 425 (Child)",
+    "dropped_numbers": [
+      "13",
+      "14"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Alo American Express Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass Lounge Visit Bill USD 32 per visit per person (no complimentary visits stated); Priority Pass Issuance Fee BDT 1200; Priority Pass Replacement Fee BDT 1200; International Lounge Access Fee (guests, per person): BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "after": "Priority Pass Lounge Visit Bill USD 32 per visit per person (complimentary visits not specified; check with the bank); Priority Pass Issuance Fee BDT 1200; Priority Pass Replacement Fee BDT 1200; International Lounge Access Fee (guests, per person): BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Alo American Express Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "One companion and up to 2 children below 12; up to 10 visits a year (5 max in each lounge) (SoC notes 13-14, Gold & City Alo primary). Domestic Lounge Access Fee (guests, per person): BDT 850 (Adult) / BDT 425 (Child)",
+    "after": "One companion and up to 2 children below 12; up to 10 visits a year (5 max in each lounge) (Gold & City Alo primary). Domestic Lounge Access Fee (guests, per person): BDT 850 (Adult) / BDT 425 (Child)",
+    "dropped_numbers": [
+      "13",
+      "14"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Blue Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "International/Domestic Lounge Access Fee for guests N/A (SoC)",
+    "after": "International/Domestic Lounge Access Fee for guests N/A",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Gold Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass: 3 complimentary visits for Gold primary cardmember (SoC note 11); USD 32 per visit per person otherwise",
+    "after": "Priority Pass: 3 complimentary visits for Gold primary cardmember; USD 32 per visit per person otherwise",
+    "dropped_numbers": [
+      "11"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Gold Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "City Bank American Express domestic/international lounge (HSIA): one companion and up to 2 children below 12; up to 10 visits a year (5 max in each lounge) per SoC notes 13-14 (Gold primary). Guest fee BDT 2500 adult / BDT 1250 child (international), BDT 850 / BDT 425 (domestic)",
+    "after": "City Bank American Express domestic/international lounge (HSIA): one companion and up to 2 children below 12; up to 10 visits a year (5 max in each lounge) (Gold primary). Guest fee BDT 2500 adult / BDT 1250 child (international), BDT 850 / BDT 425 (domestic)",
+    "dropped_numbers": [
+      "13",
+      "14"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Gold FC Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass Lounge Visit Bill USD 32 per visit per person (no complimentary visits stated)",
+    "after": "Priority Pass Lounge Visit Bill USD 32 per visit per person (complimentary visits not specified; check with the bank)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Gold FC Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic Lounge Access Fee (guest, per person): BDT 850 (Adult) / BDT 425 (Child) (SoC p.3 row 'Domestic Lounge Access Fee', note 13-14); International Lounge Access Fee (guest): BDT 2500 (Adult) / BDT 1250 (Child)",
+    "after": "Domestic Lounge Access Fee (guest, per person): BDT 850 (Adult) / BDT 425 (Child); International Lounge Access Fee (guest): BDT 2500 (Adult) / BDT 1250 (Child)",
+    "dropped_numbers": [
+      "3",
+      "13",
+      "14"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass: complimentary for Platinum primary cardmember and 10 guest visits (SoC note 11); one Platinum supplementary cardmember gets complimentary Priority Pass (note 12); USD 32 per visit per person otherwise. Product page: unlimited free visits to 1,700+ lounges. International Lounge Access Fee (guests, per person): BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "after": "Priority Pass: complimentary for Platinum primary cardmember and 10 guest visits; one Platinum supplementary cardmember gets complimentary Priority Pass; USD 32 per visit per person otherwise. Unlimited free visits to 1,700+ lounges. International Lounge Access Fee (guests, per person): BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "dropped_numbers": [
+      "11",
+      "12"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "City Bank American Express Platinum & Domestic lounge (HSIA): Platinum primary + 3 companions (supplementary + 2), unlimited visits (SoC notes 13-14). Domestic Lounge Access Fee (guests, per person): BDT 850 (Adult) / BDT 425 (Child)",
+    "after": "City Bank American Express Platinum & Domestic lounge (HSIA): Platinum primary + 3 companions (supplementary + 2), unlimited visits. Domestic Lounge Access Fee (guests, per person): BDT 850 (Adult) / BDT 425 (Child)",
+    "dropped_numbers": [
+      "13",
+      "14"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Platinum FC Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass Lounge Visit Bill USD 32 per visit per person (no complimentary visits stated)",
+    "after": "Priority Pass Lounge Visit Bill USD 32 per visit per person (complimentary visits not specified; check with the bank)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Platinum FC Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic Lounge Access Fee (guest, per person): BDT 850 (Adult) / BDT 425 (Child) (SoC p.3 row 'Domestic Lounge Access Fee', note 13-14); International Lounge Access Fee (guest): BDT 2500 (Adult) / BDT 1250 (Child)",
+    "after": "Domestic Lounge Access Fee (guest, per person): BDT 850 (Adult) / BDT 425 (Child); International Lounge Access Fee (guest): BDT 2500 (Adult) / BDT 1250 (Child)",
+    "dropped_numbers": [
+      "3",
+      "13",
+      "14"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Platinum Reserve Credit Card",
+    "field": "lounge_access_international",
+    "before": "Product page: Priority Pass, complimentary unlimited access for primary cardmember + two guests per visit (1,700+ lounges). Fee table: Priority Pass Lounge Visit Bill USD 35 per visit per person (complimentary for primary and two guests on each visit, note 10); Priority Pass Replacement Fee BDT 1,000; International Lounge Access Fee (additional guests) BDT 2,500 (Adult)/BDT 1,250 (Child). Note: product-page prose says supplementary visits cost USD 32, fee table says USD 35 (site inconsistency).",
+    "after": "Priority Pass, complimentary unlimited access for primary cardmember + two guests per visit (1,700+ lounges). Priority Pass Lounge Visit Bill USD 35 per visit per person (complimentary for primary and two guests on each visit); Priority Pass Replacement Fee BDT 1,000; International Lounge Access Fee (additional guests) BDT 2,500 (Adult)/BDT 1,250 (Child). Supplementary visits: USD 32 or USD 35. Check with the bank: published sources differ.",
+    "dropped_numbers": [
+      "10"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Platinum Reserve Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic Lounge Access Fee (additional guests): BDT 850 (Adult) / BDT 425 (Child) (note 11-12)",
+    "after": "Domestic Lounge Access Fee (additional guests): BDT 850 (Adult) / BDT 425 (Child)",
+    "dropped_numbers": [
+      "11",
+      "12"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank American Express Platinum Reserve Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee: BDT 50,000 (single fee, no separate first-year fee shown)",
+    "after": "Annual fee details: Annual Fee: BDT 50,000 (single fee; separate first-year fee not specified)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank Mastercard World Elite Credit Card",
+    "field": "lounge_access_international",
+    "before": "International lounge access through LoungeKey is complimentary up to 15 visits; access fee (USD 35 per visit per person) above 15 visits (SoC note 9)",
+    "after": "International lounge access through LoungeKey is complimentary up to 15 visits; access fee (USD 35 per visit per person) above 15 visits",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Bank Mastercard World Elite Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Product page: unlimited City Bank lounge access; SoC: City Bank lounge guest fee BDT 850 (Adult)/BDT 425 (Child) except primary cardholder & 1 adult and 2 children under 12",
+    "after": "Unlimited City Bank lounge access; City Bank lounge guest fee BDT 850 (Adult)/BDT 425 (Child) except primary cardholder & 1 adult and 2 children under 12",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Islamic Blue American Express Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass Membership BDT 1200; lounge access fee applicable (no complimentary visits) (SoC note 10)",
+    "after": "Priority Pass Membership BDT 1200; lounge access fee applicable (no complimentary visits)",
+    "dropped_numbers": [
+      "10"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Islamic Blue American Express Card",
+    "field": "lounge_access_domestic",
+    "before": "N/A (SoC)",
+    "after": "N/A",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Islamic Gold American Express Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass membership Free; lounge visit using Priority Pass complimentary up to 3 visits in a calendar year (primary only), fee applicable above 3 (SoC note 10); Priority Pass Visit Bill USD 32 per visit per person; Lounge Visit Fee (International) for guests: BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "after": "Priority Pass membership Free; lounge visit using Priority Pass complimentary up to 3 visits in a calendar year (primary only), fee applicable above 3; Priority Pass Visit Bill USD 32 per visit per person; Lounge Visit Fee (International) for guests: BDT 2,500 (Adult) / BDT 1,250 (Child)",
+    "dropped_numbers": [
+      "10"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "City Islamic Visa Infinite Credit Card",
+    "field": "lounge_access_international",
+    "before": "Lounge Key Membership Free; Lounge Key visit complimentary up to 8 visits in a calendar year, fee applicable above 8; Lounge Key Visit Bill USD 35 per visit per person (SoC note 11)",
+    "after": "Lounge Key Membership Free; Lounge Key visit complimentary up to 8 visits in a calendar year, fee applicable above 8; Lounge Key Visit Bill USD 35 per visit per person",
+    "dropped_numbers": [
+      "11"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "FC VISA Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee: USD 20 (SoC column: FC VISA Platinum)",
+    "after": "Annual fee details: Annual Fee: USD 20",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "University of Dhaka American Express Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "No annual fee for University of Dhaka faculties and executives; BDT 1,500 for University of Dhaka alumni (SoC note 1)",
+    "after": "No annual fee for University of Dhaka faculties and executives; BDT 1,500 for University of Dhaka alumni",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "University of Dhaka American Express Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass Lounge Visit Bill: N/A; Priority Pass Issuance Fee: N/A; Priority Pass Replacement Fee: N/A; International Lounge Access Fee: N/A (no Priority Pass fees apply to the DU card in the SoC)",
+    "after": "Priority Pass Lounge Visit Bill: N/A; Priority Pass Issuance Fee: N/A; Priority Pass Replacement Fee: N/A; International Lounge Access Fee: N/A (no Priority Pass fees apply to the DU card)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "University of Dhaka American Express Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Only Dhaka University faculties/staff: up to 10 visits a year (5 max in each lounge) (SoC notes 13-14)",
+    "after": "Only Dhaka University faculties/staff: up to 10 visits a year (5 max in each lounge)",
+    "dropped_numbers": [
+      "13",
+      "14"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Visa Infinite",
+    "field": "lounge_access_international",
+    "before": "LoungeKey visit complimentary for primary cardholder; bill applicable above 8 visits (USD 35 per visit per person); supplementary gets complimentary LoungeKey membership but USD 35 per access (SoC note 11)",
+    "after": "LoungeKey visit complimentary for primary cardholder; bill applicable above 8 visits (USD 35 per visit per person); supplementary gets complimentary LoungeKey membership but USD 35 per access",
+    "dropped_numbers": [
+      "11"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Visa Infinite",
+    "field": "lounge_access_domestic",
+    "before": "International Lounge Access Fee BDT 2,500 (Adult)/BDT 1,250 (Child); Domestic Lounge Access Fee BDT 850 (Adult)/BDT 425 (Child) for guests at City Bank American Express lounges at HSIA; primary: 1 adult and 2 children under 12 complimentary (SoC notes 12-13)",
+    "after": "International Lounge Access Fee BDT 2,500 (Adult)/BDT 1,250 (Child); Domestic Lounge Access Fee BDT 850 (Adult)/BDT 425 (Child) for guests at City Bank American Express lounges at HSIA; primary: 1 adult and 2 children under 12 complimentary",
+    "dropped_numbers": [
+      "12",
+      "13"
+    ]
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Visa Infinite",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee: BDT 10,000 (SoC column: VISA Infinite)",
+    "after": "Annual fee details: Annual Fee: BDT 10,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Visa Platinum Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Product page (MyRewards Points): 25% annual fee = 750 BDT/1,875 points; 50% = 1,500/3,750; 75% = 2,250/5,625; 100% = 3,000/7,500 points",
+    "after": "MyRewards Points: 25% annual fee = 750 BDT/1,875 points; 50% = 1,500/3,750; 75% = 2,250/5,625; 100% = 3,000/7,500 points",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "City Bank PLC",
+    "card": "Visa Platinum Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee: BDT 3,000 (SoC column: VISA Platinum)",
+    "after": "Annual fee details: Annual Fee: BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "DBBL Nexus Mastercard World Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all credit cards, annual fee can be waived through required reward points. Features PDF (Signature/World): 6,000 points = 100% waiver of supplementary card fee or 50% of primary; 12,000 points = 100% waiver of primary card fee (2 points per BDT 50, 3 per USD 1)",
+    "after": "For all credit cards, annual fee can be waived through required reward points. Signature/World: 6,000 points = 100% waiver of supplementary card fee or 50% of primary; 12,000 points = 100% waiver of primary card fee (2 points per BDT 50, 3 per USD 1)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "DBBL Nexus Mastercard World Credit Card",
+    "field": "lounge_access_international",
+    "before": "Features PDF: complimentary Priority Pass; cardholders (primary & supplementary) max 8 free visits with total 8 guests per year to international lounges; USD 35 per visit beyond complimentary (SoC note 7). Also access to selected DBBL branch VIP lounges.",
+    "after": "Complimentary Priority Pass; cardholders (primary & supplementary) max 8 free visits with total 8 guests per year to international lounges; USD 35 per visit beyond complimentary. Also access to selected DBBL branch VIP lounges.",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "DBBL Nexus Mastercard World Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Product page: Balaka VIP Lounge (HSIA Dhaka) - total 12 free accesses with 12 guests per year (primary + supplementary); access to a number of DBBL VIP banking lounges/VIP zones at selected branches (unlimited, 5 guests/month); airport Meet & Greet (12 per year, primary+supplementary) and Pick & Drop (max 6 per card per year, principal cardholder). Features PDF is silent on Balaka for World. Note: same page also contains an inconsistent 'unlimited Priority Pass visits' paragraph copied from Signature.",
+    "after": "Balaka VIP Lounge (HSIA Dhaka) - total 12 free accesses with 12 guests per year (primary + supplementary); access to a number of DBBL VIP banking lounges/VIP zones at selected branches (unlimited, 5 guests/month); airport Meet & Greet (12 per year, primary+supplementary) and Pick & Drop (max 6 per card per year, principal cardholder). Check with the bank: Balaka access needs confirmation; published terms differ on whether Priority Pass visits are limited or unlimited.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "DBBL Nexus Mastercard World Credit Card",
+    "field": "late_payment_fee",
+    "before": "Late Payment Fee (if minimum due is not paid within due date): Free. (Features PDF: no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "after": "Late Payment Fee (if minimum due is not paid within due date): Free. (no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "DBBL Nexus VISA Signature Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all credit cards, annual fee can be waived through required reward points. Features PDF (Signature/World): 6,000 points = 100% waiver of supplementary card fee or 50% of primary; 12,000 points = 100% waiver of primary card fee (2 points per BDT 50, 3 per USD 1)",
+    "after": "For all credit cards, annual fee can be waived through required reward points. Signature/World: 6,000 points = 100% waiver of supplementary card fee or 50% of primary; 12,000 points = 100% waiver of primary card fee (2 points per BDT 50, 3 per USD 1)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "DBBL Nexus VISA Signature Credit Card",
+    "field": "lounge_access_international",
+    "before": "Features PDF: complimentary Priority Pass; cardholders (primary & supplementary) max 8 free visits with total 8 guests per year to international lounges; USD 35 per visit beyond complimentary (SoC note 7). Also access to selected DBBL branch VIP lounges.",
+    "after": "Complimentary Priority Pass; cardholders (primary & supplementary) max 8 free visits with total 8 guests per year to international lounges; USD 35 per visit beyond complimentary. Also access to selected DBBL branch VIP lounges.",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "DBBL Nexus VISA Signature Credit Card",
+    "field": "late_payment_fee",
+    "before": "Late Payment Fee (if minimum due is not paid within due date): Free. (Features PDF: no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "after": "Late Payment Fee (if minimum due is not paid within due date): Free. (no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "MasterCard Gold International Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all credit cards, annual fee can be waived through required reward points. Features PDF (Gold): 500-999 points = 50% waiver; 1,000 points = 100% waiver (1 point per BDT 50/USD 1 spent)",
+    "after": "For all credit cards, annual fee can be waived through required reward points. Gold: 500-999 points = 50% waiver; 1,000 points = 100% waiver (1 point per BDT 50/USD 1 spent)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "MasterCard Gold International Credit Card",
+    "field": "late_payment_fee",
+    "before": "Late Payment Fee (if minimum due is not paid within due date): Free. (Features PDF: no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "after": "Late Payment Fee (if minimum due is not paid within due date): Free. (no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "MasterCard Gold Local Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all credit cards, annual fee can be waived through required reward points. Features PDF (Gold): 500-999 points = 50% waiver; 1,000 points = 100% waiver (1 point per BDT 50/USD 1 spent)",
+    "after": "For all credit cards, annual fee can be waived through required reward points. Gold: 500-999 points = 50% waiver; 1,000 points = 100% waiver (1 point per BDT 50/USD 1 spent)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "MasterCard Gold Local Credit Card",
+    "field": "late_payment_fee",
+    "before": "Late Payment Fee (if minimum due is not paid within due date): Free. (Features PDF: no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "after": "Late Payment Fee (if minimum due is not paid within due date): Free. (no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "MasterCard Titanium Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all credit cards, annual fee can be waived through required reward points. Features PDF (Platinum/Titanium): 1000-1499 points = 50% waiver of previous year's fee; 1500-2000 points = 100% waiver (1.5 points per BDT 50/USD 1)",
+    "after": "For all credit cards, annual fee can be waived through required reward points. Platinum/Titanium: 1000-1499 points = 50% waiver of previous year's fee; 1500-2000 points = 100% waiver (1.5 points per BDT 50/USD 1)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "MasterCard Titanium Credit Card",
+    "field": "lounge_access_international",
+    "before": "Features PDF: Free Priority Pass: cardholder (primary and supplementary) max 4 free visits with total 4 guests per year to international airport lounges; USD 35 per visit beyond complimentary (SoC note 7)",
+    "after": "Free Priority Pass: cardholder (primary and supplementary) max 4 free visits with total 4 guests per year to international airport lounges; USD 35 per visit beyond complimentary",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "MasterCard Titanium Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Features PDF: 6 free accesses with total 6 guests per year at Balaka Lounge, HSIA (primary and supplementary)",
+    "after": "6 free accesses with total 6 guests per year at Balaka Lounge, HSIA (primary and supplementary)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "MasterCard Titanium Credit Card",
+    "field": "late_payment_fee",
+    "before": "Late Payment Fee (if minimum due is not paid within due date): Free. (Features PDF: no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "after": "Late Payment Fee (if minimum due is not paid within due date): Free. (no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "VISA Gold International Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all credit cards, annual fee can be waived through required reward points. Features PDF (Gold): 500-999 points = 50% waiver; 1,000 points = 100% waiver (1 point per BDT 50/USD 1 spent)",
+    "after": "For all credit cards, annual fee can be waived through required reward points. Gold: 500-999 points = 50% waiver; 1,000 points = 100% waiver (1 point per BDT 50/USD 1 spent)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "VISA Gold International Credit Card",
+    "field": "late_payment_fee",
+    "before": "Late Payment Fee (if minimum due is not paid within due date): Free. (Features PDF: no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "after": "Late Payment Fee (if minimum due is not paid within due date): Free. (no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "VISA Gold Local Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all credit cards, annual fee can be waived through required reward points. Features PDF (Gold): 500-999 points = 50% waiver; 1,000 points = 100% waiver (1 point per BDT 50/USD 1 spent)",
+    "after": "For all credit cards, annual fee can be waived through required reward points. Gold: 500-999 points = 50% waiver; 1,000 points = 100% waiver (1 point per BDT 50/USD 1 spent)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "VISA Gold Local Credit Card",
+    "field": "late_payment_fee",
+    "before": "Late Payment Fee (if minimum due is not paid within due date): Free. (Features PDF: no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "after": "Late Payment Fee (if minimum due is not paid within due date): Free. (no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "VISA Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Note 2: For all credit cards, annual fee can be waived through required reward points. Features PDF (Platinum/Titanium): 1000-1499 points = 50% waiver of previous year's fee; 1500-2000 points = 100% waiver (1.5 points per BDT 50/USD 1)",
+    "after": "For all credit cards, annual fee can be waived through required reward points. Platinum/Titanium: 1000-1499 points = 50% waiver of previous year's fee; 1500-2000 points = 100% waiver (1.5 points per BDT 50/USD 1)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "VISA Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "Features PDF: Free Priority Pass: cardholder (primary and supplementary) max 4 free visits with total 4 guests per year to international airport lounges; USD 35 per visit beyond complimentary (SoC note 7)",
+    "after": "Free Priority Pass: cardholder (primary and supplementary) max 4 free visits with total 4 guests per year to international airport lounges; USD 35 per visit beyond complimentary",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "VISA Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Features PDF: 6 free accesses with total 6 guests per year at Balaka Lounge, HSIA (primary and supplementary)",
+    "after": "6 free accesses with total 6 guests per year at Balaka Lounge, HSIA (primary and supplementary)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Dutch-Bangla Bank PLC",
+    "card": "VISA Platinum Credit Card",
+    "field": "late_payment_fee",
+    "before": "Late Payment Fee (if minimum due is not paid within due date): Free. (Features PDF: no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "after": "Late Payment Fee (if minimum due is not paid within due date): Free. (no late fee; if minimum due not paid by due date, additional 2% p.a. interest on the unpaid minimum due.)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Diners Club International Credit Card",
+    "field": "lounge_access_international",
+    "before": "6 complimentary international SKYLOUNGE visits per year (note 2); Global lounge access fee charged directly by lounge authority (note 31)",
+    "after": "6 complimentary international SKYLOUNGE visits per year; Global lounge access fee charged directly by lounge authority",
+    "dropped_numbers": [
+      "2",
+      "31"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Diners Club International Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Diners Club International Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 869 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 869",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Diners Club International Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Diners Club International Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 1,740 (as read from SoC column 'Diners Club')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 1,740",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Diners Club International Credit Card",
+    "field": "reward_points_policy",
+    "before": "5% cashback on every EBL POS purchase at Agora, Meena Bazar & Shwapno using your DCI Credit card. Up to BDT 1000 cash-back per month*. 10% cashback on every EBL POS purchase at Aarong using your DCI Credit Card. Up to BDT 1000 cash-back per month*.",
+    "after": "5% cashback on every EBL POS purchase at Agora, Meena Bazar & Shwapno using your DCI Credit card. Up to BDT 1000 cash-back per month. 10% cashback on every EBL POS purchase at Aarong using your DCI Credit Card. Up to BDT 1000 cash-back per month.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Diners Club International Credit Card",
+    "field": "cashback_rules.0.text",
+    "before": "5% cashback on every EBL POS purchase at Agora, Meena Bazar & Shwapno using your DCI Credit card. Up to BDT 1000 cash-back per month*.",
+    "after": "5% cashback on every EBL POS purchase at Agora, Meena Bazar & Shwapno using your DCI Credit card. Up to BDT 1000 cash-back per month.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Diners Club International Credit Card",
+    "field": "cashback_rules.1.text",
+    "before": "10% cashback on every EBL POS purchase at Aarong using your DCI Credit Card. Up to BDT 1000 cash-back per month*.",
+    "after": "10% cashback on every EBL POS purchase at Aarong using your DCI Credit Card. Up to BDT 1000 cash-back per month.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Mastercard World Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Mastercard World Credit Card",
+    "field": "lounge_access_international",
+    "before": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest (note 2); Global lounge access fee USD 36 per person (note 41); no free global visits listed",
+    "after": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest; Global lounge access fee USD 36 per person; complimentary global visits not specified; check with the bank",
+    "dropped_numbers": [
+      "2",
+      "41"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Mastercard World Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Mastercard World Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Mastercard World Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Mastercard World Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 7,500 (as read from SoC column 'World')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 7,500",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Air Force Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Air Force Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "6 complimentary international SKYLOUNGE visits per year (note 2); Global lounge access fee USD 36 per person (note 41); Priority Pass required (note 13); no free global visits listed",
+    "after": "6 complimentary international SKYLOUNGE visits per year; Global lounge access fee USD 36 per person; Priority Pass required; complimentary global visits not specified; check with the bank",
+    "dropped_numbers": [
+      "2",
+      "41",
+      "13"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Air Force Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Air Force Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Air Force Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Air Force Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 4,000 (as read from SoC column 'Platinum (Army/Air Force/Navy)')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 4,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Army Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Army Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "6 complimentary international SKYLOUNGE visits per year (note 2); Global lounge access fee USD 36 per person (note 41); Priority Pass required (note 13); no free global visits listed",
+    "after": "6 complimentary international SKYLOUNGE visits per year; Global lounge access fee USD 36 per person; Priority Pass required; complimentary global visits not specified; check with the bank",
+    "dropped_numbers": [
+      "2",
+      "41",
+      "13"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Army Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Army Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Army Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Army Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 4,000 (as read from SoC column 'Platinum (Army/Air Force/Navy)')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 4,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Classic Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Classic Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary card 1st free (note 42: Classic/Gold: 1st free, 2nd onwards fee); issuance/annual fee BDT 1,500",
+    "after": "Supplementary card 1st free (Classic/Gold: 1st free, 2nd onwards fee); issuance/annual fee BDT 1,500",
+    "dropped_numbers": [
+      "42"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Classic Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Classic Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 1,500 (as read from SoC column 'Classic')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 1,500",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Gold Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Gold Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary card 1st free (note 42: Classic/Gold: 1st free, 2nd onwards fee); issuance/annual fee BDT 1,500",
+    "after": "Supplementary card 1st free (Classic/Gold: 1st free, 2nd onwards fee); issuance/annual fee BDT 1,500",
+    "dropped_numbers": [
+      "42"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Gold Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Gold Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 3,000 (as read from SoC column 'Gold')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Navy Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Navy Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "6 complimentary international SKYLOUNGE visits per year (note 2); Global lounge access fee USD 36 per person (note 41); Priority Pass required (note 13); no free global visits listed",
+    "after": "6 complimentary international SKYLOUNGE visits per year; Global lounge access fee USD 36 per person; Priority Pass required; complimentary global visits not specified; check with the bank",
+    "dropped_numbers": [
+      "2",
+      "41",
+      "13"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Navy Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Navy Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Navy Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Navy Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 4,000 (as read from SoC column 'Platinum (Army/Air Force/Navy)')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 4,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "6 complimentary international SKYLOUNGE visits per year (note 2); Global lounge access fee USD 36 per person (note 41); Priority Pass required for Visa cards (note 13); no free global visits listed",
+    "after": "6 complimentary international SKYLOUNGE visits per year; Global lounge access fee USD 36 per person; Priority Pass required for Visa cards; complimentary global visits not specified; check with the bank",
+    "dropped_numbers": [
+      "2",
+      "41",
+      "13"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 5,000 (as read from SoC column 'Platinum')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 5,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Women Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Women Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "6 complimentary international SKYLOUNGE visits per year (note 2); Global lounge access fee USD 36 per person (note 41); Priority Pass required (note 13); no free global visits listed",
+    "after": "6 complimentary international SKYLOUNGE visits per year; Global lounge access fee USD 36 per person; Priority Pass required; complimentary global visits not specified; check with the bank",
+    "dropped_numbers": [
+      "2",
+      "41",
+      "13"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Women Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Women Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 2,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Women Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Visa Women Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 3,000 (as read from SoC column 'Women Platinum')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Wander Woman Co-Brand Credit Mastercard",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "No renewal fee if 24 transactions in a year (product page)",
+    "after": "No renewal fee if 24 transactions in a year",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Wander Woman Co-Brand Credit Mastercard",
+    "field": "lounge_access_international",
+    "before": "Product page: up to 6 complimentary SKYLOUNGE accesses per year (HSIA Dhaka; Chattogram domestic terminal only)",
+    "after": "Up to 6 complimentary SKYLOUNGE accesses per year (HSIA Dhaka; Chattogram domestic terminal only)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Wander Woman Co-Brand Credit Mastercard",
+    "field": "cash_advance_fee",
+    "before": "Cash withdrawal/advance fee EBL ATM: 2.17% or BDT 300 (whichever is higher); other ATM: 3% or BDT 300/USD 5 (as regular Titanium, note 35)",
+    "after": "Cash withdrawal/advance fee EBL ATM: 2.17% or BDT 300 (whichever is higher); other ATM: 3% or BDT 300/USD 5 (regular Titanium terms apply)",
+    "dropped_numbers": [
+      "35"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Wander Woman Co-Brand Credit Mastercard",
+    "field": "late_payment_fee",
+    "before": "Late payment fee: BDT 1,200 / USD 15 (as regular Titanium, note 35)",
+    "after": "Late payment fee: BDT 1,200 / USD 15 (regular Titanium terms apply)",
+    "dropped_numbers": [
+      "35"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Wander Woman Co-Brand Credit Mastercard",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; supplementary issuance/annual fee BDT 3,000 (as regular Titanium, note 35)",
+    "after": "1st and 2nd supplementary cards free; supplementary issuance/annual fee BDT 3,000 (regular Titanium terms apply)",
+    "dropped_numbers": [
+      "35"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Wander Woman Co-Brand Credit Mastercard",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: 3% foreign currency conversion multiplier on USD-converted amount (as regular Titanium, note 35)",
+    "after": "3% foreign currency conversion multiplier on USD-converted amount (regular Titanium terms apply)",
+    "dropped_numbers": [
+      "18",
+      "35"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "EBL Wander Woman Co-Brand Credit Mastercard",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee BDT 1,725 (VAT included) per SoC note 35",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee BDT 1,725 (VAT included)",
+    "dropped_numbers": [
+      "35"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Mastercard Titanium Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Mastercard Titanium Credit Card",
+    "field": "lounge_access_international",
+    "before": "6 complimentary international SKYLOUNGE visits per year (note 2); Global lounge access fee USD 36 per person (note 41); no free global visits listed",
+    "after": "6 complimentary international SKYLOUNGE visits per year; Global lounge access fee USD 36 per person; complimentary global visits not specified; check with the bank",
+    "dropped_numbers": [
+      "2",
+      "41"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Mastercard Titanium Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Mastercard Titanium Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Mastercard Titanium Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Mastercard Titanium Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 5,000 (as read from SoC column 'Titanium')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 5,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "UnionPay Contactless Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "UnionPay Contactless Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "6 complimentary international SKYLOUNGE visits per year (note 2); ",
+    "after": "6 complimentary international SKYLOUNGE visits per year",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "UnionPay Contactless Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "UnionPay Contactless Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 1,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 1,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "UnionPay Contactless Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "UnionPay Contactless Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 5,000 (as read from SoC column 'Platinum')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 5,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual fee waived with minimum BDT 10 lakh annual spend (note 3)",
+    "after": "Annual fee waived with minimum BDT 10 lakh annual spend",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "lounge_access_international",
+    "before": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest (note 2); 13 free global lounge visits per year (SoC row, digit read from image); global lounge access fee USD 36 per person otherwise (note 41); Priority Pass issuance/replacement fee not applicable (note 24)",
+    "after": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest; 13 free global lounge visits per year; global lounge access fee USD 36 per person otherwise; Priority Pass issuance/replacement fee not applicable",
+    "dropped_numbers": [
+      "2",
+      "41",
+      "24"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 25,000 (as read from SoC column 'Infinite')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 25,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Infinite Credit Card",
+    "field": "cashback_rules.0.cap_text",
+    "before": "Maximum cashback of BDT 500 per month (listed under 'Welcome Vouchers')",
+    "after": "Maximum cashback of BDT 500 per month (welcome vouchers)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Acci-shield Credit Card",
+    "field": "lounge_access_international",
+    "before": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest (note 2); 10 free global lounge visits per year (SoC row); global lounge access fee USD 36 per person otherwise (note 41)",
+    "after": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest; 10 free global lounge visits per year; global lounge access fee USD 36 per person otherwise",
+    "dropped_numbers": [
+      "2",
+      "41"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Acci-shield Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Acci-shield Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Acci-shield Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Acci-shield Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 12,000 (as read from SoC column 'Signature')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 12,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Lite Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Lite Credit Card",
+    "field": "lounge_access_international",
+    "before": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest (note 2); 6 free global lounge visits per year (SoC row); global lounge access fee USD 36 per person beyond/otherwise (note 41)",
+    "after": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest; 6 free global lounge visits per year; global lounge access fee USD 36 per person beyond/otherwise",
+    "dropped_numbers": [
+      "2",
+      "41"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Lite Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Lite Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Lite Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Signature Lite Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 10,000 (as read from SoC column 'Signature')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 10,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Women Signature Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (note 3: cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "after": "Annual/renewal fee waived on 24 settled transactions within the first year of card validity (cash advance, card cheque, QR, EasyCredit, utility bill and purchase transactions counted)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Women Signature Credit Card",
+    "field": "lounge_access_international",
+    "before": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest (note 2); 6 free global lounge visits per year (SoC row); global lounge access fee USD 36 per person beyond/otherwise (note 41)",
+    "after": "Unlimited free SKYLOUNGE visits for cardholder + 1 guest; 6 free global lounge visits per year; global lounge access fee USD 36 per person beyond/otherwise",
+    "dropped_numbers": [
+      "2",
+      "41"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Women Signature Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Domestic SKYLOUNGE: unlimited complimentary visits (SoC row); Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE (note 2)",
+    "after": "Domestic SKYLOUNGE: unlimited complimentary visits; Platinum/Titanium/Diners international cardholders: 1 guest + up to 2 children under 12 free in domestic SKYLOUNGE",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Women Signature Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000 (SoC)",
+    "after": "1st and 2nd supplementary cards free; issuance/annual fee BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Women Signature Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Note 18: for transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "after": "For transactions in currencies other than USD billing currency, converted to USD at Visa/Mastercard/Diners Club/UnionPay rates and a 3% foreign currency conversion multiplier is applied on the converted amount",
+    "dropped_numbers": [
+      "18"
+    ]
+  },
+  {
+    "bank": "Eastern Bank PLC",
+    "card": "Visa Women Signature Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 10,000 (as read from SoC column 'Signature')",
+    "after": "Annual fee details: Issuance/Renewal/Annual fee primary card: BDT 10,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla BDF Co-Branded Titanium Mastercard",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Brochure: no annual fee for lifetime for Assistant Professors and above; 100% waiver on renewal fee for the 1st two years for all other BDF members; renewal fee waiver by transactions: 12 NOs (STS/BDF)",
+    "after": "No annual fee for lifetime for Assistant Professors and above; 100% waiver on renewal fee for the 1st two years for all other BDF members; renewal fee waiver by transactions: 12 NOs (STS/BDF)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla BDF Co-Branded Titanium Mastercard",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; Spouse Card Fee: FREE (brochure: up to 3 free supplementary cards)",
+    "after": "Supplementary Card Fee: FREE; Spouse Card Fee: FREE (up to 3 free supplementary cards)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla BDF Co-Branded Titanium Mastercard",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Membership Fee: Free for first 2 years (STS/BDF Co-Branded Card); Renewal Fee (Yearly): BDT 2,500 + VAT 15% (brochure: Complimentary Card - no annual fee for a lifetime for Assistant Professors and above)",
+    "after": "Annual fee details: Membership Fee: Free for first 2 years (STS/BDF Co-Branded Card); Renewal Fee (Yearly): BDT 2,500 + VAT 15% (Complimentary Card - no annual fee for a lifetime for Assistant Professors and above)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Mastercard Classic",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Mastercard Gold",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Mastercard Titanium",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla STS Co-Branded Titanium Mastercard",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; Spouse Card Fee: FREE (brochure: up to 3 free supplementary cards)",
+    "after": "Supplementary Card Fee: FREE; Spouse Card Fee: FREE (up to 3 free supplementary cards)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Shikha Mastercard Classic",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **) (only woman)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (only woman)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Shikha Mastercard Gold",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **) (only woman)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (only woman)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Shikha Mastercard Titanium",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **) (only woman)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (only woman)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Visa Classic",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Visa Gold",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "LankaBangla Finance PLC",
+    "card": "LankaBangla Visa Platinum",
+    "field": "supplementary_card_fee",
+    "before": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free (note **)",
+    "after": "Supplementary Card Fee: FREE; spouse card fee FREE; first 2 supplementary cards' annual/membership fee free",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Classic Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Annual Fee-Supplementary Card: BDT 750; first one supplementary card is free (SoC note 2)",
+    "after": "Annual Fee-Supplementary Card: BDT 750; first one supplementary card is free",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Classic Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Classic Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: BDT 1,500 (SoC column 'Classic')",
+    "after": "Annual fee details: Annual Fee- Primary Card: BDT 1,500",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB FC Signature Credit Card",
+    "field": "lounge_access_international",
+    "before": "LoungeKey Access Fee: USD 35 (per person per visit) (SoC)",
+    "after": "LoungeKey Access Fee: USD 35 (per person per visit)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB FC Signature Credit Card",
+    "field": "cash_advance_fee",
+    "before": "Cash Advance Fee (MTB ATM): N/A; Cash Advance Fee (Other Banks' ATM): 3% (the 3% cell in the 'Other Banks' ATM' row is merged across all five columns including FC Signature)",
+    "after": "Cash Advance Fee (MTB ATM): N/A; Cash Advance Fee (Other Banks' ATM): 3% (3% applies to all five card tiers, including FC Signature)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB FC Signature Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB FC Signature Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: USD 100 (SoC column 'FC Signature')",
+    "after": "Annual fee details: Annual Fee- Primary Card: USD 100",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Gold Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Annual Fee-Supplementary Card: BDT 1,500; first one supplementary card is free (SoC note 2)",
+    "after": "Annual Fee-Supplementary Card: BDT 1,500; first one supplementary card is free",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Gold Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Gold Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: BDT 3,000 (SoC column 'Gold')",
+    "after": "Annual fee details: Annual Fee- Primary Card: BDT 3,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Gold Ujrah Card",
+    "field": "late_payment_fee",
+    "before": "No Late Payment Fee (product page); no late fee row in SoC",
+    "after": "No Late Payment Fee",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Gold Ujrah Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (SoC note 7)",
+    "after": "Markup Fee: 3.00%",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Gold Ujrah Card",
+    "field": "additional_features.1",
+    "before": "Interest/charges details: Islamic Ujrah: no interest. SoC: Monthly Maintenance fee (MMF) BDT 2,000. Product page says MMF is '2% on overdue outstanding, not more than BDT 2,000' - SoC and product page differ in wording",
+    "after": "Interest/charges details: Islamic Ujrah: no interest. Monthly Maintenance fee (MMF) BDT 2,000. MMF: 2% on overdue outstanding, not more than BDT 2,000. Check with the bank: published sources differ on how the fee is calculated.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Platinum Ujrah Card",
+    "field": "lounge_access_domestic",
+    "before": "MTB Air Lounges: platinum/signature unlimited free visits with one adult and two children (SoC note 9)",
+    "after": "MTB Air Lounges: platinum/signature unlimited free visits with one adult and two children",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Platinum Ujrah Card",
+    "field": "late_payment_fee",
+    "before": "No Late Payment Fee (product page); no late fee row in SoC",
+    "after": "No Late Payment Fee",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Platinum Ujrah Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (SoC note 7)",
+    "after": "Markup Fee: 3.00%",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Platinum Ujrah Card",
+    "field": "additional_features.1",
+    "before": "Interest/charges details: Islamic Ujrah: no interest. SoC: Monthly Maintenance fee (MMF) BDT 5,000. Product page says MMF is '2% on overdue outstanding, not more than BDT 5,000' - SoC and product page differ in wording",
+    "after": "Interest/charges details: Islamic Ujrah: no interest. Monthly Maintenance fee (MMF) BDT 5,000. MMF: 2% on overdue outstanding, not more than BDT 5,000. Check with the bank: published sources differ on how the fee is calculated.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Signature Ujrah Card",
+    "field": "lounge_access_international",
+    "before": "Signature primary: 10 complimentary LoungeKey visits per calendar year (guests count); USD 35 per person per visit beyond or for supplementary (SoC note 8)",
+    "after": "Signature primary: 10 complimentary LoungeKey visits per calendar year (guests count); USD 35 per person per visit beyond or for supplementary",
+    "dropped_numbers": [
+      "8"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Signature Ujrah Card",
+    "field": "lounge_access_domestic",
+    "before": "MTB Air Lounges: platinum/signature unlimited free visits with one adult and two children (SoC note 9)",
+    "after": "MTB Air Lounges: platinum/signature unlimited free visits with one adult and two children",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Signature Ujrah Card",
+    "field": "late_payment_fee",
+    "before": "No Late Payment Fee (product page); no late fee row in SoC",
+    "after": "No Late Payment Fee",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Signature Ujrah Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (SoC note 7)",
+    "after": "Markup Fee: 3.00%",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Islamic Visa Signature Ujrah Card",
+    "field": "additional_features.1",
+    "before": "Interest/charges details: Islamic Ujrah: no interest. SoC: Monthly Maintenance fee (MMF) BDT 8,000. Product page says MMF is '2% on overdue outstanding, not more than BDT 8,000' - SoC and product page differ in wording",
+    "after": "Interest/charges details: Islamic Ujrah: no interest. Monthly Maintenance fee (MMF) BDT 8,000. MMF: 2% on overdue outstanding, not more than BDT 8,000. Check with the bank: published sources differ on how the fee is calculated.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard Titanium Credit Card",
+    "field": "lounge_access_international",
+    "before": "LoungeKey access fee N/A for this tier (SoC)",
+    "after": "LoungeKey access fee N/A for this tier",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard Titanium Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc. (SoC note 9)",
+    "after": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc.",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard Titanium Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Annual Fee-Supplementary Card: BDT 3,000; first one supplementary card is free (SoC note 2)",
+    "after": "Annual Fee-Supplementary Card: BDT 3,000; first one supplementary card is free",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard Titanium Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard Titanium Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: BDT 6,000 (SoC column 'Platinum/ Titanium')",
+    "after": "Annual fee details: Annual Fee- Primary Card: BDT 6,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard World Credit Card",
+    "field": "lounge_access_international",
+    "before": "LoungeKey: primary cardholder entitled to 10 complimentary visits per calendar year (accompanying guests count among the 10); further visits or supplementary cardholder USD 35 (equivalent BDT) per person per visit (SoC note 8)",
+    "after": "LoungeKey: primary cardholder entitled to 10 complimentary visits per calendar year (accompanying guests count among the 10); further visits or supplementary cardholder USD 35 (equivalent BDT) per person per visit",
+    "dropped_numbers": [
+      "8"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard World Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc. (SoC note 9)",
+    "after": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc.",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard World Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Annual Fee-Supplementary Card: BDT 6,000; first two supplementary cards are free (SoC note 2)",
+    "after": "Annual Fee-Supplementary Card: BDT 6,000; first two supplementary cards are free",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard World Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Mastercard World Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: BDT 12,000 (SoC column 'Diamond / Signature/ World')",
+    "after": "Annual fee details: Annual Fee- Primary Card: BDT 12,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Diamond Credit Card",
+    "field": "lounge_access_international",
+    "before": "LoungeKey: primary cardholder entitled to 10 complimentary visits per calendar year (accompanying guests count among the 10); further visits or supplementary cardholder USD 35 (equivalent BDT) per person per visit (SoC note 8)",
+    "after": "LoungeKey: primary cardholder entitled to 10 complimentary visits per calendar year (accompanying guests count among the 10); further visits or supplementary cardholder USD 35 (equivalent BDT) per person per visit",
+    "dropped_numbers": [
+      "8"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Diamond Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc. (SoC note 9)",
+    "after": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc.",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Diamond Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Annual Fee-Supplementary Card: BDT 6,000; first two supplementary cards are free (SoC note 2)",
+    "after": "Annual Fee-Supplementary Card: BDT 6,000; first two supplementary cards are free",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Diamond Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Diamond Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: BDT 12,000 (SoC column 'Diamond / Signature/ World')",
+    "after": "Annual fee details: Annual Fee- Primary Card: BDT 12,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "LoungeKey access fee N/A for this tier (SoC)",
+    "after": "LoungeKey access fee N/A for this tier",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc. (SoC note 9)",
+    "after": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc.",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Annual Fee-Supplementary Card: BDT 3,000; first one supplementary card is free (SoC note 2)",
+    "after": "Annual Fee-Supplementary Card: BDT 3,000; first one supplementary card is free",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB UnionPay Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: BDT 6,000 (SoC column 'Platinum/ Titanium')",
+    "after": "Annual fee details: Annual Fee- Primary Card: BDT 6,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "LoungeKey access fee N/A for this tier (SoC)",
+    "after": "LoungeKey access fee N/A for this tier",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc. (SoC note 9)",
+    "after": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc.",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Annual Fee-Supplementary Card: BDT 3,000; first one supplementary card is free (SoC note 2)",
+    "after": "Annual Fee-Supplementary Card: BDT 3,000; first one supplementary card is free",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: BDT 6,000 (SoC column 'Platinum/ Titanium')",
+    "after": "Annual fee details: Annual Fee- Primary Card: BDT 6,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Signature Credit Card",
+    "field": "lounge_access_international",
+    "before": "LoungeKey: primary cardholder entitled to 10 complimentary visits per calendar year (accompanying guests count among the 10); further visits or supplementary cardholder USD 35 (equivalent BDT) per person per visit (SoC note 8)",
+    "after": "LoungeKey: primary cardholder entitled to 10 complimentary visits per calendar year (accompanying guests count among the 10); further visits or supplementary cardholder USD 35 (equivalent BDT) per person per visit",
+    "dropped_numbers": [
+      "8"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Signature Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc. (SoC note 9)",
+    "after": "MTB Air Lounges (HSIA Dhaka, Chattogram, Sylhet, Cox's Bazar, etc.): unlimited free visits with one adult and two children; additional guests BDT 2,000 (HSIA international) / BDT 850 (HSIA domestic) etc.",
+    "dropped_numbers": [
+      "9"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Signature Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Annual Fee-Supplementary Card: BDT 6,000; first two supplementary cards are free (SoC note 2)",
+    "after": "Annual Fee-Supplementary Card: BDT 6,000; first two supplementary cards are free",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Signature Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD) (SoC note 7)",
+    "after": "Markup Fee: 3.00% (charged when transacting in any foreign currency other than USD)",
+    "dropped_numbers": [
+      "7"
+    ]
+  },
+  {
+    "bank": "Mutual Trust Bank PLC",
+    "card": "MTB Visa Signature Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee- Primary Card: BDT 12,000 (SoC column 'Diamond / Signature/ World')",
+    "after": "Annual fee details: Annual Fee- Primary Card: BDT 12,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "CPA-Prime Bank Co-Branded Visa Platinum Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: conditional (SoC note 2 'Conditional')",
+    "after": "Abroad: conditional; check with the bank for eligibility and charges.",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "CPA-Prime Bank Co-Branded Visa Platinum Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka lounge: six free visits per year including companions (SoC note 1)",
+    "after": "Balaka lounge: six free visits per year including companions",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "CPA-Prime Bank Co-Branded Visa Platinum Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "CPA-Prime Bank Co-Branded Visa Platinum Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): Free (Dynamic Currency Card column 'CPA Co-branded Platinum')",
+    "after": "Annual fee details: Annual Fee (Basic): Free",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Gold Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Gold Credit Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: N/A (SoC)",
+    "after": "Abroad: N/A",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Gold Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka lounge: conditional - visit fee waived by spending USD 500 overseas during travel period (companion USD 1,000) (SoC note 1)",
+    "after": "Balaka lounge: conditional - visit fee waived by spending USD 500 overseas during travel period (companion USD 1,000)",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Gold Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Gold Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 2,500 (Dynamic Currency Card column 'Gold')",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 2,500",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: conditional - visit fee waived by spending USD 500 overseas (SoC note 2, Platinum tier); otherwise at actual",
+    "after": "Abroad: conditional - visit fee waived by spending USD 500 overseas (Platinum tier); otherwise at actual",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka VIP lounge: unlimited visits with 1 companion (SoC note 1, Platinum tier; product page: exclusive access to Balaka VIP lounge)",
+    "after": "Balaka VIP lounge: unlimited visits with 1 companion (Platinum tier; exclusive access to Balaka VIP lounge)",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank JCB Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 5,000 (Dynamic Currency Card column 'Platinum')",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 5,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Mastercard Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Mastercard Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: Priority Pass/LoungeKey access for primary cardholders; visit fee waived by spending USD 500 overseas (companion USD 1,000); otherwise charged at actual (SoC note 2)",
+    "after": "Abroad: Priority Pass/LoungeKey access for primary cardholders; visit fee waived by spending USD 500 overseas (companion USD 1,000); otherwise charged at actual",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Mastercard Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka VIP lounge: unlimited visits with 1 companion (SoC note 1)",
+    "after": "Balaka VIP lounge: unlimited visits with 1 companion",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Mastercard Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Mastercard Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 5,000 (Dynamic Currency Card column 'Platinum')",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 5,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Classic (Standard) Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Classic (Standard) Credit Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: N/A (SoC)",
+    "after": "Abroad: N/A",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Classic (Standard) Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka lounge: N/A (SoC)",
+    "after": "Balaka lounge: N/A",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Classic (Standard) Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Classic (Standard) Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 2,000 (Dynamic Currency Card column 'Classic')",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 2,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Gold Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Gold Credit Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: N/A (SoC)",
+    "after": "Abroad: N/A",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Gold Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka lounge: conditional - visit fee waived by spending USD 500 overseas during travel period (companion USD 1,000) (SoC note 1)",
+    "after": "Balaka lounge: conditional - visit fee waived by spending USD 500 overseas during travel period (companion USD 1,000)",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Gold Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Gold Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 2,500 (Dynamic Currency Card column 'Gold')",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 2,500",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Gold Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Gold Credit Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: N/A (SoC)",
+    "after": "Abroad: N/A",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Gold Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka lounge: conditional - fee waived by spending USD 500 overseas (companion USD 1,000) (SoC Hasanah note 1)",
+    "after": "Balaka lounge: conditional - fee waived by spending USD 500 overseas (companion USD 1,000)",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Gold Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC Hasanah note 3: converted at Visa rates; factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (converted at Visa rates; factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Gold Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 2,500 (Hasanah table, Gold)",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 2,500 (Hasanah Gold)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka VIP lounge: unlimited (cardholder with 01 companion) (SoC Hasanah note 1)",
+    "after": "Balaka VIP lounge: unlimited (cardholder with 01 companion)",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC Hasanah note 3: converted at Visa rates; factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (converted at Visa rates; factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Hasanah Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 5,000 (Hasanah table, Platinum)",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 5,000 (Hasanah Platinum)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Platinum Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: Priority Pass/LoungeKey access for primary cardholders; visit fee waived by spending USD 500 overseas (companion USD 1,000); otherwise charged at actual (SoC note 2; product page: 1400+ lounges)",
+    "after": "Abroad: Priority Pass/LoungeKey access for primary cardholders; visit fee waived by spending USD 500 overseas (companion USD 1,000); otherwise charged at actual (1400+ lounges)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Platinum Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka VIP lounge: unlimited visits with 1 companion (SoC note 1)",
+    "after": "Balaka VIP lounge: unlimited visits with 1 companion",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Platinum Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank Visa Platinum Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 5,000 (Dynamic Currency Card column 'Platinum')",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 5,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank World Mastercard Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (SoC footnote; product page: annual fee waiver on 15 purchases)",
+    "after": "Annual Fee will be reversed/waived based on 15 transactions (ATM excluded); call 16218 after fulfilling criteria (annual fee waiver on 15 purchases)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank World Mastercard Credit Card",
+    "field": "lounge_access_international",
+    "before": "Abroad: 6 free visits per year including companions (each person counts as one visit) via Priority Pass/LoungeKey (SoC note 2; product page: 1400+ lounges)",
+    "after": "Abroad: 6 free visits per year including companions (each person counts as one visit) via Priority Pass/LoungeKey (1400+ lounges)",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank World Mastercard Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka lounge: unlimited visits with 02 companions (SoC note 1)",
+    "after": "Balaka lounge: unlimited visits with 02 companions",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank World Mastercard Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Prime Bank World Mastercard Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): BDT 7,500 (Dynamic Currency Card column 'World')",
+    "after": "Annual fee details: Annual Fee (Basic): BDT 7,500",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Zero by Prime Bank Visa Signature Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass or LoungeKey access for primary cardholder; charged at actual for each visit (SoC note 2)",
+    "after": "Priority Pass or LoungeKey access for primary cardholder; charged at actual for each visit",
+    "dropped_numbers": [
+      "2"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Zero by Prime Bank Visa Signature Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka lounge visits charged at actual (SoC note 1)",
+    "after": "Balaka lounge visits charged at actual",
+    "dropped_numbers": [
+      "1"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Zero by Prime Bank Visa Signature Credit Card",
+    "field": "foreign_transaction_fee",
+    "before": "Markup Fee: 3% (SoC note 5: overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "after": "Markup Fee: 3% (overseas transactions converted at Visa/Mastercard/JCB rates; 3% factor applied when transaction currency is non-USD)",
+    "dropped_numbers": [
+      "5"
+    ]
+  },
+  {
+    "bank": "Prime Bank PLC",
+    "card": "Zero by Prime Bank Visa Signature Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Basic): Free (Dynamic Currency Card column 'Signature 'ZERO'')",
+    "after": "Annual fee details: Annual Fee (Basic): Free",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered MetLife Assurance Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual fee can be waived through Reward Points (product page)",
+    "after": "Annual fee can be waived through Reward Points",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered MetLife Assurance Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass: 3 free visits per calendar year for cardholder (page: 1700+ lounges); USD 35 otherwise",
+    "after": "Priority Pass: 3 free visits per calendar year for cardholder (1700+ lounges); USD 35 otherwise",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered MetLife Assurance Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Only 1 supplementary card applicable (for spouse) (SoC footnote); fee per column a) Free for 1st and 2nd; b) BDT 1,000 from 3rd",
+    "after": "Only 1 supplementary card applicable (for spouse); supplementary fee terms: a) Free for 1st and 2nd; b) BDT 1,000 from 3rd. Check with the bank: published terms differ on supplementary card availability.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered MetLife Assurance Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Primary Card): BDT 5,000 (shared SoC column 'Visa Platinum/Smart Card/Assurance Card'; BDT 3,000 figure is for Smart)",
+    "after": "Annual fee details: Annual Fee (Primary Card): BDT 5,000 (BDT 3,000 applies to Smart Card only)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Platinum Visa/Mastercard Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass membership free; 3 free visits per calendar year for cardholder; USD 35 usage fee otherwise (SoC; page: 1200+ lounges)",
+    "after": "Priority Pass membership free; 3 free visits per calendar year for cardholder; USD 35 usage fee otherwise (1200+ lounges)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Platinum Visa/Mastercard Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka Executive Lounge (HSIA Dhaka): unlimited access for cardholder only (page); additional guest BDT 2,000 (SoC)",
+    "after": "Balaka Executive Lounge (HSIA Dhaka): unlimited access for cardholder only; additional guest BDT 2,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Platinum Visa/Mastercard Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Primary Card): BDT 5,000 (SoC column 'Visa Platinum/Smart Card/Assurance Card')",
+    "after": "Annual fee details: Annual Fee (Primary Card): BDT 5,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Rewards Visa Signature Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass membership free; unlimited free visits for cardholder and 6 free guest visits per calendar year; USD 35 per visit otherwise (SoC; page: 1700+ lounges)",
+    "after": "Priority Pass membership free; unlimited free visits for cardholder and 6 free guest visits per calendar year; USD 35 per visit otherwise (1700+ lounges)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Rewards Visa Signature Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Balaka Executive Lounge (HSIA Dhaka): unlimited for cardholder plus any 3 persons (SoC; page: up to 3 companions); passenger handling free for up to 4 persons",
+    "after": "Balaka Executive Lounge (HSIA Dhaka): unlimited for cardholder plus any 3 persons (up to 3 companions); passenger handling free for up to 4 persons",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Saadiq Green Credit Card",
+    "field": "additional_features.1",
+    "before": "Interest/charges details: Islamic (Ujrah): no interest; Monthly maintenance fee (only payable if there is any outstanding amount): BDT 1,200 (SoC: maximum monthly maintenance fee)",
+    "after": "Interest/charges details: Islamic (Ujrah): no interest; Monthly maintenance fee (only payable if there is any outstanding amount): BDT 1,200 (maximum monthly maintenance fee)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Saadiq Visa Gold Credit Card",
+    "field": "additional_features.1",
+    "before": "Interest/charges details: Islamic (Ujrah): no interest; Monthly maintenance fee (only payable if there is any outstanding amount): BDT 2,500 (SoC: maximum monthly maintenance fee)",
+    "after": "Interest/charges details: Islamic (Ujrah): no interest; Monthly maintenance fee (only payable if there is any outstanding amount): BDT 2,500 (maximum monthly maintenance fee)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Saadiq Visa Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass membership free; 3 free visits per calendar year for cardholder; USD 35 usage fee otherwise; Balaka lounge free for cardholder only; passenger handling free up to 2 persons (SoC)",
+    "after": "Priority Pass membership free; 3 free visits per calendar year for cardholder; USD 35 usage fee otherwise; Balaka lounge free for cardholder only; passenger handling free up to 2 persons",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Saadiq Visa Platinum Credit Card",
+    "field": "additional_features.1",
+    "before": "Interest/charges details: Islamic (Ujrah): no interest; Monthly maintenance fee (only payable if there is any outstanding amount): BDT 8,300 (SoC: maximum monthly maintenance fee)",
+    "after": "Interest/charges details: Islamic (Ujrah): no interest; Monthly maintenance fee (only payable if there is any outstanding amount): BDT 8,300 (maximum monthly maintenance fee)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Simply Cash Credit Card",
+    "field": "lounge_access_domestic",
+    "before": "Free passenger handling service at HSIA (up to 2 persons) (SoC); product page: Meet, Greet & Assist",
+    "after": "Free passenger handling service at HSIA (up to 2 persons); Meet, Greet & Assist",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Simply Cash Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "BDT 1,000 (SoC shows a single supplementary fee for this column)",
+    "after": "BDT 1,000",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Smart (Visa Platinum) Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual fee waived automatically from the second year if retail expenditure exceeds BDT 3 lacs in a year (between two annual fee levied dates) (product page)",
+    "after": "Annual fee waived automatically from the second year if retail expenditure exceeds BDT 3 lacs in a year (between two annual fee levied dates)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Smart (Visa Platinum) Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Not available: supplementary card feature not applicable for Smart card (page FAQ; SoC footnote)",
+    "after": "Not available: supplementary card feature not applicable for Smart card",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Smart (Visa Platinum) Credit Card",
+    "field": "additional_features.0",
+    "before": "Annual fee details: Annual Fee (Primary Card): BDT 3,000 (Smart Card; applies to standalone and add-on) (SoC)",
+    "after": "Annual fee details: Annual Fee (Primary Card): BDT 3,000 (Smart Card; applies to standalone and add-on)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Visa International Platinum Credit Card",
+    "field": "lounge_access_international",
+    "before": "Priority Pass membership: Fee (per SoC); USD 35 usage fee (3 free visits per calendar year for cardholder)",
+    "after": "Priority Pass membership: fee applies; USD 35 usage fee (3 free visits per calendar year for cardholder)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "Standard Chartered Bank",
+    "card": "Standard Chartered Visa International Platinum Credit Card",
+    "field": "supplementary_card_fee",
+    "before": "Not applicable (SoC)",
+    "after": "Not applicable",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Master Classic Card",
+    "field": "lounge_access_international",
+    "before": "N/A (Classic: no UCB Imperial or global airport lounge access per SoC)",
+    "after": "N/A (Classic: no UCB Imperial or global airport lounge access)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Master Gold Card",
+    "field": "lounge_access_international",
+    "before": "UCB International Airport Lounge: Basic Cardholder + 1 Guest (SoC). No global (Priority Pass/LoungeKey) access listed for Gold.",
+    "after": "UCB International Airport Lounge: Basic Cardholder + 1 Guest. No global (Priority Pass/LoungeKey) access for Gold.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Master Platinum Card",
+    "field": "lounge_access_international",
+    "before": "UCB International Airport Lounge: Basic Cardholder + 2 Guests. Global lounges: Lounge Key membership free; access fee per visit USD 35 (SoC)",
+    "after": "UCB International Airport Lounge: Basic Cardholder + 2 Guests. Global lounges: Lounge Key membership free; access fee per visit USD 35",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Mastercard World Credit Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual fee waiver only by redeeming 12000 reward points (not waivable by transactions) per SoC note 3; product page: 'from second year and onwards'",
+    "after": "Annual fee waiver only by redeeming 12000 reward points (not waivable by transactions); from second year and onwards",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Mastercard World Credit Card",
+    "field": "lounge_access_international",
+    "before": "UCB International Airport Lounge: Basic Cardholder + 3 Guests. Lounge Key: 10 free entries per calendar year (incl. guests), USD 35 per visit/person after 10th (SoC)",
+    "after": "UCB International Airport Lounge: Basic Cardholder + 3 Guests. Lounge Key: 10 free entries per calendar year (incl. guests), USD 35 per visit/person after 10th",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Visa Classic Card",
+    "field": "lounge_access_international",
+    "before": "N/A (Classic: no UCB Imperial or global airport lounge access per SoC)",
+    "after": "N/A (Classic: no UCB Imperial or global airport lounge access)",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Visa Gold Card",
+    "field": "lounge_access_international",
+    "before": "UCB International Airport Lounge: Basic Cardholder + 1 Guest (SoC). No global (Priority Pass/LoungeKey) access listed for Gold.",
+    "after": "UCB International Airport Lounge: Basic Cardholder + 1 Guest. No global (Priority Pass/LoungeKey) access for Gold.",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Visa Platinum Card",
+    "field": "lounge_access_international",
+    "before": "UCB International Airport Lounge: Basic Cardholder + 2 Guests. Global lounges: Priority Pass membership free; access fee per visit USD 35 (SoC)",
+    "after": "UCB International Airport Lounge: Basic Cardholder + 2 Guests. Global lounges: Priority Pass membership free; access fee per visit USD 35",
+    "dropped_numbers": []
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Visa Signature Card",
+    "field": "annual_fee_waiver_policy.conditions",
+    "before": "Annual fee waiver only by redeeming 12000 reward points (not waivable by transactions) per SoC note 3; product page: 'from second year and onwards'",
+    "after": "Annual fee waiver only by redeeming 12000 reward points (not waivable by transactions); from second year and onwards",
+    "dropped_numbers": [
+      "3"
+    ]
+  },
+  {
+    "bank": "United Commercial Bank PLC",
+    "card": "UCB Visa Signature Card",
+    "field": "lounge_access_international",
+    "before": "UCB International Airport Lounge: Basic Cardholder + 3 Guests. Priority Pass: 12 free entries per year (incl. guests), USD 35 per visit/person after 12th (SoC)",
+    "after": "UCB International Airport Lounge: Basic Cardholder + 3 Guests. Priority Pass: 12 free entries per year (incl. guests), USD 35 per visit/person after 12th",
+    "dropped_numbers": []
+  }
+]
