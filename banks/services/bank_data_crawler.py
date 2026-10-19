@@ -110,6 +110,9 @@ class BankDataCrawlerService:
 
             # Check for content changes
             content_hash = self._generate_content_hash(extracted_content)
+            binary_hash = getattr(self.content_extractor, "last_binary_hash", "")
+            if isinstance(binary_hash, str) and binary_hash:
+                content_hash = binary_hash
             if self._should_skip_processing(data_source, content_hash):
                 return True
 
@@ -495,31 +498,37 @@ class BankDataCrawlerService:
         method = content_extraction_context.get("method") or self._extraction_method(
             data_source
         )
+        parsing_result = None
         if method in {
             "ocr",
             "image_ocr",
             "image",
         } and not ContentExtractor.has_usable_fee_text(extracted_content):
-            message = "Image-only schedule; extract manually or with a vision model"
-            record = self._record_deferred(data_source, message, "needs_multimodal")
-            record.raw_content = raw_content
-            record.extracted_content = extracted_content
-            record.content_hash = content_hash
-            record.extraction_method = method
-            record.needs_manual_review = True
-            record.save()
-            ReviewQueue.objects.create(
-                bank=data_source.bank,
-                crawled_content=record,
-                priority=ReviewPriority.HIGH,
-                message=message,
-            )
-            return False
+            parsing_result = self._parse_vision_safely(data_source)
+            if parsing_result is None:
+                message = "Image-only schedule; extract manually or with a vision model"
+                record = self._record_deferred(data_source, message, "needs_multimodal")
+                record.raw_content = raw_content
+                record.extracted_content = extracted_content
+                record.content_hash = content_hash
+                record.extraction_method = method
+                record.needs_manual_review = True
+                record.save()
+                ReviewQueue.objects.create(
+                    bank=data_source.bank,
+                    crawled_content=record,
+                    priority=ReviewPriority.HIGH,
+                    message=message,
+                )
+                return False
+            method = "vision"
+            content_extraction_context["method"] = method
 
         # Parse content with AI (multi-pass first, legacy single-pass fallback)
-        parsing_result = self._parse_content_safely(
-            data_source, extracted_content, method=method
-        )
+        if parsing_result is None:
+            parsing_result = self._parse_content_safely(
+                data_source, extracted_content, method=method
+            )
         if not parsing_result:
             return False
 
@@ -562,6 +571,35 @@ class BankDataCrawlerService:
             # sources and flag real conflicts for manual review.
             self._validate_multi_source(crawled_content)
         return success
+
+    def _parse_vision_safely(self, data_source):
+        """Try bounded image extraction, preserving manual review on failure.
+
+        Parameters
+        ----------
+        data_source : BankDataSource
+            Image-only schedule whose OCR is unusable.
+
+        Returns
+        -------
+        tuple or None
+            Validated parse result, or None when vision cannot finish.
+        """
+        if llm_budget_exhausted():
+            return None
+        try:
+            with self.content_extractor.vision_images(
+                data_source.url, data_source.content_type
+            ) as image_paths:
+                return self.llm_parser.parse_from_images(
+                    image_paths, data_source.bank.name
+                )
+        except Exception as exc:  # noqa: BLE001 - retain today's manual review path
+            limited, all_limited = rate_limit_state(exc)
+            if limited:
+                self.providers_rate_limited = all_limited
+            logger.warning("Vision unavailable for %s: %s", data_source.bank.name, exc)
+            return None
 
     @staticmethod
     def _validate_multi_source(crawled_content):

@@ -1,6 +1,12 @@
+import hashlib
 import logging
 import re
+import shutil
+import subprocess
+import tempfile
+from contextlib import contextmanager
 from io import BytesIO
+from pathlib import Path
 
 import magic
 import pandas as pd
@@ -14,6 +20,9 @@ from banks.exceptions import ContentExtractionError, FileFormatError, NetworkErr
 from banks.services.quality_scoring import clamp_confidence, score_content
 
 logger = logging.getLogger(__name__)
+VISION_MAX_PAGES = 4
+VISION_MAX_BYTES = 20 * 1024 * 1024
+VISION_MAX_EDGE = 4000
 
 
 class ContentExtractor:
@@ -43,6 +52,8 @@ class ContentExtractor:
         None
         """
         self.last_extraction_method = ""
+        self.last_binary_hash = ""
+        self._vision_source = None
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -74,7 +85,7 @@ class ContentExtractor:
             For unsupported or undetectable file formats
         """
         self.last_extraction_method = self._method_for_content_type(content_type)
-        raw_content = self._fetch_content(url)
+        raw_content = self._fetch_and_remember(url, content_type)
         extracted_content = self._process_content(raw_content, content_type, url)
 
         # For binary content types, store a placeholder for raw content to avoid NUL character issues
@@ -114,7 +125,7 @@ class ContentExtractor:
             When the document could not be fetched.
         """
         self.last_extraction_method = self._method_for_content_type(content_type)
-        raw_content = self._fetch_content(url)
+        raw_content = self._fetch_and_remember(url, content_type)
 
         attempts = []
         primary_method = self._method_for_content_type(content_type)
@@ -186,6 +197,176 @@ class ContentExtractor:
             Bounded confidence in the inclusive range 0.0-1.0.
         """
         return clamp_confidence(score_content(content, method))
+
+    def _fetch_and_remember(self, url, content_type):
+        """Fetch once and retain bounded binary input for a later vision pass.
+
+        Parameters
+        ----------
+        url : str
+            Source URL.
+        content_type : str
+            Declared document type.
+
+        Returns
+        -------
+        bytes
+            Downloaded source bytes.
+        """
+        self._vision_source = None
+        self.last_binary_hash = ""
+        content = self._fetch_content(url)
+        if content_type in {ContentType.PDF, ContentType.IMAGE}:
+            self.last_binary_hash = hashlib.sha256(content).hexdigest()
+            if len(content) <= VISION_MAX_BYTES:
+                self._vision_source = (url, content_type, content)
+        return content
+
+    @contextmanager
+    def vision_images(self, url, content_type):
+        """Render the retained source and remove temporary images after use.
+
+        Parameters
+        ----------
+        url : str
+            URL of the most recently extracted source.
+        content_type : str
+            PDF or image content type.
+
+        Yields
+        ------
+        list of pathlib.Path
+            Page overviews and bounded detail tiles for at most four pages.
+        """
+        source = self._vision_source
+        if source is None or source[:2] != (url, content_type):
+            raise ContentExtractionError("No bounded binary source available for vision")
+        with tempfile.TemporaryDirectory(prefix="creditmate-vision-") as directory:
+            yield self.prepare_vision_images(source[2], content_type, directory)
+
+    @staticmethod
+    def prepare_vision_images(raw_content, content_type, directory):
+        """Create bounded PNGs from a PDF or a direct image without OCR.
+
+        Parameters
+        ----------
+        raw_content : bytes
+            Untrusted binary data, at most 20 MiB.
+        content_type : str
+            PDF or image content type.
+        directory : path-like
+            Temporary output directory owned by the caller.
+
+        Returns
+        -------
+        list of pathlib.Path
+            First four PDF pages at 200 dpi, bounded to 4000 pixels per edge,
+            or the direct image, plus detail tiles for large images. PNG output
+            totals at most 20 MiB.
+
+        Raises
+        ------
+        ContentExtractionError
+            If rendering fails or a size limit is exceeded.
+        """
+        if not raw_content or len(raw_content) > VISION_MAX_BYTES:
+            raise ContentExtractionError("Vision source exceeds the 20 MiB limit")
+        directory = Path(directory)
+        paths = []
+        try:
+            if content_type == ContentType.PDF:
+                binary = shutil.which("pdftoppm")
+                if binary:
+                    pdf = directory / "source.pdf"
+                    pdf.write_bytes(raw_content)
+                    subprocess.run(
+                        [
+                            binary,
+                            "-f",
+                            "1",
+                            "-l",
+                            str(VISION_MAX_PAGES),
+                            "-r",
+                            "200",
+                            "-scale-to",
+                            str(VISION_MAX_EDGE),
+                            "-png",
+                            str(pdf),
+                            str(directory / "page"),
+                        ],
+                        check=True,
+                        capture_output=True,
+                        timeout=90,
+                    )
+                    paths = sorted(
+                        directory.glob("page-*.png"),
+                        key=lambda path: int(path.stem.rsplit("-", 1)[1]),
+                    )[:VISION_MAX_PAGES]
+                else:
+                    # PyMuPDF is already required by the existing OCR path.
+                    import fitz
+
+                    with fitz.open(stream=raw_content, filetype="pdf") as document:
+                        for index in range(min(len(document), VISION_MAX_PAGES)):
+                            page = document[index]
+                            scale = min(
+                                200 / 72,
+                                VISION_MAX_EDGE / max(page.rect.width, page.rect.height),
+                            )
+                            path = directory / f"page-{index + 1}.png"
+                            page.get_pixmap(matrix=fitz.Matrix(scale, scale)).save(path)
+                            paths.append(path)
+            elif content_type == ContentType.IMAGE:
+                path = directory / "page-1.png"
+                with Image.open(BytesIO(raw_content)) as image:
+                    image.thumbnail((VISION_MAX_EDGE, VISION_MAX_EDGE))
+                    image.convert("RGB").save(path, "PNG")
+                paths = [path]
+            else:
+                raise ValueError("Vision requires a PDF or image source")
+            paths = ContentExtractor._add_vision_details(paths)
+            if not paths or sum(path.stat().st_size for path in paths) > VISION_MAX_BYTES:
+                raise ValueError("Vision PNG output is empty or exceeds 20 MiB")
+            return paths
+        except Exception as exc:
+            raise ContentExtractionError(
+                "Unable to prepare bounded vision images"
+            ) from exc
+
+    @staticmethod
+    def _add_vision_details(paths):
+        """Keep dense tables readable when providers downscale large images.
+
+        Parameters
+        ----------
+        paths : list of pathlib.Path
+            Page overviews, each bounded to 4000 pixels per edge.
+
+        Returns
+        -------
+        list of pathlib.Path
+            Overviews followed by numbered, overlapping 1600-pixel detail tiles
+            in reading order. At most nine tiles per page (40 images total).
+        """
+        result = []
+        for path in paths:
+            result.append(path)
+            with Image.open(path) as image:
+                if max(image.size) <= 2000:
+                    continue
+                for row, top in enumerate(range(0, image.height, 1500), 1):
+                    for column, left in enumerate(range(0, image.width, 1500), 1):
+                        tile = path.with_stem(f"{path.stem}-detail-r{row}-c{column}")
+                        image.crop(
+                            (
+                                left,
+                                top,
+                                min(left + 1600, image.width),
+                                min(top + 1600, image.height),
+                            )
+                        ).save(tile, "PNG")
+                        result.append(tile)
+        return result
 
     def _build_attempt(self, method, content, error):
         """Build one extraction attempt record.

@@ -3,6 +3,7 @@
 import json
 import subprocess
 from io import StringIO
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -90,6 +91,45 @@ def test_api_key_kept_when_enabled(provider, settings, monkeypatch):
     with patch(RUN, return_value=completed(success("OK"))) as run:
         provider.generate_response("x")
     assert run.call_args.kwargs["env"]["ANTHROPIC_API_KEY"] == "sk-secret"
+
+
+def test_images_are_copied_and_only_scoped_read_is_allowed(
+    provider, tmp_path, monkeypatch
+):
+    image = tmp_path / "untrusted;name.png"
+    image.write_bytes(b"image data")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-secret")
+    directories = []
+
+    def inspect(command, **kwargs):
+        cwd = Path(kwargs["cwd"])
+        directories.append(cwd)
+        copied = cwd / "page-1.png"
+        assert copied.read_bytes() == b"image data"
+        assert str(copied) in kwargs["input"]
+        assert str(image) not in kwargs["input"]
+        assert command[command.index("--tools") + 1] == "Read"
+        assert command[command.index("--allowedTools") + 1] == f"Read(/{cwd}/**)"
+        assert command[command.index("--add-dir") + 1] == str(cwd)
+        assert command[command.index("--permission-mode") + 1] == "dontAsk"
+        assert "--strict-mcp-config" in command
+        assert "ANTHROPIC_API_KEY" not in kwargs["env"]
+        return completed(success("[]"))
+
+    with patch(RUN, side_effect=inspect):
+        assert provider.generate_from_images("extract", [image]) == "[]"
+        provider.generate_from_images("extract again", [image])
+    assert directories[0] != directories[1]
+    assert all(not directory.exists() for directory in directories)
+
+
+def test_image_directory_is_removed_after_timeout(provider, tmp_path):
+    image = tmp_path / "image.png"
+    image.write_bytes(b"image")
+    with patch(RUN, side_effect=subprocess.TimeoutExpired("claude", 1)) as run:
+        with pytest.raises(LLMNetworkError):
+            provider.generate_from_images("extract", [image])
+    assert not Path(run.call_args.kwargs["cwd"]).exists()
 
 
 @pytest.mark.parametrize(
