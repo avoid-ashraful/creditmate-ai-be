@@ -1,0 +1,472 @@
+{
+  "date": "2026-10-19",
+  "source": "/home/ubuntu/credit-agent-control/r2/bank-sources/ebl/soc_cards_25May2026.pdf",
+  "source_sha256": "fc442c360aefc6918c54f99fed3c27a4b06d3096e0ba045ddd23b8fa13c67384",
+  "provider": "claude_code",
+  "model": "haiku",
+  "subscription_auth": true,
+  "real_generation_calls_total": 2,
+  "first_call": {
+    "images": 1,
+    "product_groups": 14,
+    "annual_fees_recovered": 0,
+    "late_fees_recovered": 0,
+    "apr_values_recovered": 11
+  },
+  "final_call": {
+    "images": 7,
+    "product_groups": 14,
+    "parsed_cards": [
+      {
+        "name": "Classic Card",
+        "annual_fee": 1500.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,000 / USD 12"
+      },
+      {
+        "name": "Gold Card",
+        "annual_fee": 3000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,000 / USD 12"
+      },
+      {
+        "name": "Platinum Card",
+        "annual_fee": 5000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Women Platinum Card",
+        "annual_fee": 3000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Army/Navy/Air Force Platinum Card",
+        "annual_fee": 4000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Corporate Platinum Card",
+        "annual_fee": 1000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Signature Lite / Women Signature Card",
+        "annual_fee": 10000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Signature Access Card",
+        "annual_fee": 12000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Infinite Card",
+        "annual_fee": 25000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Mastercard Titanium Card",
+        "annual_fee": 5000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Mastercard World Card",
+        "annual_fee": 7500.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "Diners Club Card",
+        "annual_fee": 1480.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": ""
+      },
+      {
+        "name": "UnionPay Platinum Card",
+        "annual_fee": 5000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      {
+        "name": "FX Express Credit Card",
+        "annual_fee": null,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "USD 15"
+      }
+    ]
+  },
+  "comparison_note": "Manual source-column/group mapping for comparison only, not exact product-name matches or automatic identity resolution. Combined military and Signature columns map to several fixture products. Signature Access is interpreted as the Signature/Acci-shield column and remains a label error. Corporate Platinum and FX Express have no verified fixture rows. Wander Woman is not separately extracted. No fixture values were supplied to the LLM.",
+  "fixture": "credit_cards/fixtures/verified_cards_2026-10-18.json",
+  "verified_fixture_rows": 16,
+  "field_counts": {
+    "annual_fee": {
+      "mismatch": 1,
+      "match": 14,
+      "missing": 1
+    },
+    "interest_rate_apr": {
+      "match": 15,
+      "missing": 1
+    },
+    "late_payment_fee": {
+      "missing": 2,
+      "match": 14
+    }
+  },
+  "comparisons": [
+    {
+      "fixture_name": "EBL Diners Club International Credit Card",
+      "manually_mapped_group": "Diners Club Card",
+      "expected": {
+        "annual_fee": 1740,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 1480.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": ""
+      },
+      "status": {
+        "annual_fee": "mismatch",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "missing"
+      }
+    },
+    {
+      "fixture_name": "EBL Mastercard World Credit Card",
+      "manually_mapped_group": "Mastercard World Card",
+      "expected": {
+        "annual_fee": 7500,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 7500.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "EBL Visa Air Force Platinum Credit Card",
+      "manually_mapped_group": "Army/Navy/Air Force Platinum Card",
+      "expected": {
+        "annual_fee": 4000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 4000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "EBL Visa Army Platinum Credit Card",
+      "manually_mapped_group": "Army/Navy/Air Force Platinum Card",
+      "expected": {
+        "annual_fee": 4000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 4000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "EBL Visa Classic Credit Card",
+      "manually_mapped_group": "Classic Card",
+      "expected": {
+        "annual_fee": 1500,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,000 / USD 12"
+      },
+      "extracted": {
+        "annual_fee": 1500.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,000 / USD 12"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "EBL Visa Gold Credit Card",
+      "manually_mapped_group": "Gold Card",
+      "expected": {
+        "annual_fee": 3000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,000 / USD 12"
+      },
+      "extracted": {
+        "annual_fee": 3000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,000 / USD 12"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "EBL Visa Navy Platinum Credit Card",
+      "manually_mapped_group": "Army/Navy/Air Force Platinum Card",
+      "expected": {
+        "annual_fee": 4000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 4000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "EBL Visa Platinum Credit Card",
+      "manually_mapped_group": "Platinum Card",
+      "expected": {
+        "annual_fee": 5000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 5000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "EBL Visa Women Platinum Credit Card",
+      "manually_mapped_group": "Women Platinum Card",
+      "expected": {
+        "annual_fee": 3000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 3000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "EBL Wander Woman Co-Brand Credit Mastercard",
+      "manually_mapped_group": null,
+      "expected": {
+        "annual_fee": 1500,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15 (as regular Titanium, note 35)"
+      },
+      "extracted": {
+        "annual_fee": null,
+        "interest_rate_apr": null,
+        "late_payment_fee": null
+      },
+      "status": {
+        "annual_fee": "missing",
+        "interest_rate_apr": "missing",
+        "late_payment_fee": "missing"
+      }
+    },
+    {
+      "fixture_name": "Mastercard Titanium Credit Card",
+      "manually_mapped_group": "Mastercard Titanium Card",
+      "expected": {
+        "annual_fee": 5000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 5000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "UnionPay Contactless Platinum Credit Card",
+      "manually_mapped_group": "UnionPay Platinum Card",
+      "expected": {
+        "annual_fee": 5000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 5000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "Visa Infinite Credit Card",
+      "manually_mapped_group": "Infinite Card",
+      "expected": {
+        "annual_fee": 25000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 25000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "Visa Signature Acci-shield Credit Card",
+      "manually_mapped_group": "Signature Access Card",
+      "expected": {
+        "annual_fee": 12000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 12000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "Visa Signature Lite Credit Card",
+      "manually_mapped_group": "Signature Lite / Women Signature Card",
+      "expected": {
+        "annual_fee": 10000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 10000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    },
+    {
+      "fixture_name": "Visa Women Signature Credit Card",
+      "manually_mapped_group": "Signature Lite / Women Signature Card",
+      "expected": {
+        "annual_fee": 10000,
+        "interest_rate_apr": 25,
+        "late_payment_fee": "Late payment fee: BDT 1,200 / USD 15"
+      },
+      "extracted": {
+        "annual_fee": 10000.0,
+        "interest_rate_apr": 25.0,
+        "late_payment_fee": "BDT 1,200 / USD 15"
+      },
+      "status": {
+        "annual_fee": "match",
+        "interest_rate_apr": "match",
+        "late_payment_fee": "match"
+      }
+    }
+  ],
+  "validation": {
+    "environment": "DEBUG=True SECRET_KEY=test CACHE_BACKEND=locmem SEARCH_ENABLED=False DATABASE_URL=postgresql:///creditmate_worker9",
+    "targeted_initial": {
+      "command": "heavy uv run pytest common/tests/test_multimodal.py common/tests/test_gemini_provider.py common/tests/test_claude_code_provider.py banks/tests/test_vision_extraction.py banks/tests/test_crawler_quota_and_content.py -q",
+      "passed": 91,
+      "warnings": 1,
+      "note": "Before detail tiling and the additional tile regression test; final changes are covered by the subsequent common/banks and full suite runs."
+    },
+    "common_banks": {
+      "command": "heavy uv run pytest common banks -q",
+      "passed": 1021,
+      "warnings": 58
+    },
+    "migrations": {
+      "command": "uv run python manage.py makemigrations --check --dry-run",
+      "result": "No changes detected"
+    },
+    "black": {
+      "command": ".venv/bin/black --check common/llm/base.py common/llm/services.py common/llm/providers/gemini.py common/llm/providers/claude_code.py banks/services/content_extractor.py banks/services/llm_parser.py banks/services/bank_data_crawler.py common/tests/test_gemini_provider.py common/tests/test_claude_code_provider.py common/tests/test_multimodal.py banks/tests/test_vision_extraction.py banks/tests/test_crawler_quota_and_content.py",
+      "result": "12 files unchanged"
+    },
+    "isort": {
+      "command": ".venv/bin/isort --check-only common/llm/base.py common/llm/services.py common/llm/providers/gemini.py common/llm/providers/claude_code.py banks/services/content_extractor.py banks/services/llm_parser.py banks/services/bank_data_crawler.py common/tests/test_gemini_provider.py common/tests/test_claude_code_provider.py common/tests/test_multimodal.py banks/tests/test_vision_extraction.py banks/tests/test_crawler_quota_and_content.py",
+      "result": "passed"
+    },
+    "flake8": {
+      "command": ".venv/bin/flake8 common/llm/base.py common/llm/services.py common/llm/providers/gemini.py common/llm/providers/claude_code.py banks/services/content_extractor.py banks/services/llm_parser.py banks/services/bank_data_crawler.py common/tests/test_gemini_provider.py common/tests/test_claude_code_provider.py common/tests/test_multimodal.py banks/tests/test_vision_extraction.py banks/tests/test_crawler_quota_and_content.py",
+      "result": "passed"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    "full_suite": {
+      "command": "heavy uv run pytest -q",
+      "passed": 1905,
+      "skipped": 57,
+      "warnings": 509,
+      "seconds": 151.04
+    }
+  },
+  "native_pdf_text_characters": 0
+}

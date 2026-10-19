@@ -128,7 +128,18 @@ class LLMOrchestrator:
         AllLLMProvidersFailedError
             If all configured providers fail to generate a response
         """
+        image_paths = kwargs.get("image_paths")
         provider_order = self._get_provider_order(preferred_provider)
+        if image_paths is not None:
+            provider_order = [
+                name
+                for name in provider_order
+                if getattr(self.providers[name], "supports_images", False) is True
+            ]
+            if not provider_order:
+                raise LLMConfigurationError(
+                    "No image-capable LLM providers are available"
+                )
         attempts = []
         errors = {}
 
@@ -146,6 +157,28 @@ class LLMOrchestrator:
                 return result
 
         self._handle_all_providers_failed(attempts, errors)
+
+    def generate_from_images(self, prompt, image_paths, **kwargs):
+        """Generate from local images with the usual fallback and call budget.
+
+        Parameters
+        ----------
+        prompt : str
+            Extraction instructions.
+        image_paths : sequence of path-like
+            Images that remain available until this call returns.
+        **kwargs : dict
+            Same system prompt, preference, retry and tuning options as text calls.
+
+        Returns
+        -------
+        dict
+            Response, serving provider, attempts and errors.
+        """
+        image_paths = list(image_paths)
+        if not image_paths:
+            raise LLMConfigurationError("At least one image is required")
+        return self.generate_response(prompt, image_paths=image_paths, **kwargs)
 
     def _get_provider_order(self, preferred_provider):
         """Get ordered list of providers to try.
@@ -225,9 +258,12 @@ class LLMOrchestrator:
                 )
 
             try:
-                response = provider.generate_response(
-                    prompt=prompt, system_prompt=system_prompt, **kwargs
+                generate = (
+                    provider.generate_from_images
+                    if kwargs.get("image_paths") is not None
+                    else provider.generate_response
                 )
+                response = generate(prompt=prompt, system_prompt=system_prompt, **kwargs)
 
                 if provider.validate_response(response):
                     logger.info(

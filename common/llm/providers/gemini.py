@@ -6,10 +6,13 @@ the Google Gen AI SDK (``google-genai``).
 """
 
 import logging
+from pathlib import Path
 
 import httpx
 from google import genai
 from google.genai import errors as genai_errors
+from google.genai import types
+from PIL import Image
 
 from django.conf import settings
 
@@ -31,6 +34,8 @@ class GeminiProvider(BaseLLMProvider):
     Provides direct access to Google's Gemini models with comprehensive
     error handling and configuration management.
     """
+
+    supports_images = True
 
     def __init__(self):
         """Initialize Gemini provider."""
@@ -115,6 +120,20 @@ class GeminiProvider(BaseLLMProvider):
 
         try:
             full_prompt = self._build_full_prompt(prompt, system_prompt)
+            image_paths = kwargs.pop("image_paths", None)
+            if image_paths is not None:
+                parts = [full_prompt]
+                for path in image_paths:
+                    with Image.open(path) as image:
+                        mime_type = Image.MIME.get(image.format)
+                    if mime_type not in {"image/png", "image/jpeg", "image/webp"}:
+                        raise ValueError("Unsupported vision image format")
+                    parts.append(
+                        types.Part.from_bytes(
+                            data=Path(path).read_bytes(), mime_type=mime_type
+                        )
+                    )
+                full_prompt = parts
             generation_config = self._build_generation_config(
                 temperature, max_tokens, **kwargs
             )
@@ -124,6 +143,25 @@ class GeminiProvider(BaseLLMProvider):
 
         except Exception as e:
             self._handle_gemini_error(e)
+
+    def generate_from_images(self, prompt, image_paths, **kwargs):
+        """Generate using inline image parts.
+
+        Parameters
+        ----------
+        prompt : str
+            Extraction instructions.
+        image_paths : sequence of path-like
+            Local PNG, JPEG or WebP images.
+        **kwargs : dict
+            Generation options accepted by ``generate_response``.
+
+        Returns
+        -------
+        str
+            Generated response text.
+        """
+        return self.generate_response(prompt, image_paths=image_paths, **kwargs)
 
     def _validate_availability(self):
         """Validate that the provider is available.
@@ -187,8 +225,8 @@ class GeminiProvider(BaseLLMProvider):
 
         Parameters
         ----------
-        prompt : str
-            Full prompt to send
+        prompt : str or list
+            Full text prompt or text and inline image parts.
         config : dict
             Generation configuration
 

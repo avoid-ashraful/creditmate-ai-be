@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from banks.exceptions import ContentExtractionError
 from banks.factories import BankDataSourceFactory, BankFactory
 from banks.models import CrawledContent, ReviewQueue
 from banks.services.bank_data_crawler import BankDataCrawlerService
@@ -167,9 +168,12 @@ class TestExtractionProvenanceAndQuality:
             "",
         ],
     )
-    def test_image_only_schedule_goes_to_human_review_without_llm(self, noise):
+    def test_image_only_schedule_goes_to_review_when_vision_unavailable(self, noise):
         crawler = fake_crawler(content=noise)
         crawler.content_extractor.last_extraction_method = "ocr"
+        crawler.content_extractor.vision_images.side_effect = ContentExtractionError(
+            "No bounded binary source available for vision"
+        )
         source = BankDataSourceFactory(content_type="pdf", failed_attempt_count=4)
         assert not crawler.crawl_bank_data_source(source.pk)
         crawler.llm_parser.parse_with_multi_pass.assert_not_called()

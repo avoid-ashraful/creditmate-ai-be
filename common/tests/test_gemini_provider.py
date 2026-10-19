@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 from google.genai import errors as genai_errors
+from PIL import Image
 
 from common.llm.exceptions import (
     LLMAuthenticationError,
@@ -72,6 +73,28 @@ def test_no_config_passes_none(client):
     mock_client.models.generate_content.return_value = MagicMock(text="ok")
     provider.generate_response("x")
     assert mock_client.models.generate_content.call_args.kwargs["config"] is None
+
+
+def test_images_are_inline_sdk_parts_not_generation_options(client, tmp_path):
+    provider, mock_client, _ = client
+    paths = [tmp_path / "one.png", tmp_path / "two.jpg"]
+    for path in paths:
+        Image.new("RGB", (5, 5)).save(path)
+    mock_client.models.generate_content.return_value = MagicMock(text="[]")
+    assert (
+        provider.generate_from_images(
+            "extract", paths, system_prompt="strict", temperature=0.1
+        )
+        == "[]"
+    )
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    assert kwargs["contents"][0] == "strict\n\nextract"
+    for part, path, mime in zip(
+        kwargs["contents"][1:], paths, ["image/png", "image/jpeg"]
+    ):
+        assert part.inline_data.data == path.read_bytes()
+        assert part.inline_data.mime_type == mime
+    assert kwargs["config"] == {"temperature": 0.1}
 
 
 @pytest.mark.parametrize("text", [None, ""])

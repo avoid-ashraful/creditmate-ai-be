@@ -16,6 +16,8 @@ class BaseLLMProvider(ABC):
     Gemini, etc.
     """
 
+    supports_images = False
+
     def __init__(self, provider_name):
         """Initialize the LLM provider.
 
@@ -128,4 +130,5 @@ class BaseLLMProvider(ABC):
             "name": self.provider_name,
             "is_configured": self.is_configured,
             "is_available": self.is_available(),
+            "supports_images": self.supports_images,
         }
