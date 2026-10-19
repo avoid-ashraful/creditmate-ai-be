@@ -234,6 +234,13 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
     ]
     ordering = ["bank__name", "name"]
 
+    def get_queryset(self):
+        """Load public bank counts only for actions that serialize nested banks."""
+        queryset = super().get_queryset()
+        if self.action in {"list", "retrieve"}:
+            return queryset.with_bank_card_counts()
+        return queryset
+
     def get_serializer_class(self):
         """Return appropriate serializer based on action.
 
@@ -447,6 +454,13 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             }
             return Response(response)
 
+        cache_key = build_query_cache_key(
+            "credit_cards:typeahead", SEARCH_SUGGESTIONS_VERSION_KEY, request
+        )
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
+
         card_queryset = self.get_queryset()
         prefix_cards = list(
             card_queryset.filter(name__istartswith=query).order_by("name")[
@@ -559,4 +573,5 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             "result_limit": AUTOCOMPLETE_MAX_RESULTS,
             "active": True,
         }
+        cache.set(cache_key, response_data, SEARCH_SUGGESTIONS_TTL)
         return Response(response_data)

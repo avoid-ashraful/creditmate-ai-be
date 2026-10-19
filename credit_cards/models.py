@@ -12,6 +12,18 @@ from credit_cards.validators import validate_cashback_rules, validate_earn_rules
 class CreditCardQuerySet(models.QuerySet):
     """Queryset helpers for credit cards."""
 
+    def with_bank_card_counts(self):
+        """Load banks and their public counts in one additional query.
+
+        Returns
+        -------
+        CreditCardQuerySet
+            Cards whose nested bank serializer does not issue count queries.
+        """
+        return self.select_related(None).prefetch_related(
+            models.Prefetch("bank", queryset=Bank.objects.with_public_card_counts())
+        )
+
     def public(self):
         """Return only cards visible to anonymous users.
 
