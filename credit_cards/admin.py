@@ -30,7 +30,7 @@ class CreditCardAdmin(admin.ModelAdmin):
         "created",
         "modified",
     ]
-    search_fields = ["name", "bank__name", "reward_points_policy"]
+    search_fields = ["name", "bank__name", "reward_points_policy", "reward_program_name"]
     readonly_fields = ["verified_at", "verified_by", "created", "modified"]
     ordering = ["bank__name", "name"]
     actions = ["mark_verified", "mark_needs_review"]
@@ -73,7 +73,21 @@ class CreditCardAdmin(admin.ModelAdmin):
                     "cash_advance_fee",
                     "late_payment_fee",
                     "annual_fee_waiver_policy",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Rewards",
+            {
+                "fields": (
                     "reward_points_policy",
+                    "reward_program_name",
+                    "reward_earn_rules",
+                    "cashback_rules",
+                    "reward_point_value_bdt",
+                    "points_expiry_text",
+                    "reward_source_url",
                 ),
                 "classes": ("collapse",),
             },

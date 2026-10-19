@@ -1,7 +1,7 @@
 import hashlib
 import logging
 import re
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
@@ -16,6 +16,7 @@ from banks.validators.numeric_fields import (
 )
 from credit_cards.constants import MAX_INTEREST_RATE_APR, CardNetwork, VerificationStatus
 from credit_cards.models import CreditCard
+from credit_cards.validators import REWARD_CATEGORIES
 
 logger = logging.getLogger(__name__)
 
@@ -479,6 +480,12 @@ class CreditCardDataService:
             "apply_url",
             "is_islamic",
             "is_dual_currency",
+            "reward_program_name",
+            "reward_earn_rules",
+            "cashback_rules",
+            "reward_point_value_bdt",
+            "points_expiry_text",
+            "reward_source_url",
         }:
             return self._differs(current, proposed)
         if field in {"annual_fee", "interest_rate_apr", "min_monthly_income"}:
@@ -579,6 +586,19 @@ class CreditCardDataService:
             "late_payment_fee": text(card_data, "late_payment_fee"),
             "annual_fee_waiver_policy": card_data.get("annual_fee_waiver_policy"),
             "reward_points_policy": text(card_data, "reward_points_policy"),
+            "reward_program_name": text(card_data, "reward_program_name"),
+            "reward_earn_rules": self._parse_reward_rules(
+                card_data.get("reward_earn_rules"),
+                ("points_per_unit", "spend_unit_bdt"),
+            ),
+            "cashback_rules": self._parse_reward_rules(
+                card_data.get("cashback_rules"), ("percent",)
+            ),
+            "reward_point_value_bdt": self._parse_positive_decimal(
+                card_data.get("reward_point_value_bdt")
+            ),
+            "points_expiry_text": text(card_data, "points_expiry_text"),
+            "reward_source_url": self._parse_url(card_data.get("reward_source_url")),
             "additional_features": card_data.get("additional_features") or [],
             "source_url": self._parse_url(card_data.get("source_url")),
             "apply_url": self._parse_url(card_data.get("apply_url")),
@@ -602,6 +622,111 @@ class CreditCardDataService:
         value = str(card_data.get(key) or "").strip()
         max_length = CreditCard._meta.get_field(key).max_length
         return value[:max_length] if max_length else value
+
+    @staticmethod
+    def _parse_reward_rules(value, number_fields):
+        """Keep only complete, positive, categorised reward rules.
+
+        Parameters
+        ----------
+        value : any
+            Raw rule list extracted by the LLM.
+        number_fields : tuple of str
+            Numeric keys the rule must provide (all greater than zero).
+
+        Returns
+        -------
+        list of dict
+            Conservative copy of the usable rules; malformed entries are
+            dropped rather than guessed.
+        """
+        if not isinstance(value, list):
+            return []
+        rules = []
+        for raw in value:
+            rule = CreditCardDataService._normalise_reward_rule(raw, number_fields)
+            if rule is not None:
+                rules.append(rule)
+        return rules
+
+    @staticmethod
+    def _normalise_reward_rule(raw, number_fields):
+        """Return one usable reward rule, or ``None`` when it is malformed.
+
+        Parameters
+        ----------
+        raw : any
+            One entry from an extracted rule list.
+        number_fields : tuple of str
+            Numeric keys the rule must provide.
+
+        Returns
+        -------
+        dict or None
+            Rule with only the known keys, or ``None`` when unusable.
+        """
+        if not isinstance(raw, dict):
+            return None
+        category = raw.get("category")
+        if category not in REWARD_CATEGORIES:
+            return None
+        rule = {"category": category, "text": str(raw.get("text") or "").strip()}
+        for field in number_fields:
+            number = CreditCardDataService._reward_number(raw.get(field))
+            if number is None:
+                return None
+            rule[field] = number
+        if "cap_text" in raw:
+            rule["cap_text"] = str(raw.get("cap_text") or "").strip()
+        return rule
+
+    @staticmethod
+    def _reward_number(value):
+        """Return a positive JSON-safe number, or ``None`` when unusable.
+
+        Parameters
+        ----------
+        value : any
+            Raw number from an extracted reward rule.
+
+        Returns
+        -------
+        int, float or None
+            Integral values stay integers; other values become floats.
+        """
+        if isinstance(value, bool):
+            return None
+        try:
+            number = Decimal(str(value))
+        except (InvalidOperation, TypeError, ValueError):
+            return None
+        if not number.is_finite() or number <= 0:
+            return None
+        return int(number) if number == number.to_integral_value() else float(number)
+
+    @staticmethod
+    def _parse_positive_decimal(value):
+        """Return a positive Decimal, or ``None`` when no value is stated.
+
+        Parameters
+        ----------
+        value : any
+            Raw redemption value from the extraction.
+
+        Returns
+        -------
+        decimal.Decimal or None
+            The stated value; never an invented default.
+        """
+        if isinstance(value, bool):
+            return None
+        try:
+            number = Decimal(str(value))
+        except (InvalidOperation, TypeError, ValueError):
+            return None
+        if not number.is_finite() or number <= 0:
+            return None
+        return number
 
     @staticmethod
     def _parse_bool(value):

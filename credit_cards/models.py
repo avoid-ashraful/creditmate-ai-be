@@ -6,6 +6,7 @@ from banks.models import Bank
 from common.models import Audit
 from credit_cards.constants import CardNetwork, VerificationStatus
 from credit_cards.lounge import card_has_lounge_access, direction_has_access
+from credit_cards.validators import validate_cashback_rules, validate_earn_rules
 
 
 class CreditCardQuerySet(models.QuerySet):
@@ -57,6 +58,23 @@ class CreditCard(Audit):
     cash_advance_fee = models.CharField(max_length=255, blank=True, default="")
     late_payment_fee = models.CharField(max_length=255, blank=True, default="")
     reward_points_policy = models.TextField(blank=True, default="")
+    reward_program_name = models.CharField(max_length=255, blank=True, default="")
+    reward_earn_rules = models.JSONField(
+        default=list, blank=True, validators=[validate_earn_rules]
+    )
+    cashback_rules = models.JSONField(
+        default=list, blank=True, validators=[validate_cashback_rules]
+    )
+    reward_point_value_bdt = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        help_text="Redemption value of one point in BDT, only when stated",
+    )
+    points_expiry_text = models.TextField(blank=True, default="")
+    reward_source_url = models.URLField(max_length=500, blank=True, default="")
     additional_features = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)
     source_url = models.URLField(max_length=500, blank=True, default="")

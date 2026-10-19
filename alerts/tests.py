@@ -257,6 +257,9 @@ def test_daily_sends_one_digest_per_day_grouping_changes(
     django_user_model, settings, monkeypatch
 ):
     now, user, card = _immediate_setup(django_user_model, settings, monkeypatch, "daily")
+    # Pin to midday: "+30 minutes" must stay on the same day whenever the suite runs.
+    now = now.replace(hour=12, minute=0, second=0, microsecond=0)
+    monkeypatch.setattr("alerts.tasks.timezone.now", lambda: now)
     pref = user.notification_preference
     pref.frequency = "daily"
     pref.save()
