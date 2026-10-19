@@ -25,7 +25,7 @@ class BankViewSet(viewsets.ReadOnlyModelViewSet):
     views with different serialization formats.
     """
 
-    queryset = Bank.objects.filter(is_active=True)
+    queryset = Bank.objects.filter(is_active=True).with_public_card_counts()
     serializer_class = BankSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = BankFilter

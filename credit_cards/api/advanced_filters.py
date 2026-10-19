@@ -356,6 +356,42 @@ FACET_DEFINITIONS = {
 }
 
 
+def _resolve_facet_counts(queryset, facets):
+    """Resolve all scalar bucket counts in one conditional SQL aggregate.
+
+    Parameters
+    ----------
+    queryset : QuerySet
+        Filtered cards shared by all requested facets.
+    facets : dict
+        Facet buckets containing Count expressions or resolved term counts.
+
+    Returns
+    -------
+    dict
+        Facets with integer counts and empty category buckets omitted.
+    """
+    expressions = {}
+    pending = []
+    for facet in facets.values():
+        for bucket in facet["buckets"]:
+            for field, value in bucket.items():
+                if isinstance(value, models.Count):
+                    alias = f"count_{len(pending)}"
+                    expressions[alias] = value
+                    pending.append((bucket, field, alias))
+    if expressions:
+        counts = queryset.aggregate(**expressions)
+        for bucket, field, alias in pending:
+            bucket[field] = counts[alias]
+    for facet in facets.values():
+        if facet["type"] == "category":
+            facet["buckets"] = [
+                bucket for bucket in facet["buckets"] if bucket["count"] > 0
+            ]
+    return facets
+
+
 def compute_facets(queryset, facet_names=None):  # noqa: C901
     """Compute facet counts for the given queryset.
 
@@ -412,7 +448,7 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
                 if "to" in range_def:
                     filter_kwargs[f"{field}__lt"] = range_def["to"]
 
-                count = queryset.filter(**filter_kwargs).count()
+                count = Count("id", filter=Q(**filter_kwargs))
                 buckets.append(
                     {
                         "key": range_def["key"],
@@ -441,25 +477,21 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
                     is_property = option.get("is_property", False)
 
                     if opt_field == "has_lounge_access":
-                        true_count = queryset.filter(card_lounge_access_q(True)).count()
-                        false_count = queryset.filter(card_lounge_access_q(False)).count()
+                        true_count = Count("id", filter=Q(card_lounge_access_q(True)))
+                        false_count = Count("id", filter=Q(card_lounge_access_q(False)))
                     elif opt_field in LOUNGE_DIRECTION_FIELDS:
-                        true_count = queryset.filter(
-                            lounge_access_q(opt_field, True)
-                        ).count()
-                        false_count = queryset.filter(
-                            lounge_access_q(opt_field, False)
-                        ).count()
+                        true_count = Count(
+                            "id", filter=Q(lounge_access_q(opt_field, True))
+                        )
+                        false_count = Count(
+                            "id", filter=Q(lounge_access_q(opt_field, False))
+                        )
                     elif opt_field == "has_annual_fee" or is_property:
-                        true_count = queryset.filter(annual_fee__gt=0).count()
-                        false_count = queryset.filter(annual_fee=0).count()
+                        true_count = Count("id", filter=Q(annual_fee__gt=0))
+                        false_count = Count("id", filter=Q(annual_fee=0))
                     else:
-                        true_count = queryset.exclude(
-                            **{f"{opt_field}__exact": ""}
-                        ).count()
-                        false_count = queryset.filter(
-                            **{f"{opt_field}__exact": ""}
-                        ).count()
+                        true_count = Count("id", filter=~Q(**{f"{opt_field}__exact": ""}))
+                        false_count = Count("id", filter=Q(**{f"{opt_field}__exact": ""}))
 
                     buckets.append(
                         {
@@ -479,17 +511,17 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
                 is_property = definition.get("is_property", False)
                 if is_property:
                     if field == "has_annual_fee":
-                        true_count = queryset.filter(annual_fee__gt=0).count()
-                        false_count = queryset.filter(annual_fee=0).count()
+                        true_count = Count("id", filter=Q(annual_fee__gt=0))
+                        false_count = Count("id", filter=Q(annual_fee=0))
                     elif field == "has_lounge_access":
-                        true_count = queryset.filter(card_lounge_access_q(True)).count()
-                        false_count = queryset.filter(card_lounge_access_q(False)).count()
+                        true_count = Count("id", filter=Q(card_lounge_access_q(True)))
+                        false_count = Count("id", filter=Q(card_lounge_access_q(False)))
                     else:
-                        true_count = queryset.exclude(**{f"{field}__exact": ""}).count()
-                        false_count = queryset.filter(**{f"{field}__exact": ""}).count()
+                        true_count = Count("id", filter=~Q(**{f"{field}__exact": ""}))
+                        false_count = Count("id", filter=Q(**{f"{field}__exact": ""}))
                 else:
-                    true_count = queryset.filter(**{f"{field}__exact": True}).count()
-                    false_count = queryset.filter(**{f"{field}__exact": False}).count()
+                    true_count = Count("id", filter=Q(**{f"{field}__exact": True}))
+                    false_count = Count("id", filter=Q(**{f"{field}__exact": False}))
 
                 facets[facet_name] = {
                     "label": definition["label"],
@@ -506,44 +538,55 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
             for cat in CANONICAL_CATEGORIES:
                 slug = cat["slug"]
                 if slug == "travel":
-                    count = queryset.filter(
-                        Q(reward_points_policy__icontains="travel")
-                        | Q(additional_features__icontains="travel")
-                    ).count()
+                    count = Count(
+                        "id",
+                        filter=Q(
+                            Q(reward_points_policy__icontains="travel")
+                            | Q(additional_features__icontains="travel")
+                        ),
+                    )
                 elif slug == "cashback":
-                    count = queryset.filter(
-                        reward_points_policy__icontains="cashback"
-                    ).count()
+                    count = Count(
+                        "id", filter=Q(reward_points_policy__icontains="cashback")
+                    )
                 elif slug == "premium":
-                    count = queryset.filter(
-                        Q(annual_fee__gte=2000)
-                        | lounge_access_q("lounge_access_international", True)
-                    ).count()
+                    count = Count(
+                        "id",
+                        filter=Q(
+                            Q(annual_fee__gte=2000)
+                            | lounge_access_q("lounge_access_international", True)
+                        ),
+                    )
                 elif slug == "student":
-                    count = queryset.filter(
-                        Q(reward_points_policy__icontains="student")
-                        | Q(additional_features__icontains="student")
-                        | Q(annual_fee__lte=500)
-                    ).count()
+                    count = Count(
+                        "id",
+                        filter=Q(
+                            Q(reward_points_policy__icontains="student")
+                            | Q(additional_features__icontains="student")
+                            | Q(annual_fee__lte=500)
+                        ),
+                    )
                 elif slug == "business":
-                    count = queryset.filter(
-                        Q(reward_points_policy__icontains="business")
-                        | Q(additional_features__icontains="business")
-                    ).count()
+                    count = Count(
+                        "id",
+                        filter=Q(
+                            Q(reward_points_policy__icontains="business")
+                            | Q(additional_features__icontains="business")
+                        ),
+                    )
                 elif slug == "no-annual-fee":
-                    count = queryset.filter(annual_fee=0).count()
+                    count = Count("id", filter=Q(annual_fee=0))
                 else:
                     count = 0
 
-                if count > 0:
-                    buckets.append(
-                        {
-                            "key": slug,
-                            "label": cat["name"],
-                            "count": count,
-                            "filter": f"categories={slug}",
-                        }
-                    )
+                buckets.append(
+                    {
+                        "key": slug,
+                        "label": cat["name"],
+                        "count": count,
+                        "filter": f"categories={slug}",
+                    }
+                )
 
             facets[facet_name] = {
                 "label": definition["label"],
@@ -551,7 +594,7 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
                 "buckets": buckets,
             }
 
-    return facets
+    return _resolve_facet_counts(queryset, facets)
 
 
 def normalize_query_params(query_params):  # noqa: C901

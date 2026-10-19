@@ -12,6 +12,24 @@ from banks.enums import (
 from common.models import Audit
 
 
+class BankQuerySet(models.QuerySet):
+    """Query helpers for bank data exposed by public serializers."""
+
+    def with_public_card_counts(self):
+        """Annotate public card counts without per-bank queries.
+
+        Returns
+        -------
+        BankQuerySet
+            Banks with their active, verified card count.
+        """
+        from credit_cards.constants import PUBLIC_BANK_CARD_Q
+
+        return self.annotate(
+            _public_card_count=models.Count("credit_cards", filter=PUBLIC_BANK_CARD_Q)
+        )
+
+
 class Bank(Audit):
     """Model representing a bank that issues credit cards.
 
@@ -31,6 +49,8 @@ class Bank(Audit):
     )
     is_active = models.BooleanField(default=True)
 
+    objects = BankQuerySet.as_manager()
+
     class Meta:
         ordering = ["name"]
         db_table = "banks_bank"
@@ -47,6 +67,8 @@ class Bank(Audit):
         int
             Number of active, verified credit cards associated with this bank
         """
+        if hasattr(self, "_public_card_count"):
+            return self._public_card_count
         return self.credit_cards.public().count()
 
 
