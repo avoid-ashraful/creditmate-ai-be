@@ -1,6 +1,7 @@
 name: Security Checks
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [master, main]
   push:
