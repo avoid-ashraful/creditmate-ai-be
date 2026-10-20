@@ -38,6 +38,10 @@ NONE_SAMPLES = [
     "Not available",
     "No lounge access",
     "Nil",
+    "None (complimentary Balaka Lounge access not applicable)",
+    "None (SoC shows '-' for Balaka lounge)",
+    "N/A (Classic: no UCB Imperial or global airport lounge access)",
+    "N/A (Classic)",
 ]
 UNLIMITED_SAMPLES = ["Unlimited", "unlimited domestic visits", "No limit"]
 LIMITED_SAMPLES = ["4 per year", "5 visits", "2 visits per quarter", "Priority Pass"]
@@ -116,6 +120,16 @@ class TestDirectionAndCardAccess:
             ("N/A", "", None),
             ("0", "unknown", None),
             ("", "", None),
+            (
+                "None",
+                "None (complimentary Balaka Lounge access not applicable)",
+                False,
+            ),
+            (
+                "N/A (Classic: no UCB Imperial or global airport lounge access)",
+                "N/A (Classic)",
+                False,
+            ),
         ],
     )
     def test_card_flag(self, international, domestic, expected):

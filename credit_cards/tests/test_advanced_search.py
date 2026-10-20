@@ -62,6 +62,15 @@ class TestAdvancedFilters:
         assert response.status_code == 200
         assert response.data["total"] == 0
 
+    def test_invalid_ids_filter_is_rejected(self, api_client):
+        """Non-integer ids/bank_ids return 400 instead of a 500."""
+        neutral_card(name="Any Card")
+
+        for params in ({"ids": "abc"}, {"bank_ids": "x,y"}):
+            response = api_client.get(ADVANCED_SEARCH_URL, params)
+            assert response.status_code == 400
+            assert list(response.data.keys()) == [next(iter(params))]
+
     def test_annual_fee_range_filter(self, api_client):
         """Filter by annual fee range."""
         neutral_card(name="Free Card", annual_fee=0)
@@ -112,6 +121,75 @@ class TestAdvancedFilters:
         assert response.status_code == 200
         assert response.data["total"] == 1
         assert response.data["results"][0]["name"] == "Lounge Card"
+
+    def test_has_lounge_access_false_filter(self, api_client):
+        """has_lounge_access=false keeps only cards with a known none."""
+        neutral_card(
+            name="Lounge Card",
+            lounge_access_international="2 visits",
+            lounge_access_domestic="1 visit",
+        )
+        neutral_card(
+            name="No Lounge Card",
+            lounge_access_international="0",
+            lounge_access_domestic="None (not applicable)",
+        )
+
+        response = api_client.get(ADVANCED_SEARCH_URL, {"has_lounge_access": "false"})
+
+        assert response.status_code == 200
+        assert response.data["total"] == 1
+        assert response.data["results"][0]["name"] == "No Lounge Card"
+
+    def test_exact_annual_fee_filter(self, api_client):
+        """annual_fee is an exact match, including the documented 0 filter."""
+        neutral_card(name="Free Card", annual_fee=0)
+        neutral_card(name="Paid Card", annual_fee=500)
+
+        response = api_client.get(ADVANCED_SEARCH_URL, {"annual_fee": "0"})
+
+        assert response.status_code == 200
+        assert [row["name"] for row in response.data["results"]] == ["Free Card"]
+
+    def test_bank_alias_filter(self, api_client):
+        """`bank` filters like `bank_ids`."""
+        bank = BankFactory(name="Alias Bank")
+        wanted = CreditCardFactory(bank=bank, name="Alias Card")
+        neutral_card(name="Other Card")
+
+        response = api_client.get(ADVANCED_SEARCH_URL, {"bank": str(bank.pk)})
+
+        assert response.status_code == 200
+        assert [row["id"] for row in response.data["results"]] == [wanted.pk]
+
+    def test_q_alias_filter(self, api_client):
+        """`q` is an alias of `search`."""
+        neutral_card(name="Visa Platinum", reward_points_policy="travel rewards")
+        neutral_card(name="Mastercard Gold", reward_points_policy="cashback")
+
+        response = api_client.get(ADVANCED_SEARCH_URL, {"q": "visa"})
+
+        assert response.status_code == 200
+        assert [row["name"] for row in response.data["results"]] == ["Visa Platinum"]
+
+    def test_category_alias_filter(self, api_client):
+        """`category` is an alias of `categories`."""
+        neutral_card(name="Travel Card", reward_points_policy="2x travel rewards")
+        neutral_card(name="Cashback Card", reward_points_policy="2% cashback")
+
+        response = api_client.get(ADVANCED_SEARCH_URL, {"category": "travel"})
+
+        assert response.status_code == 200
+        assert [row["name"] for row in response.data["results"]] == ["Travel Card"]
+
+    def test_is_active_false_has_no_public_match(self, api_client):
+        """An inactive card is never public, so is_active=false returns nothing."""
+        neutral_card(name="Active Card", is_active=True)
+
+        response = api_client.get(ADVANCED_SEARCH_URL, {"is_active": "false"})
+
+        assert response.status_code == 200
+        assert response.data["total"] == 0
 
     def test_search_query_full_text(self, api_client):
         """Full-text search across multiple fields."""
@@ -257,6 +335,27 @@ class TestAdvancedSearchSorting:
         assert response.status_code == 200
         assert response.data["results"][0]["name"] == "Lounge Card"
 
+    def test_sort_by_lounge_entitlement_puts_unlimited_first(self, api_client):
+        """Numeric entitlement ordering beats free-text ordering."""
+        neutral_card(
+            name="Six Visits",
+            lounge_access_international="Up to 6 complimentary visits",
+            lounge_access_domestic="",
+        )
+        neutral_card(
+            name="Unlimited Visits",
+            lounge_access_international="Unlimited free visits",
+            lounge_access_domestic="",
+        )
+
+        response = api_client.get(
+            ADVANCED_SEARCH_URL,
+            {"search": "visits", "ordering": "-lounge_entitlement"},
+        )
+
+        assert response.status_code == 200
+        assert response.data["results"][0]["name"] == "Unlimited Visits"
+
     def test_sort_by_name(self, api_client):
         """Sort by card name."""
         neutral_card(name="Zebra Card")
@@ -337,13 +436,24 @@ class TestQueryNormalization:
         assert normalized["annual_fee_max"] == "1000"
 
     def test_normalize_boolean_params(self):
-        """Normalize boolean parameters (only include when true)."""
+        """Normalize boolean parameters (explicit true and false are kept)."""
         from django.http import QueryDict
 
         query = QueryDict("no_annual_fee=true&has_lounge_access=false")
         normalized = normalize_query_params(query)
         assert normalized["no_annual_fee"] == "true"
-        assert "has_lounge_access" not in normalized
+        assert normalized["has_lounge_access"] == "false"
+
+    def test_normalize_search_and_filter_aliases(self):
+        """q/search, category/categories and bank/bank_ids fold together."""
+        from django.http import QueryDict
+
+        query = QueryDict("q=visa&category=travel,cashback&bank=3&annual_fee=0")
+        normalized = normalize_query_params(query)
+        assert normalized["search"] == "visa"
+        assert normalized["categories"] == "cashback,travel"
+        assert normalized["bank_ids"] == "3"
+        assert normalized["annual_fee"] == "0"
 
     def test_normalize_multi_value_params(self):
         """Normalize multi-value parameters (sorted for consistency)."""
@@ -561,11 +671,11 @@ class TestSavedSearchCompatibility:
         )
         assert response1.data["query_hash"] != response2.data["query_hash"]
 
-    def test_boolean_true_only_in_normalized(self, api_client):
-        """Only true boolean params should appear in normalized query."""
+    def test_boolean_true_and_false_both_in_normalized(self, api_client):
+        """An explicit false is a real filter and must appear in the normalized query."""
         response = api_client.get(
             "/api/v1/credit-cards/advanced-search/normalize/",
             {"no_annual_fee": "true", "has_lounge_access": "false"},
         )
         assert "no_annual_fee" in response.data["normalized_query"]
-        assert "has_lounge_access" not in response.data["normalized_query"]
+        assert response.data["normalized_query"]["has_lounge_access"] == "false"

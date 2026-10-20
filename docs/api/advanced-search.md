@@ -23,18 +23,23 @@ The Advanced Search API provides a unified, high-performance search endpoint wit
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `search` | string | Full-text search query across card name, bank, rewards, features |
+| `q` | string | Alias of `search` |
 | `categories` | string | Comma-separated category slugs for OR filtering: `travel,cashback,premium,student,business,no-annual-fee` |
+| `category` | string | Alias of `categories` |
+| `annual_fee` | number | Exact annual fee in BDT (e.g. `0` for no-fee cards) |
 | `annual_fee_min` | number | Minimum annual fee |
 | `annual_fee_max` | number | Maximum annual fee |
 | `interest_rate_min` | number | Minimum APR |
 | `interest_rate_max` | number | Maximum APR |
-| `has_lounge_access` | boolean | Filter cards with any lounge access |
+| `has_lounge_access` | boolean | Filter cards with any lounge access (`false` keeps known-none cards) |
 | `has_international_lounge` | boolean | Filter cards with international lounge access |
 | `has_domestic_lounge` | boolean | Filter cards with domestic lounge access |
 | `no_annual_fee` | boolean | Filter cards with no annual fee |
 | `has_fee_waiver` | boolean | Filter cards with fee waiver policy |
 | `feature_search` | string | Search within additional features |
 | `bank_ids` | string | Comma-separated bank IDs to filter |
+| `bank` | string | Alias of `bank_ids` |
+| `is_active` | boolean | Filter by card active flag (`true` only, because only active cards are public) |
 | `ordering` | string | Sort field (see Sort Options below) |
 | `page` | integer | Page number (1-based, default: 1) |
 | `page_size` | integer | Results per page (1-100, default: 20) |
@@ -44,8 +49,9 @@ The Advanced Search API provides a unified, high-performance search endpoint wit
 - `relevance` - Best match first (default with search query)
 - `annual_fee` / `-annual_fee` - Annual fee ascending/descending
 - `interest_rate_apr` / `-interest_rate_apr` - APR ascending/descending
-- `-lounge_access_international` - International lounge access (most first)
-- `-lounge_access_domestic` - Domestic lounge access (most first)
+- `lounge_entitlement` / `-lounge_entitlement` - Numeric international lounge entitlement (unlimited first, then highest stated visit count)
+- `-lounge_access_international` - International lounge access (most first, free-text)
+- `-lounge_access_domestic` - Domestic lounge access (most first, free-text)
 - `name` / `-name` - Card name A-Z / Z-A
 - `-created` / `created` - Newest/oldest first
 
@@ -275,7 +281,8 @@ Database fallback supports the same query parameters but:
 The `normalize` endpoint and `normalize_query_params` utility canonicalize queries for saved search deduplication:
 
 - Scalar parameters: trimmed and included as-is
-- Boolean parameters: only included when explicitly `true`
+- Boolean parameters: included for an explicit `true` or `false` (a `false` is a real filter)
+- Alias parameters folded onto the canonical name (`q` -> `search`, `category` -> `categories`, `bank` -> `bank_ids`)
 - Multi-value parameters (categories, ids, bank_ids): split, deduplicated, sorted, re-joined
 - Parameters sorted alphabetically for consistent canonical string
 

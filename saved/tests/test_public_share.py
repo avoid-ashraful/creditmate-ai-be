@@ -1,6 +1,8 @@
 import pytest
 from rest_framework import status
 
+from credit_cards.constants import VerificationStatus
+from credit_cards.factories import CreditCardFactory
 from saved.models import Collection, CollectionItem, SavedComparison, SavedComparisonItem
 
 SHARED_URL = "/api/v1/saved/shared/{token}/"
@@ -92,6 +94,17 @@ class TestSharedComparison:
 
         assert anonymous_client.get(url).status_code == status.HTTP_404_NOT_FOUND
 
+    def test_shared_comparison_drops_unpublished_cards(
+        self, owner, cards, anonymous_client
+    ):
+        draft = CreditCardFactory(verification_status=VerificationStatus.DRAFT)
+        comparison = _public_comparison(owner, [cards[0], draft])
+
+        response = anonymous_client.get(SHARED_URL.format(token=comparison.share_token))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert [card["id"] for card in response.data["cards"]] == [cards[0].pk]
+
     def test_shared_endpoint_is_read_only(self, owner, cards, anonymous_client):
         comparison = _public_comparison(owner, cards[:1])
         url = SHARED_URL.format(token=comparison.share_token)
@@ -134,6 +147,23 @@ class TestSharedCollection:
         assert set(response.data.keys()) == PUBLIC_COLLECTION_KEYS
         assert response.data["cards"][0]["notes"] == "top"
         assert response.data["cards"][0]["card"]["id"] == cards[0].pk
+
+    def test_public_collection_drops_unpublished_cards(
+        self, owner, cards, anonymous_client
+    ):
+        collection = Collection.objects.create(
+            user=owner, name="Has drafts", is_public=True
+        )
+        draft = CreditCardFactory(verification_status=VerificationStatus.DRAFT)
+        CollectionItem.objects.create(collection=collection, card=cards[0], notes="top")
+        CollectionItem.objects.create(collection=collection, card=draft, notes="draft")
+
+        response = anonymous_client.get(
+            SHARED_COLLECTION_URL.format(slug=collection.slug)
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert [row["card"]["id"] for row in response.data["cards"]] == [cards[0].pk]
 
     def test_public_collection_hides_owner(self, owner, anonymous_client):
         collection = Collection.objects.create(

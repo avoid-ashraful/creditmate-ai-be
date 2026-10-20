@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from credit_cards.models import CreditCard
+
 from .models import AlertSubscription, NotificationPreference
 
 
@@ -7,6 +9,12 @@ class AlertSubscriptionSerializer(serializers.ModelSerializer):
     card_name = serializers.CharField(source="card.name", read_only=True, default=None)
     bank_name = serializers.CharField(
         source="card.bank.name", read_only=True, default=None
+    )
+    card = serializers.PrimaryKeyRelatedField(
+        queryset=CreditCard.objects.public(),
+        required=False,
+        allow_null=True,
+        help_text="Published card to watch, or null for a general alert.",
     )
 
     class Meta:

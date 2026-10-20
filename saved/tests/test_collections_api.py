@@ -1,6 +1,8 @@
 import pytest
 from rest_framework import status
 
+from credit_cards.constants import VerificationStatus
+from credit_cards.factories import CreditCardFactory
 from saved.models import Collection, CollectionItem
 
 COLLECTIONS_URL = "/api/v1/saved/collections/"
@@ -162,6 +164,18 @@ class TestCollectionCardActions:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "card_id" in response.data
+
+    def test_unpublished_card_is_400(self, owner, owner_client, cards):
+        collection = Collection.objects.create(user=owner, name="No drafts")
+        draft = CreditCardFactory(verification_status=VerificationStatus.DRAFT)
+
+        response = owner_client.post(
+            _cards_url(collection.pk), {"card_id": draft.pk}, format="json"
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "card_id" in response.data
+        assert not CollectionItem.objects.filter(collection=collection).exists()
 
     def test_card_id_is_required(self, owner, owner_client):
         collection = Collection.objects.create(user=owner, name="Missing")

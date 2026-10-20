@@ -13,6 +13,9 @@ UNKNOWN
 NONE
     The value states there is no access, e.g. ``"0"``, ``"0 visits"``,
     ``"None"``, ``"N/A"``, ``"Not applicable"`` or ``"No lounge access"``.
+    A negation followed by a single clarifying parenthesis also counts, so
+    ``"None (complimentary access not applicable)"`` and ``"N/A (Classic)"``
+    are none rather than an entitlement.
 UNLIMITED
     The value states unlimited access, e.g. ``"Unlimited"``. Unlimited is a
     status, not a number: it has no finite visit count, so it never matches
@@ -36,7 +39,7 @@ import re
 
 from django.db import models
 from django.db.models import Q
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Coalesce
 
 UNKNOWN = "unknown"
 NONE = "none"
@@ -67,9 +70,13 @@ def _alternation(values):
 UNKNOWN_PATTERN = r"^\s*" + _alternation(UNKNOWN_VALUES) + r"\s*\.?\s*\Z"
 UNLIMITED_PATTERN = r"unlimited|no\s+limit|without\s+(?:any\s+)?limit"
 NONE_PATTERN = (
-    r"^\s*(?:0+(?:[.,]0+)?|n\s*/?\s*a|none|nil|no|not)(?:\s+[a-z]+)*\s*\.?\s*\Z"
+    r"^\s*(?:0+(?:[.,]0+)?|n\s*/?\s*a|none|nil|no|not)"
+    r"(?:\s+[a-z]+)*(?:\s*\([^)]*\))?\s*\.?\s*\Z"
 )
 COUNT_PATTERN = r"\d{1,9}"
+
+#: Entitlement score used for unlimited access so it sorts above any count.
+UNLIMITED_ENTITLEMENT = 10**9
 
 _UNKNOWN_RE = re.compile(UNKNOWN_PATTERN, re.IGNORECASE)
 _UNLIMITED_RE = re.compile(UNLIMITED_PATTERN, re.IGNORECASE)
@@ -274,6 +281,55 @@ def annotate_lounge_count(queryset, field, alias):
         output_field=models.IntegerField(),
     )
     return queryset.annotate(**{alias: count})
+
+
+def annotate_lounge_entitlement(queryset, field, alias):
+    """Annotate a queryset with an integer lounge entitlement score.
+
+    Mirrors ``classify_lounge_access`` so that ``ordering`` can rank by
+    entitlement instead of by the free-text value: a known NONE is ``0``,
+    UNLIMITED is a large sentinel (above every finite count), LIMITED is its
+    first integer, or ``1`` when the text grants access without a number, and
+    UNKNOWN is NULL. Sorting descending therefore puts unlimited first, then
+    the highest stated visit count, with unknown values last.
+
+    Parameters
+    ----------
+    queryset : QuerySet
+        CreditCard queryset to annotate.
+    field : str
+        Name of a lounge access text field on CreditCard.
+    alias : str
+        Name of the annotation to add.
+
+    Returns
+    -------
+    QuerySet
+        The annotated queryset.
+    """
+    first_number = models.Func(
+        models.F(field),
+        models.Value(COUNT_PATTERN),
+        function="SUBSTRING",
+        output_field=models.CharField(),
+    )
+    score = models.Case(
+        models.When(lounge_status_q(field, NONE), then=models.Value(0)),
+        models.When(
+            lounge_status_q(field, UNLIMITED),
+            then=models.Value(UNLIMITED_ENTITLEMENT),
+        ),
+        models.When(
+            lounge_status_q(field, LIMITED),
+            then=Coalesce(
+                Cast(first_number, output_field=models.IntegerField()),
+                models.Value(1),
+            ),
+        ),
+        default=models.Value(None),
+        output_field=models.IntegerField(),
+    )
+    return queryset.annotate(**{alias: score})
 
 
 def filter_lounge_count_min(queryset, field, minimum):

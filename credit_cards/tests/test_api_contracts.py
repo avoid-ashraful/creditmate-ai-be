@@ -197,6 +197,28 @@ class CreditCardAPIContractTests(APITestCase):
         self.assertIsInstance(response.data["annual_fee_min"], list)
         self.assertIn("Enter a number.", response.data["annual_fee_min"][0])
 
+    def test_non_integer_ids_return_error_envelope(self):
+        CreditCardFactory()
+
+        for param in ("ids", "bank_ids"):
+            response = self.client.get("/api/v1/credit-cards/", {param: "abc"})
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(set(response.data.keys()), {param})
+            self.assertIsInstance(response.data[param], list)
+            self.assertIn("whole number", response.data[param][0])
+
+    def test_non_integer_pagination_returns_error_envelope(self):
+        CreditCardFactory()
+
+        for param, value in (("page", "abc"), ("page_size", "abc")):
+            response = self.client.get("/api/v1/credit-cards/", {param: value})
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(set(response.data.keys()), {param})
+            self.assertIsInstance(response.data[param], list)
+            self.assertIn("integer", response.data[param][0])
+
     def test_unknown_detail_returns_error_shape(self):
         CreditCardFactory()
         unavailable_id = CreditCard.objects.latest("id").id + 1
