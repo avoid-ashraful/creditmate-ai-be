@@ -1,5 +1,5 @@
-# Use Python 3.12 slim image
-FROM python:3.12-slim
+# Use Python 3.14 slim image
+FROM python:3.14-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -21,13 +21,13 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.10 /uv /usr/local/bin/uv
 
 # Copy pyproject.toml, uv.lock, and README.md
 COPY pyproject.toml uv.lock README.md ./
 
 # Install Python dependencies
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy project
 COPY . .
@@ -37,7 +37,7 @@ RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
 USER app
 
-EXPOSE $PORT
+EXPOSE 8000
 
 # Default command - use PORT environment variable
-CMD ["sh", "-c", "uv run gunicorn --bind 0.0.0.0:${PORT:-8000} credit_mate_ai.wsgi:application"]
+CMD ["sh", "-c", "exec /app/.venv/bin/gunicorn --bind 0.0.0.0:${PORT:-8000} credit_mate_ai.wsgi:application"]

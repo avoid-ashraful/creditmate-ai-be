@@ -21,7 +21,7 @@ class PublicReviewListCreateView(ReviewWriteThrottleMixin, generics.ListCreateAP
     serializer_class = CardReviewSerializer
     # Use default throttles for reads; ReviewWriteThrottleMixin applies
     # ReviewUserThrottle only to write requests (POST).
-    throttle_classes = []
+    throttle_classes = [ReviewUserThrottle]
 
     @extend_schema(
         tags=["reviews"],

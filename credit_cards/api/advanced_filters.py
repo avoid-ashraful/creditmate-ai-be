@@ -99,9 +99,7 @@ class CreditCardAdvancedFilter(CardDetailFilterSet):
     search = django_filters.CharFilter(method="filter_search")
 
     # Alias query parameters kept for backwards compatibility with the docs
-    q = django_filters.CharFilter(
-        method="filter_search", help_text="Alias of search"
-    )
+    q = django_filters.CharFilter(method="filter_search", help_text="Alias of search")
     category = django_filters.CharFilter(
         method="filter_categories",
         help_text="Alias of categories (comma-separated category slugs)",
@@ -131,9 +129,7 @@ class CreditCardAdvancedFilter(CardDetailFilterSet):
         }
 
     # Bank filter by name (exact or contains)
-    bank = django_filters.CharFilter(
-        field_name="bank__name", lookup_expr="icontains"
-    )
+    bank = django_filters.CharFilter(field_name="bank__name", lookup_expr="icontains")
 
     def filter_categories(self, queryset, name, value):  # noqa: C901
         """Filter by multiple categories with OR logic.
@@ -638,9 +634,7 @@ def _collect_multi_values(query_params, *keys):
     flattened = []
     for value in values:
         if isinstance(value, str):
-            flattened.extend(
-                item.strip() for item in value.split(",") if item.strip()
-            )
+            flattened.extend(item.strip() for item in value.split(",") if item.strip())
         else:
             text = str(value).strip()
             if text:

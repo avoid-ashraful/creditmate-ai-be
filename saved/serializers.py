@@ -114,9 +114,7 @@ class SavedComparisonSerializer(serializers.ModelSerializer):
         if len(value) != len(set(value)):
             raise serializers.ValidationError("Each card can appear only once.")
         published = set(
-            CreditCard.objects.public()
-            .filter(pk__in=value)
-            .values_list("pk", flat=True)
+            CreditCard.objects.public().filter(pk__in=value).values_list("pk", flat=True)
         )
         unavailable = [card_id for card_id in value if card_id not in published]
         if unavailable:

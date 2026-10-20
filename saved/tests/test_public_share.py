@@ -94,10 +94,18 @@ class TestSharedComparison:
 
         assert anonymous_client.get(url).status_code == status.HTTP_404_NOT_FOUND
 
+    @pytest.mark.parametrize(
+        "hidden_attributes",
+        [
+            {"verification_status": VerificationStatus.DRAFT},
+            {"verification_status": VerificationStatus.NEEDS_REVIEW},
+            {"is_active": False},
+        ],
+    )
     def test_shared_comparison_drops_unpublished_cards(
-        self, owner, cards, anonymous_client
+        self, owner, cards, anonymous_client, hidden_attributes
     ):
-        draft = CreditCardFactory(verification_status=VerificationStatus.DRAFT)
+        draft = CreditCardFactory(**hidden_attributes)
         comparison = _public_comparison(owner, [cards[0], draft])
 
         response = anonymous_client.get(SHARED_URL.format(token=comparison.share_token))

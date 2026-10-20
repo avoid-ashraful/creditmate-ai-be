@@ -71,8 +71,7 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pyenv
-.python-version
+# Python version is tracked for reproducible development
 
 # celery beat schedule file
 celerybeat-schedule
