@@ -5,6 +5,7 @@ from django.core.cache import cache
 from django.urls import reverse
 
 from banks.models import Bank
+from credit_cards.constants import VerificationStatus
 from credit_cards.models import CreditCard
 from reviews.models import CardReview
 
@@ -21,7 +22,12 @@ def verified_user(username, **kwargs):
 
 def card_setup(bank_name="Review Bank"):
     bank = Bank.objects.create(name=bank_name, website="https://example.com")
-    return CreditCard.objects.create(bank=bank, name="Review Card")
+    return CreditCard.objects.create(
+        bank=bank,
+        name="Review Card",
+        is_active=True,
+        verification_status=VerificationStatus.VERIFIED,
+    )
 
 
 def test_public_reviews_only_show_approved(db):
@@ -289,6 +295,22 @@ def test_review_throttle_and_public_list_query_count(db, django_assert_num_queri
     last_card = card_setup("Review Bank 6")
     payload["card"] = last_card.pk
     assert client.post(url, payload).status_code == 429
+
+
+def test_public_review_reads_are_not_write_throttled(db):
+    """Anonymous reads must not consume the 5/hour review_write scope."""
+    cache.clear()
+    card = card_setup()
+    client = APIClient()
+    for _ in range(6):
+        response = client.get(reverse("review-list"), {"card": card.pk})
+        assert response.status_code == 200
+
+
+def test_non_integer_card_param_returns_400(db):
+    response = APIClient().get(reverse("review-list"), {"card": "abc"})
+    assert response.status_code == 400
+    assert list(response.data.keys()) == ["card"]
 
 
 def test_unverified_email_cannot_create_review(db):

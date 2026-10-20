@@ -8,7 +8,7 @@ from saved.constants import MAX_CARDS_PER_COMPARISON
 from saved.models import Collection, CollectionItem, SavedComparison
 
 
-def serialize_ordered_cards(items, context):
+def serialize_ordered_cards(items, context, public_only=False):
     """Serialize comparison items as CreditCardListSerializer rows in position order.
 
     Parameters
@@ -17,12 +17,17 @@ def serialize_ordered_cards(items, context):
         Items with card and card.bank already loaded, sorted by position
     context : dict
         Serializer context forwarded to CreditCardListSerializer
+    public_only : bool
+        When True, skip items whose card is not published. Used by the
+        anonymous share payloads so drafts can never leak through a link.
 
     Returns
     -------
     list of dict
         Serialized card data, one entry per item
     """
+    if public_only:
+        items = [item for item in items if item.card.is_public]
     return CreditCardListSerializer(
         [item.card for item in items],
         many=True,
@@ -89,7 +94,7 @@ class SavedComparisonSerializer(serializers.ModelSerializer):
         return serialize_ordered_cards(obj.items.all(), self.context)
 
     def validate_card_ids(self, value):
-        """Check that card ids are unique and refer to existing cards.
+        """Check that card ids are unique and refer to published cards.
 
         Parameters
         ----------
@@ -104,16 +109,20 @@ class SavedComparisonSerializer(serializers.ModelSerializer):
         Raises
         ------
         ValidationError
-            On duplicate ids or ids that do not match any card
+            On duplicate ids or ids that do not match a published card
         """
         if len(value) != len(set(value)):
             raise serializers.ValidationError("Each card can appear only once.")
-        existing = set(
-            CreditCard.objects.filter(pk__in=value).values_list("pk", flat=True)
+        published = set(
+            CreditCard.objects.public()
+            .filter(pk__in=value)
+            .values_list("pk", flat=True)
         )
-        missing = [card_id for card_id in value if card_id not in existing]
-        if missing:
-            raise serializers.ValidationError(f"Unknown card ids: {missing}")
+        unavailable = [card_id for card_id in value if card_id not in published]
+        if unavailable:
+            raise serializers.ValidationError(
+                f"Unknown or unpublished card ids: {unavailable}"
+            )
         return value
 
     def validate(self, attrs):
@@ -200,7 +209,7 @@ class PublicSavedComparisonSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(CreditCardListSerializer(many=True))
     def get_cards(self, obj):
-        """Return the shared comparison's cards in position order.
+        """Return the shared comparison's published cards in position order.
 
         Parameters
         ----------
@@ -212,7 +221,7 @@ class PublicSavedComparisonSerializer(serializers.ModelSerializer):
         list of dict
             Serialized CreditCardListSerializer rows
         """
-        return serialize_ordered_cards(obj.items.all(), self.context)
+        return serialize_ordered_cards(obj.items.all(), self.context, public_only=True)
 
 
 class CollectionItemSerializer(serializers.ModelSerializer):
@@ -293,11 +302,28 @@ class PublicCollectionSerializer(serializers.ModelSerializer):
     None
     """
 
-    cards = CollectionItemSerializer(source="items", many=True, read_only=True)
+    cards = serializers.SerializerMethodField()
 
     class Meta:
         model = Collection
         fields = ["name", "description", "slug", "cards", "modified"]
+
+    @extend_schema_field(CollectionItemSerializer(many=True))
+    def get_cards(self, obj):
+        """Return the collection's published cards, dropping any draft rows.
+
+        Parameters
+        ----------
+        obj : Collection
+            The shared collection
+
+        Returns
+        -------
+        list of dict
+            Serialized CollectionItemSerializer rows
+        """
+        items = [item for item in obj.items.all() if item.card.is_public]
+        return CollectionItemSerializer(items, many=True, context=self.context).data
 
 
 class CollectionCardAddSerializer(serializers.Serializer):
@@ -321,7 +347,7 @@ class CollectionCardAddSerializer(serializers.Serializer):
     )
 
     def validate_card_id(self, value):
-        """Check that the card exists.
+        """Check that the card exists and is published.
 
         Parameters
         ----------
@@ -336,8 +362,8 @@ class CollectionCardAddSerializer(serializers.Serializer):
         Raises
         ------
         ValidationError
-            When no card has this id
+            When no published card has this id
         """
-        if not CreditCard.objects.filter(pk=value).exists():
-            raise serializers.ValidationError("Unknown card id.")
+        if not CreditCard.objects.public().filter(pk=value).exists():
+            raise serializers.ValidationError("Unknown or unpublished card id.")
         return value

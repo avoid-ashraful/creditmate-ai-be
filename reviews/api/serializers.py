@@ -4,12 +4,17 @@ from rest_framework import serializers
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.html import strip_tags
 
+from credit_cards.models import CreditCard
 from reviews.models import CardReview, ReviewVote
 from reviews.validators import clean_review_text
 
 
 class CardReviewSerializer(serializers.ModelSerializer):
     reviewer_name = serializers.SerializerMethodField()
+    card = serializers.PrimaryKeyRelatedField(
+        queryset=CreditCard.objects.public(),
+        help_text="Published card the review is about.",
+    )
 
     class Meta:
         model = CardReview

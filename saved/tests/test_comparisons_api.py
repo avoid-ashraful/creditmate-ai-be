@@ -1,6 +1,8 @@
 import pytest
 from rest_framework import status
 
+from credit_cards.constants import VerificationStatus
+from credit_cards.factories import CreditCardFactory
 from saved.models import SavedComparison, SavedComparisonItem
 
 COMPARISONS_URL = "/api/v1/saved/comparisons/"
@@ -112,6 +114,15 @@ class TestCreateComparison:
         missing = cards[-1].pk + 1000
 
         response = _create(owner_client, "Ghost", [cards[0].pk, missing])
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "card_ids" in response.data
+        assert SavedComparison.objects.count() == 0
+
+    def test_unpublished_card_is_rejected(self, owner_client, cards):
+        draft = CreditCardFactory(verification_status=VerificationStatus.DRAFT)
+
+        response = _create(owner_client, "Draft", [cards[0].pk, draft.pk])
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "card_ids" in response.data
@@ -235,6 +246,20 @@ class TestUpdateComparison:
             _detail_url(comparison.pk),
             {"card_ids": [card.pk for card in cards]},
             format="json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert list(comparison.items.values_list("card_id", flat=True)) == [cards[0].pk]
+
+    def test_patch_with_unpublished_card_is_rejected(self, owner, owner_client, cards):
+        comparison = SavedComparison.objects.create(user=owner, name="NoDrafts")
+        SavedComparisonItem.objects.create(
+            comparison=comparison, card=cards[0], position=0
+        )
+        draft = CreditCardFactory(verification_status=VerificationStatus.DRAFT)
+
+        response = owner_client.patch(
+            _detail_url(comparison.pk), {"card_ids": [draft.pk]}, format="json"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST

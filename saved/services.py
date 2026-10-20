@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.http import Http404
 
+from credit_cards.models import CreditCard
 from saved.constants import (
     MAX_CARDS_PER_COLLECTION,
     MAX_COLLECTIONS_PER_USER,
@@ -12,6 +13,41 @@ from saved.constants import (
 from saved.models import Collection, CollectionItem, SavedComparison, SavedComparisonItem
 
 COPY_SUFFIX = " (copy)"
+
+
+def _require_published_cards(card_ids):
+    """Reject card ids that do not point at a published card.
+
+    The public catalogue only exposes published cards
+    (``CreditCard.objects.public()``). Saved comparisons are shareable, so a
+    private save must not be able to smuggle an unpublished (draft) card into
+    a public payload later.
+
+    Parameters
+    ----------
+    card_ids : iterable of int
+        Card primary keys about to be attached to a saved object
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValidationError
+        When any id does not match a published card
+    """
+    card_ids = list(card_ids)
+    published = set(
+        CreditCard.objects.public()
+        .filter(pk__in=card_ids)
+        .values_list("pk", flat=True)
+    )
+    unavailable = [card_id for card_id in card_ids if card_id not in published]
+    if unavailable:
+        raise ValidationError(
+            {"card_ids": [f"Unknown or unpublished card ids: {unavailable}"]}
+        )
 
 
 def _lock_owner(user):
@@ -104,6 +140,7 @@ def create_comparison(user, fields, card_ids):
             MAX_COMPARISONS_PER_USER,
             "comparisons",
         )
+        _require_published_cards(card_ids)
         comparison = SavedComparison.objects.create(user=user, **fields)
         write_comparison_cards(comparison, card_ids)
     return comparison
@@ -131,6 +168,7 @@ def update_comparison(comparison, fields, card_ids):
             setattr(comparison, attr, value)
         comparison.save()
         if card_ids is not None:
+            _require_published_cards(card_ids)
             write_comparison_cards(comparison, card_ids)
     return comparison
 
@@ -235,6 +273,8 @@ def add_card_to_collection(collection, card_id, notes):
             raise ValidationError(
                 {"card_id": ["This card is already in the collection."]}
             )
+        if not CreditCard.objects.public().filter(pk=card_id).exists():
+            raise ValidationError({"card_id": ["Unknown or unpublished card id."]})
         return CollectionItem.objects.create(
             collection=collection,
             card_id=card_id,
