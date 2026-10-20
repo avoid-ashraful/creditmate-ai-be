@@ -195,7 +195,9 @@ class LogoutView(_AuthUserThrottleMixin, APIView):
         operation_id="auth_logout",
     )
     def post(self, request):
-        serializer = LogoutSerializer(data=request.data)
+        # Pass the request so the serializer can verify that the submitted
+        # refresh token belongs to the authenticated caller before blacklisting.
+        serializer = LogoutSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         return Response(
             {"detail": _("Successfully logged out.")},
@@ -536,7 +538,9 @@ class ChangePasswordView(_AuthUserThrottleMixin, APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # Blacklist all outstanding refresh tokens for this user (password change invalidates tokens)
+        # Blacklist all outstanding refresh tokens for this user. Access tokens
+        # are invalidated by JWTAuthentication's CHECK_REVOKE_TOKEN check because
+        # the password hash stored in them no longer matches the user's password.
         self._blacklist_user_refresh_tokens(request.user)
 
         return Response(

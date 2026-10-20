@@ -58,7 +58,7 @@ ALLOWED_HOSTS = (_configured_allowed_hosts or "testserver,localhost,127.0.0.1").
 # Backend is chosen explicitly via CACHE_BACKEND ("redis" default, "locmem"
 # for local/test runs without a Redis server) to avoid import-time probes.
 CACHE_BACKEND = os.getenv("CACHE_BACKEND", "redis").lower()
-REDIS_CACHE_URL = os.getenv("REDIS_CACHE_URL", "redis://127.0.0.1:6379/1")
+REDIS_CACHE_URL = os.getenv("REDIS_CACHE_URL", "redis://127.0.0.1:6379/14")
 
 _REDIS_CACHE_CONFIG = {
     "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -438,6 +438,12 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
+    # Embed a hash of the user's password in issued tokens and reject tokens
+    # whose hash no longer matches. This invalidates outstanding access tokens
+    # immediately after a password change (refresh tokens are blacklisted by
+    # the password-change/reset views).
+    "CHECK_REVOKE_TOKEN": True,
+    "REVOKE_TOKEN_CLAIM": "hash_password",
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,

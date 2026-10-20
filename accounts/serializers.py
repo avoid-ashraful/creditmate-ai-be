@@ -5,6 +5,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import (
     TokenRefreshSerializer as SimpleJWTTokenRefreshSerializer,
 )
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.conf import settings
@@ -153,9 +154,35 @@ class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
     def validate_refresh(self, value):
-        """Validate the refresh token can be blacklisted."""
+        """Validate the refresh token belongs to the caller, then blacklist it."""
         try:
             token = RefreshToken(value)
+        except Exception:
+            raise serializers.ValidationError(_("Invalid refresh token."))
+
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        token_user_id = token.get(jwt_settings.USER_ID_CLAIM)
+        user_id = getattr(user, jwt_settings.USER_ID_FIELD, None)
+        if (
+            user is None
+            or not user.is_authenticated
+            or token_user_id is None
+            or str(token_user_id) != str(user_id)
+        ):
+            raise serializers.ValidationError(
+                _("This refresh token does not belong to you.")
+            )
+
+        # Double-check by fetching the outstanding token and verifying ownership
+        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+        jti = token.get("jti")
+        if not OutstandingToken.objects.filter(jti=jti, user=user).exists():
+            raise serializers.ValidationError(
+                _("This refresh token does not belong to you.")
+            )
+
+        try:
             token.blacklist()
         except Exception:
             raise serializers.ValidationError(_("Invalid refresh token."))

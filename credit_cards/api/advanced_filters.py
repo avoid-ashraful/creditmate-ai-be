@@ -8,7 +8,7 @@ import django_filters
 
 from django.db import models
 
-from credit_cards.api.filters import CardDetailFilterSet
+from credit_cards.api.filters import CardDetailFilterSet, IntegerInFilter
 from credit_cards.lounge import (
     card_lounge_access_q,
     filter_lounge_count_min,
@@ -90,13 +90,22 @@ class CreditCardAdvancedFilter(CardDetailFilterSet):
     has_fee_waiver = django_filters.BooleanFilter(method="filter_has_fee_waiver")
 
     # IDs filter for filtering multiple credit cards
-    ids = django_filters.BaseInFilter(field_name="id", lookup_expr="in")
+    ids = IntegerInFilter(field_name="id", lookup_expr="in")
 
     # Bank IDs filter for filtering by multiple banks
-    bank_ids = django_filters.BaseInFilter(field_name="bank", lookup_expr="in")
+    bank_ids = IntegerInFilter(field_name="bank", lookup_expr="in")
 
     # Search query parameter for full-text search
     search = django_filters.CharFilter(method="filter_search")
+
+    # Alias query parameters kept for backwards compatibility with the docs
+    q = django_filters.CharFilter(
+        method="filter_search", help_text="Alias of search"
+    )
+    category = django_filters.CharFilter(
+        method="filter_categories",
+        help_text="Alias of categories (comma-separated category slugs)",
+    )
 
     # Ordering is handled by DRF OrderingFilter, but we declare allowed fields here for documentation
     # ordering = django_filters.OrderingFilter(
@@ -120,6 +129,11 @@ class CreditCardAdvancedFilter(CardDetailFilterSet):
             "created": ["gte", "lte"],
             "modified": ["gte", "lte"],
         }
+
+    # Bank filter by name (exact or contains)
+    bank = django_filters.CharFilter(
+        field_name="bank__name", lookup_expr="icontains"
+    )
 
     def filter_categories(self, queryset, name, value):  # noqa: C901
         """Filter by multiple categories with OR logic.
@@ -597,12 +611,55 @@ def compute_facets(queryset, facet_names=None):  # noqa: C901
     return _resolve_facet_counts(queryset, facets)
 
 
+def _collect_multi_values(query_params, *keys):
+    """Collect and canonicalize one or more comma-separated query keys.
+
+    Parameters
+    ----------
+    query_params : QueryDict or dict
+        Raw query parameters from the request.
+    *keys : str
+        Parameter names that feed the same canonical value (aliases).
+
+    Returns
+    -------
+    str or None
+        Trimmed values, deduplicated and sorted, joined by commas; ``None``
+        when no key carried a value.
+    """
+    values = []
+    for key in keys:
+        if hasattr(query_params, "getlist"):
+            values.extend(query_params.getlist(key))
+        else:
+            value = query_params.get(key)
+            if value is not None:
+                values.append(value)
+    flattened = []
+    for value in values:
+        if isinstance(value, str):
+            flattened.extend(
+                item.strip() for item in value.split(",") if item.strip()
+            )
+        else:
+            text = str(value).strip()
+            if text:
+                flattened.append(text)
+    if not flattened:
+        return None
+    return ",".join(sorted(set(flattened)))
+
+
 def normalize_query_params(query_params):  # noqa: C901
     """Normalize query parameters for saved searches.
 
     This function canonicalizes query parameters so that equivalent searches
     produce the same normalized representation, enabling reliable saved search
     matching and deduplication.
+
+    Alias parameters are folded onto their canonical names (``q`` -> ``search``,
+    ``category`` -> ``categories``, ``bank`` -> ``bank_ids``) and an explicit
+    boolean ``false`` is kept because it is a real filter, not the default.
 
     Parameters
     ----------
@@ -618,9 +675,9 @@ def normalize_query_params(query_params):  # noqa: C901
 
     # Define parameter categories
     scalar_params = {
-        "search",
         "name",
         "bank_name",
+        "annual_fee",
         "annual_fee_min",
         "annual_fee_max",
         "interest_rate_min",
@@ -644,17 +701,26 @@ def normalize_query_params(query_params):  # noqa: C901
         "has_additional_features",
         "has_fee_waiver",
         "include_unknown_income",
+        "is_active",
     }
 
     # Tri-state: an explicit false is a real filter, so it is kept.
     tristate_params = {"is_islamic", "is_dual_currency"}
 
+    # Multi-value parameters, with aliases folded onto the canonical name.
     multi_value_params = {
-        "card_network",
-        "categories",
-        "ids",
-        "bank_ids",
+        "card_network": ("card_network",),
+        "categories": ("categories", "category"),
+        "ids": ("ids",),
+        "bank_ids": ("bank_ids", "bank"),
     }
+
+    # Search accepts ``search`` with ``q`` as an alias.
+    for key in ("search", "q"):
+        value = query_params.get(key)
+        if value is not None and str(value).strip():
+            normalized["search"] = str(value).strip()
+            break
 
     # Process scalar parameters
     for key in scalar_params:
@@ -662,16 +728,19 @@ def normalize_query_params(query_params):  # noqa: C901
         if value is not None and value != "":
             normalized[key] = str(value).strip()
 
-    # Process boolean parameters - only include if explicitly true
+    # Process boolean parameters - keep explicit true and false
     for key in boolean_params:
         value = query_params.get(key)
-        if value is not None:
-            if isinstance(value, str):
-                normalized_value = value.lower().strip()
-                if normalized_value in ("true", "1", "yes", "on"):
-                    normalized[key] = "true"
-            elif isinstance(value, bool) and value:
+        if value is None:
+            continue
+        if isinstance(value, str):
+            normalized_value = value.lower().strip()
+            if normalized_value in ("true", "1", "yes", "on"):
                 normalized[key] = "true"
+            elif normalized_value in ("false", "0", "no", "off"):
+                normalized[key] = "false"
+        elif isinstance(value, bool):
+            normalized[key] = "true" if value else "false"
 
     for key in tristate_params:
         value = query_params.get(key)
@@ -681,19 +750,10 @@ def normalize_query_params(query_params):  # noqa: C901
             normalized[key] = "false"
 
     # Process multi-value parameters - sort for consistency
-    for key in multi_value_params:
-        values = query_params.getlist(key) if hasattr(query_params, "getlist") else []
-        # Flatten comma-separated values from getlist (e.g., ['a,b'] -> ['a', 'b'])
-        flattened = []
-        for v in values:
-            if isinstance(v, str):
-                flattened.extend([item.strip() for item in v.split(",") if item.strip()])
-            else:
-                s = str(v).strip()
-                if s:
-                    flattened.append(s)
-        if flattened:
-            normalized[key] = ",".join(sorted(set(flattened)))
+    for key, aliases in multi_value_params.items():
+        combined = _collect_multi_values(query_params, *aliases)
+        if combined:
+            normalized[key] = combined
 
     return normalized
 
@@ -731,6 +791,16 @@ def get_sort_options():
             "key": "-interest_rate_apr",
             "label": "APR (High to Low)",
             "description": "Sort by interest rate descending",
+        },
+        {
+            "key": "-lounge_entitlement",
+            "label": "Lounge Entitlement (Most First)",
+            "description": "Sort by stated international lounge entitlement (unlimited first)",
+        },
+        {
+            "key": "lounge_entitlement",
+            "label": "Lounge Entitlement (Least First)",
+            "description": "Sort by stated international lounge entitlement ascending",
         },
         {
             "key": "-lounge_access_international",

@@ -246,6 +246,33 @@ class TestLogoutView:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "refresh" in response.data
 
+    def test_logout_rejects_another_users_refresh_token(self, api_client, user):
+        """Logout must not blacklist a refresh token owned by another user."""
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        other = User.objects.create_user(
+            username="other@example.com",
+            email="other@example.com",
+            password="securepass123",
+        )
+        other_refresh = RefreshToken.for_user(other)
+        api_client.force_authenticate(user=user)
+
+        response = api_client.post(
+            "/api/v1/auth/logout/", {"refresh": str(other_refresh)}, format="json"
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "refresh" in response.data
+
+        # The other user's refresh token must still be usable.
+        refresh_response = APIClient().post(
+            "/api/v1/auth/token/refresh/",
+            {"refresh": str(other_refresh)},
+            format="json",
+        )
+        assert refresh_response.status_code == status.HTTP_200_OK
+
     def test_logout_requires_auth(self, api_client):
         """Test logout requires authentication."""
         data = {"refresh": "some.token.here"}
@@ -620,6 +647,50 @@ class TestChangePasswordView:
 
         # The old refresh token should now be blacklisted
         assert BlacklistedToken.objects.filter(token__jti=jti).exists()
+
+    def test_change_password_invalidates_access_tokens(self, api_client, user):
+        """Old access tokens must stop authenticating after a password change."""
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        refresh = RefreshToken.for_user(user)
+        old_access = str(refresh.access_token)
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {old_access}")
+
+        # The token is valid before the password change.
+        assert api_client.get("/api/v1/auth/me/").status_code == status.HTTP_200_OK
+
+        data = {
+            "old_password": "securepass123",
+            "new_password": "newsecurepass123",
+            "new_password_confirm": "newsecurepass123",
+        }
+        response = api_client.post("/api/v1/auth/change-password/", data, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        # The old access token no longer authenticates.
+        assert api_client.get("/api/v1/auth/me/").status_code == (
+            status.HTTP_401_UNAUTHORIZED
+        )
+
+        # The old refresh token is blacklisted.
+        response = api_client.post(
+            "/api/v1/auth/token/refresh/", {"refresh": str(refresh)}, format="json"
+        )
+        # The blacklisted refresh token returns 401 (unauthorized) since
+        # the token validation fails before reaching the view logic.
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+        # A fresh login still works and its access token is accepted.
+        # Clear old credentials first
+        api_client.credentials()
+        response = api_client.post(
+            "/api/v1/auth/login/",
+            {"email": user.email, "password": "newsecurepass123"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
+        assert api_client.get("/api/v1/auth/me/").status_code == status.HTTP_200_OK
 
 
 @pytest.mark.django_db

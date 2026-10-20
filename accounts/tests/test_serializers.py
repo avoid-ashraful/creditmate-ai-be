@@ -1,5 +1,7 @@
 """Tests for accounts serializers."""
 
+from types import SimpleNamespace
+
 import pytest
 
 from django.contrib.auth import get_user_model
@@ -360,8 +362,9 @@ class TestLogoutSerializer:
         refresh = RefreshToken.for_user(user)
 
         data = {"refresh": str(refresh)}
+        request = SimpleNamespace(user=user)
 
-        serializer = LogoutSerializer(data=data)
+        serializer = LogoutSerializer(data=data, context={"request": request})
         assert serializer.is_valid(), serializer.errors
 
     def test_invalid_refresh_rejected(self):
@@ -371,6 +374,33 @@ class TestLogoutSerializer:
         serializer = LogoutSerializer(data=data)
         assert not serializer.is_valid()
         assert "refresh" in serializer.errors
+
+    def test_other_users_refresh_rejected(self):
+        """A caller cannot blacklist another user's refresh token."""
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        caller = User.objects.create_user(
+            username="caller@example.com",
+            email="caller@example.com",
+            password="securepass123",
+        )
+        other = User.objects.create_user(
+            username="other@example.com",
+            email="other@example.com",
+            password="securepass123",
+        )
+        other_refresh = RefreshToken.for_user(other)
+
+        serializer = LogoutSerializer(
+            data={"refresh": str(other_refresh)},
+            context={"request": SimpleNamespace(user=caller)},
+        )
+
+        assert not serializer.is_valid()
+        assert "refresh" in serializer.errors
+
+        # The other user's token must not have been blacklisted.
+        assert str(RefreshToken(str(other_refresh)))
 
 
 @pytest.mark.django_db

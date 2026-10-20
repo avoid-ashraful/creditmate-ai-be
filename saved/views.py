@@ -22,23 +22,28 @@ from saved.serializers import (
 )
 
 
-def _ordered_items_prefetch():
+def _ordered_items_prefetch(public_only=False):
     """Prefetch comparison items in position order with their cards loaded.
 
     Parameters
     ----------
-    None
+    public_only : bool
+        When True, only include items whose card is public (verified and active).
+        Used by public share endpoints to prevent draft cards from being loaded.
 
     Returns
     -------
     Prefetch
         Prefetch for the ``items`` relation of SavedComparison
     """
+    queryset = SavedComparisonItem.objects.select_related("card__bank").order_by(
+        "position"
+    )
+    if public_only:
+        queryset = queryset.filter(card__is_public=True)
     return Prefetch(
         "items",
-        queryset=SavedComparisonItem.objects.select_related("card__bank").order_by(
-            "position"
-        ),
+        queryset=queryset,
     )
 
 
@@ -252,7 +257,7 @@ class SharedComparisonView(APIView):
         """
         comparison = get_object_or_404(
             SavedComparison.objects.filter(is_public=True).prefetch_related(
-                _ordered_items_prefetch()
+                _ordered_items_prefetch(public_only=True)
             ),
             share_token=token,
         )
