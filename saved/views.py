@@ -11,6 +11,7 @@ from django.db.models import Prefetch
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
+from credit_cards.models import CreditCard
 from saved import services
 from saved.models import Collection, SavedComparison, SavedComparisonItem
 from saved.serializers import (
@@ -40,7 +41,7 @@ def _ordered_items_prefetch(public_only=False):
         "position"
     )
     if public_only:
-        queryset = queryset.filter(card__is_public=True)
+        queryset = queryset.filter(card__in=CreditCard.objects.public())
     return Prefetch(
         "items",
         queryset=queryset,

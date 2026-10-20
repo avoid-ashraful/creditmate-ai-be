@@ -25,7 +25,7 @@ class IntegerInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
 
     def filter(self, qs, value):
         # Ensure validation runs even when queryset is empty
-        if value is not None and value != '':
+        if value is not None and value != "":
             # This will trigger the IntegerField validation
             try:
                 self.get_filter_predicate(value)

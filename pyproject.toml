@@ -3,20 +3,20 @@ name = "credit-mate-ai"
 version = "0.1.0"
 description = "AI-powered credit card discovery platform"
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.13,<3.15"
 dependencies = [
-    "django~=5.2.3",
+    "django>=5.2.8,<5.3",
     "djangorestframework~=3.17.0",
     "djangorestframework-simplejwt~=5.5.0",
-    "django-filter~=25.1",
-    "celery~=5.5.3",
-    "redis~=6.2.0",
+    "django-filter>=26.2,<27",
+    "celery>=5.6,<6",
+    "redis>=8.1,<9",
     "requests~=2.33.0",
     "python-magic~=0.4.27",
-    "pandas~=2.3.0",
+    "pandas>=3,<4",
     "urllib3",
-    "django-cors-headers~=4.6.0",
-    "gunicorn~=23.0.0",
+    "django-cors-headers>=4.9,<5",
+    "gunicorn>=26.2,<27",
     "psycopg2-binary~=2.9.9",
     "dj-database-url",
     "python-dotenv",
@@ -30,21 +30,23 @@ dependencies = [
     "pypdf",
     "whitenoise",
     "elasticsearch>=8.18,<9",
-    "drf-spectacular~=0.28.0",
+    "drf-spectacular>=0.30,<0.31",
     "prometheus-client>=0.20.0",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest~=8.4.0",
-    "pytest-django~=4.11.1",
-    "pytest-socket~=0.7.0",
-    "pytest-cov~=6.0.0",
+    "pytest>=9,<10",
+    "pytest-django>=4.12,<5",
+    "pytest-socket>=0.8,<0.9",
+    "pytest-cov>=7,<8",
     "factory-boy~=3.3.3",
-    "black~=24.10.0",
-    "flake8~=7.1.1",
-    "isort~=5.13.2",
-    "pre-commit~=4.0.1",
+    "black>=26,<27",
+    "flake8>=7.3,<8",
+    "isort>=7,<8",
+    "pre-commit>=4.5,<5",
+    "pip-audit>=2.10,<3",
+    "bandit[toml]>=1.9,<2",
 ]
 
 [build-system]
@@ -56,7 +58,7 @@ packages = ["credit_mate_ai", "banks", "credit_cards", "common", "accounts"]
 
 [tool.black]
 line-length = 90
-target-version = ['py311']
+target-version = ['py313']
 include = '\.pyi?$'
 exclude = '''
 /(

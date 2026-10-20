@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """End-to-end smoke checks for the merged Credit Mate API."""
+
 import json
 import os
 import sys

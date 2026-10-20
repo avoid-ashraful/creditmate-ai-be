@@ -39,9 +39,7 @@ def _require_published_cards(card_ids):
     """
     card_ids = list(card_ids)
     published = set(
-        CreditCard.objects.public()
-        .filter(pk__in=card_ids)
-        .values_list("pk", flat=True)
+        CreditCard.objects.public().filter(pk__in=card_ids).values_list("pk", flat=True)
     )
     unavailable = [card_id for card_id in card_ids if card_id not in published]
     if unavailable:

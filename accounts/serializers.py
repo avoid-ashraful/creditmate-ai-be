@@ -176,6 +176,7 @@ class LogoutSerializer(serializers.Serializer):
 
         # Double-check by fetching the outstanding token and verifying ownership
         from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+
         jti = token.get("jti")
         if not OutstandingToken.objects.filter(jti=jti, user=user).exists():
             raise serializers.ValidationError(

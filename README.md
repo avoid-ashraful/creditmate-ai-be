@@ -65,7 +65,7 @@ This project is currently in active development phase. Core features are impleme
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.14 (default); Python 3.13 is also supported
 - Redis (for Celery task queue)
 - OpenAI API Key
 
@@ -83,7 +83,7 @@ This project is currently in active development phase. Core features are impleme
    pip install uv
 
    # Install project dependencies
-   uv sync --dev
+   uv sync --frozen --dev
 
    # Activate virtual environment (if not already activated)
    source .venv/bin/activate
@@ -465,3 +465,17 @@ This project is licensed under the MIT License.
   <p>
   </p>
 </div>
+
+### Runtime and CI maintenance
+
+Python 3.14 is pinned in `.python-version` and Docker; CI tests Python 3.13 and
+3.14 against the same `uv.lock`, covering in-memory and Redis cache backends. Django stays on the supported 5.2 LTS line.
+Use `uv sync --frozen --dev` for reproducible installs. Dependency upgrades must
+update `pyproject.toml` and `uv.lock` together, then pass both runtime jobs.
+
+CI enforces Black, isort, flake8, dependency consistency, the complete test suite,
+a clean PostgreSQL migration apply, OpenAPI validation, deployment settings,
+locked production dependency auditing and medium/high severity Bandit checks.
+These replace advisory grep heuristics and jobs that installed untracked tools
+or hid failures. Migration rollback is not automatic: historical data migrations
+may be irreversible and require a migration-specific recovery plan.

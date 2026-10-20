@@ -2,26 +2,34 @@ name: Tests
 
 on:
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
   push:
-    branches: [ master, main ]
+    branches: [master, main]
+
+permissions:
+  contents: read
 
 env:
-  # Environment variables for testing
-  SECRET_KEY: "test-super-long-secret-key-with-many-unique-characters-for-github-actions-12345"
+  SECRET_KEY: "ci-only-secret-key-with-sufficient-length-and-entropy-123456789"
   DEBUG: "True"
-  ALLOWED_HOSTS: "localhost,127.0.0.1"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,testserver"
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/creditmate_test"
   REDIS_CACHE_URL: "redis://localhost:6379/14"
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+      CACHE_BACKEND: ${{ matrix.cache-backend }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.12]
-
+        include:
+          - python-version: "3.13"
+            cache-backend: locmem
+          - python-version: "3.14"
+            cache-backend: redis
     services:
       postgres:
         image: postgres:17
@@ -36,7 +44,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
       redis:
         image: redis:7-alpine
         options: >-
@@ -46,58 +53,21 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/uv
-        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-uv-
-
-    - name: Install uv
-      run: |
-        python -m pip install --upgrade pip
-        pip install uv
-
-    - name: Install dependencies
-      run: |
-        uv sync --dev
-
-    - name: Check for missing migrations
-      run: |
-        uv run python manage.py makemigrations --dry-run --check
-
-    - name: Run migrations
-      run: |
-        uv run python manage.py migrate
-
-    - name: Run tests with coverage
-      run: |
-        uv run pytest --cov=banks --cov=credit_cards --cov=common --cov-report=xml --cov-report=term-missing
-
-    - name: Upload coverage reports to Codecov
-      if: matrix.python-version == '3.12'
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-
-    - name: Run Django system checks
-      run: |
-        uv run python manage.py check
-
-    - name: Test static files collection
-      run: |
-        uv run python manage.py collectstatic --noinput
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.12.10"
+          enable-cache: true
+      - run: uv sync --frozen --dev --python ${{ matrix.python-version }}
+      - name: Run complete test suite
+        run: uv run --frozen pytest --cov=accounts --cov=banks --cov=credit_cards --cov=common --cov=reviews --cov=saved --cov-report=xml --cov-report=term-missing
+      - run: uv run --frozen python manage.py check
+      - run: uv run --frozen python manage.py collectstatic --noinput
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-python-${{ matrix.python-version }}
+          path: coverage.xml
