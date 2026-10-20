@@ -1,5 +1,6 @@
 import django_filters
 
+from django import forms
 from django.db.models import Q
 
 from credit_cards.constants import CardNetwork
@@ -9,6 +10,29 @@ from credit_cards.lounge import (
     lounge_access_q,
 )
 from credit_cards.models import CreditCard
+
+
+class IntegerInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
+    """Filter on a comma-separated list of integers (e.g. ``ids=1,2``).
+
+    ``BaseInFilter`` alone treats every element as an untyped string, so a
+    non-integer value such as ``ids=abc`` reaches ``id__in`` and raises
+    ``ValueError`` (HTTP 500). Pairing it with an ``IntegerField`` turns
+    malformed values into a validation error (HTTP 400) instead.
+    """
+
+    field_class = forms.IntegerField
+
+    def filter(self, qs, value):
+        # Ensure validation runs even when queryset is empty
+        if value is not None and value != '':
+            # This will trigger the IntegerField validation
+            try:
+                self.get_filter_predicate(value)
+            except Exception:
+                # Validation will be caught by filterset.is_valid()
+                pass
+        return super().filter(qs, value)
 
 
 class CardDetailFilterSet(django_filters.FilterSet):
@@ -34,6 +58,11 @@ class CardDetailFilterSet(django_filters.FilterSet):
             "With max_min_monthly_income, also include cards with no stated "
             "minimum income"
         ),
+    )
+    annual_fee = django_filters.NumberFilter(
+        field_name="annual_fee",
+        lookup_expr="exact",
+        help_text="Exact annual fee in BDT (e.g. 0 for no-fee cards)",
     )
 
     def filter_card_network(self, queryset, name, value):
@@ -112,10 +141,10 @@ class CreditCardFilter(CardDetailFilterSet):
     has_fee_waiver = django_filters.BooleanFilter(method="filter_has_fee_waiver")
 
     # IDs filter for filtering multiple credit cards
-    ids = django_filters.BaseInFilter(field_name="id", lookup_expr="in")
+    ids = IntegerInFilter(field_name="id", lookup_expr="in")
 
     # Bank IDs filter for filtering by multiple banks
-    bank_ids = django_filters.BaseInFilter(field_name="bank", lookup_expr="in")
+    bank_ids = IntegerInFilter(field_name="bank", lookup_expr="in")
 
     class Meta:
         model = CreditCard

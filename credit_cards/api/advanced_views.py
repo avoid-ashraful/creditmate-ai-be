@@ -17,6 +17,7 @@ import django_filters
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -31,6 +32,7 @@ from credit_cards.api.advanced_filters import (
     normalize_query_params,
 )
 from credit_cards.api.serializers import CreditCardListSerializer
+from credit_cards.lounge import annotate_lounge_entitlement
 from credit_cards.models import CreditCard
 from credit_mate_ai.cache import ADVANCED_SEARCH_TTL, ADVANCED_SEARCH_VERSION_KEY
 from credit_mate_ai.metrics import increment_search
@@ -97,6 +99,11 @@ def _try_elasticsearch_search(query_params, request):
             # Map categories to ES filterable fields
             # Use "category" filter which maps to proper ES queries matching DB logic
             filters["category"] = ",".join(category_slugs)
+
+        # ``annual_fee`` is the documented alias for an exact fee match.
+        if "annual_fee" in query_params:
+            filters.pop("annual_fee", None)
+            filters["annual_fee_exact"] = query_params["annual_fee"]
 
         # Build search body with aggregations for facets
         body = build_body(
@@ -334,13 +341,25 @@ def _execute_db_search(query_params):
             "-lounge_access_international",
             "lounge_access_domestic",
             "-lounge_access_domestic",
+            "lounge_entitlement",
+            "-lounge_entitlement",
             "created",
             "-created",
             "modified",
             "-modified",
         }
         if ordering.lstrip("-") in allowed_ordering:
-            queryset = queryset.order_by(ordering)
+            if ordering.lstrip("-") == "lounge_entitlement":
+                queryset = annotate_lounge_entitlement(
+                    queryset, "lounge_access_international", "lounge_entitlement"
+                )
+                entitlement = models.F("lounge_entitlement")
+                if ordering.startswith("-"):
+                    queryset = queryset.order_by(entitlement.desc(nulls_last=True))
+                else:
+                    queryset = queryset.order_by(entitlement.asc(nulls_last=True))
+            else:
+                queryset = queryset.order_by(ordering)
     elif search_query:
         # Default to relevance-like ordering when search query present
         queryset = queryset.order_by("bank__name", "name")
@@ -572,13 +591,15 @@ ADVANCED_SEARCH_PARAMETERS = [
         name="ordering",
         type=OpenApiTypes.STR,
         location=OpenApiParameter.QUERY,
-        description="Sort field (relevance, annual_fee, -annual_fee, interest_rate_apr, -interest_rate_apr, -lounge_access_international, -lounge_access_domestic, name, -name, -created, created)",
+        description="Sort field (relevance, annual_fee, -annual_fee, interest_rate_apr, -interest_rate_apr, -lounge_entitlement, -lounge_access_international, -lounge_access_domestic, name, -name, -created, created)",
         enum=[
             "relevance",
             "annual_fee",
             "-annual_fee",
             "interest_rate_apr",
             "-interest_rate_apr",
+            "lounge_entitlement",
+            "-lounge_entitlement",
             "-lounge_access_international",
             "-lounge_access_domestic",
             "name",
@@ -649,6 +670,15 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
             _pagination_values(normalized_params)
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=400)
+
+        # Validate filters up front (ids/bank_ids, numeric ranges, ...) so a
+        # malformed value returns a 400 error envelope rather than a 500 or a
+        # silently ignored filter.
+        filterset = CreditCardAdvancedFilter(
+            normalized_params, queryset=CreditCard.objects.none()
+        )
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
 
         # Check cache
         cache_key = _build_cache_key(

@@ -1,7 +1,7 @@
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, permissions, status
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -14,13 +14,14 @@ from credit_cards.models import CreditCard
 from reviews.models import CardReview, ReviewVote
 
 from .serializers import CardReviewSerializer, ReviewVoteSerializer
-from .throttles import ReviewUserThrottle
+from .throttles import ReviewUserThrottle, ReviewWriteThrottleMixin
 
 
-class PublicReviewListCreateView(generics.ListCreateAPIView):
+class PublicReviewListCreateView(ReviewWriteThrottleMixin, generics.ListCreateAPIView):
     serializer_class = CardReviewSerializer
-    throttle_classes = [ReviewUserThrottle]
-    throttle_scope = "review_write"
+    # Use default throttles for reads; ReviewWriteThrottleMixin applies
+    # ReviewUserThrottle only to write requests (POST).
+    throttle_classes = []
 
     @extend_schema(
         tags=["reviews"],
@@ -45,7 +46,13 @@ class PublicReviewListCreateView(generics.ListCreateAPIView):
             "user", "card"
         )
         card_id = self.request.query_params.get("card")
-        return qs.filter(card_id=card_id) if card_id else qs
+        if not card_id:
+            return qs
+        try:
+            card_id = int(card_id)
+        except (TypeError, ValueError):
+            raise ValidationError({"card": ["A valid integer is required."]}) from None
+        return qs.filter(card_id=card_id)
 
     def get_permissions(self):
         return (
@@ -66,7 +73,9 @@ class PublicReviewListCreateView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user, status=CardReview.Status.PENDING)
 
 
-class OwnReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+class OwnReviewDetailView(
+    ReviewWriteThrottleMixin, generics.RetrieveUpdateDestroyAPIView
+):
     serializer_class = CardReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ReviewUserThrottle]
