@@ -412,3 +412,79 @@ class ReportIssueResponseSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(help_text="Review queue item id")
     status = serializers.CharField()
+
+
+class EligibilityCheckSerializer(serializers.Serializer):
+    """Input for the stateless eligibility checker.
+
+    Only ``monthly_income`` drives verdicts (against each card's published
+    minimum); the remaining fields are self-declarations used for the CIB
+    rule and general guidance notes. Nothing is stored.
+    """
+
+    monthly_income = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=0,
+        help_text="Your monthly income in BDT",
+    )
+    employment_type = serializers.ChoiceField(
+        choices=["salaried", "self_employed", "other"],
+        help_text="How you earn your income",
+    )
+    age = serializers.IntegerField(
+        required=False, min_value=0, max_value=120, help_text="Your age, if you wish"
+    )
+    has_tin = serializers.BooleanField(
+        required=False, help_text="Whether you hold an e-TIN certificate"
+    )
+    cib_status = serializers.ChoiceField(
+        choices=["clean", "has_issues", "unknown"],
+        required=False,
+        default="unknown",
+        help_text="Self-declared CIB status; undeclared is treated as unknown",
+    )
+    islamic_only = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text="Only consider Islamic (Shariah-compliant) cards",
+    )
+
+
+class EligibilityCardResultSerializer(serializers.Serializer):
+    """One card with its eligibility verdict and reasons."""
+
+    card = CreditCardListSerializer()
+    verdict = serializers.ChoiceField(
+        choices=["eligible", "likely", "unknown", "not_yet"]
+    )
+    reasons = serializers.ListField(child=serializers.CharField())
+
+
+class EligibilityCountsSerializer(serializers.Serializer):
+    """How many cards fell into each verdict."""
+
+    eligible = serializers.IntegerField()
+    likely = serializers.IntegerField()
+    unknown = serializers.IntegerField()
+    not_yet = serializers.IntegerField()
+
+
+class EligibilityResponseSerializer(serializers.Serializer):
+    """Full eligibility check response."""
+
+    counts = EligibilityCountsSerializer()
+    total_cards = serializers.IntegerField(
+        help_text="Cards considered (after the islamic_only filter, if set)"
+    )
+    results = EligibilityCardResultSerializer(many=True)
+    notes = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="General application guidance; these never change a verdict",
+    )
+    method = serializers.CharField(
+        help_text="What the verdicts are based on, and what they ignore"
+    )
+    disclaimer = serializers.CharField(
+        help_text="Estimates only; the issuing bank decides"
+    )

@@ -22,11 +22,24 @@ from credit_cards.api.serializers import (
     CreditCardFieldHistorySerializer,
     CreditCardListSerializer,
     CreditCardSerializer,
+    EligibilityCheckSerializer,
+    EligibilityResponseSerializer,
     ReportIssueResponseSerializer,
     ReportIssueSerializer,
     TypeaheadResponseSerializer,
 )
 from credit_cards.constants import PUBLIC_BANK_CARD_Q
+from credit_cards.eligibility import (
+    DISCLAIMER,
+    METHOD,
+    VERDICT_ELIGIBLE,
+    VERDICT_LIKELY,
+    VERDICT_NOT_YET,
+    VERDICT_ORDER,
+    VERDICT_UNKNOWN,
+    evaluate_card,
+    profile_notes,
+)
 from credit_cards.lounge import card_lounge_access_q
 from credit_cards.models import CreditCard
 from credit_mate_ai.cache import (
@@ -405,6 +418,77 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             contact_email=data.get("contact_email", ""),
         )
         return Response({"id": item.id, "status": item.status}, status=HTTP_201_CREATED)
+
+    @extend_schema(
+        request=EligibilityCheckSerializer,
+        responses={200: EligibilityResponseSerializer},
+        description=(
+            "Estimate eligibility for every public card from a monthly income "
+            "and a self-declared CIB status. Verdicts use only each card's "
+            "published minimum monthly income; cards that publish none are "
+            "reported as unknown rather than guessed. Stateless: nothing is "
+            "stored and no personal data is logged. The result is an "
+            "estimate — the issuing bank makes the final decision."
+        ),
+        tags=["credit-cards"],
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="eligibility",
+        throttle_classes=[TrustedClientRateThrottle],
+    )
+    def eligibility(self, request):
+        """Return per-card eligibility estimates for an applicant profile."""
+        serializer = EligibilityCheckSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        cards = (
+            CreditCard.objects.public()
+            .with_bank_card_counts()
+            .order_by("bank__name", "name")
+        )
+        if data["islamic_only"]:
+            cards = cards.filter(is_islamic=True)
+
+        monthly_income = data["monthly_income"]
+        cib_status = data["cib_status"]
+        evaluated = []
+        counts = {
+            VERDICT_ELIGIBLE: 0,
+            VERDICT_LIKELY: 0,
+            VERDICT_UNKNOWN: 0,
+            VERDICT_NOT_YET: 0,
+        }
+        for card in cards:
+            verdict, reasons = evaluate_card(
+                card.min_monthly_income, monthly_income, cib_status
+            )
+            counts[verdict] += 1
+            evaluated.append({"card": card, "verdict": verdict, "reasons": reasons})
+
+        evaluated.sort(
+            key=lambda item: (
+                VERDICT_ORDER[item["verdict"]],
+                item["card"].min_monthly_income is None,
+                item["card"].min_monthly_income or 0,
+                item["card"].bank.name,
+                item["card"].name,
+            )
+        )
+
+        payload = {
+            "counts": counts,
+            "total_cards": len(evaluated),
+            "results": evaluated,
+            "notes": profile_notes(
+                data["employment_type"], data.get("age"), data.get("has_tin")
+            ),
+            "method": METHOD,
+            "disclaimer": DISCLAIMER,
+        }
+        return Response(EligibilityResponseSerializer(payload).data)
 
     @extend_schema(
         parameters=[
