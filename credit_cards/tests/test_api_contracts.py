@@ -42,6 +42,8 @@ CARD_LIST_FIELDS = {
     "min_monthly_income",
     "supplementary_card_fee",
     "foreign_transaction_fee",
+    "creditmate_score",
+    "creditmate_score_breakdown",
     "created",
     "modified",
 }

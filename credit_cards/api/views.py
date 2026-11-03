@@ -42,6 +42,7 @@ from credit_cards.eligibility import (
 )
 from credit_cards.lounge import card_lounge_access_q
 from credit_cards.models import CreditCard
+from credit_cards.scoring import evaluate_score
 from credit_mate_ai.cache import (
     CARD_LIST_TTL,
     CARD_LIST_VERSION_KEY,
@@ -204,7 +205,11 @@ def _build_autocomplete_response(query, cards, banks, categories, facets, did_yo
 
 @extend_schema_view(
     list=extend_schema(
-        description="List all active credit cards with filtering and search",
+        description=(
+            "List all active credit cards with filtering and search. "
+            "Pass ordering=-creditmate_score (or creditmate_score) to rank "
+            "by the CreditMate Score instead of the database orderings."
+        ),
         tags=["credit-cards"],
     ),
     retrieve=extend_schema(
@@ -271,6 +276,49 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
             return CreditCardListSerializer
         return CreditCardSerializer
 
+    #: ``ordering`` values handled in Python by ``_list_ordered_by_score``.
+    SCORE_ORDERINGS = {"creditmate_score", "-creditmate_score"}
+
+    def _list_ordered_by_score(self, request, descending):
+        """List cards ordered by their CreditMate Score.
+
+        The score is computed in Python (see credit_cards.scoring), not
+        stored in a database column, so DRF's OrderingFilter cannot sort
+        by it. The public catalogue is small (~105 cards), so this
+        evaluates the filtered queryset, sorts it in Python, and only
+        then paginates — the ordering is therefore consistent across
+        page boundaries. Score-ordered responses are not cached: the
+        score changes whenever card data changes, and recomputing ~105
+        scores is cheap. Ties break by bank name, then card name, so
+        the order is fully deterministic.
+        """
+        queryset = self.get_queryset()
+        for backend_class in self.filter_backends:
+            if backend_class is filters.OrderingFilter:
+                continue
+            queryset = backend_class().filter_queryset(request, queryset, self)
+
+        if descending:
+            key = lambda card: (  # noqa: E731
+                -evaluate_score(card)["score"],
+                card.bank.name,
+                card.name,
+            )
+        else:
+            key = lambda card: (  # noqa: E731
+                evaluate_score(card)["score"],
+                card.bank.name,
+                card.name,
+            )
+        cards = sorted(queryset, key=key)
+
+        page = self.paginate_queryset(cards)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(cards, many=True)
+        return Response(serializer.data)
+
     def list(self, request, *args, **kwargs):
         """List credit cards with query-aware caching.
 
@@ -278,7 +326,15 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
         SearchFilter ``search``) use the filter-results TTL (2 min); plain
         list requests use the card list TTL (5 min). Keys are specific to the
         normalized query parameters and request origin/path.
+        ``ordering=creditmate_score`` / ``-creditmate_score`` bypass the
+        cache and are handled by :meth:`_list_ordered_by_score`.
         """
+        ordering = (request.query_params.get("ordering") or "").strip()
+        if ordering in self.SCORE_ORDERINGS:
+            return self._list_ordered_by_score(
+                request, descending=ordering.startswith("-")
+            )
+
         filter_param_keys = set(self.filterset_class.get_filters().keys())
         has_filters = (
             any(key in request.query_params for key in filter_param_keys)
