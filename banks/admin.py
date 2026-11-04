@@ -4,7 +4,7 @@ from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
-from banks.models import Bank, BankDataSource, CrawledContent, ReviewQueue
+from banks.models import Bank, BankDataSource, CrawledContent, ReviewQueue, SyncRun
 from banks.services import ReviewQueueService
 
 
@@ -40,6 +40,7 @@ class BankDataSourceAdmin(admin.ModelAdmin):
         "bank",
         "url_display",
         "content_type",
+        "purpose",
         "is_active",
         "failed_attempt_count",
         "last_crawled_at",
@@ -47,6 +48,7 @@ class BankDataSourceAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         "content_type",
+        "purpose",
         "is_active",
         "bank",
         "last_crawled_at",
@@ -291,3 +293,28 @@ class ReviewQueueAdmin(admin.ModelAdmin):
             self.message_user(request, f"Rejected {rejected} review item(s).")
 
     reject_items.short_description = "Reject selected review items"
+
+
+@admin.register(SyncRun)
+class SyncRunAdmin(admin.ModelAdmin):
+    """Read-only audit view of nightly sync executions."""
+
+    list_display = ["id", "trigger", "status", "started_at", "finished_at"]
+    list_filter = ["status", "trigger", "started_at"]
+    readonly_fields = [
+        "trigger",
+        "status",
+        "started_at",
+        "finished_at",
+        "summary",
+        "error",
+        "created",
+        "modified",
+    ]
+    ordering = ["-started_at"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

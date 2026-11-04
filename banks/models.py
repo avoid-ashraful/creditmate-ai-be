@@ -8,6 +8,9 @@ from banks.enums import (
     ReviewPriority,
     ReviewSource,
     ReviewStatus,
+    SourcePurpose,
+    SyncRunStatus,
+    SyncTrigger,
 )
 from common.models import Audit
 
@@ -82,6 +85,16 @@ class BankDataSource(Audit):
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE, related_name="data_sources")
     url = models.URLField(max_length=1024, validators=[URLValidator()])
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
+    purpose = models.CharField(
+        max_length=30,
+        choices=SourcePurpose.choices,
+        default=SourcePurpose.CREDIT_CARD,
+        db_index=True,
+        help_text=(
+            "Which product vertical this source feeds in the nightly sync. "
+            "Only credit_card sources enter the LLM card-extraction pipeline."
+        ),
+    )
     description = models.CharField(max_length=500, blank=True, default="")
     failed_attempt_count = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
@@ -494,3 +507,41 @@ class ReviewQueue(Audit):
 
     def __str__(self):
         return f"{self.bank.name} - {self.get_priority_display()} priority"
+
+
+class SyncRun(Audit):
+    """One execution of the nightly all-products sync.
+
+    Written by :class:`banks.services.nightly_sync.NightlySyncService` at the
+    start of every run and finalised with the run ``summary`` (sources
+    checked/changed, chart editions ingested, drafts/proposals created, LLM
+    calls used, quota state) so operators can audit sync health without
+    reading worker logs.
+    """
+
+    trigger = models.CharField(
+        max_length=20,
+        choices=SyncTrigger.choices,
+        default=SyncTrigger.SCHEDULED,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=SyncRunStatus.choices,
+        default=SyncRunStatus.RUNNING,
+        db_index=True,
+    )
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    summary = models.JSONField(default=dict, blank=True)
+    error = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ["-started_at"]
+        db_table = "banks_syncrun"
+        verbose_name = "nightly sync run"
+        verbose_name_plural = "nightly sync runs"
+
+    def __str__(self):
+        return (
+            f"SyncRun {self.pk} ({self.status}) started {self.started_at:%Y-%m-%d %H:%M}"
+        )
