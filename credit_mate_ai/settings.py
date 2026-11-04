@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     "common",
     "banks",
     "credit_cards",
+    "deposits",
     "saved",
     "search",
     "reviews",
@@ -491,6 +492,11 @@ SPECTACULAR_SETTINGS = {
         }
     ],
     "COMPONENT_SPLIT_REQUEST": True,
+    # DepositProduct.kind (fdr/dps/…) collides with another component's
+    # "kind" field name; pin its enum component name explicitly.
+    "ENUM_NAME_OVERRIDES": {
+        "DepositKindEnum": "deposits.constants.DepositKind",
+    },
 }
 
 # CORS Configuration
