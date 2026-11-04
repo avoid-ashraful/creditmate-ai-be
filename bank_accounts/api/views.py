@@ -159,9 +159,12 @@ class AccountProductViewSet(viewsets.ReadOnlyModelViewSet):
                     "(half-yearly BDT 0/100/200/250/300 by average "
                     "balance; current accounts capped at BDT 300 "
                     "half-yearly) — they do not differentiate banks. "
-                    "What differs is debit-card, SMS and online-banking "
-                    "fees, waivers, and the interest actually earned at "
-                    "your slab.",
+                    "Among the recurring charges counted in this net "
+                    "value, what differs is debit-card, SMS and "
+                    "online-banking fees, waivers, and the interest "
+                    "actually earned at your slab.",
+                    "Net value excludes cheque-book, closure and other "
+                    "one-off fees; those are shown per product.",
                     "Fees exclude 15% VAT and government excise duty on "
                     "balances, which apply equally at all banks. Figures "
                     "are steady-state (year-2) values: a first-year card "

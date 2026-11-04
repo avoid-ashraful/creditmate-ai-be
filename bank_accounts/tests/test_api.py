@@ -163,6 +163,12 @@ def test_scenario_ranks_by_net_value(client, bank):
         "fixed by" in note and "Bangladesh Bank" in note
         for note in response.data["notes"]
     )
+    # The net value counts recurring charges only; the exclusion of
+    # one-off fees (cheque-book, closure, ...) must be disclosed.
+    assert any(
+        "Net value excludes cheque-book, closure and other one-off fees" in note
+        for note in response.data["notes"]
+    )
 
 
 @pytest.mark.django_db

@@ -65,6 +65,32 @@ def test_pick_fee_slab_inclusive_ceilings():
     assert pick_fee_slab(BB_MAINT, Decimal("1000001"))["fee"] == "300"
 
 
+def test_pick_fee_slab_paisa_gap_resolves_to_upcoming_band():
+    # Tk 10,000.50 is above the printed ceiling of the free band, so the
+    # upcoming band's "above Tk 10,000" fee applies — not the free band.
+    assert pick_fee_slab(BB_MAINT, Decimal("10000.50"))["fee"] == "100"
+    assert pick_fee_slab(BB_MAINT, Decimal("25000.50"))["fee"] == "200"
+
+
+# BRAC Virtual Savings maintenance as seeded: Tk 200 up to Tk 50,000,
+# free above Tk 50,000 (bands stored as printed, integer bounds).
+BRAC_VIRTUAL_MAINT = [
+    {"balance_min": "0", "balance_max": "10000", "fee": "100"},
+    {"balance_min": "10001", "balance_max": "25000", "fee": "100"},
+    {"balance_min": "25001", "balance_max": "50000", "fee": "200"},
+    {"balance_min": "50001", "balance_max": None, "fee": "0"},
+]
+
+
+def test_pick_fee_slab_brac_virtual_free_above_50k_edge():
+    # Exactly Tk 50,000 is the inclusive ceiling of the Tk 200 band.
+    assert pick_fee_slab(BRAC_VIRTUAL_MAINT, Decimal("50000"))["fee"] == "200"
+    # Tk 50,000.50 sits in the paisa gap before the free band; the
+    # upcoming (free) band's semantics apply.
+    assert pick_fee_slab(BRAC_VIRTUAL_MAINT, Decimal("50000.50"))["fee"] == "0"
+    assert pick_fee_slab(BRAC_VIRTUAL_MAINT, Decimal("50001"))["fee"] == "0"
+
+
 def test_pick_fee_slab_config_schedule_boundaries():
     # The same thresholds through the *config* schedule shape used by
     # maintenance_cap_at: 10,000 -> 0; 10,001 -> 100; 50,000 -> 200;

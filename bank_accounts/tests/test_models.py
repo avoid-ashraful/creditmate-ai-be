@@ -1,5 +1,6 @@
 """Model tests: Islamic rule, variant validation, BB maintenance cap."""
 
+import logging
 from datetime import date
 
 import pytest
@@ -138,6 +139,45 @@ def test_free_above_top_band_does_not_warn(bank, fee_schedules):
     # is free above Tk 10 lakh) — only exceeding it warns.
     product = make(bank, maintenance_fee_slabs=bb_slabs(top_fee="0"))
     assert product.maintenance_warnings() == []
+
+
+@pytest.mark.django_db
+def test_maintenance_warnings_accepts_preresolved_params(bank):
+    # The admin changelist resolves the schedule params once and passes
+    # them in; validation must work from the dict alone (no schedule
+    # rows in the DB here) and still flag an over-cap fee.
+    params_by_key = {
+        SCHEDULE_SAVINGS_MAINTENANCE: {
+            "period": "half_yearly",
+            "slabs": [
+                {"up_to": "10000", "fee": "0"},
+                {"up_to": "25000", "fee": "100"},
+                {"up_to": "200000", "fee": "200"},
+                {"up_to": "1000000", "fee": "250"},
+                {"up_to": None, "fee": "300"},
+            ],
+        },
+        SCHEDULE_CURRENT_MAINTENANCE_CAP: {"period": "half_yearly", "max_fee": "300"},
+    }
+    product = make(bank, maintenance_fee_slabs=bb_slabs(top_fee="350"))
+    warnings = product.maintenance_warnings(params_by_key=params_by_key)
+    assert warnings
+    assert any("350" in w for w in warnings)
+
+
+@pytest.mark.django_db
+def test_missing_fee_schedule_config_logs_loud_warning(bank, caplog):
+    # No AccountFeeSchedule rows seeded: validation cannot run, and that
+    # must be loud (mirrors deposits' missing tax-rule warning), never a
+    # silent pass.
+    product = make(bank, maintenance_fee_slabs=bb_slabs())
+    with caplog.at_level(logging.WARNING, logger="bank_accounts.netvalue"):
+        assert product.maintenance_warnings() == []
+    assert any(
+        SCHEDULE_SAVINGS_MAINTENANCE in record.getMessage()
+        and record.levelno == logging.WARNING
+        for record in caplog.records
+    )
 
 
 @pytest.mark.django_db

@@ -17,10 +17,14 @@ Design notes
   computes at ``rate`` (the lower bound).
 * The savings maintenance fee is fixed by Bangladesh Bank on one slab
   schedule for every bank. Products store their maintenance slabs **as
-  published in the bank's own schedule of charges** (variants may charge
-  less); :meth:`AccountProduct.maintenance_warnings` compares them with
-  the dated :class:`AccountFeeSchedule` config so an over-cap figure —
-  a data error or a compliance breach — is flagged for review.
+  published in the bank's own schedule of charges** where the bank
+  publishes one (variants may charge less). A bank that publishes no
+  schedule of charges (DBBL, flagged ``bank_statement_evidence``)
+  instead carries the BB regulator schedule that its published customer
+  statement confirms, with that provenance disclosed on the product.
+  :meth:`AccountProduct.maintenance_warnings` compares the stored slabs
+  with the dated :class:`AccountFeeSchedule` config so an over-cap
+  figure — a data error or a compliance breach — is flagged for review.
 * Fees are stored **excluding VAT** (``fees_include_vat`` is False for
   SOC-sourced rows; SOCs quote fees exclusive of the 15% VAT). A fee of
   ``None`` means "not published in the sources we hold" — never zero.
@@ -330,7 +334,7 @@ class AccountProduct(Audit):
         super().save(*args, **kwargs)
 
     # --- BB maintenance-schedule validation ---------------------------------
-    def maintenance_warnings(self, on=None):
+    def maintenance_warnings(self, on=None, params_by_key=None):
         """Compare stored maintenance slabs with the BB fee schedule.
 
         Returns a list of human-readable warnings. A warning fires when a
@@ -338,6 +342,10 @@ class AccountProduct(Audit):
         balance range it covers — either a data-entry error or a genuine
         breach; both need human review. Charging *less* than the cap is
         legitimate (student/digital variants do) and is not a warning.
+
+        ``params_by_key`` lets a caller that validates many products
+        (the admin changelist) pass schedule params it resolved once,
+        instead of one query per product.
         """
         from bank_accounts.netvalue import fee_schedule_params, maintenance_cap_at
 
@@ -349,7 +357,10 @@ class AccountProduct(Audit):
             if self.account_type == AccountType.SAVINGS
             else SCHEDULE_CURRENT_MAINTENANCE_CAP
         )
-        params = fee_schedule_params(key, on=on)
+        if params_by_key is not None and key in params_by_key:
+            params = params_by_key[key]
+        else:
+            params = fee_schedule_params(key, on=on)
         if not params:
             return warnings
         for slab in self.maintenance_fee_slabs:

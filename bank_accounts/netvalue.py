@@ -31,10 +31,13 @@ Conventions
   products.
 """
 
+import logging
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
 from bank_accounts.constants import InterestBasis
+
+logger = logging.getLogger(__name__)
 
 TWO_PLACES = Decimal("0.01")
 
@@ -75,7 +78,10 @@ def pick_fee_slab(slabs, balance):
     Tk 10,000: free; above Tk 10,000 to Tk 25,000: Tk 100"), so fee
     slabs are stored as printed (``balance_min`` is the first taka of
     the band, ``balance_max`` its last) and matched inclusively. A
-    paisa-level gap between bands resolves to the lower band.
+    balance in the paisa-level gap between two bands (e.g. Tk 10,000.50,
+    above the printed ceiling of the free band) resolves to the
+    *upcoming* band, matching the printed "above Tk X" semantics of the
+    next band. A balance above every band resolves to the top band.
     """
     balance = _d(balance)
     ordered = sorted(slabs or [], key=lambda s: _d(s.get("balance_min", "0")))
@@ -84,10 +90,12 @@ def pick_fee_slab(slabs, balance):
         low = _d(slab.get("balance_min", "0"))
         high = slab.get("balance_max")
         if balance < low:
-            break
+            # Below this band's floor: either below the first band or in
+            # the gap after the previous band — the upcoming band applies.
+            return slab
         if high is None or balance <= _d(high):
             return slab
-        chosen = slab  # paisa gap: fall back to the lower band
+        chosen = slab
     return chosen
 
 
@@ -102,7 +110,13 @@ def rate_for_balance(product, balance):
 
 
 def fee_schedule_params(key, on=None):
-    """Params of the latest AccountFeeSchedule row for ``key`` effective ``on``."""
+    """Params of the latest AccountFeeSchedule row for ``key`` effective ``on``.
+
+    When no row exists the caller gets ``{}`` (and therefore no caps to
+    validate against). That fallback is deliberately loud (a warning),
+    mirroring deposits' tax-rule lookup: the BB fee schedule must come
+    from dated config data, so a missing seed must never fail silently.
+    """
     from bank_accounts.models import AccountFeeSchedule
 
     on = on or date.today()
@@ -111,7 +125,16 @@ def fee_schedule_params(key, on=None):
         .order_by("-effective_from")
         .first()
     )
-    return row.params if row else {}
+    if row is None:
+        logger.warning(
+            "No AccountFeeSchedule row for key=%s effective on %s; "
+            "maintenance-cap validation is unavailable until the "
+            "fee schedule is seeded.",
+            key,
+            on,
+        )
+        return {}
+    return row.params
 
 
 def maintenance_cap_at(params, balance):

@@ -784,6 +784,16 @@ add(
         if k not in ("debit_card_fee_annual", "sms_fee_annual")
     },
 )
+# OPEN QUESTION (checked against the live SOC, 2026-11-04): the student
+# section of City's Retail SOC (eff. 14 Oct 2025) says the College Plan
+# debit card is "First year Free" — unlike the School Plan's unqualified
+# "Free for Minor" — but publishes no College-Plan-specific card fee for
+# year 2 onwards. The steady-state figure below therefore keeps the
+# general Tk 600 card charge from the same SOC's DEBIT CARD ISSUE
+# CHARGE table (inherited via CITY_COMMON), with the first year at 0.
+# Whether City actually charges College Plan cards from year 2 is not
+# stated in the SOC and needs confirmation from the bank; do not treat
+# the 600 as plan-published until then.
 add(
     B,
     name="Student Savings – College Plan",
