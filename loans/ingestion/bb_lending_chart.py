@@ -19,10 +19,12 @@ snapshot because BB serves only the current month.
 
 The chart is regulator-published and parsed deterministically, so its
 bands auto-verify (Phase 2 decision #3). Re-running an unchanged edition
-writes nothing.
+writes nothing; if BB revises an edition in-month (same edition label,
+changed HTML), the snapshot and bands are refreshed in place.
 """
 
 import datetime
+import hashlib
 import re
 from decimal import Decimal, InvalidOperation
 
@@ -142,28 +144,42 @@ def parse_lending_chart(html):
     if table is None:
         raise ValueError("Lending chart table not found in page")
 
-    banks = _extract_bank_rows(table)
+    banks, skipped_sc_rows = _extract_bank_rows(table)
     parsed = [
         {"code": entry["code"], "categories": _merge_categories(entry["rows"])}
         for entry in banks
     ]
     anomalies = _detect_anomalies(parsed)
+    if skipped_sc_rows:
+        anomalies.append(
+            f"{skipped_sc_rows} SC-marked chart row(s) skipped: expected 14 cells"
+        )
     if not parsed:
         raise ValueError("No bank rows parsed from the lending chart")
     return edition_label, edition_month, parsed, anomalies
 
 
 def _extract_bank_rows(table):
-    """Group the table's data rows by bank (SC.2 rows join the bank above)."""
+    """Group the table's data rows by bank (SC.2 rows join the bank above).
+
+    Returns ``(banks, skipped_sc_rows)``: rows marked SC.1/SC.2 whose
+    cell count is not the expected 14 are skipped AND counted, so a BB
+    layout change (e.g. rowspan'd bank-code cells collapsing a row)
+    surfaces as a snapshot anomaly instead of silently dropping banks.
+    """
     banks = []
     current = None
+    skipped = 0
     for row in table.find_all("tr"):
         cells = [c.get_text(" ", strip=True) for c in row.find_all(["td", "th"])]
+        is_sc_row = len(cells) >= 2 and cells[1].strip().upper().startswith("SC")
         if len(cells) != 14:
+            if is_sc_row:
+                skipped += 1
             continue
         # Data rows are marked SC.1 / SC.2 in the sub-category cell; this
         # also skips the 14-cell header rows.
-        if not cells[1].strip().upper().startswith("SC"):
+        if not is_sc_row:
             continue
         code = cells[0].strip()
         if code:
@@ -172,11 +188,21 @@ def _extract_bank_rows(table):
         if current is None:
             continue
         current["rows"].append(cells)
-    return banks
+    return banks, skipped
 
 
 def _merge_categories(rows):
-    """Union of the SC.1/SC.2 bands per category: (min of mins, max of maxes)."""
+    """Union of the SC.1/SC.2 bands per category: (min of mins, max of maxes).
+
+    Union semantics: the chart splits each bank's lending into two
+    sub-rows (SC.1 and SC.2) that our product taxonomy does not
+    distinguish, so the bank's announced band for a category is the
+    union of the two. This can produce wide bands when the sub-rows
+    price very differently (e.g. City Bank's consumer-credit rows union
+    to 6.00-19.00) — that width is the bank's own announced range across
+    its sub-schemes, not a parse artefact, and the payload labels the
+    category so consumers know it is the blended consumer-credit band.
+    """
     categories = {}
     for category, column in CATEGORY_COLUMNS.items():
         lows, highs = [], []
@@ -224,42 +250,73 @@ def _resolve_bank(code):
     return bank, display_name
 
 
+def _html_digest(html):
+    return hashlib.sha256((html or "").encode("utf-8")).hexdigest()
+
+
 @transaction.atomic
 def ingest_lending_chart(html):
-    """Snapshot the edition and upsert chart bands. Idempotent per edition."""
-    edition_label, edition_month, parsed, anomalies = parse_lending_chart(html)
+    """Snapshot the edition and upsert chart bands.
 
-    snapshot, created = LendingChartSnapshot.objects.get_or_create(
-        edition_label=edition_label,
-        defaults={
-            "edition_month": edition_month,
-            "source_url": CHART_URL,
-            "raw_html": html,
-            "raw_rows": [
-                {
-                    "code": b["code"],
-                    "categories": {
-                        k: [str(v[0]), str(v[1])] for k, v in b["categories"].items()
-                    },
-                }
-                for b in parsed
-            ],
-            "anomalies": anomalies,
-        },
-    )
+    Idempotent per edition: re-running an UNCHANGED edition (same HTML
+    hash as the stored snapshot) writes nothing. If BB revises an
+    edition in-month — same edition label, changed HTML — the snapshot
+    and bands are refreshed instead of staying stale until the next
+    edition arrives.
+    """
+    edition_label, edition_month, parsed, anomalies = parse_lending_chart(html)
+    raw_rows = [
+        {
+            "code": b["code"],
+            "categories": {k: [str(v[0]), str(v[1])] for k, v in b["categories"].items()},
+        }
+        for b in parsed
+    ]
+
+    snapshot = LendingChartSnapshot.objects.filter(edition_label=edition_label).first()
+    created = snapshot is None
+    refreshed = False
+    if created:
+        snapshot = LendingChartSnapshot.objects.create(
+            edition_label=edition_label,
+            edition_month=edition_month,
+            source_url=CHART_URL,
+            raw_html=html,
+            raw_rows=raw_rows,
+            anomalies=anomalies,
+        )
+    elif _html_digest(snapshot.raw_html) != _html_digest(html):
+        snapshot.edition_month = edition_month
+        snapshot.source_url = CHART_URL
+        snapshot.raw_html = html
+        snapshot.raw_rows = raw_rows
+        snapshot.anomalies = anomalies
+        snapshot.save(
+            update_fields=[
+                "edition_month",
+                "source_url",
+                "raw_html",
+                "raw_rows",
+                "anomalies",
+            ]
+        )
+        refreshed = True
 
     stats = {
         "edition": edition_label,
         "snapshot_created": created,
+        "snapshot_refreshed": refreshed,
         "banks_seen": len(parsed),
         "bands_written": 0,
         "bands_created": 0,
         "bands_updated": 0,
+        "bands_removed": 0,
         "anomalies": anomalies,
     }
-    if not created:
+    if not created and not refreshed:
         return stats
 
+    seen_keys = set()
     for entry in parsed:
         bank, display_name = _resolve_bank(entry["code"])
         for category, (low, high) in entry["categories"].items():
@@ -283,6 +340,19 @@ def ingest_lending_chart(html):
                 },
                 **lookup,
             )
+            seen_keys.add((band.bank_id, band.institution_name, band.category))
             stats["bands_written"] += 1
             stats["bands_created" if was_created else "bands_updated"] += 1
+
+    if refreshed:
+        # Bands whose bank/category vanished from the revised edition
+        # are stale — drop them so the store mirrors the latest parse.
+        stale_pks = [
+            band.pk
+            for band in LoanChartBand.objects.all()
+            if (band.bank_id, band.institution_name, band.category) not in seen_keys
+        ]
+        if stale_pks:
+            LoanChartBand.objects.filter(pk__in=stale_pks).delete()
+            stats["bands_removed"] = len(stale_pks)
     return stats

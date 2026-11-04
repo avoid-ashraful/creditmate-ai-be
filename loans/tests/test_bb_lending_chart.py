@@ -94,6 +94,54 @@ class ParseTests(TestCase):
         # Second run of the same edition writes nothing.
         stats2 = ingest_lending_chart(FIXTURE_HTML)
         self.assertFalse(stats2["snapshot_created"])
+        self.assertFalse(stats2["snapshot_refreshed"])
         self.assertEqual(stats2["bands_written"], 0)
         self.assertEqual(LendingChartSnapshot.objects.count(), 1)
         self.assertEqual(LoanChartBand.objects.count(), 5)
+
+    def test_ingest_refreshes_a_revised_edition(self):
+        Bank.objects.create(name="BRAC Bank PLC")
+        ingest_lending_chart(FIXTURE_HTML)
+        # BB revises the edition in-month: same "October, 2026" label,
+        # BRAC's SC.1 housing band changes and its consumer band is
+        # withdrawn (blank in both sub-rows).
+        revised = FIXTURE_HTML.replace("9.22-11.22", "9.00-11.00").replace(
+            "9.72-11.72", ""
+        )
+        stats = ingest_lending_chart(revised)
+        self.assertFalse(stats["snapshot_created"])
+        self.assertTrue(stats["snapshot_refreshed"])
+        self.assertEqual(LendingChartSnapshot.objects.count(), 1)
+        snapshot = LendingChartSnapshot.objects.get()
+        self.assertEqual(snapshot.raw_html, revised)
+        # Housing band refreshed: SC.1 9.00-11.00 union SC.2 10.00-12.00
+        brac_housing = LoanChartBand.objects.get(
+            bank__name="BRAC Bank PLC", category=ChartCategory.HOUSING
+        )
+        self.assertEqual(brac_housing.rate_min, Decimal("9.00"))
+        self.assertEqual(brac_housing.rate_max, Decimal("12.00"))
+        # The withdrawn consumer band is removed, not left stale
+        self.assertFalse(
+            LoanChartBand.objects.filter(
+                bank__name="BRAC Bank PLC",
+                category=ChartCategory.CONSUMER_CREDIT,
+            ).exists()
+        )
+        self.assertEqual(stats["bands_removed"], 1)
+        # Re-running the revised edition is again a no-op
+        stats2 = ingest_lending_chart(revised)
+        self.assertFalse(stats2["snapshot_refreshed"])
+        self.assertEqual(stats2["bands_written"], 0)
+
+    def test_skipped_sc_rows_are_counted_as_an_anomaly(self):
+        # An SC-marked row with the wrong cell count (e.g. BB switches
+        # to rowspan'd bank codes) must surface, not vanish silently.
+        broken_cells = ["DBBL", "SC.1"] + ["1-2"] * 11  # 13 cells
+        broken_row = "<tr>" + "".join(f"<td>{c}</td>" for c in broken_cells) + "</tr>"
+        html = FIXTURE_HTML.replace("</table>", broken_row + "</table>")
+        _edition, _month, banks, anomalies = parse_lending_chart(html)
+        self.assertEqual({b["code"] for b in banks}, {"BRAC", "EBL", "Padma"})
+        self.assertTrue(any("skipped" in a for a in anomalies))
+        ingest_lending_chart(html)
+        snapshot = LendingChartSnapshot.objects.get()
+        self.assertTrue(any("skipped" in a for a in snapshot.anomalies))

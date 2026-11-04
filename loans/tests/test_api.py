@@ -126,11 +126,15 @@ class LoanApiTests(TestCase):
         total_min = Decimal(result["at_min_rate"]["total_cost"])
         expected = (
             Decimal("1000000")
-            + Decimal(result["at_min_rate"]["total_interest"])
+            + Decimal(result["at_min_rate"]["total_interest_or_profit"])
             + Decimal("5750.00")
         )
         self.assertEqual(total_min, expected)
         self.assertEqual(result["band"]["source"], "annexure_a")
+        # A product's own band carries no chart category
+        self.assertIsNone(result["band"]["category"])
+        # The neutral key replaced the old "total_interest" key entirely
+        self.assertNotIn("total_interest", result["at_min_rate"])
 
     def test_scenario_flags(self):
         response = self.client.post(
@@ -179,7 +183,134 @@ class LoanApiTests(TestCase):
         results = {r["product"]["name"]: r for r in response.data["results"]}
         fallback = results["No Own Band Loan"]
         self.assertEqual(fallback["band"]["source"], "bb_chart")
+        # The fallback band discloses its chart category
+        self.assertEqual(fallback["band"]["category"], "consumer_credit")
         self.assertIsNotNone(fallback["at_min_rate"])
+
+    def test_chart_fallback_category_for_car_and_detail(self):
+        # A band-less CAR product falls back to the bank's blended
+        # consumer-credit band (the BB chart has no car column) — both
+        # the scenario band and the detail effective_rate must say so.
+        car = make_product(
+            self.bank,
+            name="No Own Band Car Loan",
+            loan_type="car",
+            amount_max_bdt=6000000,
+            tenure_max_months=84,
+        )
+        LoanChartBand.objects.create(
+            bank=self.bank,
+            category="consumer_credit",
+            rate_min=Decimal("10.00"),
+            rate_max=Decimal("12.00"),
+            edition_label="October, 2026",
+        )
+        response = self.client.post(
+            "/api/v1/loan-products/scenario/",
+            {"loan_type": "car", "amount": 2000000, "tenure_months": 60},
+            format="json",
+        )
+        results = {r["product"]["name"]: r for r in response.data["results"]}
+        self.assertEqual(results["No Own Band Car Loan"]["band"]["source"], "bb_chart")
+        self.assertEqual(
+            results["No Own Band Car Loan"]["band"]["category"], "consumer_credit"
+        )
+        # Detail serializer: effective_rate carries the same category
+        response = self.client.get(f"/api/v1/loan-products/{car.slug}/")
+        self.assertEqual(response.data["effective_rate"]["source"], "bb_chart")
+        self.assertEqual(response.data["effective_rate"]["category"], "consumer_credit")
+        # ...while a product with its own band carries category None
+        response = self.client.get(f"/api/v1/loan-products/{self.personal.slug}/")
+        self.assertEqual(response.data["effective_rate"]["source"], "annexure_a")
+        self.assertIsNone(response.data["effective_rate"]["category"])
+
+    def _scenario_personal(self, **overrides):
+        payload = {
+            "loan_type": "personal",
+            "amount": 500000,
+            "tenure_months": 36,
+            "monthly_income": 40000,
+        }
+        payload.update(overrides)
+        response = self.client.post(
+            "/api/v1/loan-products/scenario/", payload, format="json"
+        )
+        self.assertEqual(response.status_code, 200)
+        results = {r["product"]["slug"]: r for r in response.data["results"]}
+        return results[self.personal.slug]
+
+    def test_scenario_income_between_segments_warns_without_flag(self):
+        # Minima: salaried 30,000 / business 50,000. Income 40,000 with
+        # no segment given: meets salaried, misses business -> warning
+        # naming both sides, NO hard income flag, still eligible.
+        result = self._scenario_personal()
+        self.assertTrue(result["eligible"])
+        flag_codes = [f["code"] for f in result["flags"]]
+        self.assertNotIn("income_below_minimum", flag_codes)
+        warnings = {w["code"]: w["message"] for w in result["warnings"]}
+        self.assertIn("income_segment_dependent", warnings)
+        self.assertIn("salaried", warnings["income_segment_dependent"])
+        self.assertIn("business", warnings["income_segment_dependent"])
+
+    def test_scenario_income_with_segment_below_its_minimum_flags(self):
+        result = self._scenario_personal(segment="business")
+        self.assertFalse(result["eligible"])
+        codes = [f["code"] for f in result["flags"]]
+        self.assertIn("income_below_minimum", codes)
+        flag = next(f for f in result["flags"] if f["code"] == "income_below_minimum")
+        self.assertIn("business", flag["message"])
+        self.assertIn("50,000", flag["message"])
+
+    def test_scenario_income_with_segment_meeting_its_minimum_is_clean(self):
+        result = self._scenario_personal(segment="salaried")
+        self.assertTrue(result["eligible"])
+        self.assertNotIn("income_below_minimum", [f["code"] for f in result["flags"]])
+        self.assertNotIn(
+            "income_segment_dependent", [w["code"] for w in result["warnings"]]
+        )
+
+    def test_scenario_income_below_all_segments_flags(self):
+        result = self._scenario_personal(monthly_income=20000)
+        self.assertFalse(result["eligible"])
+        self.assertIn("income_below_minimum", [f["code"] for f in result["flags"]])
+
+    def test_unsecured_warning_despite_higher_published_product_limit(self):
+        # Pubali shape: the product publishes an unsecured limit (Tk 20
+        # lakh for its own salary-account holders) ABOVE the BB ceiling
+        # (Tk 10 lakh). Amounts between the ceiling and the product
+        # limit must still get the regulatory warning.
+        pubali_like = make_product(
+            self.bank,
+            name="Generous Unsecured Loan",
+            rate_min=Decimal("10.00"),
+            rate_max=Decimal("12.00"),
+            rate_source="product_page",
+            amount_max_bdt=4000000,
+            tenure_max_months=96,
+            unsecured_max_bdt=2000000,
+        )
+        response = self.client.post(
+            "/api/v1/loan-products/scenario/",
+            {"loan_type": "personal", "amount": 1500000, "tenure_months": 60},
+            format="json",
+        )
+        results = {r["product"]["slug"]: r for r in response.data["results"]}
+        warnings = {
+            w["code"]: w["message"] for w in results[pubali_like.slug]["warnings"]
+        }
+        self.assertIn("security_may_be_required", warnings)
+        self.assertIn("1,000,000", warnings["security_may_be_required"])
+        # Above the product's own published limit, its message wins
+        response = self.client.post(
+            "/api/v1/loan-products/scenario/",
+            {"loan_type": "personal", "amount": 2500000, "tenure_months": 60},
+            format="json",
+        )
+        results = {r["product"]["slug"]: r for r in response.data["results"]}
+        warnings = {
+            w["code"]: w["message"] for w in results[pubali_like.slug]["warnings"]
+        }
+        self.assertIn("2,000,000", warnings["security_may_be_required"])
 
     def test_scenario_formula_product_has_no_emi(self):
         make_product(
@@ -224,7 +355,7 @@ class LoanApiTests(TestCase):
         results = {r["product"]["slug"]: r for r in response.data["results"]}
         result = results[bhbfc.slug]
         self.assertEqual(
-            Decimal(result["at_min_rate"]["total_interest"]),
+            Decimal(result["at_min_rate"]["total_interest_or_profit"]),
             Decimal("2250000.00"),
         )
         self.assertEqual(Decimal(result["at_min_rate"]["emi"]), Decimal("10833.33"))

@@ -2,7 +2,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from loans.caps import product_cap_flags
-from loans.constants import LoanType
+from loans.constants import CHART_CATEGORY_FOR_TYPE, LoanType
 from loans.models import LoanFieldHistory, LoanProduct, RegulatoryCap
 
 
@@ -13,6 +13,10 @@ class EffectiveRateBandSerializer(serializers.Serializer):
     max = serializers.DecimalField(max_digits=6, decimal_places=2)
     source = serializers.CharField()
     label = serializers.CharField()
+    # The BB chart category a chart-sourced band came from (the chart
+    # has no car column, so a car band is really "consumer_credit");
+    # None for a product's own non-chart band.
+    category = serializers.CharField(allow_null=True)
 
 
 class EffectiveBandMixin:
@@ -23,6 +27,17 @@ class EffectiveBandMixin:
 
     def _band(self, obj):
         request = self.context.get("request")
+        # The scenario view preloads all chart bands in one query and
+        # shares them via the request — reuse them instead of querying.
+        preloaded = (
+            getattr(request, "_loan_chart_bands_preload", None)
+            if request is not None
+            else None
+        )
+        if preloaded is not None:
+            from loans.api.views import chart_band_for
+
+            return chart_band_for(obj, chart_bands=preloaded)
         cache = getattr(request, "_loan_chart_band_cache", None)
         if cache is None:
             cache = {}
@@ -38,11 +53,15 @@ class EffectiveBandMixin:
     @extend_schema_field(EffectiveRateBandSerializer(allow_null=True))
     def get_effective_rate(self, obj):
         if obj.rate_min is not None and obj.rate_max is not None:
+            category = None
+            if obj.rate_source == "bb_chart":
+                category = CHART_CATEGORY_FOR_TYPE.get(obj.loan_type)
             return {
                 "min": obj.rate_min,
                 "max": obj.rate_max,
                 "source": obj.rate_source,
                 "label": obj.rate_label,
+                "category": category,
             }
         band = self._band(obj)
         if band is not None:
@@ -51,6 +70,7 @@ class EffectiveBandMixin:
                 "max": band.rate_max,
                 "source": "bb_chart",
                 "label": obj.rate_label,
+                "category": band.category,
             }
         return None
 
@@ -163,6 +183,12 @@ class LoanScenarioInputSerializer(serializers.Serializer):
     tenure_months = serializers.IntegerField(min_value=1, max_value=600)
     monthly_income = serializers.IntegerField(
         min_value=0, required=False, allow_null=True
+    )
+    # Optional borrower segment (e.g. "salaried", "business"): when
+    # given, the income check uses that segment's published minimum;
+    # when omitted, an income between segment minima yields a warning.
+    segment = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, allow_null=True
     )
     islamic_only = serializers.BooleanField(required=False, default=False)
     bank = serializers.IntegerField(required=False, allow_null=True)
