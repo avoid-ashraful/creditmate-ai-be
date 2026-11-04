@@ -70,6 +70,11 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - ENVIRONMENT=production
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # LLM keys for the crawl / nightly-sync pipeline (see settings.py)
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_MAX_CALLS_PER_RUN=${LLM_MAX_CALLS_PER_RUN:-200}
     depends_on:
       - db
       - redis
@@ -93,6 +98,11 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - ENVIRONMENT=production
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # LLM keys for the crawl / nightly-sync pipeline (see settings.py)
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_MAX_CALLS_PER_RUN=${LLM_MAX_CALLS_PER_RUN:-200}
     depends_on:
       - db
       - redis
