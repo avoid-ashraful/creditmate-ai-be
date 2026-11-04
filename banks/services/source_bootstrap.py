@@ -143,7 +143,7 @@ def _register_account_sources(counts):
     from bank_accounts.models import AccountProduct
 
     soc_pairs = (
-        AccountProduct.objects.filter(bank__isnull=False)
+        AccountProduct.objects.filter(bank__isnull=False, bank__is_active=True)
         .exclude(source_soc_url="")
         .values_list("bank_id", "source_soc_url")
         .distinct()
@@ -157,7 +157,7 @@ def _register_account_sources(counts):
             counts,
         )
     rate_pairs = (
-        AccountProduct.objects.filter(bank__isnull=False)
+        AccountProduct.objects.filter(bank__isnull=False, bank__is_active=True)
         .exclude(source_rate_url="")
         .values_list("bank_id", "source_rate_url")
         .distinct()
@@ -178,7 +178,7 @@ def _register_deposit_sources(counts):
     from deposits.models import DepositProduct
 
     pairs = (
-        DepositProduct.objects.filter(bank__isnull=False)
+        DepositProduct.objects.filter(bank__isnull=False, bank__is_active=True)
         .exclude(source_url="")
         .exclude(source_kind__in=[SourceKind.BB_CHART, SourceKind.NSD])
         .values_list("bank_id", "source_url")
@@ -199,7 +199,7 @@ def _register_loan_sources(counts):
     from loans.models import LoanProduct
 
     pairs = (
-        LoanProduct.objects.filter(bank__isnull=False)
+        LoanProduct.objects.filter(bank__isnull=False, bank__is_active=True)
         .exclude(source_url="")
         .exclude(source_url__contains="bb.org.bd")
         .values_list("bank_id", "source_url")
