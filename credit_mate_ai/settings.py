@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     "common",
     "banks",
     "credit_cards",
+    "loans",
     "saved",
     "search",
     "reviews",

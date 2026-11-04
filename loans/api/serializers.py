@@ -1,0 +1,148 @@
+from rest_framework import serializers
+
+from loans.caps import product_cap_flags
+from loans.models import LoanFieldHistory, LoanProduct, RegulatoryCap
+
+
+class EffectiveBandMixin:
+    """Adds the effective rate band: the product's own published band wins;
+    otherwise the bank's BB lending-chart band for the mapped category is
+    the provenance-labelled fallback; formula-priced products stay
+    band-less (their price is a spread over a deposit rate)."""
+
+    def _band(self, obj):
+        request = self.context.get("request")
+        cache = getattr(request, "_loan_chart_band_cache", None)
+        if cache is None:
+            cache = {}
+            if request is not None:
+                request._loan_chart_band_cache = cache
+        key = (obj.bank_id, obj.institution_name, obj.loan_type)
+        if key not in cache:
+            from loans.api.views import chart_band_for
+
+            cache[key] = chart_band_for(obj)
+        return cache[key]
+
+    def get_effective_rate(self, obj):
+        if obj.rate_min is not None and obj.rate_max is not None:
+            return {
+                "min": obj.rate_min,
+                "max": obj.rate_max,
+                "source": obj.rate_source,
+                "label": obj.rate_label,
+            }
+        band = self._band(obj)
+        if band is not None:
+            return {
+                "min": band.rate_min,
+                "max": band.rate_max,
+                "source": "bb_chart",
+                "label": obj.rate_label,
+            }
+        return None
+
+
+class LoanProductListSerializer(EffectiveBandMixin, serializers.ModelSerializer):
+    bank_name = serializers.SerializerMethodField()
+    lender_name = serializers.SerializerMethodField()
+    rate_label = serializers.SerializerMethodField()
+    effective_rate = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LoanProduct
+        fields = [
+            "id",
+            "slug",
+            "name",
+            "bank",
+            "bank_name",
+            "institution_name",
+            "lender_name",
+            "lender_type",
+            "loan_type",
+            "segment_tags",
+            "purpose_tags",
+            "is_islamic",
+            "shariah_mode",
+            "rate_label",
+            "rate_min",
+            "rate_max",
+            "rate_type",
+            "rate_source",
+            "spread_over_deposit_rate",
+            "uses_simple_interest",
+            "effective_rate",
+            "amount_min_bdt",
+            "amount_max_bdt",
+            "tenure_min_months",
+            "tenure_max_months",
+            "ltv_percent",
+            "processing_fee_percent",
+            "processing_fee_percent_max",
+            "processing_fee_cap_bdt",
+            "min_income_by_segment",
+            "income_metric",
+            "source_url",
+            "verified_at",
+        ]
+
+    def get_bank_name(self, obj):
+        return obj.bank.name if obj.bank_id else None
+
+    def get_lender_name(self, obj):
+        return obj.lender_display_name
+
+    def get_rate_label(self, obj):
+        return obj.rate_label
+
+
+class LoanProductSerializer(EffectiveBandMixin, serializers.ModelSerializer):
+    bank_name = serializers.SerializerMethodField()
+    lender_name = serializers.SerializerMethodField()
+    rate_label = serializers.SerializerMethodField()
+    effective_rate = serializers.SerializerMethodField()
+    regulatory_cap_flags = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LoanProduct
+        exclude = ["created", "modified"]
+
+    def get_bank_name(self, obj):
+        return obj.bank.name if obj.bank_id else None
+
+    def get_lender_name(self, obj):
+        return obj.lender_display_name
+
+    def get_rate_label(self, obj):
+        return obj.rate_label
+
+    def get_regulatory_cap_flags(self, obj):
+        stored = list(obj.regulatory_flags or [])
+        computed = product_cap_flags(obj)
+        return stored + [f for f in computed if f not in stored]
+
+
+class LoanFieldHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LoanFieldHistory
+        fields = ["id", "field_name", "old_value", "new_value", "source", "created"]
+
+
+class RegulatoryCapSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegulatoryCap
+        fields = ["key", "effective_from", "params", "description", "source_note"]
+
+
+class LoanScenarioInputSerializer(serializers.Serializer):
+    loan_type = serializers.ChoiceField(
+        choices=["personal", "home", "car", "secured_against_deposit"]
+    )
+    amount = serializers.IntegerField(min_value=1)
+    tenure_months = serializers.IntegerField(min_value=1, max_value=600)
+    monthly_income = serializers.IntegerField(
+        min_value=0, required=False, allow_null=True
+    )
+    islamic_only = serializers.BooleanField(required=False, default=False)
+    bank = serializers.IntegerField(required=False, allow_null=True)
