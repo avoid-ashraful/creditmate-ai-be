@@ -41,9 +41,7 @@ class AccountProductAdmin(admin.ModelAdmin):
         # Resolve the dated BB fee-schedule params once per changelist
         # request; maintenance_warning_count passes them to each row's
         # validation instead of re-querying per product (N+1).
-        self._schedule_params = {
-            key: fee_schedule_params(key) for key in SCHEDULE_KEYS
-        }
+        self._schedule_params = {key: fee_schedule_params(key) for key in SCHEDULE_KEYS}
         return super().get_changelist(request, **kwargs)
 
     @admin.display(description="BB maintenance warnings")
