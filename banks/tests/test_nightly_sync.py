@@ -156,6 +156,44 @@ class TestBootstrapSyncSources:
         assert second["existing"] == first["created"]
         assert BankDataSource.objects.count() == first["created"]
 
+    def test_inactive_bank_gets_no_sources(self):
+        from bank_accounts.models import AccountProduct
+        from deposits.models import DepositProduct
+        from loans.models import LoanProduct
+
+        bank = BankFactory(
+            name="Dormant Bank",
+            is_active=False,
+            schedule_charge_url="https://dormant.example/soc.pdf",
+        )
+        AccountProduct.objects.create(
+            bank=bank,
+            name="Dormant Savings",
+            account_type="savings",
+            rate_slabs=[{"balance_min": "0", "balance_max": None, "rate": "3.00"}],
+            source_soc_url="https://dormant.example/account-soc.pdf",
+            source_rate_url="https://dormant.example/account-rates",
+        )
+        DepositProduct.objects.create(
+            bank=bank,
+            kind="fdr",
+            name="Dormant FDR",
+            slug="dormant-fdr",
+            source_url="https://dormant.example/deposit-rates",
+            source_kind="bank_rates_page",
+        )
+        LoanProduct.objects.create(
+            bank=bank,
+            loan_type="personal",
+            source_url="https://dormant.example/annexure-a.pdf",
+        )
+
+        counts = bootstrap_sync_sources()
+
+        # The BB charts still register; the inactive bank gets nothing.
+        assert counts["created"] > 0
+        assert not BankDataSource.objects.filter(bank=bank).exists()
+
     def test_shared_url_keeps_first_purpose(self, seeded_catalogues):
         bank = seeded_catalogues
         BankDataSourceFactory(
@@ -221,6 +259,7 @@ class TestNightlySyncOrchestration:
         assert run.summary["llm"]["quota_exhausted"] is False
         assert run.summary["watch"]["checked"] == 0
         assert run.summary["errors"] == []
+        assert run.error == ""
         assert SyncRun.objects.count() == 1
 
     def test_quota_exhaustion_degrades_gracefully(self, caplog):
@@ -253,6 +292,36 @@ class TestNightlySyncOrchestration:
         assert run.summary["charts"]["lending"]["banks_seen"] == 61
         assert run.summary["cards"]["sources_checked"] == 2
         assert len(run.summary["errors"]) == 2
+        # The failure trail is carried on the run row itself.
+        assert "bb unreachable" in run.error
+
+    def test_chart_failure_does_not_increment_failed_attempts(self):
+        """Chart registry rows are bookkeeping only: a failed deterministic
+        chart ingestion must not march a row toward auto-deactivation,
+        while a success still resets the counter."""
+        from deposits.constants import BB_DEPOSIT_CHART_URLS, ChartSource
+        from loans.ingestion.bb_lending_chart import CHART_URL as LENDING_CHART_URL
+
+        deposit_source = BankDataSourceFactory(
+            url=BB_DEPOSIT_CHART_URLS[ChartSource.CONVENTIONAL],
+            failed_attempt_count=4,
+        )
+        lending_source = BankDataSourceFactory(
+            url=LENDING_CHART_URL,
+            failed_attempt_count=3,
+        )
+        with patch(
+            "deposits.ingestion.bb_chart.fetch_chart_html",
+            side_effect=RuntimeError("bb unreachable"),
+        ):
+            run = NightlySyncService(crawler=_mock_crawler()).run()
+
+        assert run.status == SyncRunStatus.PARTIAL
+        deposit_source.refresh_from_db()
+        lending_source.refresh_from_db()
+        assert deposit_source.failed_attempt_count == 4
+        assert deposit_source.is_active is True
+        assert lending_source.failed_attempt_count == 0
 
     def test_task_wrapper_returns_run_status(self):
         with patch(
@@ -357,12 +426,123 @@ class TestWatchedSources:
         assert stats["unchanged"] == 1
         assert ReviewQueue.objects.count() == 1
 
+    def test_nul_bytes_in_content_are_stripped_not_fatal(self, crawler, source):
+        # Regression: a bank PDF extracting with embedded NUL bytes aborted
+        # the watch phase of the first live run (Postgres rejects NUL in
+        # text columns). The content must be sanitised, baselined, and then
+        # recognised as unchanged on the next check.
+        stats = self._run_watch(crawler, source, "soc\x00v1\x00")
+        assert stats["baselined"] == 1
+        stored = CrawledContent.objects.get(data_source=source)
+        assert "\x00" not in stored.extracted_content
+        stats = self._run_watch(crawler, source, "soc\x00v1\x00")
+        assert stats["unchanged"] == 1
+
     def test_failed_fetch_counts_failed(self, crawler, source):
         crawler._extract_content_safely = MagicMock(return_value=None)
         summary = {}
         NightlySyncService(crawler=crawler)._sync_watch_sources(summary)
         assert summary["watch"]["failed"] == 1
         assert ReviewQueue.objects.count() == 0
+
+    def _run_watch_real(self, crawler):
+        """Run the watch phase with the crawler's REAL extraction helper,
+        so failure runs create their real FAILED CrawledContent record."""
+        summary = {}
+        NightlySyncService(crawler=crawler)._sync_watch_sources(summary)
+        return summary["watch"]
+
+    def test_failed_fetch_does_not_create_phantom_change(self, crawler, source):
+        from banks.exceptions import NetworkError
+
+        extractor = crawler.content_extractor
+        extractor.last_extraction_method = "pdf_text"
+        extractor.extract_content.return_value = ("soc v1", "soc v1")
+
+        stats = self._run_watch_real(crawler)
+        assert stats["baselined"] == 1
+
+        # A failed night: the real helper records a FAILED row whose
+        # content_hash is empty.
+        extractor.extract_content.side_effect = NetworkError(
+            "connection reset", {"url": source.url}
+        )
+        stats = self._run_watch_real(crawler)
+        assert stats["failed"] == 1
+        failed_row = CrawledContent.objects.get(
+            data_source=source, processing_status=ProcessingStatus.FAILED
+        )
+        assert failed_row.content_hash == ""
+
+        # The next successful check sees identical content: it must compare
+        # against the baseline, not the FAILED row's empty hash.
+        extractor.extract_content.side_effect = None
+        stats = self._run_watch_real(crawler)
+        assert stats["unchanged"] == 1
+        assert stats["changed"] == 0
+        assert CrawledContent.objects.filter(data_source=source).count() == 2
+        assert ReviewQueue.objects.count() == 0
+
+    def test_first_success_after_initial_failure_is_baselined(self, crawler, source):
+        from banks.exceptions import NetworkError
+
+        extractor = crawler.content_extractor
+        extractor.last_extraction_method = "pdf_text"
+        extractor.extract_content.side_effect = NetworkError(
+            "connection reset", {"url": source.url}
+        )
+        stats = self._run_watch_real(crawler)
+        assert stats["failed"] == 1
+        assert (
+            CrawledContent.objects.filter(
+                data_source=source, processing_status=ProcessingStatus.FAILED
+            ).count()
+            == 1
+        )
+
+        extractor.extract_content.side_effect = None
+        extractor.extract_content.return_value = ("soc v1", "soc v1")
+        stats = self._run_watch_real(crawler)
+        assert stats["baselined"] == 1
+        assert stats["changed"] == 0
+        assert ReviewQueue.objects.count() == 0
+        baseline = CrawledContent.objects.get(
+            data_source=source, processing_status=ProcessingStatus.COMPLETED
+        )
+        assert baseline.content_hash == hashlib.sha256(b"soc v1").hexdigest()
+
+    def test_one_source_exception_does_not_skip_later_sources(self, crawler):
+        bad = BankDataSourceFactory(
+            bank=BankFactory(name="Aardvark Bank"),
+            url="https://bad.example/soc.pdf",
+            purpose=SourcePurpose.ACCOUNT_SOC,
+        )
+        good = BankDataSourceFactory(
+            bank=BankFactory(name="Zebra Bank"),
+            url="https://good.example/soc.pdf",
+            purpose=SourcePurpose.ACCOUNT_SOC,
+        )
+        service = NightlySyncService(crawler=crawler)
+        checked_pks = []
+
+        def check(_crawler, src):
+            checked_pks.append(src.pk)
+            if src.pk == bad.pk:
+                raise RuntimeError("boom")
+            return "unchanged"
+
+        summary = {}
+        with patch.object(service, "_check_watch_source", side_effect=check):
+            service._sync_watch_sources(summary)
+
+        # Both sources were attempted, in order, despite the first raising.
+        assert checked_pks == [bad.pk, good.pk]
+        assert summary["watch"]["checked"] == 2
+        assert summary["watch"]["failed"] == 1
+        assert summary["watch"]["unchanged"] == 1
+        assert len(summary["errors"]) == 1
+        assert summary["errors"][0]["phase"] == "watch"
+        assert "boom" in summary["errors"][0]["error"]
 
 
 @pytest.mark.django_db

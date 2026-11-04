@@ -124,8 +124,14 @@ class NightlySyncService:
         else:
             run.status = SyncRunStatus.COMPLETED
         run.summary = json.loads(json.dumps(summary, default=str))
+        # Carry the failure trail on the run row itself, so sync health is
+        # auditable from the SyncRun record without digging into the summary.
+        run.error = "\n".join(
+            f"{entry.get('phase', 'sync')}: {entry.get('error', '')}"
+            for entry in summary["errors"]
+        )
         run.finished_at = timezone.now()
-        run.save(update_fields=["status", "summary", "finished_at", "modified"])
+        run.save(update_fields=["status", "summary", "error", "finished_at", "modified"])
         logger.info(
             "Nightly sync run %s finished with status %s: %s",
             run.pk,
@@ -210,8 +216,11 @@ class NightlySyncService:
             source.last_successful_crawl_at = now
             source.save(update_fields=["last_crawled_at", "last_successful_crawl_at"])
             source.reset_failed_attempts()
-        else:
-            source.increment_failed_attempts()
+        # On failure, deliberately leave failed_attempt_count untouched: the
+        # chart registry rows are bookkeeping only — the deterministic chart
+        # ingestion never consults them — so a transient chart outage (or a
+        # bot-challenged fetch) must not march the row toward the automatic
+        # deactivation threshold the card crawl spine uses.
 
     # ------------------------------------------------------------------
     # Phase 2: credit cards through the existing crawl spine
@@ -285,7 +294,21 @@ class NightlySyncService:
         crawler = self._get_crawler()
         for source in sources:
             stats["checked"] += 1
-            outcome = self._check_watch_source(crawler, source)
+            try:
+                outcome = self._check_watch_source(crawler, source)
+            except (
+                Exception
+            ) as exc:  # noqa: BLE001 - one bad source must not skip the rest
+                logger.exception(
+                    "Nightly sync watch check failed for %s - %s",
+                    source.bank.name,
+                    source.url,
+                )
+                stats["failed"] += 1
+                summary.setdefault("errors", []).append(
+                    {"phase": "watch", "source": source.url, "error": str(exc)}
+                )
+                continue
             stats[outcome] += 1
             if outcome == "changed":
                 stats["review_items_created"] += 1
@@ -296,8 +319,12 @@ class NightlySyncService:
 
         Returns one of 'unchanged', 'changed', 'baselined', 'failed'.
         Mirrors the card spine's hash semantics: the binary hash wins when
-        the extractor produced one, and the newest CrawledContent row is
-        the comparison baseline (a still-pending change is not re-flagged).
+        the extractor produced one, and the newest non-failed CrawledContent
+        row is the comparison baseline (a still-pending change is not
+        re-flagged). Failed crawl records are excluded: the extractor logs
+        failures as FAILED rows with an empty content hash, and letting one
+        become the baseline would flag a phantom change on the next
+        successful check.
         """
         extraction = crawler._extract_content_safely(source)
         if not extraction:
@@ -310,6 +337,13 @@ class NightlySyncService:
         }:
             return "failed"
 
+        # Postgres text columns cannot store NUL bytes, and some bank PDFs
+        # extract with them embedded — one such source aborted the watch
+        # phase of the first live run. Strip them before hashing so the
+        # stored content and every future comparison use the same text.
+        raw_content = raw_content.replace("\x00", "")
+        extracted_content = extracted_content.replace("\x00", "")
+
         content_hash = crawler._generate_content_hash(extracted_content)
         binary_hash = getattr(crawler.content_extractor, "last_binary_hash", "")
         if isinstance(binary_hash, str) and binary_hash:
@@ -317,6 +351,7 @@ class NightlySyncService:
 
         latest = (
             CrawledContent.objects.filter(data_source=source)
+            .exclude(processing_status=ProcessingStatus.FAILED)
             .order_by("-crawled_at", "-id")
             .first()
         )
