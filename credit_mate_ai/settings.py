@@ -132,6 +132,7 @@ INSTALLED_APPS = [
     "credit_cards",
     "deposits",
     "loans",
+    "bank_accounts",
     "saved",
     "search",
     "reviews",
@@ -495,12 +496,18 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     # DepositProduct.kind (fdr/dps/…) collides with another component's
     # "kind" field name; pin its enum component name explicitly.
-    # Likewise deposits.RateType and loans.RateType are different choice
-    # sets sharing the field name "rate_type" — pin both component names.
+    # Likewise "rate_type" exists in deposits, loans and bank_accounts
+    # with three different choice sets, and "source_kind" in deposits
+    # and bank_accounts with two — pin a distinct component name for
+    # every side so the generated components never collide.
     "ENUM_NAME_OVERRIDES": {
         "DepositKindEnum": "deposits.constants.DepositKind",
         "DepositRateTypeEnum": "deposits.constants.RateType",
         "LoanRateTypeEnum": "loans.constants.RateType",
+        "BankAccountRateTypeEnum": "bank_accounts.constants.AccountRateType",
+        "DepositSourceKindEnum": "deposits.constants.SourceKind",
+        "BankAccountSourceKindEnum": "bank_accounts.constants.AccountSourceKind",
+        "BankAccountTypeEnum": "bank_accounts.constants.AccountType",
     },
 }
 
