@@ -195,6 +195,34 @@ class TestScenario:
         gross = Decimal(results[0]["gross_maturity"])
         assert abs(gross - Decimal("20897")) < Decimal("1")
 
+    def test_dps_scenario_includes_benchmarks_not_results(
+        self, client, catalogue, tax_rules
+    ):
+        # Benchmarks are kind="scheme": a DPS scenario must still surface
+        # them in `benchmarks` (evaluated on total contributions) and
+        # never rank them among bank products.
+        response = client.post(
+            SCENARIO_URL,
+            {"kind": "dps", "monthly_instalment": "500", "months": 12},
+            format="json",
+        )
+        assert response.status_code == 200
+        data = response.data
+        ranked_names = {r["product"]["name"] for r in data["results"]}
+        assert "Benchmark Scheme" not in ranked_names
+        # The only DPS product's rates start at 36 months, so at a
+        # 12-month horizon nothing is ranked.
+        assert data["results"] == []
+        assert len(data["benchmarks"]) == 1
+        bench = data["benchmarks"][0]
+        assert bench["product"]["name"] == "Benchmark Scheme"
+        # Total contributions 500 x 12 = 6,000 as a lump sum at 11.83%
+        # simple (at_maturity) for 12 months -> 6,709.80 gross; holding
+        # 6,000 <= 5 lakh -> 5% source tax on the 709.80 interest.
+        assert Decimal(bench["gross_maturity"]) == Decimal("6709.80")
+        assert Decimal(bench["source_tax"]) == Decimal("35.49")
+        assert Decimal(bench["net_maturity"]) == Decimal("6674.31")
+
     def test_scenario_validation(self, client, catalogue):
         response = client.post(SCENARIO_URL, {"kind": "dps", "months": 12}, format="json")
         assert response.status_code == 400

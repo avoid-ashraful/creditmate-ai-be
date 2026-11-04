@@ -11,7 +11,12 @@ from deposits.ingestion.bb_chart import (
     parse_chart,
     parse_rate_cell,
 )
-from deposits.models import DepositFieldHistory, DepositProduct, DepositRate
+from deposits.models import (
+    DepositChartSnapshot,
+    DepositFieldHistory,
+    DepositProduct,
+    DepositRate,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -151,3 +156,55 @@ class TestIngestChart:
         history = DepositFieldHistory.objects.get(field_name="rate_6_12")
         assert Decimal(history.old_value["rate_min"]) == Decimal("8.38")
         assert Decimal(history.new_value["rate_min"]) == Decimal("8.60")
+
+    def test_rate_appearance_writes_history(self):
+        html = load("bb_chart_conventional_oct2026.html")
+        ingest_chart(html, "conventional", self.URL)
+        product = DepositProduct.objects.get(
+            institution_name="Bangladesh Development Bank"
+        )
+        # BDBL publishes nothing for the 2-<3y FD band in this edition.
+        assert not product.rates.filter(
+            tenure_months_min=24, tenure_months_max=36
+        ).exists()
+        # Fill the first blank FD cell of BDBL's row (the 2-<3y band).
+        marker = '<td class="text-left">BDBL</td>'
+        head, _, tail = html.partition(marker)
+        row_end = tail.index("</tr>")
+        row = tail[:row_end].replace(
+            '<td class="text-left"></td>', '<td class="text-left">9.25</td>', 1
+        )
+        changed = head + marker + row + tail[row_end:]
+        assert changed != html
+        report = ingest_chart(changed, "conventional", self.URL)
+        assert report["rates_created"] == 1
+        assert report["history_rows"] == 1
+        rate = product.rates.get(tenure_months_min=24, tenure_months_max=36)
+        assert rate.rate_min == Decimal("9.25")
+        history = DepositFieldHistory.objects.get(
+            product=product, field_name="rate_24_36"
+        )
+        assert history.old_value is None
+        assert Decimal(history.new_value["rate_min"]) == Decimal("9.25")
+
+    def test_unparseable_cell_keeps_existing_rate(self):
+        html = load("bb_chart_conventional_oct2026.html")
+        ingest_chart(html, "conventional", self.URL)
+        # AGRANI's 6m-1y FD band (8.38) becomes unreadable in the next
+        # fetch: that must NOT be read as the rate disappearing.
+        changed = html.replace(">8.38<", ">TBD<", 1)
+        assert changed != html
+        report = ingest_chart(changed, "conventional", self.URL)
+        assert report["rates_deleted"] == 0
+        product = DepositProduct.objects.get(
+            institution_name="Agrani Bank", slug__contains="agrani"
+        )
+        band = product.rates.get(tenure_months_min=6, tenure_months_max=12)
+        assert band.rate_min == Decimal("8.38")
+        # …and the cell is flagged on the snapshot for human review.
+        snapshot = DepositChartSnapshot.objects.get(
+            source="conventional", edition_label="October, 2026"
+        )
+        anomaly_types = {a["type"] for a in snapshot.anomalies}
+        assert "unparseable_rate_cell" in anomaly_types
+        assert "unparseable_rate_cell" in {a["type"] for a in report["anomalies"]}
