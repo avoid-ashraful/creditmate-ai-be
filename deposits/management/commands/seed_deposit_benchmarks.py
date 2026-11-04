@@ -51,7 +51,7 @@ TAX_RULES = [
     },
 ]
 
-# name, rate, tenure months, payout, eligibility
+# name, rate, tenure months, payout, eligibility, is_pensioner_scheme
 SCHEMES = [
     (
         "5-Year Bangladesh Sanchayapatra",
@@ -61,6 +61,7 @@ SCHEMES = [
         "Any adult Bangladeshi citizen. TIN is mandatory above the "
         "prescribed thresholds and a tax return is required for purchases "
         "above BDT 5 lakh.",
+        False,
     ),
     (
         "3-Monthly Profit Sanchayapatra",
@@ -68,6 +69,7 @@ SCHEMES = [
         36,
         PayoutStyle.QUARTERLY,
         "Any adult Bangladeshi citizen. Profit is paid every three months.",
+        False,
     ),
     (
         "Paribar (Family) Sanchayapatra",
@@ -76,6 +78,7 @@ SCHEMES = [
         PayoutStyle.MONTHLY,
         "Women, persons with disabilities, and citizens aged 65+. "
         "Profit is paid monthly.",
+        False,
     ),
     (
         "Pensioner Sanchayapatra",
@@ -84,6 +87,7 @@ SCHEMES = [
         PayoutStyle.QUARTERLY,
         "Retired government and autonomous-body employees only. Profit is "
         "paid quarterly.",
+        True,
     ),
 ]
 
@@ -106,8 +110,8 @@ class Command(BaseCommand):
                 f"tax rule {obj.key}: {'created' if created else 'updated'}"
             )
 
-        for name, rate, months, payout, eligibility in SCHEMES:
-            cap = Decimal("10000000") if "Pensioner" in name else Decimal("5000000")
+        for name, rate, months, payout, eligibility, is_pensioner in SCHEMES:
+            cap = Decimal("10000000") if is_pensioner else Decimal("5000000")
             product, created = DepositProduct.objects.update_or_create(
                 slug=_slug(name),
                 defaults={
@@ -119,6 +123,7 @@ class Command(BaseCommand):
                     "rate_type": RateType.INTEREST,
                     "is_islamic": False,
                     "is_benchmark": True,
+                    "is_pensioner_scheme": is_pensioner,
                     "payout_style": payout,
                     "tenures_months": [months],
                     "compounding": Compounding.AT_MATURITY,
