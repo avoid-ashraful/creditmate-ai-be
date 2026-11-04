@@ -34,6 +34,7 @@ from credit_cards.api.advanced_filters import (
 from credit_cards.api.serializers import CreditCardListSerializer
 from credit_cards.lounge import annotate_lounge_entitlement
 from credit_cards.models import CreditCard
+from credit_cards.scoring import evaluate_score
 from credit_mate_ai.cache import ADVANCED_SEARCH_TTL, ADVANCED_SEARCH_VERSION_KEY
 from credit_mate_ai.metrics import increment_search
 
@@ -327,9 +328,32 @@ def _execute_db_search(query_params):
     filter_set = CreditCardAdvancedFilter(query_params, queryset=queryset)
     queryset = filter_set.qs
 
-    # Apply ordering
+    # Apply ordering. The CreditMate Score lives in Python (see
+    # credit_cards.scoring), so score ordering evaluates and sorts the
+    # filtered queryset before pagination, like the main list endpoint.
     ordering = query_params.get("ordering")
-    if ordering:
+    score_ordered = ordering in {"creditmate_score", "-creditmate_score"}
+    if score_ordered:
+        descending = ordering.startswith("-")
+        cards = list(queryset)
+        if descending:
+            cards.sort(
+                key=lambda card: (
+                    -evaluate_score(card)["score"],
+                    card.bank.name,
+                    card.name,
+                )
+            )
+        else:
+            cards.sort(
+                key=lambda card: (
+                    evaluate_score(card)["score"],
+                    card.bank.name,
+                    card.name,
+                )
+            )
+        queryset = cards
+    elif ordering:
         allowed_ordering = {
             "name",
             "-name",
@@ -364,10 +388,10 @@ def _execute_db_search(query_params):
         # Default to relevance-like ordering when search query present
         queryset = queryset.order_by("bank__name", "name")
 
-    # Pagination
+    # Pagination (``queryset`` is a list when score-ordered)
     page, page_size = _pagination_values(query_params)
 
-    total = queryset.count()
+    total = len(queryset) if score_ordered else queryset.count()
     start = (page - 1) * page_size
     end = start + page_size
 
@@ -376,14 +400,15 @@ def _execute_db_search(query_params):
     # Serialize results
     serializer = CreditCardListSerializer(results, many=True)
 
-    # Compute facets
+    # Compute facets (always from the ORM queryset, even when the
+    # results above came from the Python-sorted list)
     facet_names = query_params.get("facets")
     if facet_names:
         facet_list = [f.strip() for f in facet_names.split(",") if f.strip()]
     else:
         facet_list = None
 
-    facets = compute_facets(queryset, facet_names=facet_list)
+    facets = compute_facets(filter_set.qs, facet_names=facet_list)
 
     return {
         "query": search_query,
@@ -689,8 +714,18 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
             cached_response["cached"] = True
             return Response(cached_response)
 
-        # Try Elasticsearch first
-        es_results = _try_elasticsearch_search(normalized_params, request)
+        # Try Elasticsearch first — except for CreditMate Score ordering.
+        # The score is computed in Python (credit_cards.scoring) and the
+        # Elasticsearch query builder has no score field to sort by, so
+        # an ES attempt would silently return results in its default
+        # order. The DB path implements score ordering correctly.
+        if normalized_params.get("ordering") in {
+            "creditmate_score",
+            "-creditmate_score",
+        }:
+            es_results = None
+        else:
+            es_results = _try_elasticsearch_search(normalized_params, request)
 
         if es_results is not None:
             results = es_results

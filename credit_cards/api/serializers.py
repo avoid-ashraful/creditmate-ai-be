@@ -4,6 +4,34 @@ from rest_framework import serializers
 from banks.api.serializers import BankListSerializer
 from credit_cards.constants import REPORTABLE_FIELDS
 from credit_cards.models import CreditCard, CreditCardFieldHistory
+from credit_cards.scoring import evaluate_score
+
+
+class CreditMateScoreComponentSerializer(serializers.Serializer):
+    """One component of a CreditMate Score breakdown."""
+
+    points = serializers.FloatField(help_text="Points earned, up to max")
+    max = serializers.FloatField(help_text="Maximum points for this component")
+    reason = serializers.CharField(help_text="Why these points, in plain words")
+
+
+class CreditMateScoreMixin(serializers.Serializer):
+    """Adds the CreditMate Score fields computed by credit_cards.scoring."""
+
+    creditmate_score = serializers.SerializerMethodField()
+    creditmate_score_breakdown = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.FloatField())
+    def get_creditmate_score(self, obj):
+        """CreditMate Score, 0-10 (see credit_cards.scoring)."""
+        return evaluate_score(obj)["score"]
+
+    @extend_schema_field(
+        serializers.DictField(child=CreditMateScoreComponentSerializer())
+    )
+    def get_creditmate_score_breakdown(self, obj):
+        """Per-component points, maxima and reasons behind the score."""
+        return evaluate_score(obj)["breakdown"]
 
 
 class TypeaheadCardSuggestionSerializer(serializers.Serializer):
@@ -226,7 +254,7 @@ class TypeaheadResponseSerializer(serializers.Serializer):
     match_policy = TypeaheadMatchPolicySerializer()
 
 
-class CreditCardSerializer(serializers.ModelSerializer):
+class CreditCardSerializer(CreditMateScoreMixin, serializers.ModelSerializer):
     """Serializer for CreditCard model."""
 
     bank = BankListSerializer(read_only=True)
@@ -271,6 +299,8 @@ class CreditCardSerializer(serializers.ModelSerializer):
             "has_lounge_access",
             "total_lounge_access",
             "has_annual_fee",
+            "creditmate_score",
+            "creditmate_score_breakdown",
             "created",
             "modified",
         ]
@@ -295,7 +325,7 @@ class CreditCardFieldHistorySerializer(serializers.ModelSerializer):
         ]
 
 
-class CreditCardListSerializer(serializers.ModelSerializer):
+class CreditCardListSerializer(CreditMateScoreMixin, serializers.ModelSerializer):
     """Serializer for CreditCard list views.
 
     Includes the bank identity and the detail fields the frontend transforms
@@ -345,6 +375,8 @@ class CreditCardListSerializer(serializers.ModelSerializer):
             "min_monthly_income",
             "supplementary_card_fee",
             "foreign_transaction_fee",
+            "creditmate_score",
+            "creditmate_score_breakdown",
             "created",
             "modified",
         ]

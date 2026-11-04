@@ -767,6 +767,11 @@ def get_sort_options():
             "description": "Best match first (default with search query)",
         },
         {
+            "key": "-creditmate_score",
+            "label": "CreditMate Score (Best First)",
+            "description": "Sort by CreditMate Score descending",
+        },
+        {
             "key": "annual_fee",
             "label": "Annual Fee (Low to High)",
             "description": "Sort by annual fee ascending",
