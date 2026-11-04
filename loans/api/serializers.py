@@ -1,7 +1,18 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from loans.caps import product_cap_flags
+from loans.constants import LoanType
 from loans.models import LoanFieldHistory, LoanProduct, RegulatoryCap
+
+
+class EffectiveRateBandSerializer(serializers.Serializer):
+    """Schema shape of the effective_rate object (see EffectiveBandMixin)."""
+
+    min = serializers.DecimalField(max_digits=6, decimal_places=2)
+    max = serializers.DecimalField(max_digits=6, decimal_places=2)
+    source = serializers.CharField()
+    label = serializers.CharField()
 
 
 class EffectiveBandMixin:
@@ -24,6 +35,7 @@ class EffectiveBandMixin:
             cache[key] = chart_band_for(obj)
         return cache[key]
 
+    @extend_schema_field(EffectiveRateBandSerializer(allow_null=True))
     def get_effective_rate(self, obj):
         if obj.rate_min is not None and obj.rate_max is not None:
             return {
@@ -87,12 +99,15 @@ class LoanProductListSerializer(EffectiveBandMixin, serializers.ModelSerializer)
             "verified_at",
         ]
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_bank_name(self, obj):
         return obj.bank.name if obj.bank_id else None
 
+    @extend_schema_field(serializers.CharField())
     def get_lender_name(self, obj):
         return obj.lender_display_name
 
+    @extend_schema_field(serializers.CharField())
     def get_rate_label(self, obj):
         return obj.rate_label
 
@@ -108,15 +123,19 @@ class LoanProductSerializer(EffectiveBandMixin, serializers.ModelSerializer):
         model = LoanProduct
         exclude = ["created", "modified"]
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_bank_name(self, obj):
         return obj.bank.name if obj.bank_id else None
 
+    @extend_schema_field(serializers.CharField())
     def get_lender_name(self, obj):
         return obj.lender_display_name
 
+    @extend_schema_field(serializers.CharField())
     def get_rate_label(self, obj):
         return obj.rate_label
 
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_regulatory_cap_flags(self, obj):
         stored = list(obj.regulatory_flags or [])
         computed = product_cap_flags(obj)
@@ -136,9 +155,10 @@ class RegulatoryCapSerializer(serializers.ModelSerializer):
 
 
 class LoanScenarioInputSerializer(serializers.Serializer):
-    loan_type = serializers.ChoiceField(
-        choices=["personal", "home", "car", "secured_against_deposit"]
-    )
+    # Reuse the model's canonical choices (not a literal copy) so
+    # drf-spectacular dedupes this enum with LoanProduct.loan_type
+    # instead of warning about a naming collision.
+    loan_type = serializers.ChoiceField(choices=LoanType.choices)
     amount = serializers.IntegerField(min_value=1)
     tenure_months = serializers.IntegerField(min_value=1, max_value=600)
     monthly_income = serializers.IntegerField(
