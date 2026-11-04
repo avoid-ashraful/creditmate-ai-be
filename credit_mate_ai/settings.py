@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     "common",
     "banks",
     "credit_cards",
+    "deposits",
     "loans",
     "saved",
     "search",
@@ -492,6 +493,15 @@ SPECTACULAR_SETTINGS = {
         }
     ],
     "COMPONENT_SPLIT_REQUEST": True,
+    # DepositProduct.kind (fdr/dps/…) collides with another component's
+    # "kind" field name; pin its enum component name explicitly.
+    # Likewise deposits.RateType and loans.RateType are different choice
+    # sets sharing the field name "rate_type" — pin both component names.
+    "ENUM_NAME_OVERRIDES": {
+        "DepositKindEnum": "deposits.constants.DepositKind",
+        "DepositRateTypeEnum": "deposits.constants.RateType",
+        "LoanRateTypeEnum": "loans.constants.RateType",
+    },
 }
 
 # CORS Configuration

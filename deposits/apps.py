@@ -1,0 +1,9 @@
+from django.apps import AppConfig
+
+
+class DepositsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "deposits"
+
+    def ready(self):
+        import deposits.signals  # noqa: F401
