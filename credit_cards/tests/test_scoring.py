@@ -124,6 +124,42 @@ class TestRewards:
         card = make_card(reward_points_policy="1 point per BDT 50 spent.")
         assert component(card, "rewards")["points"] == 0.3
 
+    def test_regular_rate_reason_uses_per_100_rate(self):
+        card = make_card(
+            reward_earn_rules=[
+                {"spend_unit_bdt": 50, "points_per_unit": 1, "category": "all"}
+            ]
+        )
+        assert "earns up to 2 pts per BDT 100" in component(card, "rewards")["reason"]
+
+    def test_lump_sum_bonus_reason_is_not_a_per_100_rate(self):
+        """A threshold bonus must not be restated as an earn rate.
+
+        "1,000 points for spending BDT 5,000" normalises to 20 points
+        per BDT 100, but it is a one-off monthly bonus, not a rate the
+        cardholder earns on every BDT 100. The points are unchanged
+        (the normalised rate still lands in the top band); only the
+        reason string describes the rule as published.
+        """
+        card = make_card(
+            reward_earn_rules=[
+                {
+                    "spend_unit_bdt": 5000,
+                    "points_per_unit": 1000,
+                    "category": "dining",
+                    "text": (
+                        "1,000 reward points every month by spending "
+                        "BDT 5,000 monthly at partner restaurants"
+                    ),
+                }
+            ]
+        )
+        rewards = component(card, "rewards")
+        assert rewards["points"] == 1.5
+        assert "per BDT 100" not in rewards["reason"]
+        assert "1,000" in rewards["reason"]
+        assert "BDT 5,000" in rewards["reason"]
+
 
 class TestPerks:
     def test_unlimited_both_directions_is_full_points(self):
@@ -143,6 +179,18 @@ class TestPerks:
     def test_unpublished_lounge_is_neutral_not_zero(self):
         perks = component(make_card(), "perks")
         assert perks["points"] == 0.4  # 0.2 neutral per direction
+
+    def test_limited_without_count_gets_published_band_floor(self):
+        """Count-less LIMITED access earns the published band's floor.
+
+        The published limited band is 0.45-0.65 per direction, so a
+        direction that states access without a visit count earns 0.45
+        (plus 0.2 neutral for the unpublished other direction here).
+        """
+        card = make_card(
+            lounge_access_international="Complimentary lounge access",
+        )
+        assert component(card, "perks")["points"] == 0.65
 
 
 class TestDataConfidence:
@@ -276,3 +324,60 @@ class TestAdvancedSearchScoreOrdering:
         assert options.status_code == 200
         keys = [opt["key"] for opt in options.data["sort_options"]]
         assert "-creditmate_score" in keys
+
+    def test_score_ordering_bypasses_elasticsearch(self, api_client, monkeypatch):
+        """Score ordering must use the DB path even when ES is enabled.
+
+        The Elasticsearch query builder has no CreditMate Score field
+        to sort by, so if the ES attempt ran it would return hits in
+        its own (here deliberately wrong) order. The view must skip ES
+        for score orderings and let the DB path sort by score.
+        """
+        import search.client as client_module
+        import search.service as service_module
+
+        TestScoreOrdering()._make_fee_ladder(count=3)
+
+        class WrongOrderClient:
+            """Fake ES client returning hits in ascending-score order."""
+
+            def search(self, index=None, body=None):
+                hits = [
+                    {"_source": {"name": f"Ladder Card {index:02d}"}, "_score": 1.0}
+                    for index in (2, 1, 0)
+                ]
+                return {
+                    "took": 1,
+                    "hits": {"total": {"value": 3}, "hits": hits},
+                    "aggregations": {},
+                }
+
+        class FakeSearchService:
+            def resolve_name(self, kind):
+                return "credit_cards_test"
+
+            @property
+            def client(self):
+                return WrongOrderClient()
+
+        monkeypatch.setattr(client_module, "is_enabled", lambda: True)
+        monkeypatch.setattr(client_module, "ping", lambda *args, **kwargs: True)
+        monkeypatch.setattr(service_module, "SearchService", FakeSearchService)
+
+        descending = api_client.get(self.URL, {"ordering": "-creditmate_score"})
+        assert descending.status_code == 200
+        assert descending.data["source"] == "database"
+        assert [c["name"] for c in descending.data["results"]] == [
+            "Ladder Card 00",
+            "Ladder Card 01",
+            "Ladder Card 02",
+        ]
+
+        ascending = api_client.get(self.URL, {"ordering": "creditmate_score"})
+        assert ascending.status_code == 200
+        assert ascending.data["source"] == "database"
+        assert [c["name"] for c in ascending.data["results"]] == [
+            "Ladder Card 02",
+            "Ladder Card 01",
+            "Ladder Card 00",
+        ]

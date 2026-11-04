@@ -139,16 +139,46 @@ def _interest(card):
     return points, reason
 
 
-def _best_earn_per_100(card):
-    """Best published earn rate, in points per BDT 100 spent."""
+def _best_earn_rule(card):
+    """The earn rule with the best rate, as ``(rate per BDT 100, rule)``.
+
+    Returns ``(Decimal("0"), None)`` when the card publishes no usable
+    earn rule.
+    """
     best = Decimal("0")
+    best_rule = None
     for rule in card.reward_earn_rules or []:
         unit = rule.get("spend_unit_bdt")
         points = rule.get("points_per_unit")
         if unit and points:
             rate = Decimal(str(points)) / Decimal(str(unit)) * 100
-            best = max(best, rate)
-    return best
+            if rate > best:
+                best = rate
+                best_rule = rule
+    return best, best_rule
+
+
+def _best_earn_per_100(card):
+    """Best published earn rate, in points per BDT 100 spent."""
+    return _best_earn_rule(card)[0]
+
+
+def _is_lump_sum_rule(rule):
+    """Whether an earn rule is a one-off bonus, not a per-spend rate.
+
+    Some cards publish rules like "1,000 points for spending BDT 5,000
+    in a month": a fixed bonus for reaching a spend threshold.
+    Normalising that into a per-BDT-100 rate would misstate it as an
+    ongoing earn rate, so the reason string must describe the rule as
+    published. Genuine earn rates in the catalogue award a handful of
+    points per small spend block (BDT 50-100); lump-sum bonuses award
+    hundreds of points against a block of BDT 1,000 or more.
+    """
+    if not rule:
+        return False
+    points = Decimal(str(rule.get("points_per_unit") or 0))
+    unit = Decimal(str(rule.get("spend_unit_bdt") or 0))
+    return points >= 100 or unit >= 1000
 
 
 def _band_points(value, bands, positive_points):
@@ -189,7 +219,7 @@ def _cashback_points(best_cashback):
 
 
 def _rewards(card):
-    earn_rate = _best_earn_per_100(card)
+    earn_rate, best_rule = _best_earn_rule(card)
     earn = _earn_points(earn_rate)
 
     percents = [
@@ -206,7 +236,14 @@ def _rewards(card):
 
     parts = []
     if earn_rate > 0:
-        parts.append(f"earns up to {_num(earn_rate)} pts per BDT 100")
+        if _is_lump_sum_rule(best_rule):
+            # Describe the bonus as published; the normalised per-100
+            # figure would misstate it as an ongoing earn rate.
+            bonus = Decimal(str(best_rule.get("points_per_unit")))
+            threshold = Decimal(str(best_rule.get("spend_unit_bdt")))
+            parts.append(f"bonus of {bonus:,.0f} pts for spending {_fmt_bdt(threshold)}")
+        else:
+            parts.append(f"earns up to {_num(earn_rate)} pts per BDT 100")
     if best_cashback > 0:
         parts.append(f"cashback up to {_num(best_cashback)}%")
     if not parts:
@@ -224,7 +261,7 @@ def _direction_points(value):
     if status == LIMITED:
         count = lounge_access_count(value)
         if count is None:
-            return Decimal("0.4")
+            return Decimal("0.45")
         if count >= 6:
             return Decimal("0.65")
         if count >= 3:

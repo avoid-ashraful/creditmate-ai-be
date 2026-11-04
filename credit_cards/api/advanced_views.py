@@ -684,8 +684,18 @@ class AdvancedSearchViewSet(viewsets.ViewSet):
             cached_response["cached"] = True
             return Response(cached_response)
 
-        # Try Elasticsearch first
-        es_results = _try_elasticsearch_search(normalized_params, request)
+        # Try Elasticsearch first — except for CreditMate Score ordering.
+        # The score is computed in Python (credit_cards.scoring) and the
+        # Elasticsearch query builder has no score field to sort by, so
+        # an ES attempt would silently return results in its default
+        # order. The DB path implements score ordering correctly.
+        if normalized_params.get("ordering") in {
+            "creditmate_score",
+            "-creditmate_score",
+        }:
+            es_results = None
+        else:
+            es_results = _try_elasticsearch_search(normalized_params, request)
 
         if es_results is not None:
             results = es_results
