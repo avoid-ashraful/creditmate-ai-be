@@ -131,6 +131,7 @@ INSTALLED_APPS = [
     "banks",
     "credit_cards",
     "deposits",
+    "bank_accounts",
     "saved",
     "search",
     "reviews",
@@ -496,6 +497,13 @@ SPECTACULAR_SETTINGS = {
     # "kind" field name; pin its enum component name explicitly.
     "ENUM_NAME_OVERRIDES": {
         "DepositKindEnum": "deposits.constants.DepositKind",
+        # rate_type / source_kind exist in both deposits and
+        # bank_accounts with different choice sets; pin both sides.
+        "RateTypeEnum": "deposits.constants.RateType",
+        "SourceKindEnum": "deposits.constants.SourceKind",
+        "BankAccountTypeEnum": "bank_accounts.constants.AccountType",
+        "BankAccountRateTypeEnum": "bank_accounts.constants.AccountRateType",
+        "BankAccountSourceKindEnum": "bank_accounts.constants.AccountSourceKind",
     },
 }
 
