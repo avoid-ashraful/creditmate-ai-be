@@ -12,6 +12,43 @@ class ContentType(models.TextChoices):
     CSV = "csv", "CSV"
 
 
+class SourcePurpose(models.TextChoices):
+    """What a BankDataSource feeds in the nightly product sync.
+
+    The card pipeline (LLM extraction into credit-card drafts/proposals)
+    only ever consumes ``CREDIT_CARD`` sources. Bangladesh Bank chart
+    sources are parsed deterministically by the deposits/loans ingestions
+    and never go through the LLM. The remaining purposes are *watched*
+    sources: the nightly sync change-checks them (fetch + content hash)
+    and flags changes for human review instead of auto-extracting, because
+    per-product LLM extractors for those verticals do not exist yet.
+    """
+
+    CREDIT_CARD = "credit_card", "Credit card data"
+    BB_DEPOSIT_CHART = "bb_deposit_chart", "Bangladesh Bank deposit-rate chart"
+    BB_LENDING_CHART = "bb_lending_chart", "Bangladesh Bank lending-rate chart"
+    ACCOUNT_SOC = "account_soc", "Account schedule of charges"
+    ACCOUNT_RATES = "account_rates", "Account rate sheet"
+    DEPOSIT_RATES = "deposit_rates", "Deposit rate sheet / product page"
+    LOAN_RATES = "loan_rates", "Loan Annexure-A / product page"
+
+
+class SyncRunStatus(models.TextChoices):
+    """Lifecycle states of one nightly sync execution."""
+
+    RUNNING = "running", "Running"
+    COMPLETED = "completed", "Completed"
+    PARTIAL = "partial", "Completed with phase errors"
+    FAILED = "failed", "Failed"
+
+
+class SyncTrigger(models.TextChoices):
+    """How a nightly sync execution was started."""
+
+    SCHEDULED = "scheduled", "Celery beat schedule"
+    MANUAL = "manual", "Management command / manual call"
+
+
 class ProcessingStatus(models.TextChoices):
     """Processing status choices for CrawledContent."""
 

@@ -15,6 +15,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from celery.schedules import crontab
 
 from credit_mate_ai.sentry import parse_sample_rate, sanitize_sentry_event
 
@@ -263,6 +264,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 # "-latest" alias always resolves to Google's newest fast Flash model
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+# Model pinned for the nightly sync's crawl phase when the operator has not
+# explicitly configured GEMINI_MODEL. The interactive default above
+# (gemini-flash-latest) intermittently returns 503s under load and exhausts
+# the free-tier daily quota (20 requests/day/model) quickly;
+# gemini-3.5-flash-lite is verified working end-to-end on that tier. An
+# explicit GEMINI_MODEL env var always wins, for both paths.
+NIGHTLY_SYNC_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 # Max LLM provider calls (retries/fallbacks included) in one crawl run; sources
 # left over are picked up by the next run. 0 disables the cap.
@@ -299,7 +307,11 @@ CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:63
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "UTC"
+# Beat fires on Bangladesh time so the nightly product sync runs at 02:00
+# local (see the crontab entry below). Task timestamps and storage stay UTC
+# (Django TIME_ZONE / USE_TZ above are unchanged); the other beat entries
+# use plain intervals and are unaffected by this timezone.
+CELERY_TIMEZONE = "Asia/Dhaka"
 # The alert task's lookback windows are derived from this interval.
 ALERTS_BEAT_INTERVAL_SECONDS = 3600
 CELERY_BEAT_SCHEDULE = {
@@ -312,6 +324,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "banks.tasks.crawl_all_bank_data",
         "schedule": 604800.0,
         "options": {"expires": 24 * 60 * 60},
+    },
+    # The real product sync: BB chart ingestion (deposits + loans), the
+    # change-gated card crawl, and change checks on watched
+    # accounts/deposits/loans sources. 02:00 Asia/Dhaka (CELERY_TIMEZONE).
+    "sync-all-products-nightly": {
+        "task": "banks.tasks.sync_all_products_nightly",
+        "schedule": crontab(hour=2, minute=0),
+        "options": {"expires": 6 * 60 * 60},
     },
     "monthly-data-quality-check": {
         "task": "banks.tasks.monthly_data_quality_check",

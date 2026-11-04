@@ -69,4 +69,10 @@ _search_drain_entry = search_queue_drain_entry()
 if _search_drain_entry is not None:
     app.conf.beat_schedule[SEARCH_DRAIN_BEAT_ENTRY] = _search_drain_entry
 
-app.conf.timezone = "UTC"
+# Beat scheduling timezone comes from CELERY_TIMEZONE in Django settings
+# (Asia/Dhaka, so the nightly product sync fires at 02:00 local time). Do
+# not hard-code a zone here: config_from_object already maps the setting,
+# and a literal assignment would silently override it.
+from django.conf import settings as _django_settings  # noqa: E402
+
+app.conf.timezone = getattr(_django_settings, "CELERY_TIMEZONE", "UTC")

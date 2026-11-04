@@ -8,6 +8,7 @@ No Celery-wide `acks_late`, task time limit, soft time limit, or worker-loss red
 | --- | --- | --- | --- | --- |
 | `banks.tasks.crawl_bank_data_source` | On demand | Mostly. Content hashes skip unchanged extraction, and parsed cards use `update_or_create` keyed by bank/name. Concurrent changed-content crawls can still both create `CrawledContent` rows; there is no per-source lock or transaction around the pipeline. | 3 retries, exponential countdown 60s, 120s, 240s for raised exceptions; ordinary `False` results are returned without retry. | None |
 | `banks.tasks.crawl_all_bank_data` | Weekly beat; can be called directly | Mostly, with the same crawler behavior. Re-running does not repeat card creation for the same bank/name, but crawl records and external extraction calls can repeat. | None; catches and returns errors. | Beat expiry 24h; no runtime limit |
+| `banks.tasks.sync_all_products_nightly` | Nightly beat (02:00 Asia/Dhaka); `manage.py run_nightly_sync` by hand | Yes by design: chart ingestions are idempotent per edition, unchanged sources cost 0 LLM calls (content hash), watched-source changes are de-duplicated against the newest crawl record. Every run is persisted as a `banks.SyncRun` row with a structured summary. Phase failures are recorded in the summary and never abort the remaining phases. | None; catches and returns errors. | Beat expiry 6h; LLM spend capped by `LLM_MAX_CALLS_PER_RUN` |
 | `banks.tasks.crawl_bank_data_sources_by_bank` | On demand | Mostly, with the same crawler behavior. No task lock; source content checks and card upserts provide partial protection. | None; catches and returns errors. | None |
 | `banks.tasks.daily_crawl_all_active_banks` | Daily 02:00 UTC beat | Mostly, with the same crawler behavior and partial database-write caveat. | None; catches and returns errors. | Beat expiry 6h; no runtime limit |
 | `banks.tasks.cleanup_old_crawled_content` | On demand (no beat entry found) | Yes for deletion: deleting already deleted/old rows is harmless. The returned count can differ on a repeated run. | None; catches and returns errors. | None |
@@ -25,10 +26,49 @@ No Celery-wide `acks_late`, task time limit, soft time limit, or worker-loss red
 | Entry | Schedule | Expiry |
 | --- | --- | --- |
 | `send-alert-digests-hourly` | 3600s | 3600s |
-| `crawl-bank-data-weekly` (the only scheduled crawl: active banks' active sources, unchanged content skipped, capped by `LLM_MAX_CALLS_PER_RUN`) | 604800s | 86400s |
+| `crawl-bank-data-weekly` (legacy card-only crawl: active banks' active `credit_card` sources, unchanged content skipped, capped by `LLM_MAX_CALLS_PER_RUN`) | 604800s | 86400s |
+| `sync-all-products-nightly` (all four verticals: BB chart ingestion + card crawl + watched-source change checks; see below) | crontab 02:00 Asia/Dhaka (`CELERY_TIMEZONE`) | 21600s |
 | `monthly-data-quality-check` | 30 days | 86400s |
 | `monthly-schedule-charge-discovery` | 30 days | 86400s |
 | `search-index-queue-drain` | `SEARCH_QUEUE_DRAIN_INTERVAL` seconds, when enabled | `max(60, 4 * interval)` |
+
+## Nightly product sync — deployment requirements
+
+`sync-all-products-nightly` is the production data pipeline for all four
+verticals (cards, deposits, loans, accounts). For it to run at all, a
+deployment needs **three** processes from this repo/image, not just the web
+process:
+
+1. **web** — `gunicorn --bind 0.0.0.0:8000 credit_mate_ai.wsgi:application`
+2. **worker** — `celery -A credit_mate_ai worker --loglevel=info`
+3. **beat** — `celery -A credit_mate_ai beat --loglevel=info` (exactly one
+   beat instance; two would double-fire every schedule)
+
+plus PostgreSQL and Redis, and these environment variables on the
+**worker and beat** services (wired in `docker-compose.yml` /
+`docker-compose.dev.yml`):
+
+- `GEMINI_API_KEY` (required for changed-page extraction; without it the
+  crawl phase extracts nothing and chart/watch phases still run),
+- `GEMINI_MODEL` (optional; the nightly crawl defaults to
+  `gemini-3.5-flash-lite` when unset — see `NIGHTLY_SYNC_GEMINI_MODEL`),
+- `OPENROUTER_API_KEY` (optional fallback provider),
+- `LLM_MAX_CALLS_PER_RUN` (optional per-run LLM budget, default 200).
+
+**Railway:** `railway.json` in this repo configures a single service (the
+web process, built from the Dockerfile). The worker and beat processes are
+*additional Railway services* created in the Railway project (same repo,
+start commands above) with the env vars listed here — they cannot be
+expressed in this repo's `railway.json`, which is per-service. A deployment
+with only the web service will serve the site but its data will silently
+go stale: no beat fires and no worker crawls.
+
+**Fresh deployments:** run `python manage.py bootstrap_sync_sources` once
+after seeding the catalogues — it registers the `BankDataSource` rows
+(BB charts, bank Schedules of Charges, catalogue provenance URLs) the sync
+operates on. Without it the sources table is empty and the nightly run has
+nothing to check. Run history is in the `banks.SyncRun` table (Django admin
+→ Banks → Nightly sync runs).
 
 ## Transactions, acknowledgements, and failure reporting
 

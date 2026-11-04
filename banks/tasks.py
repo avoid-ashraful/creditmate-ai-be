@@ -16,12 +16,49 @@ except ImportError:
         return decorator
 
 
-from banks.enums import ContentType
+from banks.enums import ContentType, SourcePurpose, SyncTrigger
 from banks.models import Bank, BankDataSource
 from banks.services import BankDataCrawlerService, ScheduleChargeURLFinder
 from common.llm.budget import llm_budget_exhausted, llm_call_budget
 
 logger = logging.getLogger(__name__)
+
+
+@shared_task
+def sync_all_products_nightly():
+    """Celery task: nightly sync of all four product verticals.
+
+    Scheduled by the ``sync-all-products-nightly`` beat entry (02:00
+    Asia/Dhaka). Runs the BB chart ingestions deterministically, crawls
+    credit-card sources through the change-gated LLM pipeline, and
+    change-checks the watched accounts/deposits/loans sources. The full
+    run — including any phase failures — is persisted as a
+    :class:`banks.models.SyncRun`; see
+    :class:`banks.services.nightly_sync.NightlySyncService`.
+
+    Returns
+    -------
+    dict
+        Keys: 'status' (the SyncRun status, or 'error'), 'sync_run_id',
+        'timestamp', 'summary' and 'error' when applicable.
+    """
+    try:
+        from banks.services.nightly_sync import NightlySyncService
+
+        run = NightlySyncService().run(trigger=SyncTrigger.SCHEDULED)
+        return {
+            "status": run.status,
+            "sync_run_id": run.pk,
+            "timestamp": timezone.now().isoformat(),
+            "summary": run.summary,
+        }
+    except Exception as exc:  # noqa: BLE001 - the service itself never raises
+        logger.error(f"Error in sync_all_products_nightly task: {str(exc)}")
+        return {
+            "status": "error",
+            "timestamp": timezone.now().isoformat(),
+            "error": str(exc),
+        }
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=300)
@@ -151,7 +188,9 @@ def crawl_bank_data_sources_by_bank(bank_id):
         - error: Error message if applicable
     """
     try:
-        data_sources = BankDataSource.objects.filter(bank_id=bank_id, is_active=True)
+        data_sources = BankDataSource.objects.filter(
+            bank_id=bank_id, is_active=True, purpose=SourcePurpose.CREDIT_CARD
+        )
 
         if not data_sources.exists():
             logger.warning(f"No active data sources found for bank {bank_id}")
@@ -286,7 +325,9 @@ def _crawl_bank_for_daily_schedule(bank, crawler, summary):
     dict
         Per-bank detail record with bank name, status and source counts.
     """
-    data_sources = list(bank.data_sources.filter(is_active=True))
+    data_sources = list(
+        bank.data_sources.filter(is_active=True, purpose=SourcePurpose.CREDIT_CARD)
+    )
 
     if not data_sources:
         summary["banks_skipped"] += 1
