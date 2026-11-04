@@ -3,7 +3,7 @@ import logging
 
 from django.utils import timezone
 
-from banks.enums import ReviewPriority
+from banks.enums import ReviewPriority, SourcePurpose
 from banks.exceptions import (
     AIParsingError,
     ConfigurationError,
@@ -151,8 +151,12 @@ class BankDataCrawlerService:
             Summary dictionary with keys 'total', 'successful', 'failed' and
             'skipped' containing counts of crawling results
         """
+        # Only credit-card sources enter this LLM extraction pipeline. The
+        # nightly sync registers chart/watched sources for other verticals
+        # under different purposes; feeding them here would extract junk
+        # "cards" from account/deposit documents.
         active_sources = BankDataSource.objects.filter(
-            is_active=True, bank__is_active=True
+            is_active=True, bank__is_active=True, purpose=SourcePurpose.CREDIT_CARD
         )
         with llm_call_budget():
             return self.crawl_sources(active_sources)

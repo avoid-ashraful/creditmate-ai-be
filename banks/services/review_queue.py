@@ -137,7 +137,9 @@ class ReviewQueueService:
             setattr(card, field, value)
 
         card.full_clean(exclude=["bank_id", "creditcard_ptr_id"])
-        card.save(update_fields=list(reviewed_values) + ["modified"])
+        # Applying reviewed values is a human verification of the card.
+        card.verified_at = timezone.now()
+        card.save(update_fields=list(reviewed_values) + ["modified", "verified_at"])
         self._sync_reviewed_card_data(crawled_content, card_data)
         return self._record_decision(queue_item, ReviewStatus.APPROVED, reviewer, notes)
 
@@ -160,7 +162,9 @@ class ReviewQueueService:
             raise ValidationError({field: "Edit this structured field on the card."})
         setattr(card, field, value)
         card.full_clean()
-        card.save(update_fields=[field, "modified"])
+        # A human approving a proposal has just re-verified this card's data.
+        card.verified_at = timezone.now()
+        card.save(update_fields=[field, "modified", "verified_at"])
 
     def _validate_pending(self, queue_item):
         if queue_item.status != ReviewStatus.PENDING:

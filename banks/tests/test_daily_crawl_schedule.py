@@ -1,8 +1,9 @@
-"""Crawl scheduling tests: one weekly beat entry, daily task callable by hand.
+"""Crawl scheduling tests: weekly card-crawl beat entry, daily task manual.
 
 The Celery beat entries and the task are verified offline: the schedule is read
 from the app configuration and the task runs with a mocked crawler, so no live
-crawl or external service is touched.
+crawl or external service is touched. (The all-products nightly sync has its
+own beat entry and test module: banks/tests/test_nightly_sync.py.)
 """
 
 from unittest.mock import MagicMock, patch
@@ -18,7 +19,7 @@ BEAT_ENTRY_NAME = "daily-crawl-all-active-banks"
 
 
 class TestBeatSchedule:
-    """Exactly one crawl is scheduled: weekly. The daily task stays manual."""
+    """Exactly one card crawl is scheduled: weekly. The daily task stays manual."""
 
     @pytest.fixture(scope="class")
     def schedule(self):
