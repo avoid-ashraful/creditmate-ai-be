@@ -8,12 +8,16 @@ lower bound of its rate range**. Sanchayapatra benchmarks are evaluated
 too but returned in their own list — never ranked among banks.
 """
 
+from decimal import Decimal
+
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+
+from django.db.models import Q
 
 from credit_cards.constants import VerificationStatus  # noqa: F401  (re-export parity)
 from deposits import maturity
@@ -85,7 +89,10 @@ class DepositProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         products = self.get_queryset()
         if kind == DepositKind.DPS:
-            products = products.filter(kind=DepositKind.DPS)
+            # Benchmarks are kind="scheme", not "dps" — include them
+            # explicitly or the benchmark handling below never sees them
+            # in a DPS scenario.
+            products = products.filter(Q(kind=DepositKind.DPS) | Q(is_benchmark=True))
         else:
             products = products.filter(
                 kind__in=[
@@ -99,6 +106,9 @@ class DepositProductViewSet(viewsets.ReadOnlyModelViewSet):
         if data.get("bank"):
             products = products.filter(bank_id=data["bank"])
 
+        # Resolve the dated tax rules once for the whole scenario instead
+        # of one query per product.
+        tax_params = maturity.resolve_tax_params()
         results, benchmarks, excluded = [], [], 0
         for product in products:
             pick_amount = scenario_amount
@@ -121,6 +131,7 @@ class DepositProductViewSet(viewsets.ReadOnlyModelViewSet):
                 amount=eval_amount,
                 instalment=instalment,
                 has_tin=data["has_tin"],
+                tax_params=tax_params,
             )
             entry = {
                 "product": DepositProductListSerializer(product).data,
@@ -134,8 +145,8 @@ class DepositProductViewSet(viewsets.ReadOnlyModelViewSet):
             else:
                 results.append(entry)
 
-        results.sort(key=lambda e: -float(e["net_maturity"]))
-        benchmarks.sort(key=lambda e: -float(e["net_maturity"]))
+        results.sort(key=lambda e: Decimal(e["net_maturity"]), reverse=True)
+        benchmarks.sort(key=lambda e: Decimal(e["net_maturity"]), reverse=True)
         return Response(
             {
                 "kind": kind,

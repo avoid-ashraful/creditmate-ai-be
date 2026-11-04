@@ -86,6 +86,12 @@ class DepositProduct(Audit):
         help_text="Government benchmark (Sanchayapatra): shown separately, "
         "never ranked among bank products.",
     )
+    is_pensioner_scheme = models.BooleanField(
+        default=False,
+        help_text="Pensioner-only scheme (e.g. Pensioner Sanchayapatra). "
+        "Drives the source-tax exemption in the maturity engine — an "
+        "explicit marker, never inferred from the product's slug or name.",
+    )
     payout_style = models.CharField(
         max_length=20, choices=PayoutStyle.choices, default=PayoutStyle.AT_MATURITY
     )

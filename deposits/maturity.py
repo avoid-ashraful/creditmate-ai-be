@@ -25,10 +25,13 @@ Conventions (validated against banks' published maturity tables):
   resulting net-of-tax maturity value — never the flattering end.
 """
 
+import logging
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
 from deposits.constants import Compounding, DepositKind
+
+logger = logging.getLogger(__name__)
 
 TWO_PLACES = Decimal("0.01")
 
@@ -100,8 +103,55 @@ def dps_instalment_for_target(target, rate_pct, months):
     return money(target / factor)
 
 
+def dps_effective_yield_pct(instalment, months, net_maturity):
+    """Effective annual yield (%) of a DPS, given its net maturity value.
+
+    Solves the monthly internal rate of return of the instalment stream
+    (annuity due, matching :func:`dps_maturity`) whose future value equals
+    ``net_maturity``, then annualises that monthly rate as an effective
+    rate. Instalments are paid in over time, so annualising
+    net/contributions as if every taka were invested up-front (the lump-sum
+    formula) understates a DPS yield by roughly half.
+    """
+    instalment_f = float(_d(instalment))
+    target = float(_d(net_maturity))
+    m = int(months)
+    if instalment_f <= 0 or m <= 0 or target <= 0:
+        return 0.0
+    paid_in = instalment_f * m
+    if target == paid_in:
+        return 0.0
+
+    def future_value(monthly_rate):
+        if monthly_rate == 0:
+            return paid_in
+        return (
+            instalment_f
+            * (((1 + monthly_rate) ** m - 1) / monthly_rate)
+            * (1 + monthly_rate)
+        )
+
+    # future_value is monotonically increasing in the monthly rate on
+    # (-1, ...); bisect on a generous bracket. Targets outside the bracket
+    # converge to the nearer bound.
+    lo, hi = -0.09, 0.05
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if future_value(mid) < target:
+            lo = mid
+        else:
+            hi = mid
+    monthly = (lo + hi) / 2
+    return ((1 + monthly) ** 12 - 1) * 100
+
+
 def get_tax_rule_params(key, on=None):
-    """Return the params dict of the latest DepositTaxRule effective ``on``."""
+    """Return the params dict of the latest DepositTaxRule effective ``on``.
+
+    When no rule row exists the caller falls back to hard-coded defaults.
+    That fallback is deliberately loud (a warning): tax rates are exactly
+    the kind of thing that must come from dated data, not code.
+    """
     from deposits.models import DepositTaxRule
 
     on = on or date.today()
@@ -110,41 +160,83 @@ def get_tax_rule_params(key, on=None):
         .order_by("-effective_from")
         .first()
     )
-    return rule.params if rule else {}
+    if rule is None:
+        logger.warning(
+            "No DepositTaxRule row for key=%s effective on %s; "
+            "falling back to hard-coded source-tax defaults.",
+            key,
+            on,
+        )
+        return {}
+    return rule.params
 
 
-def source_tax_rate_pct(product, *, has_tin=True, total_holding=None, on=None):
+def resolve_tax_params(on=None):
+    """Resolve every tax rule a scenario needs, once per request.
+
+    Passing the result into :func:`evaluate_product` /
+    :func:`source_tax_rate_pct` as ``tax_params`` avoids one DB query per
+    product in a scenario loop.
+    """
+    return {
+        "bank_interest_source_tax": get_tax_rule_params("bank_interest_source_tax", on),
+        "sanchayapatra_source_tax": get_tax_rule_params("sanchayapatra_source_tax", on),
+    }
+
+
+def _tax_params_for(tax_params, key, on):
+    """Params for ``key``: the pre-resolved dict if given, else a DB lookup."""
+    if tax_params is not None:
+        return tax_params.get(key) or {}
+    return get_tax_rule_params(key, on)
+
+
+def source_tax_rate_pct(
+    product, *, has_tin=True, total_holding=None, on=None, tax_params=None
+):
     """Source-tax percentage applying to a product's interest/profit.
 
     ``total_holding`` is the depositor's total holding relevant to the
     Sanchayapatra threshold; the scenario amount is used as the proxy when
-    not supplied.
+    not supplied. ``tax_params`` may carry params pre-resolved by
+    :func:`resolve_tax_params` (one lookup per request instead of per
+    product).
     """
     if getattr(product, "is_benchmark", False):
-        params = get_tax_rule_params("sanchayapatra_source_tax", on)
+        params = _tax_params_for(tax_params, "sanchayapatra_source_tax", on)
         threshold = _d(params.get("threshold", "500000"))
         holding = _d(total_holding) if total_holding is not None else threshold
-        if "pensioner" in (product.slug or "") and holding <= _d(
+        if getattr(product, "is_pensioner_scheme", False) and holding <= _d(
             params.get("pensioner_exempt_up_to", "500000")
         ):
             return Decimal("0")
         if holding <= threshold:
             return _d(params.get("at_or_below_threshold", "5"))
         return _d(params.get("above_threshold", "10"))
-    params = get_tax_rule_params("bank_interest_source_tax", on)
+    params = _tax_params_for(tax_params, "bank_interest_source_tax", on)
     if has_tin:
         return _d(params.get("with_tin", "10"))
     return _d(params.get("without_tin", "15"))
 
 
 def evaluate_product(
-    product, rate_row, *, months, amount=None, instalment=None, has_tin=True, on=None
+    product,
+    rate_row,
+    *,
+    months,
+    amount=None,
+    instalment=None,
+    has_tin=True,
+    on=None,
+    tax_params=None,
 ):
     """Evaluate one product/rate-row for a scenario.
 
     ``amount`` is the lump sum for FDR-like kinds; ``instalment`` the
     monthly payment for DPS. Ranking uses ``rate_row.rate_min`` (the lower
     bound); the at-max figure is returned for range display only.
+    ``tax_params`` may carry params pre-resolved by
+    :func:`resolve_tax_params`.
     Returns a dict of Decimals/strings ready for serialisation.
     """
     if product.kind == DepositKind.DPS:
@@ -164,7 +256,13 @@ def evaluate_product(
             else None
         )
     interest = gross - paid_in
-    tax_pct = source_tax_rate_pct(product, has_tin=has_tin, total_holding=paid_in, on=on)
+    tax_pct = source_tax_rate_pct(
+        product,
+        has_tin=has_tin,
+        total_holding=paid_in,
+        on=on,
+        tax_params=tax_params,
+    )
     tax = money(interest * tax_pct / Decimal("100")) if interest > 0 else money(0)
     net = gross - tax
     if gross_max is not None:
@@ -177,7 +275,12 @@ def evaluate_product(
         net_max = gross_max - tax_max
     else:
         net_max = None
-    if paid_in > 0 and months > 0:
+    if product.kind == DepositKind.DPS and paid_in > 0 and months > 0:
+        # Instalments trickle in over the term, so the yield is the IRR of
+        # the instalment stream — not the lump-sum annualisation, which
+        # would understate it by roughly half.
+        net_yield = dps_effective_yield_pct(instalment, months, net)
+    elif paid_in > 0 and months > 0:
         net_yield = ((float(net) / float(paid_in)) ** (12 / months) - 1) * 100
     else:
         net_yield = 0.0

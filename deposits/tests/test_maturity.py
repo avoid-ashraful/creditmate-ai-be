@@ -109,9 +109,12 @@ class TestSourceTax:
         ) == Decimal("10")
 
     def test_pensioner_exemption(self, tax_rules):
+        # The exemption keys off the explicit is_pensioner_scheme marker —
+        # this slug deliberately does NOT contain "pensioner".
         product = make_product(
             is_benchmark=True,
-            slug="national-savings-directorate-sanchayapatra-pensioner-sanchayapatra",
+            is_pensioner_scheme=True,
+            slug="national-savings-directorate-retirement-certificate",
         )
         assert maturity.source_tax_rate_pct(
             product, total_holding=Decimal("500000")
@@ -119,6 +122,17 @@ class TestSourceTax:
         assert maturity.source_tax_rate_pct(
             product, total_holding=Decimal("600000")
         ) == Decimal("10")
+
+    def test_pensioner_in_slug_alone_grants_no_exemption(self, tax_rules):
+        # Regression guard: a slug containing "pensioner" without the
+        # explicit marker must NOT be treated as a pensioner scheme.
+        product = make_product(
+            is_benchmark=True,
+            slug="national-savings-directorate-sanchayapatra-pensioner-sanchayapatra",
+        )
+        assert maturity.source_tax_rate_pct(
+            product, total_holding=Decimal("500000")
+        ) == Decimal("5")
 
 
 @pytest.mark.django_db
@@ -140,6 +154,54 @@ class TestEvaluateProduct:
         assert result["interest_earned"] == Decimal("41250.00")
         assert result["source_tax"] == Decimal("4125.00")
         assert result["net_maturity"] == Decimal("537125.00")
+
+    def test_dps_effective_yield_is_irr_based(self, tax_rules):
+        product = make_product(kind="dps", name="Test DPS")
+        row = DepositRate(
+            product=product,
+            tenure_months_min=36,
+            tenure_months_max=60,
+            rate_min=Decimal("9.50"),
+            rate_max=Decimal("9.50"),
+        )
+        result = maturity.evaluate_product(
+            product, row, months=36, instalment=Decimal("500"), has_tin=True
+        )
+        # Gross matches the DBBL table (~20,897); tax 10% of the ~2,897
+        # interest leaves net ~20,607 on 18,000 contributed over 3 years.
+        assert abs(result["gross_maturity"] - Decimal("20897")) < Decimal("1")
+        # The yield must be the IRR of the instalment stream: for a 9.50%
+        # nominal DPS the pre-tax effective yield is ~9.9%, and 10% source
+        # tax on the interest pulls it to ~9.0%. The old lump-sum
+        # annualisation reported ~4.61% — assert we are nowhere near that.
+        assert 8.5 <= result["effective_yield_pct"] <= 9.6
+        assert result["effective_yield_pct"] > 6
+
+    def test_evaluate_product_uses_supplied_tax_params(self):
+        # No DepositTaxRule rows exist in this test: the params handed in
+        # must be used as-is (this is what lets the scenario view resolve
+        # rules once per request instead of querying per product).
+        product = make_product()
+        row = DepositRate(
+            product=product,
+            tenure_months_min=12,
+            tenure_months_max=24,
+            rate_min=Decimal("10"),
+            rate_max=Decimal("10"),
+        )
+        result = maturity.evaluate_product(
+            product,
+            row,
+            months=12,
+            amount=Decimal("100000"),
+            has_tin=True,
+            tax_params={
+                "bank_interest_source_tax": {"with_tin": "20", "without_tin": "25"}
+            },
+        )
+        assert result["source_tax_pct"] == Decimal("20")
+        # interest 10,000 at 20% -> tax 2,000.
+        assert result["source_tax"] == Decimal("2000.00")
 
     def test_range_ranked_at_lower_bound(self, tax_rules):
         product = make_product()

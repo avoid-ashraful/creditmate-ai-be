@@ -152,13 +152,20 @@ def parse_chart(html):  # noqa: C901
             continue
         if len(cells) != 12 or cells[0] == "Name of the Banks":
             continue
+        fd_values = [parse_rate_cell(c) for c in cells[7:12]]
         rows.append(
             {
                 "code": cells[0],
                 "category": category,
                 "savings": parse_rate_cell(cells[1]),
                 "snd": [parse_rate_cell(c) for c in cells[2:7]],
-                "fd": [parse_rate_cell(c) for c in cells[7:12]],
+                "fd": fd_values,
+                # A non-blank cell that fails to parse is NOT the same as
+                # a blank cell: ingestion must not read it as "rate gone".
+                "fd_unparseable": [
+                    bool((c or "").strip()) and value is None
+                    for c, value in zip(cells[7:12], fd_values)
+                ],
             }
         )
     if edition_label is None:
@@ -214,6 +221,16 @@ def ingest_chart(html, source, source_url):  # noqa: C901
     """Ingest one chart edition. Returns a report dict. Idempotent."""
     parsed = parse_chart(html)
     anomalies = detect_anomalies(parsed.rows)
+    raw_rows = [
+        {
+            "code": r["code"],
+            "category": r["category"],
+            "savings": _cell_json(r["savings"]),
+            "snd": [_cell_json(v) for v in r["snd"]],
+            "fd": [_cell_json(v) for v in r["fd"]],
+        }
+        for r in parsed.rows
+    ]
     snapshot, snapshot_created = DepositChartSnapshot.objects.get_or_create(
         source=source,
         edition_label=parsed.edition_label,
@@ -221,23 +238,15 @@ def ingest_chart(html, source, source_url):  # noqa: C901
             "edition_month": parsed.edition_month,
             "source_url": source_url,
             "raw_html": html,
-            "raw_rows": [
-                {
-                    "code": r["code"],
-                    "category": r["category"],
-                    "savings": _cell_json(r["savings"]),
-                    "snd": [_cell_json(v) for v in r["snd"]],
-                    "fd": [_cell_json(v) for v in r["fd"]],
-                }
-                for r in parsed.rows
-            ],
+            "raw_rows": raw_rows,
             "anomalies": anomalies,
         },
     )
     if not snapshot_created and snapshot.raw_html != html:
         snapshot.raw_html = html
+        snapshot.raw_rows = raw_rows
         snapshot.anomalies = anomalies
-        snapshot.save(update_fields=["raw_html", "anomalies"])
+        snapshot.save(update_fields=["raw_html", "raw_rows", "anomalies"])
 
     is_window_chart = source == ChartSource.ISLAMIC_WINDOW
     report = {
@@ -311,7 +320,10 @@ def ingest_chart(html, source, source_url):  # noqa: C901
 
         changed = False
         seen_bands = set()
-        for (t_min, t_max), value in zip(BB_FD_TENURE_BANDS, row["fd"]):
+        unparseable_flags = row.get("fd_unparseable") or []
+        for band_index, ((t_min, t_max), value) in enumerate(
+            zip(BB_FD_TENURE_BANDS, row["fd"])
+        ):
             seen_bands.add((t_min, t_max))
             field_name = f"rate_{t_min}_{t_max or 'open'}"
             existing = DepositRate.objects.filter(
@@ -322,6 +334,20 @@ def ingest_chart(html, source, source_url):  # noqa: C901
                 amount_max__isnull=True,
             ).first()
             if value is None:
+                if band_index < len(unparseable_flags) and unparseable_flags[band_index]:
+                    # Non-blank but unreadable: never read this as "the
+                    # rate disappeared" — keep any existing rate and flag
+                    # the cell for human review.
+                    anomalies.append(
+                        {
+                            "type": "unparseable_rate_cell",
+                            "banks": [code],
+                            "note": f"{field_name} cell was not blank but "
+                            "could not be parsed as a rate; any existing "
+                            "rate was kept.",
+                        }
+                    )
+                    continue
                 if existing is not None:
                     DepositFieldHistory.objects.create(
                         product=product,
@@ -344,6 +370,17 @@ def ingest_chart(html, source, source_url):  # noqa: C901
                     rate_max=rate_max,
                 )
                 report["rates_created"] += 1
+                if not created:
+                    # Mirror the disappearance path: a rate appearing on
+                    # an existing product is a meaningful change and gets
+                    # a history row (old_value=None).
+                    DepositFieldHistory.objects.create(
+                        product=product,
+                        field_name=field_name,
+                        old_value=None,
+                        new_value=_rate_payload(rate_min, rate_max),
+                    )
+                    report["history_rows"] += 1
                 changed = True
             elif existing.rate_min != rate_min or existing.rate_max != rate_max:
                 DepositFieldHistory.objects.create(
@@ -372,4 +409,10 @@ def ingest_chart(html, source, source_url):  # noqa: C901
             product.rate_effective_date = parsed.edition_month
             product.verified_at = timezone.now()
             product.save(update_fields=["rate_effective_date", "verified_at"])
+    # Anomalies appended during the rate loop (large jumps, unparseable
+    # cells) belong on the snapshot as well. Persist unconditionally:
+    # snapshot.anomalies may alias this same list object (assigned above),
+    # which makes a change-check unreliable.
+    snapshot.anomalies = list(anomalies)
+    snapshot.save(update_fields=["anomalies"])
     return report
