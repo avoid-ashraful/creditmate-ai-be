@@ -12,6 +12,9 @@ for deposits, loans and accounts — the on-device shortlist's own keys.
 
 import pytest
 
+from django.db import IntegrityError, transaction
+
+from bank_accounts.models import AccountProduct
 from banks.models import Bank
 from credit_cards.constants import VerificationStatus
 from deposits.models import DepositProduct
@@ -171,3 +174,33 @@ def test_import_respects_the_vertical_cap(owner_client, cards):
     assert response.data["imported"] == 4
     assert response.data["skipped"] == 1
     assert ShortlistItem.objects.count() == 4
+
+
+@pytest.mark.django_db
+def test_exactly_one_product_constraint_rejects_two_fks(owner, cards, deposit):
+    """The DB-level CheckConstraint — not just the service layer — refuses
+    a row pointing at two products at once."""
+    with transaction.atomic():
+        with pytest.raises(IntegrityError):
+            ShortlistItem.objects.create(
+                user=owner, card=cards[0], deposit_product=deposit
+            )
+    assert ShortlistItem.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_exactly_one_product_constraint_rejects_zero_fks(owner):
+    with transaction.atomic():
+        with pytest.raises(IntegrityError):
+            ShortlistItem.objects.create(user=owner)
+    assert ShortlistItem.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_exactly_one_product_constraint_accepts_a_single_fk(owner, bank, cards):
+    account = AccountProduct.objects.create(
+        bank=bank, account_type="savings", name="Alpha Savings"
+    )
+    ShortlistItem.objects.create(user=owner, card=cards[0])
+    ShortlistItem.objects.create(user=owner, account_product=account)
+    assert ShortlistItem.objects.count() == 2

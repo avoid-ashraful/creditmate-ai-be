@@ -72,6 +72,45 @@ def test_other_users_searches_are_invisible_and_untouchable(owner_client, other_
 
 
 @pytest.mark.django_db
+def test_rename_to_an_exact_duplicate_returns_400_not_500(owner_client):
+    create(owner_client, name="One")
+    second = create(owner_client, name="Two").data
+
+    response = owner_client.patch(
+        f"{LIST_URL}{second['id']}/", {"name": "One"}, format="json"
+    )
+    assert response.status_code == 400
+    # Both rows survive, and the renamed row keeps its original name.
+    assert SavedSearch.objects.count() == 2
+    assert SavedSearch.objects.get(id=second["id"]).name == "Two"
+
+
+@pytest.mark.django_db
+def test_full_update_to_an_exact_duplicate_returns_400(owner_client):
+    create(owner_client, name="One")
+    second = create(owner_client, name="Two").data
+
+    response = owner_client.put(
+        f"{LIST_URL}{second['id']}/",
+        {"name": "One", "path": "/cards", "query": "categories=travel"},
+        format="json",
+    )
+    assert response.status_code == 400
+    assert SavedSearch.objects.count() == 2
+    assert SavedSearch.objects.get(id=second["id"]).name == "Two"
+
+
+@pytest.mark.django_db
+def test_rename_to_a_free_name_still_works(owner_client):
+    created = create(owner_client, name="Before").data
+    response = owner_client.patch(
+        f"{LIST_URL}{created['id']}/", {"name": "After"}, format="json"
+    )
+    assert response.status_code == 200
+    assert SavedSearch.objects.get(id=created["id"]).name == "After"
+
+
+@pytest.mark.django_db
 def test_owner_can_delete(owner_client):
     created = create(owner_client).data
     assert owner_client.delete(f"{LIST_URL}{created['id']}/").status_code == 204

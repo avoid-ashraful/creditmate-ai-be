@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
@@ -470,6 +471,29 @@ class SavedSearchViewSet(viewsets.ModelViewSet):
             return Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        # Renaming a search onto the exact (name, path, query) of another
+        # of the user's rows trips the unique constraint; create treats
+        # that collision idempotently, so update answers it with a clean
+        # 400 instead of letting the IntegrityError surface as a 500.
+        # The atomic block gives the failed save a savepoint to roll
+        # back to, leaving the connection usable for the 400 response.
+        # (partial_update delegates to update in DRF, so PATCH is
+        # covered by this override too.)
+        try:
+            with transaction.atomic():
+                return super().update(request, *args, **kwargs)
+        except IntegrityError:
+            return Response(
+                {
+                    "detail": (
+                        "Another of your saved searches already has that "
+                        "name, path and query."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @extend_schema(
         tags=["saved"],
