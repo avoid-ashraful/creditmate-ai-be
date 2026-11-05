@@ -1,16 +1,32 @@
 from django.urls import path
 
+from .product_views import (
+    CommentModerationActionView,
+    CommentModerationListView,
+    OwnReviewCommentDetailView,
+    ProductHelpfulVoteView,
+    ProductModerationActionView,
+    ProductModerationListView,
+    ProductOwnReviewDetailView,
+    ProductOwnReviewListView,
+    ProductReviewListCreateView,
+    ProductReviewSummaryView,
+    ReviewCommentListCreateView,
+)
 from .views import (
     CardReviewSummaryView,
     HelpfulVoteView,
     OwnReviewDetailView,
+    OwnReviewListView,
     PublicReviewListCreateView,
     StaffModerationActionView,
     StaffModerationView,
 )
 
 urlpatterns = [
+    # --- Card reviews (original endpoints, unchanged) ---
     path("reviews/", PublicReviewListCreateView.as_view(), name="review-list"),
+    path("reviews/mine/", OwnReviewListView.as_view(), name="review-mine-list"),
     path("reviews/mine/<int:pk>/", OwnReviewDetailView.as_view(), name="review-detail"),
     path(
         "reviews/<int:review_id>/helpful/",
@@ -31,5 +47,112 @@ urlpatterns = [
         "reviews/moderation/<int:pk>/",
         StaffModerationActionView.as_view(),
         name="review-moderation-action",
+    ),
+    # --- Generalised product reviews: deposits, loans, bank accounts ---
+    path(
+        "reviews/deposits/",
+        ProductReviewListCreateView.as_view(product_type="deposit"),
+        name="deposit-review-list",
+    ),
+    path(
+        "reviews/loans/",
+        ProductReviewListCreateView.as_view(product_type="loan"),
+        name="loan-review-list",
+    ),
+    path(
+        "reviews/accounts/",
+        ProductReviewListCreateView.as_view(product_type="account"),
+        name="account-review-list",
+    ),
+    path(
+        "reviews/deposits/mine/",
+        ProductOwnReviewListView.as_view(product_type="deposit"),
+        name="deposit-review-mine-list",
+    ),
+    path(
+        "reviews/loans/mine/",
+        ProductOwnReviewListView.as_view(product_type="loan"),
+        name="loan-review-mine-list",
+    ),
+    path(
+        "reviews/accounts/mine/",
+        ProductOwnReviewListView.as_view(product_type="account"),
+        name="account-review-mine-list",
+    ),
+    path(
+        "reviews/deposits/mine/<int:pk>/",
+        ProductOwnReviewDetailView.as_view(product_type="deposit"),
+        name="deposit-review-detail",
+    ),
+    path(
+        "reviews/loans/mine/<int:pk>/",
+        ProductOwnReviewDetailView.as_view(product_type="loan"),
+        name="loan-review-detail",
+    ),
+    path(
+        "reviews/accounts/mine/<int:pk>/",
+        ProductOwnReviewDetailView.as_view(product_type="account"),
+        name="account-review-detail",
+    ),
+    path(
+        "reviews/deposits/<int:review_id>/helpful/",
+        ProductHelpfulVoteView.as_view(product_type="deposit"),
+        name="deposit-review-helpful",
+    ),
+    path(
+        "reviews/loans/<int:review_id>/helpful/",
+        ProductHelpfulVoteView.as_view(product_type="loan"),
+        name="loan-review-helpful",
+    ),
+    path(
+        "reviews/accounts/<int:review_id>/helpful/",
+        ProductHelpfulVoteView.as_view(product_type="account"),
+        name="account-review-helpful",
+    ),
+    path(
+        "reviews/deposits/<int:product_id>/summary/",
+        ProductReviewSummaryView.as_view(product_type="deposit"),
+        name="deposit-review-summary",
+    ),
+    path(
+        "reviews/loans/<int:product_id>/summary/",
+        ProductReviewSummaryView.as_view(product_type="loan"),
+        name="loan-review-summary",
+    ),
+    path(
+        "reviews/accounts/<int:product_id>/summary/",
+        ProductReviewSummaryView.as_view(product_type="account"),
+        name="account-review-summary",
+    ),
+    path(
+        "reviews/moderation/products/",
+        ProductModerationListView.as_view(),
+        name="product-review-moderation-queue",
+    ),
+    path(
+        "reviews/moderation/products/<str:product_type>/<int:pk>/",
+        ProductModerationActionView.as_view(),
+        name="product-review-moderation-action",
+    ),
+    # --- Comments on any review (all four product types) ---
+    path(
+        "reviews/comments/mine/<int:pk>/",
+        OwnReviewCommentDetailView.as_view(),
+        name="review-comment-detail",
+    ),
+    path(
+        "reviews/comments/<str:review_type>/<int:review_id>/",
+        ReviewCommentListCreateView.as_view(),
+        name="review-comment-list",
+    ),
+    path(
+        "reviews/moderation/comments/",
+        CommentModerationListView.as_view(),
+        name="review-comment-moderation-queue",
+    ),
+    path(
+        "reviews/moderation/comments/<int:pk>/",
+        CommentModerationActionView.as_view(),
+        name="review-comment-moderation-action",
     ),
 ]
