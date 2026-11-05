@@ -11,9 +11,9 @@ from django.db.models import Avg, Count, F
 from django.shortcuts import get_object_or_404
 
 from credit_cards.models import CreditCard
-from reviews.models import CardReview, ReviewVote
+from reviews.models import COMMUNITY_REVIEWED_THRESHOLD, CardReview, ReviewVote
 
-from .serializers import CardReviewSerializer, ReviewVoteSerializer
+from .serializers import CardReviewSerializer, OwnCardReviewSerializer, ReviewVoteSerializer
 from .throttles import ReviewUserThrottle, ReviewWriteThrottleMixin
 
 
@@ -121,6 +121,38 @@ class OwnReviewDetailView(
         serializer.save(status=CardReview.Status.PENDING)
 
 
+class OwnReviewListView(generics.ListAPIView):
+    """The signed-in user's own card reviews (any status), with status.
+
+    Additive companion to ``OwnReviewDetailView``: lets a detail page
+    show the author's own pending review in place. Optionally filtered
+    with ``?card=<id>``.
+    """
+
+    serializer_class = OwnCardReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=["reviews"],
+        operation_id="reviews_mine_list",
+        responses={200: OwnCardReviewSerializer(many=True)},
+        parameters=[OpenApiParameter("card", int, OpenApiParameter.QUERY)],
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = CardReview.objects.filter(user=self.request.user).select_related("card")
+        card_id = self.request.query_params.get("card")
+        if not card_id:
+            return qs
+        try:
+            card_id = int(card_id)
+        except (TypeError, ValueError):
+            raise ValidationError({"card": ["A valid integer is required."]}) from None
+        return qs.filter(card_id=card_id)
+
+
 class CardReviewSummaryView(APIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CardReviewSerializer
@@ -143,13 +175,20 @@ class CardReviewSummaryView(APIView):
                 row["rating"]: row["count"]
                 for row in approved.values("rating").annotate(count=Count("id"))
             }
+            review_count = sum(grouped.values())
             summary = {
                 "card": card_id,
+                # Generalised shape shared with the other product types
+                # (additive keys; the original fields are unchanged).
+                "product_type": "card",
+                "product": card_id,
                 "average_rating": approved.aggregate(value=Avg("rating"))["value"],
-                "review_count": sum(grouped.values()),
+                "review_count": review_count,
+                "approved_count": review_count,
                 "distribution": {
                     str(rating): grouped.get(rating, 0) for rating in range(1, 6)
                 },
+                "community_reviewed": review_count >= COMMUNITY_REVIEWED_THRESHOLD,
             }
             cache.set(key, summary, 300)
         return Response(summary)
