@@ -390,6 +390,7 @@ class ShortlistItemSerializer(serializers.ModelSerializer):
     bank_name = serializers.SerializerMethodField()
     card_id = serializers.SerializerMethodField()
     slug = serializers.SerializerMethodField()
+    latest_change = serializers.SerializerMethodField()
 
     class Meta:
         model = ShortlistItem
@@ -401,9 +402,25 @@ class ShortlistItemSerializer(serializers.ModelSerializer):
             "bank_name",
             "card_id",
             "slug",
+            "latest_change",
             "created",
         ]
         read_only_fields = fields
+
+    def get_latest_change(self, obj) -> dict | None:
+        """The product's most recent recorded field change (Phase 4, D4).
+
+        Reads the same public field-history rows the detail-page
+        timelines show — {field_name, changed_at} of the newest row, or
+        None when the product has no recorded change. Nothing is derived
+        or approximated: no history row, no marker. The shortlist is
+        capped per vertical, so this stays a bounded per-item lookup on
+        an indexed (product, created) history table.
+        """
+        row = obj.product.field_history.first()
+        if row is None:
+            return None
+        return {"field_name": row.field_name, "changed_at": row.created}
 
     def get_name(self, obj) -> str:
         return obj.product.name

@@ -76,6 +76,35 @@ class BankFollow(Audit):
         ]
 
 
+class FeedSeenState(Audit):
+    """Per-user "seen" watermark for what-changed surfaces (Phase 4, D4).
+
+    Semantics (deliberate, and relied on by the client):
+
+    - ``last_seen_at`` is the newest change timestamp the user has
+      actually been *shown* on a what-changed surface (the /my/alerts
+      feed, or the personalised Home what-changed section). It is a
+      watermark over change timestamps, not a wall-clock "last visit":
+      marking seen advances it to the newest change the surface
+      displayed (the client passes that as ``through``), never beyond
+      "now", and never backwards.
+    - A change is "new for this user" iff its ``changed_at`` is strictly
+      greater than ``last_seen_at``. With no row (or a null watermark)
+      nothing is marked new — the first view establishes the baseline
+      instead of claiming everything is new.
+    - Reading the feed never moves the watermark; only the explicit
+      mark-seen call does, so pagination and refetches can't silently
+      consume changes the user hasn't seen.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="feed_seen_state",
+    )
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+
+
 class NotificationPreference(Audit):
     class Frequency(models.TextChoices):
         IMMEDIATE = "immediate", "Immediate"

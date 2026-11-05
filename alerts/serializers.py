@@ -57,3 +57,16 @@ class BankFollowFeedEntrySerializer(serializers.Serializer):
     new_value = serializers.JSONField(allow_null=True)
     source = serializers.CharField(allow_null=True)
     changed_at = serializers.DateTimeField()
+    # Phase 4 (D4): true when this change is newer than the requesting
+    # user's seen watermark. Computed by the view; defaults to False so
+    # entries built outside the feed view never claim to be new.
+    is_new = serializers.BooleanField(default=False)
+
+
+class FeedMarkSeenInputSerializer(serializers.Serializer):
+    """Input for the mark-seen call: the newest change the user was shown.
+
+    Optional — omitting ``through`` marks everything up to now as seen.
+    """
+
+    through = serializers.DateTimeField(required=False, allow_null=True)
