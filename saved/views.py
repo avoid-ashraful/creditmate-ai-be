@@ -7,19 +7,36 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
 from credit_cards.models import CreditCard
 from saved import services
-from saved.models import Collection, SavedComparison, SavedComparisonItem
+from saved.constants import (
+    MAX_SAVED_SCENARIOS_PER_USER,
+    MAX_SAVED_SEARCHES_PER_USER,
+)
+from saved.models import (
+    Collection,
+    SavedComparison,
+    SavedComparisonItem,
+    SavedScenario,
+    SavedSearch,
+)
 from saved.serializers import (
     CollectionCardAddSerializer,
     CollectionSerializer,
     PublicCollectionSerializer,
     PublicSavedComparisonSerializer,
     SavedComparisonSerializer,
+    SavedScenarioSerializer,
+    SavedSearchImportSerializer,
+    SavedSearchSerializer,
+    ShortlistAddSerializer,
+    ShortlistImportSerializer,
+    ShortlistItemSerializer,
 )
 
 
@@ -312,3 +329,226 @@ class SharedCollectionView(APIView):
             context={"request": request},
         )
         return Response(serializer.data)
+
+
+# --- Shortlist, saved searches, saved scenarios (redesign Phase 3) ---------
+
+
+@method_decorator(never_cache, name="dispatch")
+class ShortlistView(APIView):
+    """The requesting user's cross-device shortlist.
+
+    GET returns the whole shortlist (capped at 4 per vertical by the add
+    path, so the payload is bounded). POST adds one product idempotently:
+    201 when created, 200 when it was already shortlisted.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ShortlistItemSerializer
+
+    @extend_schema(
+        tags=["saved"],
+        summary="List my shortlist",
+        responses={200: ShortlistItemSerializer(many=True)},
+    )
+    def get(self, request):
+        items = services.shortlist_items_for(request.user)
+        return Response({"results": ShortlistItemSerializer(items, many=True).data})
+
+    @extend_schema(
+        tags=["saved"],
+        summary="Add a product to my shortlist",
+        request=ShortlistAddSerializer,
+        responses={201: ShortlistItemSerializer, 200: ShortlistItemSerializer},
+    )
+    def post(self, request):
+        serializer = ShortlistAddSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        item, created = services.add_shortlist_item(
+            request.user,
+            serializer.validated_data["vertical"],
+            serializer.validated_data["key"],
+        )
+        item = services.shortlist_items_for(request.user).get(pk=item.pk)
+        return Response(
+            ShortlistItemSerializer(item).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+@method_decorator(never_cache, name="dispatch")
+class ShortlistImportView(APIView):
+    """Merge an on-device shortlist into the server shortlist.
+
+    Idempotent by construction (see services.import_shortlist_items):
+    re-running it changes nothing, so clients may call it on every
+    sign-in without a client-side "already imported" flag.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ShortlistImportSerializer
+
+    @extend_schema(
+        tags=["saved"],
+        summary="Import an on-device shortlist into my server shortlist",
+        request=ShortlistImportSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    def post(self, request):
+        serializer = ShortlistImportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        imported, skipped = services.import_shortlist_items(
+            request.user, serializer.validated_data["items"]
+        )
+        items = services.shortlist_items_for(request.user)
+        return Response(
+            {
+                "imported": imported,
+                "skipped": skipped,
+                "results": ShortlistItemSerializer(items, many=True).data,
+            }
+        )
+
+
+@method_decorator(never_cache, name="dispatch")
+class ShortlistItemView(APIView):
+    """Remove one product from the requesting user's shortlist (204 always)."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ShortlistItemSerializer
+
+    @extend_schema(
+        tags=["saved"],
+        summary="Remove a product from my shortlist",
+        responses={204: None},
+    )
+    def delete(self, request, vertical, key):
+        services.remove_shortlist_item(request.user, vertical, key)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema_view(
+    list=extend_schema(tags=["saved"], summary="List my saved searches"),
+    create=extend_schema(tags=["saved"], summary="Save a search"),
+    retrieve=extend_schema(tags=["saved"], summary="Get one of my saved searches"),
+    update=extend_schema(tags=["saved"], summary="Replace a saved search"),
+    partial_update=extend_schema(tags=["saved"], summary="Edit a saved search"),
+    destroy=extend_schema(tags=["saved"], summary="Delete a saved search"),
+)
+@method_decorator(never_cache, name="dispatch")
+class SavedSearchViewSet(viewsets.ModelViewSet):
+    """CRUD for the requesting user's saved searches. Others' rows 404."""
+
+    serializer_class = SavedSearchSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return SavedSearch.objects.none()
+        return SavedSearch.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        services._enforce_limit(
+            SavedSearch.objects.filter(user=self.request.user),
+            MAX_SAVED_SEARCHES_PER_USER,
+            "saved searches",
+        )
+        serializer.save(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        # Saving the identical search again returns the existing row with
+        # 200 instead of tripping the (user, name, path, query) unique
+        # constraint — a save is idempotent, like the import path.
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        existing = SavedSearch.objects.filter(
+            user=request.user,
+            name=serializer.validated_data["name"],
+            path=serializer.validated_data["path"],
+            query=serializer.validated_data.get("query", ""),
+        ).first()
+        if existing is not None:
+            return Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        # Renaming a search onto the exact (name, path, query) of another
+        # of the user's rows trips the unique constraint; create treats
+        # that collision idempotently, so update answers it with a clean
+        # 400 instead of letting the IntegrityError surface as a 500.
+        # The atomic block gives the failed save a savepoint to roll
+        # back to, leaving the connection usable for the 400 response.
+        # (partial_update delegates to update in DRF, so PATCH is
+        # covered by this override too.)
+        try:
+            with transaction.atomic():
+                return super().update(request, *args, **kwargs)
+        except IntegrityError:
+            return Response(
+                {
+                    "detail": (
+                        "Another of your saved searches already has that "
+                        "name, path and query."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @extend_schema(
+        tags=["saved"],
+        summary="Import on-device saved searches (de-duplicated)",
+        request=SavedSearchImportSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    @action(detail=False, methods=["post"], url_path="import")
+    def import_searches(self, request):
+        """Merge on-device searches; identical (name, path, query) rows are
+        recognised by the model's unique constraint and skipped, so the
+        import is idempotent without a client-side flag."""
+        serializer = SavedSearchImportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        imported = 0
+        skipped = 0
+        for entry in serializer.validated_data["searches"]:
+            _, created = SavedSearch.objects.get_or_create(
+                user=request.user,
+                name=entry["name"],
+                path=entry["path"],
+                query=entry.get("query", ""),
+            )
+            if created:
+                imported += 1
+            else:
+                skipped += 1
+        results = SavedSearchSerializer(self.get_queryset(), many=True).data
+        return Response({"imported": imported, "skipped": skipped, "results": results})
+
+
+@extend_schema_view(
+    list=extend_schema(tags=["saved"], summary="List my saved scenarios"),
+    create=extend_schema(tags=["saved"], summary="Save a Plan scenario"),
+    retrieve=extend_schema(tags=["saved"], summary="Get one of my saved scenarios"),
+    update=extend_schema(tags=["saved"], summary="Replace a saved scenario"),
+    partial_update=extend_schema(tags=["saved"], summary="Edit a saved scenario"),
+    destroy=extend_schema(tags=["saved"], summary="Delete a saved scenario"),
+)
+@method_decorator(never_cache, name="dispatch")
+class SavedScenarioViewSet(viewsets.ModelViewSet):
+    """CRUD for the requesting user's saved Plan scenarios. Others' rows 404."""
+
+    serializer_class = SavedScenarioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return SavedScenario.objects.none()
+        return SavedScenario.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        services._enforce_limit(
+            SavedScenario.objects.filter(user=self.request.user),
+            MAX_SAVED_SCENARIOS_PER_USER,
+            "saved scenarios",
+        )
+        serializer.save(user=self.request.user)

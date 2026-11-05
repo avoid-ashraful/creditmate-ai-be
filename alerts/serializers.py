@@ -41,3 +41,19 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationPreference
         fields = ("frequency",)
+
+
+class BankFollowFeedEntrySerializer(serializers.Serializer):
+    """One field-change event in the bank-follow feed (alerts/feed.py)."""
+
+    id = serializers.CharField()
+    vertical = serializers.CharField()
+    product_name = serializers.CharField()
+    product_key = serializers.CharField()
+    bank_id = serializers.IntegerField(allow_null=True)
+    bank_name = serializers.CharField()
+    field_name = serializers.CharField()
+    old_value = serializers.JSONField(allow_null=True)
+    new_value = serializers.JSONField(allow_null=True)
+    source = serializers.CharField(allow_null=True)
+    changed_at = serializers.DateTimeField()

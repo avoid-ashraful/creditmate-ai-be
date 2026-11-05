@@ -22,6 +22,19 @@ class UserProfile(models.Model):
     terms_version = models.CharField(max_length=32, blank=True, default="")
     marketing_opt_in = models.BooleanField(default=False)
     preferences = models.JSONField(default=dict, blank=True)
+    # Redesign D4 "Your numbers" defaults (Phase 3): the voluntary scenario
+    # presets that follow the user across devices. Only these three numbers
+    # live here — eligibility inputs (income, employment, TIN, CIB answers)
+    # are never stored server-side by design.
+    typical_balance = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True
+    )
+    monthly_card_spend = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True
+    )
+    planned_loan_amount = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True
+    )
     # Denormalized email for case-insensitive unique constraint
     email = models.EmailField(max_length=254, db_index=True)
     created = models.DateTimeField(auto_now_add=True)

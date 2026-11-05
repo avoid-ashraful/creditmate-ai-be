@@ -5,7 +5,14 @@ from credit_cards.api.serializers import CreditCardListSerializer
 from credit_cards.models import CreditCard
 from saved import services
 from saved.constants import MAX_CARDS_PER_COMPARISON
-from saved.models import Collection, CollectionItem, SavedComparison
+from saved.models import (
+    Collection,
+    CollectionItem,
+    SavedComparison,
+    SavedScenario,
+    SavedSearch,
+    ShortlistItem,
+)
 
 
 def serialize_ordered_cards(items, context, public_only=False):
@@ -365,3 +372,89 @@ class CollectionCardAddSerializer(serializers.Serializer):
         if not CreditCard.objects.public().filter(pk=value).exists():
             raise serializers.ValidationError("Unknown or unpublished card id.")
         return value
+
+
+class ShortlistItemSerializer(serializers.ModelSerializer):
+    """A shortlist row in the client's own item shape.
+
+    Mirrors the frontend ShortlistItem contract exactly: ``vertical``,
+    ``key`` (card id as a string for cards, product slug otherwise),
+    ``name`` and ``bank_name`` for display, plus ``card_id`` for cards
+    (used to build /compare?ids= links) and ``slug`` for the other
+    verticals (used to build detail links).
+    """
+
+    vertical = serializers.CharField(read_only=True)
+    key = serializers.CharField(read_only=True)
+    name = serializers.SerializerMethodField()
+    bank_name = serializers.SerializerMethodField()
+    card_id = serializers.SerializerMethodField()
+    slug = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShortlistItem
+        fields = [
+            "id",
+            "vertical",
+            "key",
+            "name",
+            "bank_name",
+            "card_id",
+            "slug",
+            "created",
+        ]
+        read_only_fields = fields
+
+    def get_name(self, obj) -> str:
+        return obj.product.name
+
+    def get_bank_name(self, obj) -> str:
+        product = obj.product
+        if obj.vertical == ShortlistItem.Vertical.DEPOSITS:
+            return product.institution_display_name
+        if obj.vertical == ShortlistItem.Vertical.LOANS:
+            return product.lender_display_name
+        return product.bank.name
+
+    def get_card_id(self, obj) -> int | None:
+        return obj.card_id
+
+    def get_slug(self, obj) -> str | None:
+        if obj.card_id is not None:
+            return None
+        return obj.product.slug
+
+
+class ShortlistAddSerializer(serializers.Serializer):
+    """An add/import entry: a vertical plus the product's client key."""
+
+    vertical = serializers.ChoiceField(choices=ShortlistItem.Vertical.choices)
+    key = serializers.CharField(max_length=300)
+
+
+class ShortlistImportSerializer(serializers.Serializer):
+    # Raw dicts, deliberately not ShortlistAddSerializer: an import batch
+    # may carry entries for products that no longer exist (or from a newer
+    # client), and those are skipped per-entry by the service instead of
+    # failing the whole import.
+    items = serializers.ListField(
+        child=serializers.DictField(), allow_empty=True, max_length=100
+    )
+
+
+class SavedSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SavedSearch
+        fields = ["id", "name", "path", "query", "created", "modified"]
+        read_only_fields = ["id", "created", "modified"]
+
+
+class SavedSearchImportSerializer(serializers.Serializer):
+    searches = SavedSearchSerializer(many=True)
+
+
+class SavedScenarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SavedScenario
+        fields = ["id", "tool", "name", "params", "created", "modified"]
+        read_only_fields = ["id", "created", "modified"]

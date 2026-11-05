@@ -3,14 +3,25 @@ from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 
+from bank_accounts.models import AccountProduct
 from credit_cards.models import CreditCard
+from deposits.models import DepositProduct
+from loans.models import LoanProduct
 from saved.constants import (
     MAX_CARDS_PER_COLLECTION,
     MAX_COLLECTIONS_PER_USER,
     MAX_COMPARISONS_PER_USER,
+    MAX_SHORTLIST_PER_VERTICAL,
 )
-from saved.models import Collection, CollectionItem, SavedComparison, SavedComparisonItem
+from saved.models import (
+    Collection,
+    CollectionItem,
+    SavedComparison,
+    SavedComparisonItem,
+    ShortlistItem,
+)
 
 COPY_SUFFIX = " (copy)"
 
@@ -304,3 +315,142 @@ def remove_card_from_collection(collection, card_id):
         deleted, _ = collection.items.filter(card_id=card_id).delete()
     if not deleted:
         raise Http404("Card is not in this collection.")
+
+
+# --- Shortlist (redesign Phase 3) -------------------------------------------
+
+# vertical -> (model, FK field name on ShortlistItem, lookup by id vs slug)
+_SHORTLIST_VERTICALS = {
+    ShortlistItem.Vertical.CARDS: (CreditCard, "card", True),
+    ShortlistItem.Vertical.DEPOSITS: (DepositProduct, "deposit_product", False),
+    ShortlistItem.Vertical.LOANS: (LoanProduct, "loan_product", False),
+    ShortlistItem.Vertical.ACCOUNTS: (AccountProduct, "account_product", False),
+}
+
+
+def resolve_shortlist_product(vertical, key):
+    """Resolve a (vertical, key) pair to a published product.
+
+    Parameters
+    ----------
+    vertical : str
+        One of ShortlistItem.Vertical values
+    key : str
+        Card id as a string for cards; product slug for the other verticals
+
+    Returns
+    -------
+    model instance
+        The published product
+
+    Raises
+    ------
+    ValidationError
+        When the vertical is unknown
+    Http404
+        When no published product matches the key
+    """
+    try:
+        model, _field, by_id = _SHORTLIST_VERTICALS[vertical]
+    except (KeyError, TypeError):
+        raise ValidationError({"vertical": ["Unknown vertical."]})
+    queryset = model.objects.public()
+    if by_id:
+        try:
+            product_id = int(key)
+        except (TypeError, ValueError):
+            raise Http404("Product not found.")
+        return get_object_or_404(queryset, pk=product_id)
+    return get_object_or_404(queryset, slug=key)
+
+
+def _shortlist_field(vertical):
+    return _SHORTLIST_VERTICALS[vertical][1]
+
+
+def shortlist_items_for(user):
+    """Return the user's shortlist items with products and banks loaded."""
+    return (
+        ShortlistItem.objects.filter(user=user)
+        .select_related(
+            "card__bank",
+            "deposit_product__bank",
+            "loan_product__bank",
+            "account_product__bank",
+        )
+        .order_by("created", "id")
+    )
+
+
+def add_shortlist_item(user, vertical, key):
+    """Add a product to the user's shortlist, idempotently.
+
+    Returns
+    -------
+    (ShortlistItem, bool)
+        The item and whether it was created
+
+    Raises
+    ------
+    ValidationError
+        When the vertical already holds MAX_SHORTLIST_PER_VERTICAL items
+    Http404
+        When the product does not exist or is not published
+    """
+    product = resolve_shortlist_product(vertical, key)
+    field = _shortlist_field(vertical)
+    with transaction.atomic():
+        _lock_owner(user)
+        existing = ShortlistItem.objects.filter(user=user, **{field: product}).first()
+        if existing is not None:
+            return existing, False
+        _enforce_limit(
+            ShortlistItem.objects.filter(user=user, **{f"{field}__isnull": False}),
+            MAX_SHORTLIST_PER_VERTICAL,
+            "shortlisted products per category",
+        )
+        item = ShortlistItem.objects.create(user=user, **{field: product})
+        return item, True
+
+
+def remove_shortlist_item(user, vertical, key):
+    """Remove a product from the user's shortlist. Idempotent.
+
+    Returns True when a row was deleted. An unknown product key deletes
+    nothing and still returns False — removal never errors.
+    """
+    try:
+        product = resolve_shortlist_product(vertical, key)
+    except Http404:
+        return False
+    field = _shortlist_field(vertical)
+    deleted, _ = ShortlistItem.objects.filter(user=user, **{field: product}).delete()
+    return bool(deleted)
+
+
+def import_shortlist_items(user, entries):
+    """Merge on-device shortlist entries into the server shortlist.
+
+    De-duplicates against what the server already holds and respects the
+    per-vertical cap (excess entries are skipped, never swapped in), so
+    re-running an import — after a partial failure, or on a second device —
+    is a no-op. Returns (imported_count, skipped_count).
+    """
+    imported = 0
+    skipped = 0
+    for entry in entries:
+        vertical = entry.get("vertical")
+        key = entry.get("key")
+        if vertical not in _SHORTLIST_VERTICALS or not key:
+            skipped += 1
+            continue
+        try:
+            _item, created = add_shortlist_item(user, vertical, str(key))
+        except (Http404, ValidationError):
+            skipped += 1
+            continue
+        if created:
+            imported += 1
+        else:
+            skipped += 1
+    return imported, skipped

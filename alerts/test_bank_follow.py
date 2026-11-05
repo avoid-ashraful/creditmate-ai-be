@@ -82,7 +82,9 @@ class TestBankFollow:
 
         response = auth_client.get(LIST_URL)
         assert response.status_code == 200
-        results = response.data["results"] if "results" in response.data else response.data
+        results = (
+            response.data["results"] if "results" in response.data else response.data
+        )
         assert [row["bank"] for row in results] == [bank.id]
 
     def test_unfollow_removes_row(self, auth_client, user, bank):
@@ -101,10 +103,41 @@ class TestBankFollow:
         assert response.status_code == 204
         assert BankFollow.objects.filter(user=other_user, bank=bank).count() == 1
 
-    def test_two_users_can_follow_the_same_bank(self, auth_client, user, other_user, bank):
+    def test_two_users_can_follow_the_same_bank(
+        self, auth_client, user, other_user, bank
+    ):
         auth_client.post(LIST_URL, {"bank": bank.id}, format="json")
         client = APIClient()
         client.force_authenticate(other_user)
         response = client.post(LIST_URL, {"bank": bank.id}, format="json")
         assert response.status_code == 201
         assert BankFollow.objects.filter(bank=bank).count() == 2
+
+
+@pytest.mark.django_db
+class TestBankFollowPhase3:
+    """Phase 3 follow-ups: the create race (L3) and pagination (L4)."""
+
+    def test_create_race_returns_existing_follow_not_500(
+        self, auth_client, user, bank, monkeypatch
+    ):
+        BankFollow.objects.create(user=user, bank=bank)
+        from django.db import IntegrityError
+
+        def racing_get_or_create(**kwargs):
+            raise IntegrityError("unique_bank_follow_per_user")
+
+        monkeypatch.setattr(BankFollow.objects, "get_or_create", racing_get_or_create)
+        response = auth_client.post(LIST_URL, {"bank": bank.id}, format="json")
+        assert response.status_code == 200
+        assert response.data["bank"] == bank.id
+        assert BankFollow.objects.filter(user=user, bank=bank).count() == 1
+
+    def test_follow_list_holds_more_than_twenty_follows(self, auth_client, user):
+        banks = BankFactory.create_batch(25)
+        for followed in banks:
+            BankFollow.objects.create(user=user, bank=followed)
+        response = auth_client.get(LIST_URL)
+        assert response.status_code == 200
+        assert response.data["count"] == 25
+        assert len(response.data["results"]) == 25
