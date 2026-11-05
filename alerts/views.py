@@ -12,13 +12,20 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from .feed import build_follow_feed
-from .models import AlertSubscription, BankFollow, NotificationPreference
+from .models import AlertSubscription, BankFollow, FeedSeenState, NotificationPreference
 from .serializers import (
     AlertSubscriptionSerializer,
     BankFollowFeedEntrySerializer,
     BankFollowSerializer,
+    FeedMarkSeenInputSerializer,
     NotificationPreferenceSerializer,
 )
+
+
+def _seen_at_for(user):
+    """The user's feed watermark, or None when none has been established."""
+    state = FeedSeenState.objects.filter(user=user).first()
+    return state.last_seen_at if state else None
 
 
 class SubscriptionListCreateView(generics.ListCreateAPIView):
@@ -145,14 +152,56 @@ class BankFollowFeedView(APIView):
             page_size = 20
         page_size = min(50, max(1, page_size))
         entries, has_more = build_follow_feed(request.user, page, page_size)
+        # Phase 4 (D4): flag entries newer than the user's seen watermark.
+        # Reading the feed does NOT advance the watermark — only the
+        # mark-seen call does (see FeedSeenState for the semantics).
+        seen_at = _seen_at_for(request.user)
+        for entry in entries:
+            entry["is_new"] = bool(seen_at and entry["changed_at"] > seen_at)
         return Response(
             {
                 "results": BankFollowFeedEntrySerializer(entries, many=True).data,
                 "page": page,
                 "page_size": page_size,
                 "has_more": has_more,
+                "seen_at": seen_at,
             }
         )
+
+
+@extend_schema_view(
+    post=extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["alerts"],
+        operation_id="alerts_bank_follow_feed_mark_seen",
+        description=(
+            "Advance the current user's what-changed watermark. Pass "
+            "``through`` = the newest change timestamp the user was "
+            "actually shown; the watermark moves to min(through, now) "
+            "and never backwards. Omit ``through`` to mark up to now."
+        ),
+    )
+)
+class BankFollowFeedSeenView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FeedMarkSeenInputSerializer
+
+    @extend_schema(
+        request=FeedMarkSeenInputSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+        summary="Mark the bank-follow feed as seen up to a point in time",
+    )
+    def post(self, request):
+        serializer = FeedMarkSeenInputSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        through = serializer.validated_data.get("through")
+        now = timezone.now()
+        target = min(through, now) if through else now
+        state, _ = FeedSeenState.objects.get_or_create(user=request.user)
+        if state.last_seen_at is None or target > state.last_seen_at:
+            state.last_seen_at = target
+            state.save()
+        return Response({"last_seen_at": state.last_seen_at})
 
 
 class SubscriptionDetailView(generics.RetrieveUpdateDestroyAPIView):

@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     BankFollowDetailView,
+    BankFollowFeedSeenView,
     BankFollowFeedView,
     BankFollowListCreateView,
     PreferenceView,
@@ -16,6 +17,9 @@ urlpatterns = [
     ),
     path("bank-follows/", BankFollowListCreateView.as_view(), name="alert-bank-follows"),
     path("feed/", BankFollowFeedView.as_view(), name="alert-bank-follow-feed"),
+    path(
+        "feed/seen/", BankFollowFeedSeenView.as_view(), name="alert-bank-follow-feed-seen"
+    ),
     path(
         "bank-follows/<int:bank_id>/",
         BankFollowDetailView.as_view(),

@@ -36,7 +36,9 @@ class DepositProductViewSet(viewsets.ReadOnlyModelViewSet):
     """Read-only API for deposit products."""
 
     queryset = (
-        DepositProduct.objects.select_related("bank").prefetch_related("rates").public()
+        DepositProduct.objects.select_related("bank")
+        .prefetch_related("rates", "field_history")
+        .public()
     )
     serializer_class = DepositProductSerializer
     permission_classes = [AllowAny]
