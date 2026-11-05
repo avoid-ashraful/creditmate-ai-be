@@ -324,3 +324,29 @@ def test_unverified_email_cannot_create_review(db):
     assert response.status_code == 403
     assert response.data["code"] == "email_not_verified"
     assert not CardReview.objects.exists()
+
+
+def test_create_with_blank_optional_pros_cons(db):
+    """Card reviews: the optional pros/cons fields accept blank strings.
+
+    Regression (shared with the Phase 3B product reviews): the text
+    cleaner rejected any field empty after HTML stripping, so a member
+    who left the optional pros/cons blank in the form got a 400.
+    """
+    card = card_setup()
+    client = APIClient()
+    client.force_authenticate(verified_user("blank-pros-cons"))
+    response = client.post(
+        reverse("review-list"),
+        {
+            "card": card.pk,
+            "rating": 4,
+            "title": "Great",
+            "body": "Good rewards",
+            "pros": "",
+            "cons": "",
+        },
+    )
+    assert response.status_code == 201
+    review = CardReview.objects.get()
+    assert review.pros == "" and review.cons == ""

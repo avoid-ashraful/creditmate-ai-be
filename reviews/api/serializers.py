@@ -44,17 +44,11 @@ class CardReviewSerializer(serializers.ModelSerializer):
         return name
 
     def validate(self, attrs):
-        for field in ("title", "body", "pros", "cons"):
-            if field in attrs:
-                attrs[field] = strip_tags(attrs[field] or "").strip()
-                if not attrs[field]:
-                    raise serializers.ValidationError(
-                        {field: "This field may not be empty after removing HTML."}
-                    )
-                try:
-                    attrs[field] = clean_review_text(attrs[field])
-                except DjangoValidationError as exc:
-                    raise serializers.ValidationError({field: exc.messages}) from exc
+        # Title/body must survive cleaning; pros/cons are optional and may
+        # legitimately be blank (the form labels them optional).
+        attrs = clean_text_fields(
+            attrs, ("title", "body", "pros", "cons"), required=("title", "body")
+        )
         request = self.context.get("request")
         card = attrs.get("card", getattr(self.instance, "card", None))
         if request and request.user.is_authenticated and card:
@@ -84,15 +78,22 @@ def reviewer_display_name(user):
     return name
 
 
-def clean_text_fields(attrs, fields):
-    """Strip markup and apply the shared abuse heuristics, as card reviews do."""
+def clean_text_fields(attrs, fields, required=()):
+    """Strip markup and apply the shared abuse heuristics, as card reviews do.
+
+    Fields named in ``required`` must be non-empty once markup is stripped;
+    other fields may be blank and are normalised to "".
+    """
     for field in fields:
         if field in attrs:
             attrs[field] = strip_tags(attrs[field] or "").strip()
             if not attrs[field]:
-                raise serializers.ValidationError(
-                    {field: "This field may not be empty after removing HTML."}
-                )
+                if field in required:
+                    raise serializers.ValidationError(
+                        {field: "This field may not be empty after removing HTML."}
+                    )
+                attrs[field] = ""
+                continue
             try:
                 attrs[field] = clean_review_text(attrs[field])
             except DjangoValidationError as exc:
@@ -173,7 +174,9 @@ def product_review_serializer_class(product_type, *, own=False):
             return product_type
 
         def validate(self, attrs):
-            attrs = clean_text_fields(attrs, ("title", "body", "pros", "cons"))
+            attrs = clean_text_fields(
+                attrs, ("title", "body", "pros", "cons"), required=("title", "body")
+            )
             request = self.context.get("request")
             product = attrs.get("product", getattr(self.instance, "product", None))
             if request and request.user.is_authenticated and product:
@@ -214,6 +217,7 @@ class ReviewCommentSerializer(serializers.ModelSerializer):
     # to the same review and be top-level), never bound straight from input.
     parent = serializers.PrimaryKeyRelatedField(read_only=True)
     review_type = serializers.SerializerMethodField()
+    is_own = serializers.SerializerMethodField()
 
     class Meta:
         model = ReviewComment
@@ -223,6 +227,7 @@ class ReviewCommentSerializer(serializers.ModelSerializer):
             "review_type",
             "parent",
             "author_name",
+            "is_own",
             "body",
             "created",
             "modified",
@@ -233,6 +238,7 @@ class ReviewCommentSerializer(serializers.ModelSerializer):
             "review_type",
             "parent",
             "author_name",
+            "is_own",
             "created",
             "modified",
         )
@@ -241,6 +247,16 @@ class ReviewCommentSerializer(serializers.ModelSerializer):
     def get_author_name(self, obj):
         return reviewer_display_name(obj.author)
 
+    @extend_schema_field(serializers.BooleanField())
+    def get_is_own(self, obj):
+        request = self.context.get("request")
+        return bool(
+            request is not None
+            and getattr(request, "user", None) is not None
+            and request.user.is_authenticated
+            and obj.author_id == request.user.id
+        )
+
     @extend_schema_field(serializers.CharField())
     def get_review_type(self, obj):
         from .product_types import review_type_for_model
@@ -248,7 +264,7 @@ class ReviewCommentSerializer(serializers.ModelSerializer):
         return review_type_for_model(obj.content_type.model_class())
 
     def validate(self, attrs):
-        return clean_text_fields(attrs, ("body",))
+        return clean_text_fields(attrs, ("body",), required=("body",))
 
 
 class OwnReviewCommentSerializer(ReviewCommentSerializer):

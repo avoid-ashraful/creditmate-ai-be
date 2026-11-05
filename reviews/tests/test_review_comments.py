@@ -87,6 +87,7 @@ def test_comment_lifecycle_pending_invisible_public_after_approval(db):
     assert mine["count"] == 1
     assert mine["results"][0]["id"] == comment_id
     assert mine["results"][0]["status"] == "pending"
+    assert mine["results"][0]["is_own"] is True
 
     # Staff moderation: queue + approve.
     client.force_authenticate(staff_user())
@@ -102,6 +103,7 @@ def test_comment_lifecycle_pending_invisible_public_after_approval(db):
     assert public["count"] == 1
     assert public["results"][0]["body"] == "Helpful review, thanks"
     assert "status" not in public["results"][0]
+    assert public["results"][0]["is_own"] is False
     assert public["results"][0]["author_name"] == "commenter"
 
 

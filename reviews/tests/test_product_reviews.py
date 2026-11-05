@@ -142,6 +142,32 @@ def test_create_requires_auth_verified_email_and_is_pending(db, product_type):
 
 
 @pytest.mark.parametrize("product_type", list(TYPES))
+def test_create_with_blank_optional_pros_cons(db, product_type):
+    """pros/cons are optional in the form: blank strings must not 400.
+
+    Regression: the shared text cleaner used to reject any field left
+    empty after HTML stripping, including the optional pros/cons — the
+    live write form sends "" for untouched optional fields.
+    """
+    list_name, _, _, _, _, make_product, model = TYPES[product_type]
+    product = make_product()
+    client = APIClient()
+    client.force_authenticate(verified_user(f"blank-{product_type}"))
+    response = client.post(
+        reverse(list_name), payload(product, pros="", cons=""), format="json"
+    )
+    assert response.status_code == 201
+    review = model.objects.get()
+    assert review.pros == "" and review.cons == ""
+    # …while a required field that is markup-only still fails.
+    client.force_authenticate(verified_user(f"blank2-{product_type}"))
+    response = client.post(
+        reverse(list_name), payload(product, title="<b></b>"), format="json"
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.parametrize("product_type", list(TYPES))
 def test_moderation_flow_and_summary(db, product_type):
     list_name, _, _, _, summary_name, make_product, model = TYPES[product_type]
     product = make_product()

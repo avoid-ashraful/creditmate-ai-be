@@ -378,7 +378,7 @@ class ReviewCommentListCreateView(ReviewWriteThrottleMixin, APIView):
             status=ReviewComment.Status.PENDING,
         )
         return Response(
-            OwnReviewCommentSerializer(comment).data,
+            OwnReviewCommentSerializer(comment, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
         )
 
