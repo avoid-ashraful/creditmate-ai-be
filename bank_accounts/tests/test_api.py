@@ -116,10 +116,12 @@ def test_detail_unknown_slug_404(client, db):
 
 
 @pytest.mark.django_db
-def test_field_history_requires_auth(client, bank):
+def test_field_history_is_public(client, bank):
+    """Field history is public (redesign decision D1)."""
     product = make(bank, "Base Savings")
     response = client.get(f"{LIST_URL}{product.slug}/field-history/")
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert response.data["results"] == []
 
 
 @pytest.mark.django_db

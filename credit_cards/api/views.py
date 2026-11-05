@@ -428,14 +428,10 @@ class CreditCardViewSet(viewsets.ReadOnlyModelViewSet):
     def field_history(self, request, *args, **kwargs):
         """Return a bounded, newest-first history for a credit card.
 
-        Requires IsAuthenticated permission to access field history.
-        Anonymous users cannot view modification history.
+        Public (redesign decision D1): field-change history is shown to
+        every visitor, signed in or not — the same data the card detail
+        page publishes about its own provenance.
         """
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication required to view field history."},
-                status=403,
-            )
         card = self.get_object()
         history = card.field_history.all()
         page = self.paginate_queryset(history)

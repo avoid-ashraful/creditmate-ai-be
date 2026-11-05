@@ -9,8 +9,12 @@ from django.core import signing
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from .models import AlertSubscription, NotificationPreference
-from .serializers import AlertSubscriptionSerializer, NotificationPreferenceSerializer
+from .models import AlertSubscription, BankFollow, NotificationPreference
+from .serializers import (
+    AlertSubscriptionSerializer,
+    BankFollowSerializer,
+    NotificationPreferenceSerializer,
+)
 
 
 class SubscriptionListCreateView(generics.ListCreateAPIView):
@@ -26,6 +30,64 @@ class SubscriptionListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+@extend_schema_view(
+    get=extend_schema(
+        responses={200: BankFollowSerializer(many=True)},
+        tags=["alerts"],
+        operation_id="alerts_bank_follows_list",
+        description="List the banks the current user follows.",
+    ),
+    post=extend_schema(
+        request=BankFollowSerializer,
+        responses={201: BankFollowSerializer, 200: BankFollowSerializer},
+        tags=["alerts"],
+        operation_id="alerts_bank_follows_follow",
+        description=(
+            "Follow a bank. Idempotent: following a bank you already "
+            "follow returns the existing follow with 200, not an error."
+        ),
+    ),
+)
+class BankFollowListCreateView(generics.ListCreateAPIView):
+    serializer_class = BankFollowSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return BankFollow.objects.none()
+        return BankFollow.objects.filter(user=self.request.user).select_related("bank")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        follow, created = BankFollow.objects.get_or_create(
+            user=request.user, bank=serializer.validated_data["bank"]
+        )
+        return Response(
+            self.get_serializer(follow).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+@extend_schema_view(
+    delete=extend_schema(
+        responses={204: None},
+        tags=["alerts"],
+        operation_id="alerts_bank_follows_unfollow",
+        description=(
+            "Unfollow a bank by bank id. Idempotent: unfollowing a bank "
+            "you do not follow still returns 204."
+        ),
+    )
+)
+class BankFollowDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, bank_id: int):
+        BankFollow.objects.filter(user=request.user, bank_id=bank_id).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SubscriptionDetailView(generics.RetrieveUpdateDestroyAPIView):

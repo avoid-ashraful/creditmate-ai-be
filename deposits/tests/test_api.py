@@ -230,10 +230,12 @@ class TestScenario:
 
 @pytest.mark.django_db
 class TestFieldHistory:
-    def test_anonymous_forbidden(self, client, catalogue):
+    def test_anonymous_ok(self, client, catalogue):
+        """Field history is public (redesign decision D1)."""
         slug = catalogue["high"].slug
         response = client.get(f"{LIST_URL}{slug}/field-history/")
-        assert response.status_code == 403
+        assert response.status_code == 200
+        assert "results" in response.data
 
     def test_authenticated_ok(self, client, catalogue):
         user = get_user_model().objects.create_user(

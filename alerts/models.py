@@ -47,6 +47,35 @@ class AlertSubscription(Audit):
         ]
 
 
+class BankFollow(Audit):
+    """A user's follow of a bank (redesign D4: server-backed bank follows).
+
+    Following a bank is the subscription half of bank-follow alerts: the
+    nightly sync detects rate/fee changes per bank, and this row is what
+    ties a user to a bank. One row per (user, bank) — re-following is a
+    no-op, enforced by the unique constraint.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bank_follows",
+    )
+    bank = models.ForeignKey(
+        "banks.Bank",
+        on_delete=models.CASCADE,
+        related_name="followers",
+    )
+
+    class Meta:
+        ordering = ["-created"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "bank"], name="unique_bank_follow_per_user"
+            )
+        ]
+
+
 class NotificationPreference(Audit):
     class Frequency(models.TextChoices):
         IMMEDIATE = "immediate", "Immediate"
