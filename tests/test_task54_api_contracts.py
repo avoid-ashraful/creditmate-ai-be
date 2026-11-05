@@ -333,8 +333,20 @@ class AddedAPIContractTests(APITestCase):
         self.assertEqual(set(response.data), {"count", "next", "previous", "results"})
         response = self.client.get(f"/api/v1/reviews/cards/{self.card.id}/summary/")
         self.assertEqual(response.status_code, 200)
+        # Phase 3B: the card summary additionally carries the generalised
+        # keys shared by all product types (additive; originals unchanged).
         self.assertEqual(
-            set(response.data), {"card", "average_rating", "review_count", "distribution"}
+            set(response.data),
+            {
+                "card",
+                "average_rating",
+                "review_count",
+                "distribution",
+                "product_type",
+                "product",
+                "approved_count",
+                "community_reviewed",
+            },
         )
         review = CardReview.objects.create(
             user=self.user,

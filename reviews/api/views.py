@@ -142,6 +142,8 @@ class OwnReviewListView(generics.ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False) or not self.request.user.is_authenticated:
+            return CardReview.objects.none()
         qs = CardReview.objects.filter(user=self.request.user).select_related("card")
         card_id = self.request.query_params.get("card")
         if not card_id:

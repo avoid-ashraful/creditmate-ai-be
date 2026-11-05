@@ -130,6 +130,8 @@ class ProductOwnReviewListView(generics.ListAPIView):
 
     def get_queryset(self):
         model = PRODUCT_REVIEW_TYPES[self.product_type]["review_model"]
+        if getattr(self, "swagger_fake_view", False) or not self.request.user.is_authenticated:
+            return model.objects.none()
         qs = model.objects.filter(user=self.request.user).select_related("product")
         product_id = _parse_product_param(self.request)
         if product_id is not None:
@@ -162,10 +164,12 @@ class ProductReviewSummaryView(APIView):
     permission_classes = [permissions.AllowAny]
     product_type = None
 
+    # No explicit operation_id: this view is bound once per product type,
+    # so spectacular's path-derived auto id keeps the three operations
+    # distinct (a shared static id collides).
     @extend_schema(
         responses={200: OpenApiTypes.OBJECT},
         tags=["reviews"],
-        operation_id="reviews_product_summary",
     )
     def get(self, request, product_id):
         config = PRODUCT_REVIEW_TYPES[self.product_type]
@@ -185,11 +189,11 @@ class ProductHelpfulVoteView(APIView):
     throttle_classes = [ReviewUserThrottle]
     product_type = None
 
+    # No explicit operation_id (see ProductReviewSummaryView above).
     @extend_schema(
         request=None,
         responses={200: OpenApiTypes.OBJECT, 201: OpenApiTypes.OBJECT},
         tags=["reviews"],
-        operation_id="reviews_product_helpful_vote",
     )
     def post(self, request, review_id):
         model = PRODUCT_REVIEW_TYPES[self.product_type]["review_model"]
