@@ -68,7 +68,9 @@ def test_reading_the_feed_does_not_move_the_watermark(auth_client, change):
 
 @pytest.mark.django_db
 def test_change_after_mark_is_new_older_is_not(auth_client, user, change):
-    res = auth_client.post(SEEN_URL, {"through": change.created.isoformat()}, format="json")
+    res = auth_client.post(
+        SEEN_URL, {"through": change.created.isoformat()}, format="json"
+    )
     assert res.status_code == 200
 
     bank = change.card.bank

@@ -36,7 +36,9 @@ def _rate(product, tmin, tmax, rate):
 
 
 def _history(product, field, old, new):
-    payload = lambda v: None if v is None else {"rate_min": v, "rate_max": v}
+    def payload(v):
+        return None if v is None else {"rate_min": v, "rate_max": v}
+
     return DepositFieldHistory.objects.create(
         product=product, field_name=field, old_value=payload(old), new_value=payload(new)
     )

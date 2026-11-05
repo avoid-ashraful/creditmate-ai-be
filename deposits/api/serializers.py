@@ -132,11 +132,7 @@ class DepositProductListSerializer(serializers.ModelSerializer):
         if cell is None:
             return None
         field_name = f"rate_{cell.tenure_months_min}_{cell.tenure_months_max or 'open'}"
-        rows = [
-            row
-            for row in obj.field_history.all()
-            if row.field_name == field_name
-        ]
+        rows = [row for row in obj.field_history.all() if row.field_name == field_name]
         # field_history is ordered newest-first; walk oldest -> newest.
         points = []
         for row in reversed(rows):
@@ -145,7 +141,9 @@ class DepositProductListSerializer(serializers.ModelSerializer):
                 points.append({"at": row.created, "value": new_value})
         if rows:
             first_value = _rate_cell_value(rows[-1].old_value)
-            if first_value is not None and (not points or points[0]["value"] != first_value):
+            if first_value is not None and (
+                not points or points[0]["value"] != first_value
+            ):
                 points.insert(0, {"at": rows[-1].created, "value": first_value})
         current = _normalise_rate(cell.rate_max)
         if not points or points[-1]["value"] != current:
