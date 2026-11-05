@@ -184,7 +184,13 @@ class BankFollowFeedView(APIView):
 )
 class BankFollowFeedSeenView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FeedMarkSeenInputSerializer
 
+    @extend_schema(
+        request=FeedMarkSeenInputSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+        summary="Mark the bank-follow feed as seen up to a point in time",
+    )
     def post(self, request):
         serializer = FeedMarkSeenInputSerializer(data=request.data or {})
         serializer.is_valid(raise_exception=True)
