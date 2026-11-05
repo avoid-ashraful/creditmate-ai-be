@@ -21,6 +21,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 
+from accounts.models import UserProfile
 from accounts.serializers import (
     ChangePasswordSerializer,
     DeleteAccountSerializer,
@@ -32,6 +33,7 @@ from accounts.serializers import (
     RegisterSerializer,
     ResendVerificationSerializer,
     TokenRefreshSerializer,
+    UserDefaultsSerializer,
     UserSerializer,
 )
 from accounts.throttling import AuthAnonThrottle, AuthBurstThrottle, AuthUserThrottle
@@ -445,6 +447,49 @@ class MeView(_AuthUserThrottleMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class MyDefaultsView(_AuthUserThrottleMixin, APIView):
+    """Read or update the current user's D4 "Your numbers" defaults.
+
+    The profile is always the requesting user's own — there is no id in the
+    URL, so one user can never read or write another's defaults. Values are
+    nullable: null means "not set" and clients use the shipped defaults.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserDefaultsSerializer
+    throttle_scope = "user"
+
+    def get_object(self):
+        profile, _ = UserProfile.objects.get_or_create(
+            user=self.request.user, defaults={"email": self.request.user.email}
+        )
+        return profile
+
+    @extend_schema(
+        responses={200: UserDefaultsSerializer},
+        tags=["auth"],
+        operation_id="auth_me_defaults_retrieve",
+    )
+    def get(self, request):
+        return Response(
+            UserDefaultsSerializer(self.get_object()).data, status=status.HTTP_200_OK
+        )
+
+    @extend_schema(
+        request=UserDefaultsSerializer,
+        responses={200: UserDefaultsSerializer},
+        tags=["auth"],
+        operation_id="auth_me_defaults_update",
+    )
+    def patch(self, request):
+        serializer = UserDefaultsSerializer(
+            self.get_object(), data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class MeExportView(_AuthUserThrottleMixin, APIView):
     """Download all personal data held for the current user as JSON."""
 
@@ -489,6 +534,37 @@ class MeExportView(_AuthUserThrottleMixin, APIView):
             }
             for s in user.alert_subscriptions.select_related("card")
         ]
+        profile = getattr(user, "profile", None)
+        user_defaults = (
+            {
+                "typical_balance": profile.typical_balance,
+                "monthly_card_spend": profile.monthly_card_spend,
+                "planned_loan_amount": profile.planned_loan_amount,
+            }
+            if profile
+            else None
+        )
+        shortlist = [
+            {"vertical": item.vertical, "product": str(item.product)}
+            for item in user.shortlist_items.all()
+        ]
+        saved_searches = [
+            {"name": s.name, "path": s.path, "query": s.query, "created": s.created}
+            for s in user.saved_searches.all()
+        ]
+        saved_scenarios = [
+            {
+                "tool": s.tool,
+                "name": s.name,
+                "params": s.params,
+                "created": s.created,
+            }
+            for s in user.saved_scenarios.all()
+        ]
+        bank_follows = [
+            {"bank": follow.bank.name, "created": follow.created}
+            for follow in user.bank_follows.select_related("bank")
+        ]
         preference = getattr(user, "notification_preference", None)
         reviews = [
             {
@@ -506,6 +582,11 @@ class MeExportView(_AuthUserThrottleMixin, APIView):
         return Response(
             {
                 "profile": UserSerializer(user).data,
+                "user_defaults": user_defaults,
+                "shortlist": shortlist,
+                "saved_searches": saved_searches,
+                "saved_scenarios": saved_scenarios,
+                "bank_follows": bank_follows,
                 "saved_comparisons": comparisons,
                 "collections": collections,
                 "alert_subscriptions": subscriptions,

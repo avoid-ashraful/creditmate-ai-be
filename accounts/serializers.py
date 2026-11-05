@@ -37,6 +37,35 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ["email_verified", "terms_accepted_at", "terms_version"]
 
 
+class UserDefaultsSerializer(serializers.ModelSerializer):
+    """The D4 "Your numbers" scenario defaults stored on the profile.
+
+    Exactly three voluntary numbers — typical account balance, monthly card
+    spend, planned loan amount. All nullable: null means the user has never
+    set the value and clients fall back to the shipped defaults. Eligibility
+    inputs are deliberately absent; they are never stored server-side.
+    """
+
+    class Meta:
+        model = UserProfile
+        fields = ["typical_balance", "monthly_card_spend", "planned_loan_amount"]
+
+    def validate_typical_balance(self, value):
+        return self._validate_non_negative("typical_balance", value)
+
+    def validate_monthly_card_spend(self, value):
+        return self._validate_non_negative("monthly_card_spend", value)
+
+    def validate_planned_loan_amount(self, value):
+        return self._validate_non_negative("planned_loan_amount", value)
+
+    @staticmethod
+    def _validate_non_negative(_field, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError(_("Amounts cannot be negative."))
+        return value
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the User model with profile data."""
 

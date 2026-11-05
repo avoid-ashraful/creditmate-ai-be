@@ -2,16 +2,20 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from django.core import signing
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from .feed import build_follow_feed
 from .models import AlertSubscription, BankFollow, NotificationPreference
 from .serializers import (
     AlertSubscriptionSerializer,
+    BankFollowFeedEntrySerializer,
     BankFollowSerializer,
     NotificationPreferenceSerializer,
 )
@@ -30,6 +34,17 @@ class SubscriptionListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class BankFollowPagination(PageNumberPagination):
+    """Follows are bounded by the bank catalogue (~61 banks), so one page
+    must be able to hold all of them: the global page size (20) silently
+    truncated follow state for users following many banks (Phase 2 review
+    L4). Clients may still page explicitly via ?page_size=."""
+
+    page_size = 100
+    page_size_query_param = "page_size"
+    max_page_size = 200
 
 
 @extend_schema_view(
@@ -53,6 +68,7 @@ class SubscriptionListCreateView(generics.ListCreateAPIView):
 class BankFollowListCreateView(generics.ListCreateAPIView):
     serializer_class = BankFollowSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = BankFollowPagination
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
@@ -62,9 +78,17 @@ class BankFollowListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        follow, created = BankFollow.objects.get_or_create(
-            user=request.user, bank=serializer.validated_data["bank"]
-        )
+        bank = serializer.validated_data["bank"]
+        try:
+            follow, created = BankFollow.objects.get_or_create(
+                user=request.user, bank=bank
+            )
+        except IntegrityError:
+            # A concurrent first-follow for the same (user, bank) won the
+            # race to the unique constraint; the follow exists, which is
+            # exactly the idempotent outcome (Phase 2 review L3).
+            follow = BankFollow.objects.get(user=request.user, bank=bank)
+            created = False
         return Response(
             self.get_serializer(follow).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
@@ -88,6 +112,47 @@ class BankFollowDetailView(APIView):
     def delete(self, request, bank_id: int):
         BankFollow.objects.filter(user=request.user, bank_id=bank_id).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema_view(
+    get=extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
+        tags=["alerts"],
+        operation_id="alerts_bank_follow_feed",
+        description=(
+            "Field-change events at the banks the current user follows, "
+            "across all four verticals, newest first. Offset-paginated "
+            "with an exact has_more flag (no invented total count)."
+        ),
+        parameters=[
+            OpenApiParameter("page", OpenApiTypes.INT, OpenApiParameter.QUERY),
+            OpenApiParameter("page_size", OpenApiTypes.INT, OpenApiParameter.QUERY),
+        ],
+    )
+)
+class BankFollowFeedView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = BankFollowFeedEntrySerializer
+
+    def get(self, request):
+        try:
+            page = max(1, int(request.query_params.get("page", 1)))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            page_size = int(request.query_params.get("page_size", 20))
+        except (TypeError, ValueError):
+            page_size = 20
+        page_size = min(50, max(1, page_size))
+        entries, has_more = build_follow_feed(request.user, page, page_size)
+        return Response(
+            {
+                "results": BankFollowFeedEntrySerializer(entries, many=True).data,
+                "page": page,
+                "page_size": page_size,
+                "has_more": has_more,
+            }
+        )
 
 
 class SubscriptionDetailView(generics.RetrieveUpdateDestroyAPIView):

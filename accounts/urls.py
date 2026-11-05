@@ -9,6 +9,7 @@ from accounts.views import (
     LogoutView,
     MeExportView,
     MeView,
+    MyDefaultsView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
     RegisterView,
@@ -40,6 +41,7 @@ urlpatterns = [
         name="resend-verification",
     ),
     path("me/", MeView.as_view(), name="me"),
+    path("me/defaults/", MyDefaultsView.as_view(), name="me-defaults"),
     path("me/export/", MeExportView.as_view(), name="me-export"),
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
 ]
