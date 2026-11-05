@@ -344,12 +344,16 @@ class TestFieldHistoryAPIEndpoint:
             self.card.annual_fee = fee
             self.card.save()
 
-    def test_anonymous_user_forbidden(self):
-        """Anonymous GET to field-history should return 403."""
+    def test_anonymous_user_can_access(self):
+        """Anonymous GET to field-history returns 200 (D1: history is public)."""
         url = f"/api/v1/credit-cards/{self.card.id}/field-history/"
         response = self.client.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert "Authentication required" in response.data.get("detail", "")
+        assert response.status_code == status.HTTP_200_OK
+        # Same paginated envelope and entries an authenticated user sees:
+        # setUp recorded three annual_fee changes (200 -> 300 -> 400).
+        assert response.data["count"] == 3
+        fields = {row["field_name"] for row in response.data["results"]}
+        assert fields == {"annual_fee"}
 
     def test_authenticated_user_can_access(self):
         """Authenticated GET to field-history should return 200."""

@@ -360,11 +360,13 @@ class LoanApiTests(TestCase):
         )
         self.assertEqual(Decimal(result["at_min_rate"]["emi"]), Decimal("10833.33"))
 
-    def test_field_history_requires_auth(self):
+    def test_field_history_is_public(self):
+        """Field history is public (redesign decision D1): anonymous and
+        authenticated users get the same payload."""
         response = self.client.get(
             f"/api/v1/loan-products/{self.personal.slug}/field-history/"
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
         user = get_user_model().objects.create_user(username="loan-tester", password="x")
         self.client.force_authenticate(user)
         response = self.client.get(

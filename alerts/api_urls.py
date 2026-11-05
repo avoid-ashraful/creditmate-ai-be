@@ -1,6 +1,8 @@
 from django.urls import path
 
 from .views import (
+    BankFollowDetailView,
+    BankFollowListCreateView,
     PreferenceView,
     PublicUnsubscribeView,
     SubscriptionDetailView,
@@ -10,6 +12,12 @@ from .views import (
 urlpatterns = [
     path(
         "subscriptions/", SubscriptionListCreateView.as_view(), name="alert-subscriptions"
+    ),
+    path("bank-follows/", BankFollowListCreateView.as_view(), name="alert-bank-follows"),
+    path(
+        "bank-follows/<int:bank_id>/",
+        BankFollowDetailView.as_view(),
+        name="alert-bank-follow-detail",
     ),
     path(
         "subscriptions/<int:pk>/",

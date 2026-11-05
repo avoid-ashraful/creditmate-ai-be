@@ -15,7 +15,7 @@ on interest alone.
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -80,13 +80,9 @@ class AccountProductViewSet(viewsets.ReadOnlyModelViewSet):
     def field_history(self, request, *args, **kwargs):
         """Return a bounded, newest-first history for an account product.
 
-        Mirrors the credit-card/deposit endpoints: requires authentication.
+        Mirrors the credit-card/deposit endpoints: public (redesign
+        decision D1).
         """
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication required to view field history."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
         product = self.get_object()
         history = product.field_history.all()
         page = self.paginate_queryset(history)

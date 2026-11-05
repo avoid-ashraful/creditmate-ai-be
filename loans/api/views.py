@@ -16,7 +16,7 @@ are returned with an explanatory note instead of an invented EMI.
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -380,12 +380,10 @@ class LoanProductViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(responses=LoanFieldHistorySerializer(many=True))
     @action(detail=True, methods=["get"], url_path="field-history")
     def field_history(self, request, *args, **kwargs):
-        """Bounded, newest-first field history. Requires authentication."""
-        if not request.user or not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication required."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        """Bounded, newest-first field history.
+
+        Public (redesign decision D1), mirroring the credit-card endpoint.
+        """
         product = self.get_object()
         history = product.field_history.all()[:100]
         return Response(LoanFieldHistorySerializer(history, many=True).data)
