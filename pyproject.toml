@@ -32,6 +32,10 @@ dependencies = [
     "elasticsearch>=8.18,<9",
     "drf-spectacular>=0.30,<0.31",
     "prometheus-client>=0.20.0",
+    "langgraph>=0.2,<1",
+    "langchain-core>=0.3,<1",
+    "mcp>=1,<2",
+    "pydantic>=2,<3",
 ]
 
 [dependency-groups]
