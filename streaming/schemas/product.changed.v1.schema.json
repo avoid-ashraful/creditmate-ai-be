@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "product.changed payload",
+  "type": "object",
+  "required": [
+    "product_type",
+    "product_id",
+    "change_type"
+  ],
+  "properties": {
+    "product_type": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "integer"
+    },
+    "change_type": {
+      "type": "string",
+      "enum": [
+        "created",
+        "updated",
+        "verified"
+      ]
+    },
+    "changed_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "version": {
+      "type": "integer"
+    }
+  }
+}

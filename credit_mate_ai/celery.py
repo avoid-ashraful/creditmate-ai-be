@@ -76,3 +76,27 @@ if _search_drain_entry is not None:
 from django.conf import settings as _django_settings  # noqa: E402
 
 app.conf.timezone = getattr(_django_settings, "CELERY_TIMEZONE", "UTC")
+
+
+STREAMING_RELAY_BEAT_ENTRY = "streaming-outbox-relay"
+
+
+def streaming_relay_entry():
+    """Beat entry for the streaming outbox relay (mirrors the search drain)."""
+    from django.conf import settings
+
+    if not getattr(settings, "EVENT_STREAMING_ENABLED", False):
+        return None
+    interval = float(getattr(settings, "KAFKA_RELAY_INTERVAL", 5))
+    if interval <= 0:
+        return None
+    return {
+        "task": "streaming.relay_outbox",
+        "schedule": interval,
+        "options": {"expires": max(60, int(interval * 4))},
+    }
+
+
+_streaming_entry = streaming_relay_entry()
+if _streaming_entry is not None:
+    app.conf.beat_schedule[STREAMING_RELAY_BEAT_ENTRY] = _streaming_entry

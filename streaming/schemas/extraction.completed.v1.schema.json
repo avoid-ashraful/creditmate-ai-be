@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "extraction.completed payload",
+  "type": "object",
+  "properties": {
+    "crawled_content_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "draft_payload_ref": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "token_usage": {
+      "type": "object"
+    }
+  }
+}
