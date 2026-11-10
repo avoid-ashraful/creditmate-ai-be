@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "crawl.fetched payload",
+  "type": "object",
+  "required": [
+    "source_id",
+    "url",
+    "content_hash"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "integer"
+    },
+    "url": {
+      "type": "string"
+    },
+    "content_hash": {
+      "type": "string"
+    },
+    "fetched_at": {
+      "type": "string"
+    },
+    "sync_run_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  }
+}

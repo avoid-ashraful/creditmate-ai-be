@@ -86,6 +86,17 @@ def crawl_bank_data_source(self, data_source_id):
         success = crawler.crawl_bank_data_source(data_source_id)
 
         if success:
+            # Streaming (flag-gated, additive): emit crawl.fetched + extraction.requested via outbox.
+            try:
+                from django.conf import settings as _s
+                if getattr(_s, "EVENT_STREAMING_ENABLED", False):
+                    from banks.models import BankDataSource as _DS, CrawledContent as _CC
+                    from streaming.pipeline import emit_crawl_fetched as _emit
+                    _src = _DS.objects.filter(pk=data_source_id).first()
+                    if _src is not None:
+                        _emit(_src, _CC.objects.filter(data_source=_src).order_by("-created").first())
+            except Exception:  # noqa: BLE001 - streaming must never break crawling
+                logger.exception("streaming emit failed for source %s", data_source_id)
             logger.info(f"Successfully crawled data source {data_source_id}")
             return {
                 "status": "success",

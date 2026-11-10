@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "extraction.requested payload",
+  "type": "object",
+  "required": [
+    "source_id"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "integer"
+    },
+    "crawled_content_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "model_hint": {
+      "type": "string"
+    }
+  }
+}

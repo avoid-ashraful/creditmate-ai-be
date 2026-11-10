@@ -1,0 +1,36 @@
+# Redpanda (Kafka-compatible) for local development of the streaming app.
+# All ports bound to localhost only. Schema Registry: 18081, Console: 18082, Kafka: 19092.
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://127.0.0.1:19092
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --advertise-schema-registry-addr internal://redpanda:8081,external://127.0.0.1:18081
+      - --smp 1
+      - --memory 1G
+      - --default-log-partitions 6
+    ports:
+      - "127.0.0.1:19092:19092"
+      - "127.0.0.1:18081:18081"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  console:
+    image: docker.redpanda.com/redpandadata/console:v2.7.2
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+      KAFKA_SCHEMAREGISTRY_ENABLED: "true"
+      KAFKA_SCHEMAREGISTRY_URLS: http://redpanda:8081
+    ports:
+      - "127.0.0.1:18082:8080"
+    depends_on:
+      - redpanda
+volumes:
+  redpanda_data:

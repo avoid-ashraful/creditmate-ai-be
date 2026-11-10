@@ -139,6 +139,7 @@ INSTALLED_APPS = [
     "reviews",
     "alerts",
     "accounts",
+    "streaming",
 ]
 
 MIDDLEWARE = [
@@ -664,3 +665,14 @@ if not DEBUG:
     # Additional security headers
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
+
+
+# --- Event streaming (Kafka/Redpanda) — appended by feat/streaming-kafka ---
+# Flag off by default: the existing direct Celery pipeline is untouched.
+EVENT_STREAMING_ENABLED = os.getenv("EVENT_STREAMING_ENABLED", "False").lower() in ("true", "1", "yes", "on")
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:19092")
+KAFKA_SCHEMA_REGISTRY_URL = os.getenv("KAFKA_SCHEMA_REGISTRY_URL", "http://127.0.0.1:18081")
+KAFKA_RELAY_INTERVAL = float(os.getenv("KAFKA_RELAY_INTERVAL", "5"))
+KAFKA_RELAY_BATCH_SIZE = int(os.getenv("KAFKA_RELAY_BATCH_SIZE", "100"))
+KAFKA_CONSUMER_MAX_ATTEMPTS = int(os.getenv("KAFKA_CONSUMER_MAX_ATTEMPTS", "5"))
+KAFKA_PRODUCER_FLUSH_TIMEOUT = float(os.getenv("KAFKA_PRODUCER_FLUSH_TIMEOUT", "10"))

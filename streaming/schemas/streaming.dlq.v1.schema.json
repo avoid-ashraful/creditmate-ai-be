@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "streaming.dlq payload",
+  "type": "object",
+  "properties": {
+    "original_topic": {
+      "type": "string"
+    },
+    "error_class": {
+      "type": "string"
+    },
+    "attempts": {
+      "type": "integer"
+    },
+    "envelope": {
+      "type": "object"
+    }
+  }
+}
