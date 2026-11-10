@@ -141,6 +141,7 @@ INSTALLED_APPS = [
     "accounts",
     "streaming",
     "retrieval",
+    "advisor",
 ]
 
 MIDDLEWARE = [
@@ -717,4 +718,18 @@ GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-0
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 LOCAL_EMBEDDING_MODEL = os.getenv(
     "LOCAL_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+)
+# --- Advisor (Capability 2: LangGraph + MCP) ---------------------------------
+# Merged dark: every advisor endpoint 404s until ADVISOR_ENABLED is set.
+ADVISOR_ENABLED = os.getenv("ADVISOR_ENABLED", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+ADVISOR_CHAT_PROVIDER = os.getenv("ADVISOR_CHAT_PROVIDER", "fake")
+ADVISOR_MAX_TOOL_STEPS = int(os.getenv("ADVISOR_MAX_TOOL_STEPS", "6"))
+ADVISOR_TIMEOUT_SECONDS = float(os.getenv("ADVISOR_TIMEOUT_SECONDS", "20"))
+ADVISOR_MAX_LLM_CALLS = int(os.getenv("ADVISOR_MAX_LLM_CALLS", "12"))
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["advisor"] = os.getenv(
+    "THROTTLE_RATE_ADVISOR", "20/min"
 )
