@@ -6,6 +6,7 @@ which acts as a unified gateway to multiple language models.
 """
 
 import logging
+import time
 
 from openai import OpenAI
 
@@ -125,7 +126,9 @@ class OpenRouterProvider(BaseLLMProvider):
                 "OpenRouter provider is not properly configured",
                 provider=self.provider_name,
             )
-
+        tracking = self._pop_tracking_kwargs(kwargs)
+        model_used = model or self.default_model
+        _started = time.monotonic()
         try:
             messages = []
             if system_prompt:
@@ -156,12 +159,37 @@ class OpenRouterProvider(BaseLLMProvider):
                     "Empty response content from OpenRouter", provider=self.provider_name
                 )
 
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                self.last_usage = {
+                    "prompt_tokens": getattr(usage, "prompt_tokens", None),
+                    "completion_tokens": getattr(usage, "completion_tokens", None),
+                    "total_tokens": getattr(usage, "total_tokens", None),
+                }
+            else:
+                self.last_usage = None
             logger.debug(
                 f"OpenRouter response generated successfully (model: {model or self.default_model})"
             )
-            return content.strip()
+            text = content.strip()
+            self._emit_usage(
+                model=model_used,
+                latency_ms=int((time.monotonic() - _started) * 1000),
+                status="success",
+                prompt_tokens=(self.last_usage or {}).get("prompt_tokens"),
+                completion_tokens=(self.last_usage or {}).get("completion_tokens"),
+                total_tokens=(self.last_usage or {}).get("total_tokens"),
+                **tracking,
+            )
+            return text
 
         except Exception as e:
+            self._emit_usage(
+                model=model_used,
+                latency_ms=int((time.monotonic() - _started) * 1000),
+                status="error",
+                **tracking,
+            )
             # Map OpenAI exceptions to our custom exceptions
             error_message = str(e).lower()
 

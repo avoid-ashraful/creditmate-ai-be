@@ -664,3 +664,29 @@ if not DEBUG:
     # Additional security headers
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
+
+# ---------------------------------------------------------------------------
+# Stream F: AI cost & latency engineering (appended block; see
+# docs/measurements/ai-cost-latency.md)
+# Per-run cost cap in micro-USD alongside LLM_MAX_CALLS_PER_RUN (0 = off).
+LLM_MAX_COST_MICROUSD_PER_RUN = int(os.getenv("LLM_MAX_COST_MICROUSD_PER_RUN", "0"))
+# Per advisor-session cost cap in micro-USD (0 = off).
+ADVISOR_MAX_COST_MICROUSD_PER_SESSION = int(
+    os.getenv("ADVISOR_MAX_COST_MICROUSD_PER_SESSION", "0")
+)
+# Config-driven routing overrides per purpose; empty = routing.py defaults.
+LLM_ROUTING = {}
+# Per-purpose timeout budgets (seconds) used when a route does not set one.
+LLM_PURPOSE_TIMEOUTS = {
+    "extraction": 120,
+    "classification": 30,
+    "advisor": 20,
+    "advisor_composition": 20,
+    "eval_judge": 60,
+    "embedding": 30,
+}
+# Exact-match cache TTLs (seconds) per purpose; 0/missing = disabled.
+LLM_CACHE_TTL_SECONDS = {"default": 0, "extraction": 0, "retrieval": 3600}
+# Circuit breaker: open after N consecutive failures for S seconds.
+LLM_CIRCUIT_FAILURE_THRESHOLD = int(os.getenv("LLM_CIRCUIT_FAILURE_THRESHOLD", "5"))
+LLM_CIRCUIT_RECOVERY_SECONDS = int(os.getenv("LLM_CIRCUIT_RECOVERY_SECONDS", "60"))
