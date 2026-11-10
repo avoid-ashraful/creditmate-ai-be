@@ -6,6 +6,7 @@ the Google Gen AI SDK (``google-genai``).
 """
 
 import logging
+import time
 from pathlib import Path
 
 import httpx
@@ -117,7 +118,10 @@ class GeminiProvider(BaseLLMProvider):
             If response is invalid or empty
         """
         self._validate_availability()
-
+        tracking = self._pop_tracking_kwargs(kwargs)
+        routed_model = kwargs.pop("model", None) or kwargs.pop("routed_model", None)
+        model_used = routed_model or self.default_model_name
+        _started = time.monotonic()
         try:
             full_prompt = self._build_full_prompt(prompt, system_prompt)
             image_paths = kwargs.pop("image_paths", None)
@@ -137,11 +141,41 @@ class GeminiProvider(BaseLLMProvider):
             generation_config = self._build_generation_config(
                 temperature, max_tokens, **kwargs
             )
-            response = self._call_gemini_api(full_prompt, generation_config)
+            response = self._call_gemini_api(
+                full_prompt, generation_config, model=model_used
+            )
 
-            return self._process_response(response)
+            # Token counts from the provider response, when present.
+            usage_meta = getattr(response, "usage_metadata", None)
+            if usage_meta is not None:
+                self.last_usage = {
+                    "prompt_tokens": getattr(usage_meta, "prompt_token_count", None),
+                    "completion_tokens": getattr(
+                        usage_meta, "candidates_token_count", None
+                    ),
+                    "total_tokens": getattr(usage_meta, "total_token_count", None),
+                }
+            else:
+                self.last_usage = None
+            text = self._process_response(response)
+            self._emit_usage(
+                model=model_used,
+                latency_ms=int((time.monotonic() - _started) * 1000),
+                status="success",
+                prompt_tokens=(self.last_usage or {}).get("prompt_tokens"),
+                completion_tokens=(self.last_usage or {}).get("completion_tokens"),
+                total_tokens=(self.last_usage or {}).get("total_tokens"),
+                **tracking,
+            )
+            return text
 
         except Exception as e:
+            self._emit_usage(
+                model=model_used,
+                latency_ms=int((time.monotonic() - _started) * 1000),
+                status="error",
+                **tracking,
+            )
             self._handle_gemini_error(e)
 
     def generate_from_images(self, prompt, image_paths, **kwargs):
@@ -220,7 +254,7 @@ class GeminiProvider(BaseLLMProvider):
         config.update(kwargs)
         return config
 
-    def _call_gemini_api(self, prompt, config):
+    def _call_gemini_api(self, prompt, config, model=None):
         """Make API call to Gemini.
 
         Parameters
@@ -236,7 +270,7 @@ class GeminiProvider(BaseLLMProvider):
             Gemini API response
         """
         return self.client.models.generate_content(
-            model=self.default_model_name,
+            model=model or self.default_model_name,
             contents=prompt,
             config=config if config else None,
         )

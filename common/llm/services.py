@@ -10,6 +10,8 @@ import logging
 from django.conf import settings
 
 from common.llm.budget import current_budget
+from common.llm.retry import get_breaker
+from common.llm.routing import resolve_route
 from common.llm.exceptions import (
     AllLLMProvidersFailedError,
     LLMAuthenticationError,
@@ -97,7 +99,15 @@ class LLMOrchestrator:
         }
 
     def generate_response(
-        self, prompt, system_prompt=None, preferred_provider=None, max_retries=1, **kwargs
+        self,
+        prompt,
+        system_prompt=None,
+        preferred_provider=None,
+        max_retries=1,
+        purpose="extraction",
+        run_id="",
+        session_id="",
+        **kwargs,
     ):
         """Generate response using available providers with fallback logic.
 
@@ -128,8 +138,37 @@ class LLMOrchestrator:
         AllLLMProvidersFailedError
             If all configured providers fail to generate a response
         """
+        # Stream F: config-driven routing. An explicit preferred_provider
+        # from the caller always wins; otherwise the route for this purpose
+        # selects the first provider, with its fallbacks next.
+        route = resolve_route(purpose)
+        self._active_route = route
+        if preferred_provider is None and route.provider:
+            preferred_provider = route.provider
+        kwargs.setdefault("purpose", purpose)
+        kwargs.setdefault("run_id", run_id)
+        kwargs.setdefault("session_id", session_id)
+        kwargs.setdefault("routing_reason", route.routing_reason)
+        if session_id:
+            from common.llm.budget import session_budget_exhausted
+
+            if session_budget_exhausted(session_id):
+                raise LLMBudgetExhaustedError(
+                    "Advisor session cost budget is spent", provider=preferred_provider
+                )
         image_paths = kwargs.get("image_paths")
         provider_order = self._get_provider_order(preferred_provider)
+        if route.fallback_providers:
+            provider_order.sort(
+                key=lambda n: (
+                    0 if n == preferred_provider else 1,
+                    (
+                        route.fallback_providers.index(n)
+                        if n in route.fallback_providers
+                        else 99
+                    ),
+                )
+            )
         if image_paths is not None:
             provider_order = [
                 name
@@ -245,6 +284,13 @@ class LLMOrchestrator:
             Success result or None if all attempts failed
         """
         provider = self.providers[provider_name]
+        route = getattr(self, "_active_route", None)
+        if route is not None and provider_name == route.provider and route.model:
+            kwargs.setdefault("model", route.model)
+        breaker = get_breaker(provider_name, kwargs.get("purpose", "extraction"))
+        if not breaker.allow():
+            errors[f"{provider_name}_circuit"] = "circuit breaker open"
+            return None
 
         for attempt in range(max_retries + 1):
             attempt_key = f"{provider_name}_attempt_{attempt + 1}"
@@ -266,6 +312,7 @@ class LLMOrchestrator:
                 response = generate(prompt=prompt, system_prompt=system_prompt, **kwargs)
 
                 if provider.validate_response(response):
+                    breaker.record_success()
                     logger.info(
                         f"Successfully generated response using {provider_name} (attempt {attempt + 1})"
                     )
@@ -286,11 +333,19 @@ class LLMOrchestrator:
                 break  # Retrying cannot help; move to the next provider
 
             except LLMError as e:
+                breaker.record_failure()
                 errors[attempt_key] = str(e)
                 if not self._should_retry_provider_error(
                     provider_name, attempt, max_retries, e
                 ):
                     break
+                # Bounded exponential backoff with jitter (Stream F);
+                # the retry still consumes budget at the loop top.
+                import random
+                import time as _time
+
+                delay = min(8.0, 0.5 * (2**attempt))
+                _time.sleep(delay + random.uniform(0, delay * 0.25))
 
             except Exception as e:
                 logger.error(f"Unexpected error with {provider_name}: {e}")

@@ -32,6 +32,58 @@ class BaseLLMProvider(ABC):
         """
         self.provider_name = provider_name
         self._is_configured = False
+        # Stream F: tokens from the most recent provider response, if the
+        # provider API returned them (else stays None — never estimated).
+        self.last_usage = None
+
+    def _emit_usage(
+        self,
+        *,
+        model="",
+        latency_ms=None,
+        status="success",
+        prompt_tokens=None,
+        completion_tokens=None,
+        total_tokens=None,
+        purpose="extraction",
+        run_id="",
+        session_id="",
+        routing_reason="",
+    ):
+        """Record one call in the LLMUsage ledger + metrics; never raises."""
+        import logging
+
+        try:
+            from common.llm.usage import record_usage
+
+            return record_usage(
+                provider=self.provider_name,
+                model=model,
+                purpose=purpose,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
+                latency_ms=latency_ms,
+                run_id=run_id,
+                session_id=session_id,
+                routing_reason=routing_reason,
+                status=status,
+            )
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Failed to record LLM usage for %s", self.provider_name
+            )
+            return None
+
+    @staticmethod
+    def _pop_tracking_kwargs(kwargs):
+        """Pop Stream F tracking kwargs so they never leak to provider APIs."""
+        return {
+            "purpose": kwargs.pop("purpose", "extraction"),
+            "run_id": kwargs.pop("run_id", ""),
+            "session_id": kwargs.pop("session_id", ""),
+            "routing_reason": kwargs.pop("routing_reason", ""),
+        }
 
     @property
     def name(self):

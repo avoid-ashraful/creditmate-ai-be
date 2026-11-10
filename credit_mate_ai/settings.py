@@ -676,3 +676,28 @@ KAFKA_RELAY_INTERVAL = float(os.getenv("KAFKA_RELAY_INTERVAL", "5"))
 KAFKA_RELAY_BATCH_SIZE = int(os.getenv("KAFKA_RELAY_BATCH_SIZE", "100"))
 KAFKA_CONSUMER_MAX_ATTEMPTS = int(os.getenv("KAFKA_CONSUMER_MAX_ATTEMPTS", "5"))
 KAFKA_PRODUCER_FLUSH_TIMEOUT = float(os.getenv("KAFKA_PRODUCER_FLUSH_TIMEOUT", "10"))
+# ---------------------------------------------------------------------------
+# Stream F: AI cost & latency engineering (appended block; see
+# docs/measurements/ai-cost-latency.md)
+# Per-run cost cap in micro-USD alongside LLM_MAX_CALLS_PER_RUN (0 = off).
+LLM_MAX_COST_MICROUSD_PER_RUN = int(os.getenv("LLM_MAX_COST_MICROUSD_PER_RUN", "0"))
+# Per advisor-session cost cap in micro-USD (0 = off).
+ADVISOR_MAX_COST_MICROUSD_PER_SESSION = int(
+    os.getenv("ADVISOR_MAX_COST_MICROUSD_PER_SESSION", "0")
+)
+# Config-driven routing overrides per purpose; empty = routing.py defaults.
+LLM_ROUTING = {}
+# Per-purpose timeout budgets (seconds) used when a route does not set one.
+LLM_PURPOSE_TIMEOUTS = {
+    "extraction": 120,
+    "classification": 30,
+    "advisor": 20,
+    "advisor_composition": 20,
+    "eval_judge": 60,
+    "embedding": 30,
+}
+# Exact-match cache TTLs (seconds) per purpose; 0/missing = disabled.
+LLM_CACHE_TTL_SECONDS = {"default": 0, "extraction": 0, "retrieval": 3600}
+# Circuit breaker: open after N consecutive failures for S seconds.
+LLM_CIRCUIT_FAILURE_THRESHOLD = int(os.getenv("LLM_CIRCUIT_FAILURE_THRESHOLD", "5"))
+LLM_CIRCUIT_RECOVERY_SECONDS = int(os.getenv("LLM_CIRCUIT_RECOVERY_SECONDS", "60"))
