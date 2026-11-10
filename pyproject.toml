@@ -48,6 +48,13 @@ dev = [
     "pip-audit>=2.10,<3",
     "bandit[toml]>=1.9,<2",
 ]
+# Optional: LLM evaluation only (evals/). NOT part of the app runtime and
+# never installed by the default `uv sync`; use `uv sync --group evals`.
+evals = [
+    "ragas>=0.2,<1",
+    "langsmith>=0.1,<1",
+    "datasets>=2,<5",
+]
 
 [build-system]
 requires = ["hatchling"]

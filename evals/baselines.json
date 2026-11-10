@@ -1,0 +1,53 @@
+{
+  "suite": "golden_v1",
+  "kind": "baseline-seed",
+  "note": "Seeded from a fake-mode (stub response) run on 2026-11-11. This proves the harness, NOT advisor quality. Replace with the first live-mode baseline via an explicit PR before treating category scores as regression evidence.",
+  "generated_at": "2026-11-11",
+  "categories": {
+    "calculators": {
+      "total": 8,
+      "passed": 8,
+      "score": 1.0
+    },
+    "comparison": {
+      "total": 12,
+      "passed": 12,
+      "score": 1.0
+    },
+    "eligibility": {
+      "total": 12,
+      "passed": 12,
+      "score": 1.0
+    },
+    "factual": {
+      "total": 15,
+      "passed": 15,
+      "score": 1.0
+    },
+    "fallback": {
+      "total": 6,
+      "passed": 6,
+      "score": 1.0
+    },
+    "grounding": {
+      "total": 15,
+      "passed": 15,
+      "score": 1.0
+    },
+    "honesty-adversarial": {
+      "total": 12,
+      "passed": 12,
+      "score": 1.0
+    }
+  },
+  "totals": {
+    "cases": 80,
+    "passed": 80,
+    "score": 1.0
+  },
+  "nightly_thresholds": {
+    "faithfulness": 0.85,
+    "context_recall": 0.8,
+    "max_category_drop": 0.03
+  }
+}

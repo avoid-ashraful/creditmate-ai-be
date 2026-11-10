@@ -1,0 +1,71 @@
+name: LLM Evals (nightly)
+
+# Deterministic graders also run in PR CI (see tests workflow / runbook):
+#   python -m evals.verify_dataset
+#   python -m evals run --suite golden_v1 --mode fake   (gate: score = 1.0)
+# This workflow is the nightly full run: live advisor + RAGAS when
+# provider secrets are configured, deterministic otherwise.
+
+on:
+  schedule:
+    - cron: "30 20 * * *" # 02:30 Asia/Dhaka (UTC+6)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SECRET_KEY: "ci-only-secret-key-with-sufficient-length-and-entropy-123456789"
+  DEBUG: "True"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,testserver"
+  DATABASE_URL: "postgres://postgres:postgres@localhost:5432/creditmate_test"
+  REDIS_CACHE_URL: "redis://localhost:6379/14"
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: creditmate_test
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 10s
+          --health-timeout 5s --health-retries 5
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+      - name: Install (app + optional evals group)
+        run: uv sync --frozen --group evals
+      - name: Verify golden dataset against the catalogue
+        run: uv run python -m evals.verify_dataset
+      - name: Run evals (live when secrets present, deterministic otherwise)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+        run: |
+          if [ -n "$GEMINI_API_KEY" ]; then
+            uv run python -m evals run --suite golden_v1 --mode live --nightly
+          else
+            echo "No provider secret configured: deterministic run only."
+            uv run python -m evals run --suite golden_v1 --mode fake --nightly
+          fi
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: eval-reports
+          path: evals/reports/
