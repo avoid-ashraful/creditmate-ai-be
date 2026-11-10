@@ -1,0 +1,3 @@
+# Generated eval reports are CI artefacts, not source.
+reports/
+__pycache__/
