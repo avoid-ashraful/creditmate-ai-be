@@ -14,6 +14,7 @@ citations and a hashed tool trace — never eligibility inputs (see
 
 import json
 
+from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -71,6 +72,10 @@ class AdvisorChatView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "advisor"
 
+    @extend_schema(
+        request=AdvisorChatRequestSerializer,
+        responses=AdvisorChatResponseSerializer,
+    )
     def post(self, request):
         _require_enabled()
         serializer = AdvisorChatRequestSerializer(data=request.data)
@@ -83,6 +88,12 @@ class AdvisorChatStreamView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "advisor"
 
+    @extend_schema(
+        request=AdvisorChatRequestSerializer,
+        responses=AdvisorChatResponseSerializer,
+        description="Server-sent events stream; the answer event carries the "
+        "AdvisorChatResponse payload.",
+    )
     def post(self, request):
         _require_enabled()
         serializer = AdvisorChatRequestSerializer(data=request.data)

@@ -9,6 +9,7 @@ import logging
 
 from django.conf import settings
 
+from common.llm.base import BaseLLMProvider
 from common.llm.budget import current_budget
 from common.llm.retry import get_breaker
 from common.llm.routing import resolve_route
@@ -23,6 +24,12 @@ from common.llm.exceptions import (
 from common.llm.providers import ClaudeCodeCLIProvider, GeminiProvider, OpenRouterProvider
 
 logger = logging.getLogger(__name__)
+
+# Stream F tracking kwargs are consumed (popped) by BaseLLMProvider
+# subclasses for usage recording. Providers that do not implement that
+# contract must never see them — the orchestrator strips them at the call
+# boundary for any other provider object.
+TRACKING_KWARGS = ("purpose", "run_id", "session_id", "routing_reason")
 
 
 class LLMOrchestrator:
@@ -309,7 +316,16 @@ class LLMOrchestrator:
                     if kwargs.get("image_paths") is not None
                     else provider.generate_response
                 )
-                response = generate(prompt=prompt, system_prompt=system_prompt, **kwargs)
+                call_kwargs = kwargs
+                if not isinstance(provider, BaseLLMProvider):
+                    call_kwargs = {
+                        key: value
+                        for key, value in kwargs.items()
+                        if key not in TRACKING_KWARGS
+                    }
+                response = generate(
+                    prompt=prompt, system_prompt=system_prompt, **call_kwargs
+                )
 
                 if provider.validate_response(response):
                     breaker.record_success()
