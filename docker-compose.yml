@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL Database
   db:
-    image: postgres:15
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_DB: creditmate_ai
       POSTGRES_USER: postgres

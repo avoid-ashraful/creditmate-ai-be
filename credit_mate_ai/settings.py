@@ -140,6 +140,7 @@ INSTALLED_APPS = [
     "alerts",
     "accounts",
     "streaming",
+    "retrieval",
 ]
 
 MIDDLEWARE = [
@@ -701,3 +702,19 @@ LLM_CACHE_TTL_SECONDS = {"default": 0, "extraction": 0, "retrieval": 3600}
 # Circuit breaker: open after N consecutive failures for S seconds.
 LLM_CIRCUIT_FAILURE_THRESHOLD = int(os.getenv("LLM_CIRCUIT_FAILURE_THRESHOLD", "5"))
 LLM_CIRCUIT_RECOVERY_SECONDS = int(os.getenv("LLM_CIRCUIT_RECOVERY_SECONDS", "60"))
+# --- Retrieval / pgvector (Stream C) -------------------------------------
+# Public semantic search endpoint is off by default; embedding ingestion
+# (backfill_embeddings / handle_product_changed) works regardless.
+VECTOR_SEARCH_ENABLED = os.getenv("VECTOR_SEARCH_ENABLED", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+    "on",
+)
+EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "gemini")
+EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "384"))
+GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001")
+OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+LOCAL_EMBEDDING_MODEL = os.getenv(
+    "LOCAL_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+)

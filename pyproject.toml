@@ -33,6 +33,7 @@ dependencies = [
     "drf-spectacular>=0.30,<0.31",
     "prometheus-client>=0.20.0",
     "confluent-kafka>=2,<3",
+    "pgvector>=0.4,<0.5",
 ]
 
 [dependency-groups]
