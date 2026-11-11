@@ -44,7 +44,8 @@ def _emi(principal, apr_percent, months) -> float:
     return float(principal) * r * (1 + r) ** months / ((1 + r) ** months - 1)
 
 
-def verify(suite: str = "golden_v1") -> list[str]:
+# C901: sequential independent dataset checks — a linear checklist.
+def verify(suite: str = "golden_v1") -> list[str]:  # noqa: C901
     cases = load_cases(suite)
     cards, source = load_catalogue()
     by_slug = {c["slug"]: c for c in cards}

@@ -38,7 +38,7 @@ from advisor.tools import (
     run_tool,
 )
 from common.llm.budget import llm_call_budget
-from common.llm.chat import ChatTurn, ToolCallRequest, get_chat_provider
+from common.llm.chat import ToolCallRequest, get_chat_provider
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,9 @@ def _hash(args):
     return args_hash(args)
 
 
-def build_graph(provider=None):
+# C901: declarative graph wiring — branches are node/edge registrations;
+# splitting the builder would hide the topology.
+def build_graph(provider=None):  # noqa: C901
     """Compile the LangGraph graph around ``provider`` (fake by default)."""
     from langgraph.graph import END, START, StateGraph
 

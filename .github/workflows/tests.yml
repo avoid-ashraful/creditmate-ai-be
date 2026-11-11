@@ -63,6 +63,16 @@ jobs:
           version: "0.12.10"
           enable-cache: true
       - run: uv sync --frozen --dev --python ${{ matrix.python-version }}
+      - name: Enable pgvector in template1
+        # pytest runs with --nomigrations (pytest.ini), so the retrieval
+        # migration that creates the extension never executes in CI and the
+        # VectorField tables are built straight from the models. Test
+        # databases are cloned from template1, so the extension must exist
+        # there. The service image (pgvector/pgvector:pg17) ships the
+        # extension binaries but does not enable it.
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -p 5432 -U postgres -d template1 -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS vector"
       - name: Run complete test suite
         run: uv run --frozen pytest --cov=accounts --cov=banks --cov=credit_cards --cov=common --cov=reviews --cov=saved --cov-report=xml --cov-report=term-missing
       - run: uv run --frozen python manage.py check
