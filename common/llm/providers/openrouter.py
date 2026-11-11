@@ -77,7 +77,7 @@ class OpenRouterProvider(BaseLLMProvider):
         """
         return self._is_configured and self.client is not None
 
-    def generate_response(
+    def generate_response(  # noqa: C901 — branches handle OpenRouter payload/response shape variants
         self,
         prompt,
         system_prompt=None,

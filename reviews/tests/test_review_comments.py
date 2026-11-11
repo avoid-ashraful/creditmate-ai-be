@@ -6,7 +6,6 @@ editing returns them to pending, only approved comments are public.
 The author always sees their own comments in place with their status.
 """
 
-import pytest
 from rest_framework.test import APIClient
 
 from django.contrib.auth import get_user_model

@@ -11,7 +11,6 @@ shaped response — a malformed answer is a failed grade, not a crash.
 
 from __future__ import annotations
 
-import math
 from typing import Callable
 
 REQUIRED_RESPONSE_KEYS = {"answer", "cited_product_ids", "citations"}
