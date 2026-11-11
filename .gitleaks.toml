@@ -1,0 +1,45 @@
+# gitleaks configuration for creditmate-ai-be.
+# Docs: https://github.com/gitleaks/gitleaks#configuration
+#
+# Keep the built-in rule set; this file only adds a narrow allowlist for
+# verified false positives (test data, fixtures and documentation examples).
+# Every entry below was checked by hand against the repository history —
+# none of the matched values is a real credential.
+
+title = "CreditMate AI backend — gitleaks config"
+
+[extend]
+useDefault = true
+
+# Eligibility-checker tests: the generic-api-key rule trips on the
+# `api_client` pytest fixture name appearing next to `monthly_income=`
+# keyword arguments. The "secret" captured is the literal text
+# `monthly_income=`; the values are synthetic income figures used as
+# test inputs, not credentials.
+[[allowlists]]
+description = "Eligibility tests: synthetic monthly_income test inputs"
+paths = ['credit_cards/tests/test_eligibility\.py']
+regexes = ['monthly_income=']
+
+# Verified-cards fixture: published card feature prose (lounge-access
+# descriptions such as "International/Domestic Lounge Access ...")
+# scraped from public bank pages. Not a credential.
+[[allowlists]]
+description = "Card fixture: published lounge-access feature prose"
+paths = ['credit_cards/fixtures/verified_cards_2026-10-18\.json']
+regexes = ['International/Domestic']
+
+# Auth API documentation: intentionally truncated JWT examples
+# ("eyJhbGciOiJIUzI1NiIs..." — note the literal ellipsis) and an obvious
+# dummy token ("abc123-def456") shown in example payloads.
+[[allowlists]]
+description = "Docs: truncated JWT examples and dummy token in auth API docs"
+paths = ['docs/auth-api\.md']
+regexes = ['eyJhbGciOiJIUzI1NiIs\.\.\.', 'abc123-def456']
+
+# README: placeholder token in a curl example
+# (`Authorization: Token your-token-here`).
+[[allowlists]]
+description = "README: placeholder token in curl example"
+paths = ['README\.md']
+regexes = ['your-token-here']
