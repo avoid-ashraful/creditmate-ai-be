@@ -256,7 +256,7 @@ class LLMOrchestrator:
 
         return provider_order
 
-    def _try_provider_with_retries(
+    def _try_provider_with_retries(  # noqa: C901 — retry/fallback state machine; branches are failure classes
         self,
         provider_name,
         prompt,

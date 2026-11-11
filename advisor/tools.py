@@ -471,7 +471,8 @@ def _band(product, rate_rows):
     return str(low), str(high), kind
 
 
-def search_products(inp: SearchProductsInput) -> SearchProductsOutput:
+# C901: per-product-type dispatch — each branch is a thin query builder.
+def search_products(inp: SearchProductsInput) -> SearchProductsOutput:  # noqa: C901
     """Search deposits / loans / accounts public listings (bands only)."""
     from django.db.models import Q
 
@@ -711,7 +712,8 @@ def run_tool(name: str, args: dict):
     return output, latency_ms
 
 
-def citations_from_output(output) -> list[Citation]:
+# C901: walks heterogeneous tool outputs — branches are per-tool shapes.
+def citations_from_output(output) -> list[Citation]:  # noqa: C901
     """Best-effort citation extraction from any tool output."""
     citations: list[Citation] = []
     if isinstance(output, (SearchCardsOutput, CompareCardsOutput)):

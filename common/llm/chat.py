@@ -92,7 +92,11 @@ class FakeChatProvider(BaseChatProvider):
         self._script = list(script) if script is not None else None
         self.calls = 0
 
-    def chat(self, *, system_prompt, user_text, tool_results, available_tools):
+    # C901: test fake — branches emulate provider scenarios
+    # (tool calls, errors, fallbacks).
+    def chat(  # noqa: C901
+        self, *, system_prompt, user_text, tool_results, available_tools
+    ):
         self.calls += 1
         budget = current_budget()
         if budget is not None and not budget.consume():

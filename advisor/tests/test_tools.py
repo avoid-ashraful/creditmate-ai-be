@@ -9,7 +9,6 @@ from advisor import tools
 from advisor.tools import run_tool
 from banks.factories import BankFactory
 from credit_cards.factories import CreditCardFactory
-from credit_cards.models import CreditCard
 from credit_cards.constants import VerificationStatus
 from loans.models import LoanProduct
 
