@@ -1,0 +1,35 @@
+name: Workflow Audit (zizmor)
+
+# Statically audits this repository's own GitHub Actions workflows for
+# security problems (unpinned actions, template injection, over-broad
+# permissions, credential persistence, ...). Pre-existing findings are
+# baselined in .github/zizmor.yml; any NEW finding fails this check.
+# Reference: https://docs.zizmor.sh/audits/
+
+on:
+  pull_request:
+    branches: [master, main]
+  push:
+    branches: [master, main]
+
+permissions:
+  contents: read
+
+jobs:
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          # Pin the zizmor version for reproducible results (matches the
+          # version used to establish the .github/zizmor.yml baseline).
+          version: 1.32.0
+          # SARIF upload to the GitHub security tab requires GitHub
+          # Advanced Security, which this private repo does not have;
+          # findings are reported as PR annotations + a failing check.
+          advanced-security: false
