@@ -1,481 +1,237 @@
-# 💳 CreditMate AI
-
-[![Tests](https://github.com/avoid-ashraful/creditmate-ai-be/workflows/Tests/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions)
-[![Code Quality](https://github.com/avoid-ashraful/creditmate-ai-be/workflows/Code%20Quality/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions)
-[![codecov](https://codecov.io/gh/avoid-ashraful/creditmate-ai-be/branch/master/graph/badge.svg)](https://codecov.io/gh/avoid-ashraful/creditmate-ai-be)
-
-> 🚀 **AI-Powered Credit Card Discovery Platform** - Automatically crawl, analyze, and compare credit cards from banks across the web using advanced AI content parsing.
-
-## 🚧 Development Status
-
-**Current Phase**: Active Development
-**Version**: 0.1.0-beta
-**Status**: Not yet production-ready
-
-This project is currently in active development phase. Core features are implemented and tested, but the system has not gone live yet. We welcome contributions and feedback from developers interested in financial technology and AI applications.
-
-## ✨ Features
-
-- 🤖 **AI-Powered Content Extraction** - Uses OpenAI GPT to parse credit card data from PDFs, webpages, images, and CSV files
-- 🕷️ **Automated Web Crawling** - Celery-based scheduled crawling system with intelligent retry logic
-- 🔍 **Advanced Search & Filtering** - REST API with comprehensive filtering, searching, and comparison capabilities
-- 📊 **Smart Data Management** - Automatic deduplication, error tracking, and data quality monitoring
-- 🛡️ **Security First** - Built-in protection against SQL injection, XSS, and other vulnerabilities
-- 📱 **API-First Design** - Comprehensive REST API with Django REST Framework
-- ⚡ **High Performance** - Optimized queries, caching, and scalable architecture
-- 🎯 **Advanced Filtering** - Filter by multiple IDs, bank IDs, and comprehensive search parameters
-- ✉️ **Environment-Based Email** - Smart email configuration that disables email in development
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   REST API      │    │   AI Parsing    │
-│   (External)    │◄──►│   Django REST   │◄──►│   OpenAI GPT    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                              │
-                              ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Crawler   │◄──►│   Database      │◄──►│   Admin Panel   │
-│   Celery Tasks  │    │   PostgreSQL    │    │   Django Admin  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-## 🆕 Recent Improvements
-
-### API Enhancements
-- **Enhanced Filtering**: Added `ids` and `bank_ids` filters for flexible credit card selection
-- **Streamlined Endpoints**: Removed redundant endpoints in favor of comprehensive filtering
-- **Comprehensive Documentation**: Added detailed API documentation for both Banks and Credit Cards APIs
-
-### Developer Experience
-- **Environment-Based Configuration**: Email service automatically disabled in development/staging
-- **Security Updates**: Updated dependencies to address security vulnerabilities (Pillow 11.3.0, urllib3 2.5.0)
-- **Git Workflow**: Improved development workflow with better commit practices
-
-### Performance & Security
-- **Rate Limiting**: API throttling implemented across all endpoints (1000/hour anonymous, 2000/hour authenticated)
-- **CORS Configuration**: Environment-based Cross-Origin Resource Sharing setup
-- **Docker Support**: Complete containerization with development and production configurations
-- **Optimized Queries**: Enhanced database queries for better performance
-- **Security Hardening**: Comprehensive security testing and vulnerability protection
-- **Test Coverage**: Extensive test coverage including edge cases and security scenarios
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.14 (default); Python 3.13 is also supported
-- Redis (for Celery task queue)
-- OpenAI API Key
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/avoid-ashraful/creditmate-ai-be.git
-   cd creditmate-ai-be
-   ```
-
-2. **Install dependencies**
-   ```bash
-   # Install uv if not already installed
-   pip install uv
-
-   # Install project dependencies
-   uv sync --frozen --dev
-
-   # Activate virtual environment (if not already activated)
-   source .venv/bin/activate
-   ```
-
-3. **Environment setup**
-   ```bash
-   # Copy environment template
-   cp .env.example .env
-
-   # Edit .env with your configuration
-   export SECRET_KEY="your-super-secret-key"
-   export OPENAI_API_KEY="your-openai-api-key"
-   export DEBUG=True
-   export ENVIRONMENT=local  # Email service disabled for development
-   ```
-
-4. **Database setup**
-   ```bash
-   # Run migrations
-   uv run python manage.py migrate
-
-   # Create superuser
-   uv run python manage.py createsuperuser
-   ```
-
-5. **Start Redis (required for Celery)**
-   ```bash
-   # macOS
-   brew install redis && brew services start redis
-
-   # Ubuntu
-   sudo apt-get install redis-server && sudo systemctl start redis
-   ```
-
-6. **Run the development server**
-   ```bash
-   # Terminal 1: Django development server
-   uv run python manage.py runserver
-
-   # Terminal 2: Celery worker (in another terminal)
-   uv run celery -A credit_mate_ai worker --loglevel=info
-
-   # Terminal 3: Celery beat scheduler (in another terminal)
-   uv run celery -A credit_mate_ai beat --loglevel=info
-   ```
-
-7. **Access the application**
-   - API: http://localhost:8000/api/v1/
-   - Admin: http://localhost:8000/admin/
-   - API Documentation: See detailed documentation links below
-
-## 📖 API Documentation
-
-### Quick Reference
-
-| Resource | Endpoints | Documentation |
-|----------|-----------|---------------|
-| **Banks** | `/api/v1/banks/` | [Banks API Docs](./docs/api/banks.md) |
-| **Credit Cards** | `/api/v1/credit-cards/` | [Credit Cards API Docs](./docs/api/credit-cards.md) |
-| **Usage Examples** | All endpoints | [API Examples](./docs/api/examples.md) |
-
-### Key Endpoints
-
-```http
-# Banks
-GET    /api/v1/banks/                    # List all banks
-GET    /api/v1/banks/{id}/               # Get bank details
-
-# Credit Cards
-GET    /api/v1/credit-cards/              # List all credit cards
-GET    /api/v1/credit-cards/{id}/         # Get credit card details
-GET    /api/v1/credit-cards/search-suggestions/ # Get search suggestions
-```
-
-### Essential Query Parameters
-
-```http
-# Filter by specific credit cards (for comparison)
-?ids=1,2,3,4
-
-# Filter by specific banks
-?bank_ids=1,3,5
-
-# Advanced filtering
-?annual_fee=0&has_lounge_access=true&credit_score_required=Good
-
-# Search functionality
-?search=travel rewards cashback
-
-# Sorting and pagination
-?ordering=annual_fee,-interest_rate&page=2&page_size=20
-```
-
-### Quick Examples
-
-```bash
-# No annual fee cards
-curl "http://localhost:8000/api/v1/credit-cards/?annual_fee=0"
-
-# Compare specific cards
-curl "http://localhost:8000/api/v1/credit-cards/?ids=1,2,3,4"
-
-# Travel cards from major banks
-curl "http://localhost:8000/api/v1/credit-cards/?search=travel&bank_ids=1,2,3"
-```
-
-**📋 For comprehensive examples and detailed documentation, see:**
-- **[API Examples](./docs/api/examples.md)** - Complete usage guide with integration examples
-- **[Banks API Documentation](./docs/api/banks.md)** - Detailed Banks API reference
-- **[Credit Cards API Documentation](./docs/api/credit-cards.md)** - Complete Credit Cards API guide
-
-## 🕷️ Web Crawling System
-
-### How It Works
-
-1. **Data Sources** - Configure URLs for each bank (PDFs, webpages, images, CSV)
-2. **Scheduled Crawling** - Celery automatically crawls sources weekly
-3. **Content Extraction** - Extract text from various file formats
-4. **AI Parsing** - OpenAI GPT parses content into structured data
-5. **Data Update** - Updates credit card database with new information
-
-### Managing Data Sources
-
-```bash
-# Add data sources via Django Admin or management command
-uv run python manage.py shell
->>> from banks.models import Bank, BankDataSource
->>> bank = Bank.objects.get(name="Chase")
->>> BankDataSource.objects.create(
-...     bank=bank,
-...     url="https://www.chase.com/credit-cards",
-...     content_type="webpage",
-...     description="Chase credit cards main page"
-... )
-```
-
-### Manual Crawling
-
-```bash
-# Crawl all active sources
-uv run python manage.py crawl_bank_data
-
-# Crawl specific bank
-uv run python manage.py crawl_bank_data --bank-id 1
-
-# Crawl specific data source
-uv run python manage.py crawl_bank_data --source-id 5
-
-# Dry run (test without making changes)
-uv run python manage.py crawl_bank_data --dry-run
-```
-
-## 🧪 Testing
-
-### Running Tests
-
-```bash
-# Run all tests
-uv run pytest
-
-# Run with coverage
-uv run pytest --cov=banks --cov=credit_cards --cov=common --cov-report=html
-
-# Run specific test module
-uv run pytest banks/tests/test_api.py
-
-# Run Django tests
-uv run python manage.py test
-```
-
-### Test Coverage
-
-- **Models** - Comprehensive model validation and relationship testing
-- **API** - Full REST API endpoint testing with security checks
-- **Services** - Business logic and external service integration testing
-- **Tasks** - Celery task execution and error handling testing
-- **Integration** - End-to-end workflow testing
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# Environment Configuration (local/staging/production)
-ENVIRONMENT=local                      # Email service disabled for non-production
-
-# Core Django Settings
-SECRET_KEY=your-secret-key
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Database (PostgreSQL in production)
-DATABASE_URL=postgresql://user:pass@localhost:5432/creditmate
-
-# OpenAI Integration
-OPENAI_API_KEY=your-openai-api-key
-
-# Celery & Redis
-CELERY_BROKER_URL=redis://localhost:6379/0
-CELERY_RESULT_BACKEND=redis://localhost:6379/0
-
-# Email Configuration (Production only)
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.your-provider.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@domain.com
-EMAIL_HOST_PASSWORD=your-email-password
-
-# CORS Configuration
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://yourdomain.com
-CORS_ALLOW_CREDENTIALS=True
-
-# API Rate Limiting
-THROTTLE_RATE_ANON=1000/hour
-THROTTLE_RATE_USER=2000/hour
-THROTTLE_RATE_BURST=100/min
-
-```
-
-### Celery Configuration
-
-Customize crawling schedule in `credit_mate_ai/celery.py`:
-
-```python
-app.conf.beat_schedule = {
-    "crawl-bank-data-weekly": {
-        "task": "banks.tasks.crawl_all_bank_data",
-        "schedule": crontab(hour=2, minute=0, day_of_week=1),  # Monday 2 AM
-    },
-}
-```
-
-## 🚀 Deployment
-
-### Production Setup
-
-1. **Use PostgreSQL instead of SQLite**
-2. **Configure proper Redis instance**
-3. **Set up reverse proxy (Nginx)**
-4. **Use environment variables for secrets**
-5. **Configure logging and monitoring**
-
-### Docker Deployment
-
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# Run migrations
-docker-compose exec web python manage.py migrate
-
-# Create superuser
-docker-compose exec web python manage.py createsuperuser
-```
-
-### Recommended Production Stack
-
-- **Web Server**: Nginx + Gunicorn
-- **Database**: PostgreSQL
-- **Cache/Queue**: Redis
-- **Process Manager**: Supervisor or systemd
-
-## 🛡️ Security Features
-
-- **SQL Injection Protection** - Parameterized queries and ORM usage
-- **XSS Prevention** - Content sanitization and proper escaping
-- **CSRF Protection** - Django's built-in CSRF middleware
-- **CORS Security** - Configurable Cross-Origin Resource Sharing with environment variables
-- **Rate Limiting** - API throttling and abuse prevention (1000/hour anonymous, 2000/hour authenticated)
-- **Input Validation** - Comprehensive data validation
-- **Secure Headers** - Security headers for all responses
-
-## 📊 Monitoring & Maintenance
-
-### Health Checks
-
-```bash
-# Check system health
-uv run python manage.py check
-
-# Check database connectivity
-uv run python manage.py dbshell
-
-# Monitor Celery workers
-uv run celery -A credit_mate_ai inspect active
-```
-
-### Maintenance Tasks
-
-```bash
-# Crawl bank data manually
-uv run python manage.py crawl_bank_data
-
-# Crawl specific bank
-uv run python manage.py crawl_bank_data --bank-id 1
-
-# View available management commands
-uv run python manage.py help
-```
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Implementation Summary](./docs/development/implementation-summary.md) and [Crawler Guide](./docs/development/crawler-system.md) for technical details.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`uv run pytest`)
-5. Run code quality checks (`black . && flake8 && isort .`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-### Code Quality
-
-We maintain high code quality standards:
-
-- **Code Formatting**: Black
-- **Linting**: Flake8
-- **Import Sorting**: isort
-- **Test Coverage**: Minimum 90%
-
-## 📚 Documentation
-
-**📋 [Complete Documentation Index](./docs/README.md)**
-
-### API Documentation
-- **[API Examples](./docs/api/examples.md)** - Comprehensive API usage guide with integration examples
-- **[Banks API Reference](./docs/api/banks.md)** - Complete Banks API documentation
-- **[Credit Cards API Reference](./docs/api/credit-cards.md)** - Detailed Credit Cards API guide
-
-### Configuration & Setup
-- **[Environment Variables](./docs/configuration/environment-variables.md)** - Complete configuration reference
-- **[Email Configuration](./docs/configuration/email.md)** - Environment-based email setup
-- **[CORS & Rate Limiting](./docs/configuration/cors-and-rate-limiting.md)** - Security configuration for APIs
-
-### Development & Architecture
-- **[Setup & Guidelines](./docs/development/setup-and-guidelines.md)** - Development environment and coding standards
-- **[Crawler System](./docs/development/crawler-system.md)** - AI-powered web crawling system
-- **[Implementation Summary](./docs/development/implementation-summary.md)** - Technical implementation details
-- **[Project Guidelines](./CLAUDE.md)** - Claude development instructions
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Celery tasks not running**
-   - Check Redis connection: `redis-cli ping`
-   - Verify worker is running: `uv run celery -A credit_mate_ai inspect active`
-
-2. **OpenAI API errors**
-   - Verify API key is set: `echo $OPENAI_API_KEY`
-   - Check API usage limits on OpenAI dashboard
-
-3. **Database connection errors**
-   - Ensure database is running
-   - Check connection settings in `.env`
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- **Django** - The web framework for perfectionists with deadlines
-- **OpenAI** - AI-powered content parsing capabilities
-- **Celery** - Distributed task queue system
-- **Django REST Framework** - Powerful and flexible toolkit for building Web APIs
-- **Redis** - In-memory data structure store for caching and task queuing
+# CreditMate AI — Backend
+
+The API behind CreditMate AI: a comparison platform for banking products in
+Bangladesh — credit cards, deposits, loans, and bank accounts — built entirely
+on **published data with provenance**. Every figure the API serves traces back
+to a bank-published source or an official Bangladesh Bank chart, and passes a
+human review gate before it becomes public.
+
+[![Tests](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/tests.yml/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/tests.yml)
+[![Code Quality](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/code-quality.yml/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/code-quality.yml)
+[![Migration Checks](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/migrations.yml/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/migrations.yml)
+[![Security Checks](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/security.yml/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/security.yml)
+[![Workflow Audit (zizmor)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/workflow-audit.yml/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/workflow-audit.yml)
+[![Secret Scan (gitleaks)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/secret-scan.yml)
+[![LLM Evals (nightly)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/evals-nightly.yml/badge.svg)](https://github.com/avoid-ashraful/creditmate-ai-be/actions/workflows/evals-nightly.yml)
+
+> **Status:** pre-launch, in active development. Some capabilities are merged
+> behind feature flags and are off by default (see
+> [Feature flags](#feature-flags)).
+
+**Related repositories:**
+[Umbrella (Helm charts, platform docs)](https://github.com/avoid-ashraful/creditmate-ai) ·
+[Frontend (React + TypeScript)](https://github.com/avoid-ashraful/creditmate-ai-fe)
 
 ---
 
-<div align="center">
-  <p>Built with ❤️ by the CreditMate AI Team</p>
-  <p>
-  </p>
-</div>
+## What the API serves
 
-### Runtime and CI maintenance
+| Vertical | Catalogue | Notes |
+| --- | --- | --- |
+| Credit cards | 135 catalogued, 105 public | Fees, APRs, rewards, lounge access, per-field provenance and fee-change history |
+| Deposits | 80 products, 367 rates | Seeded from Bangladesh Bank's official rate charts; FDR ranking net of tax, DPS with IRR-based effective yield; Sanchayapatra shown as an unranked government benchmark |
+| Loans | 50 products, 15 lenders | Rates published as **bands, never invented point rates**; scenario costing at both band ends; regulatory caps as dated configuration |
+| Bank accounts | 87 products, 11 banks | Rate slabs kept as published; ranking by net annual value at the user's balance |
 
-Python 3.14 is pinned in `.python-version` and Docker; CI tests Python 3.13 and
-3.14 against the same `uv.lock`, covering in-memory and Redis cache backends. Django stays on the supported 5.2 LTS line.
-Use `uv sync --frozen --dev` for reproducible installs. Dependency upgrades must
-update `pyproject.toml` and `uv.lock` together, then pass both runtime jobs.
+On top of the catalogues:
 
-CI enforces Black, isort, flake8, dependency consistency, the complete test suite,
-a clean PostgreSQL migration apply, OpenAPI validation, deployment settings,
-locked production dependency auditing and medium/high severity Bandit checks.
-These replace advisory grep heuristics and jobs that installed untracked tools
-or hid failures. Migration rollback is not automatic: historical data migrations
-may be irreversible and require a migration-specific recovery plan.
+- **Eligibility checker** — a stateless endpoint
+  (`POST /api/v1/credit-cards/eligibility/`) that stores nothing. It takes
+  income, employment type, TIN and CIB self-declaration and returns each card
+  as Eligible / Likely / No published requirement / Not yet, with reasons
+  quoting the published numbers. Results are estimates — the API never claims
+  pre-approval or a guarantee.
+- **CreditMate Score** — a 0–10 score computed only from published card data
+  (annual cost, interest vs the 25% Bangladesh Bank cap, rewards, lounge
+  perks, data confidence), with the weights published in the methodology and
+  a per-component breakdown per card.
+- **Calculators** — EMI and payoff tools using real cards' published APRs;
+  cards with no published APR (including Islamic cards) require a custom
+  rate rather than pretending 0%.
+- **Community reviews** — public ratings, reviews and comments for all four
+  product types (50+ approved reviews earn a "Community reviewed" marker).
+- **Personalisation** — JWT accounts with server-stored profiles (only the
+  numbers a user volunteers), cross-device shortlists, saved searches,
+  bank-follow and a per-user change-alerts feed. Eligibility inputs are
+  never stored.
+
+Islamic products are modelled on their own terms throughout: expected
+profit, never "interest".
+
+## Architecture
+
+Django 5.2 / DRF monolith with Celery workers, organised by vertical. The
+data pipeline is deliberately conservative:
+
+```
+ bank pages / BB charts ──▶ crawl ──▶ SHA-256 change detection
+        ──▶ LLM extraction (draft only) ──▶ review queue ──▶ verified data
+```
+
+No automated path can modify verified data: extraction output lands in a
+draft/review queue, and only a human approval promotes it. Sources that
+don't change cost zero LLM calls.
+
+### Django apps
+
+| App | Responsibility |
+| --- | --- |
+| `credit_cards` | Card catalogue, provenance/field history, eligibility, CreditMate Score |
+| `banks` | Bank directory and bank-level pages data |
+| `deposits` | Deposit products, BB chart snapshots, tax rules, scenario ranking |
+| `loans` | Loan products, rate bands, regulatory caps, scenario costing |
+| `bank_accounts` | Account products, fee schedules, net-value ranking |
+| `accounts` | Auth (JWT), user profiles |
+| `saved` | Shortlists and saved searches |
+| `alerts` | Bank-follow and change alerts |
+| `reviews` | Community ratings, reviews, comments for all product types |
+| `search` | Elasticsearch-backed search (can be disabled with `SEARCH_ENABLED=False`) |
+| `common` | Shared infrastructure: LLM provider abstraction, embeddings, usage ledger |
+| `streaming` | Kafka event streaming via the transactional outbox pattern *(flag-gated)* |
+| `retrieval` | pgvector document store, chunking and hybrid search *(flag-gated)* |
+| `advisor` | LangGraph advisor agent + MCP server *(flag-gated)* |
+| `evals/` | Standalone LLM evaluation harness (not a Django app) |
+
+## AI components
+
+- **Extraction pipeline** — provider-agnostic LLM layer (`common/llm`) with
+  Gemini, OpenRouter and Claude providers; per-run call budgets
+  (`LLM_MAX_CALLS_PER_RUN`), provider ordering (`LLM_PROVIDER_ORDER`) and the
+  extraction model set via `GEMINI_MODEL`.
+- **Cost & latency engineering** — an `LLMUsage` ledger records every call's
+  tokens, cost (only when the provider reports it — never estimated) and
+  latency, with dated price configuration, per-run/session budgets,
+  routing, retry/backoff, a circuit breaker and Prometheus metrics.
+- **Advisor** — a LangGraph agent over 7 read-only tools (card search,
+  detail, compare, eligibility, calculators, product search, retrieval
+  grounding), also exposed through an MCP server built on the official SDK.
+  Answers are validated and must cite published data. See
+  [the ADR](docs/adr/advisor-langgraph-mcp-vs-bedrock.md) for why LangGraph +
+  MCP over Bedrock Agents.
+- **Retrieval** — structure-aware chunking of product documents into
+  pgvector (HNSW cosine + full-text, hybrid RRF ranking) with provenance on
+  every chunk. Embeddings are provider-pluggable (Gemini/OpenAI/local).
+  See [the ADR](docs/adr/pgvector-vs-managed-vector-dbs.md).
+- **Streaming** — transactional outbox → Kafka (Redpanda locally) with
+  idempotent consumers, a dead-letter topic and replay. Consumers may only
+  create review-queue drafts. See [the ADR](docs/adr/kafka-streaming.md).
+- **Evaluation** — an 80-case golden dataset built from the verified card
+  fixture (factual, comparison, eligibility, calculator, grounding, honesty
+  and fallback cases) with deterministic graders; RAGAS and LangSmith are
+  optional, key-guarded adapters over a local-first harness.
+
+## Tech stack
+
+- **Python 3.14** (`.python-version`; CI also tests 3.13), **Django 5.2**,
+  **Django REST Framework 3.17**, **Celery 5.6**
+- **PostgreSQL 17 + pgvector**, **Redis 7**, **Elasticsearch 8**
+- **drf-spectacular** (OpenAPI), **SimpleJWT**, **prometheus-client**,
+  **Sentry**
+- **LangGraph**, **MCP SDK**, **confluent-kafka**, **pgvector** (Python)
+- Tooling: **uv**, **pytest**, **black / isort / flake8**
+
+## Local development
+
+Prerequisites: Python 3.14 (or 3.13), [uv](https://docs.astral.sh/uv/),
+PostgreSQL 17 with the pgvector extension, and Redis. Elasticsearch is
+optional (`SEARCH_ENABLED=False`).
+
+```bash
+# 1. Install dependencies
+uv sync
+
+# 2. Configure environment
+cp .env.example .env        # then fill in SECRET_KEY, DB_* and any LLM keys
+
+# 3. Start backing services (Postgres + Redis; add the search/streaming
+#    compose files only if you need them)
+docker compose up -d db redis
+# docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
+# docker compose -f docker-compose.yml -f docker-compose.streaming.yml up -d
+
+# 4. Migrate and run
+uv run python manage.py migrate
+uv run python manage.py runserver
+
+# 5. Workers (separate terminals)
+uv run celery -A credit_mate_ai worker -l info
+uv run celery -A credit_mate_ai beat -l info
+```
+
+The API is then at `http://localhost:8000/api/v1/`, with interactive docs at
+`/api/v1/docs/swagger/` and `/api/v1/docs/redoc/`.
+
+### Useful commands
+
+```bash
+uv run python manage.py bootstrap_sync_sources   # seed the 120 sync sources
+uv run python manage.py import_cards <file.json> # upsert a verified-cards export
+uv run python manage.py export_verified_cards    # write the verified-cards JSON
+uv run python manage.py run_nightly_sync         # run the sync pipeline once
+uv run python manage.py llm_status               # LLM provider/budget status
+python -m evals verify_dataset                   # validate the eval golden dataset
+```
+
+Ingestion commands for the Bangladesh Bank charts
+(`ingest_bb_deposit_chart`, `ingest_bb_lending_chart`) and per-vertical seed
+commands (`seed_loan_products`, `seed_account_products`,
+`seed_deposit_benchmarks`, …) are listed by `manage.py help`.
+
+### Running tests
+
+```bash
+DEBUG=True REDIS_CACHE_URL=redis://localhost:6379/14 uv run pytest
+```
+
+Two caveats that will otherwise bite: tests expect `DEBUG=True` in a clean
+environment, and `REDIS_CACHE_URL` must point at Redis DB **14** (as in CI).
+The suite runs with `--nomigrations`, so the pgvector extension must exist
+in your `template1` for the retrieval tests:
+
+```sql
+psql -d template1 -c "CREATE EXTENSION IF NOT EXISTS vector"
+```
+
+## Feature flags
+
+All default to **off**; the features are merged dark until a deliberate
+rollout.
+
+| Flag | Enables |
+| --- | --- |
+| `ADVISOR_ENABLED` | Advisor API + SSE streaming endpoints (404 when off) |
+| `EVENT_STREAMING_ENABLED` | Kafka outbox relay and consumers |
+| `VECTOR_SEARCH_ENABLED` | pgvector retrieval search endpoint |
+| `SEARCH_ENABLED` | Elasticsearch-backed search |
+
+## API documentation
+
+- OpenAPI schema: `GET /api/v1/schema/` · Swagger UI: `/api/v1/docs/swagger/`
+  · ReDoc: `/api/v1/docs/redoc/`
+- Guides: [docs/api-docs.md](docs/api-docs.md) ·
+  [docs/auth-api.md](docs/auth-api.md) · [docs/api/](docs/api/)
+- Architecture decisions: [docs/adr/](docs/adr/)
+- Development docs: [docs/development/](docs/development/) — start with
+  [LOCAL_DEVELOPMENT.md](docs/development/LOCAL_DEVELOPMENT.md) and
+  [ARCHITECTURE.md](docs/development/ARCHITECTURE.md)
+
+## CI
+
+Every pull request runs:
+
+- **Tests** — pytest on Python 3.13 and 3.14 against PostgreSQL 17 +
+  pgvector and Redis
+- **Code Quality** — black, isort, flake8
+- **Migration Checks** — `makemigrations --check`, migration graph applied
+  to a clean database, and OpenAPI schema validation
+- **Security Checks** — pip-audit and bandit
+- **Workflow Audit** — zizmor over the workflow files themselves
+- **Secret Scan** — gitleaks on the PR's commits (weekly full-history scan)
+
+The LLM eval harness also runs nightly (`LLM Evals (nightly)`).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch, commit and review
+conventions. The short version: Conventional Commits, focused branches,
+tests and `manage.py check` green before review, and never commit secrets.
